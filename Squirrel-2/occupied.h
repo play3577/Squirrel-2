@@ -117,3 +117,32 @@ inline int sq_to_sqminus45(Square sq) {
 	return sq2sqminus45[sq];
 
 }
+
+
+constexpr int effectmask = (0b1111111);//7bitが立っている。
+
+/*
+利きを求めるために何ビットシフトさせないといけないか
+
+*/
+//int shift_table_tate[SQ_NUM];
+
+/*
+縦の利き　OK
+
+*/
+inline int shift_tate(Square sq) {
+
+	ASSERT(is_ok(sq));
+	//return shift_table_tate[sq];
+	//6段目からはb[1]になるので
+	return int(1 + 9 * (sqtofile(sq)%5));//0からはじまる！
+
+}
+
+inline int index_tate(Square sq) {
+
+	ASSERT(is_ok(sq));
+	return sq > 44 ? 1 : 0;
+
+}

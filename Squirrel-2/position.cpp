@@ -145,6 +145,7 @@ void Position::put_piece(const Color c, const Piece pt, const Square sq)
 駒得の差分計算（あとで）
 
 */
+
 void Position::do_move(Move m, StateInfo * newst)
 {
 	//stateinfoの更新
@@ -328,6 +329,25 @@ void Position::undo_move()
 
 
 }
+
+
+void Position::check_effect() {
+
+	for (Square sq = SQ1A; sq < SQ_NUM; sq++) {
+
+		if (sq == SQ5I) {
+			cout << "b[1]" << endl;
+		}
+		cout << "index_tate" << index_tate(sq) << " shifttable " << shift_tate(sq);
+		int64_t obstacle_tate = (occ_all().b[index_tate(sq)] >> shift_tate(sq))&effectmask;
+		cout << "obstacle" << static_cast<std::bitset<7>>(obstacle_tate) << endl;
+		//6筋目からなんか一つズレてる？？？
+		cout << LongRookEffect_tate[sq][obstacle_tate] << endl;
+	}
+
+
+}
+
 
 inline void Position::check_occbitboard() {
 

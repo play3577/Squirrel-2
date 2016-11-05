@@ -5,7 +5,7 @@
 #include "Bitboard.h"
 #include "occupied.h"
 #include <string>
-
+#include <bitset>
 using namespace std;
 
 
@@ -85,7 +85,7 @@ public:
 
 	}
 
-
+	void check_effect();
 
 
 	void do_move(Move m, StateInfo* st);

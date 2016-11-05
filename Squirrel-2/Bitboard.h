@@ -52,5 +52,12 @@ extern Bitboard canPromoteBB[ColorALL];
 
 extern Bitboard StepEffect[ColorALL][PT_ALL][SQ_NUM];
 
+extern Bitboard LongRookEffect_yoko[SQ_NUM][128];//OK
+extern Bitboard LongRookEffect_tate[SQ_NUM][128];//OK(香車もコレを使うコレを香車でも使うためにはinfrontBBを用意しなければならない)
+extern Bitboard LongBishopEffect_plus45[SQ_NUM][128];//OK
+extern Bitboard LongBishopEffect_minus45[SQ_NUM][128];//OK
+
+
+
 void bitboard_debug();
 void bitboard_init();
