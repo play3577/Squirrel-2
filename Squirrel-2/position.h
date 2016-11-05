@@ -36,7 +36,11 @@ struct StateInfo
 struct Position 
 {
 private:
+
 	Bitboard occupied[ColorALL];//colorALL=2‚È‚Ì‚Åè”ÔŠÖŒW‚È‚¢Bitboard‚Í—pˆÓ‚µ‚Ä‚¢‚È‚¢B
+	Bitboard occupied90;
+	Bitboard occupied_plus45, occupied_minus45;
+
 	Bitboard occupiedPt[ColorALL][PT_ALL];
 	Piece pcboard[SQ_NUM];
 

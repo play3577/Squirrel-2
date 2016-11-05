@@ -91,7 +91,7 @@ constexpr Color piece_color(const Piece pc) { return (pc& WHITE_piece) ? WHITE :
 constexpr Piece piece_type(const Piece pc) { return Piece(pc & 0b1111); }//手番の情報を除く
 constexpr bool can_promote(const Piece pc){ return ((B_PAWN <= pc&&pc <= B_ROOK) || (W_PAWN <= pc&&pc <= W_ROOK)); }
 inline Piece promotepiece(const Piece pc) { ASSERT(can_promote(pc));  return Piece(pc | PROMOTE); }
-inline Piece rowpiece(const Piece pc) { ASSERT(!can_promote(pc)); return Piece(pc&~PROMOTE); }
+constexpr Piece rowpiece(const Piece pc) { /*ASSERT(!can_promote(pc));*/ return Piece(pc&~PROMOTE); }//do_moveでなっていない駒も一律でこの関数に突っ込みたいのでASSERTは外す
 constexpr Piece add_color(const Piece pt, const Color c) { return (c == BLACK) ? pt : Piece(pt | WHITE_piece); }
 
 //表示用（コレでうまくいくか....????）OK上手く行けてた。

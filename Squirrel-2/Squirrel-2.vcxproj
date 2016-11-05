@@ -150,6 +150,7 @@
     <ClInclude Include="bitop.h" />
     <ClInclude Include="fundation.h" />
     <ClInclude Include="misc.h" />
+    <ClInclude Include="occupied.h" />
     <ClInclude Include="position.h" />
   </ItemGroup>
   <ItemGroup>
