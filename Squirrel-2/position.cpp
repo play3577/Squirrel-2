@@ -60,6 +60,7 @@ void Position::set(std::string sfen)
 			pcboard[sq] = pc;//OK
 			occupied[c] |= SquareBB[sq];
 			occupiedPt[c][pt] |= SquareBB[sq];
+			put_rotate(sq);
 			promote = false;
 			f--;
 		}
@@ -103,6 +104,8 @@ void Position::set(std::string sfen)
 		}
 		index++;
 	}
+	check_occbitboard();
+
 #ifdef CHECKPOS
 	cout << *this << endl;
 #endif
@@ -177,7 +180,8 @@ void Position::do_move(Move m, StateInfo * newst)
 		pcboard[to] = movedpiece;
 		//bitboardの更新処理
 		put_piece(c, pt, to);
-
+		//rotatedにも駒を足す。
+		put_rotate(to);
 	}
 	else {
 		/*
@@ -201,7 +205,7 @@ void Position::do_move(Move m, StateInfo * newst)
 
 		//occの更新処理
 		remove_piece(us, pt, from);
-
+		remove_rotate(from);
 		
 		if (!is_propawn(m)) {
 			//成がない場合
@@ -233,9 +237,11 @@ void Position::do_move(Move m, StateInfo * newst)
 
 			int num = num_pt(hands[sidetomove()], pt2);
 			makehand(hands[sidetomove()], pt2, num + 1);
+			//コマの捕獲の場合はrotetedは足さなくていい
 		}
 		else {
 			st->DirtyPiece[1] = NO_PIECE;
+			put_rotate(to);
 		}
 		//ksqの更新
 		if (pt == KING) { st->ksq_[us] = to; }
@@ -272,6 +278,7 @@ void Position::undo_move()
 		makehand(hands[c], pt, num + 1);
 
 		remove_piece(c, pt, to);
+		remove_rotate(to);
 	}
 	else {
 		//コマの移動
@@ -285,7 +292,7 @@ void Position::undo_move()
 		Color from_c = piece_color(movedpiece);
 		Piece from_pt = piece_type(movedpiece);
 		put_piece(from_c, from_pt, from);
-
+		put_rotate(from);
 		//駒の捕獲がある場合
 		if (capture != NO_PIECE) {
 			Piece pt;
@@ -302,7 +309,7 @@ void Position::undo_move()
 			//もともといた駒の分
 			remove_piece(from_c, piece_type(afterpiece), to);
 			ASSERT(from_c != c);
-
+			//コマの捕獲の場合はtoにいたrotetedを消す必要はない
 
 
 		}
@@ -312,6 +319,7 @@ void Position::undo_move()
 			Color c = piece_color(afterpiece);
 			//toにいた駒を消すだけでいい
 			remove_piece(c, pt, to);
+			remove_rotate(to);
 		}
 	}
 	sidetomove_ = opposite(sidetomove_);
@@ -319,6 +327,20 @@ void Position::undo_move()
 	st = st->previous;
 
 
+}
+
+inline void Position::check_occbitboard() {
+
+	cout << "occupied " << endl;
+	cout << occ_all() << endl;
+	cout << "occ 90" << endl;
+	cout << occupied90 << endl;
+	cout << "occupied_plus45" << endl;
+	cout << occupied_plus45 << endl;
+	cout << "occupied minus45" << endl;
+	cout << occupied_minus45 << endl;
+
+	return;
 }
 
 

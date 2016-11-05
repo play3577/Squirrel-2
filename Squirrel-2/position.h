@@ -3,7 +3,7 @@
 
 #include "fundation.h"
 #include "Bitboard.h"
-
+#include "occupied.h"
 #include <string>
 
 using namespace std;
@@ -62,6 +62,32 @@ public:
 	void remove_piece(const Color c, const Piece pt, const Square sq);
 	void put_piece(const Color c, const Piece pt, const Square sq);
 
+	void put_rotate(const Square sq) {
+
+		ASSERT(is_ok(Square(sq_to_sq90(sq))));
+		occupied90 ^= SquareBB[sq_to_sq90(sq)];
+		ASSERT(is_ok(Square(sq_to_sqplus45(sq))));
+		occupied_plus45 ^= SquareBB[sq_to_sqplus45(sq)];
+		ASSERT(is_ok(Square(sq_to_sqminus45(sq))));
+		occupied_minus45^= SquareBB[sq_to_sqminus45(sq)];
+
+	}
+
+	//put‚àremove‚àxor‚È‚Ì‚Å‚â‚Á‚Ä‚¢‚é‚±‚Æ‚Í“¯‚¶‚¾‚ª–¼‘O‚®‚ç‚¢•Ï‚¦‚Ä‚¨‚¢‚½‚Ù‚¤‚ª‚¢‚¢‚¾‚ë
+	void remove_rotate(const Square sq) {
+
+		ASSERT(is_ok(Square(sq_to_sq90(sq))));
+		occupied90 ^= SquareBB[sq_to_sq90(sq)];
+		ASSERT(is_ok(Square(sq_to_sqplus45(sq))));
+		occupied_plus45 ^= SquareBB[sq_to_sqplus45(sq)];
+		ASSERT(is_ok(Square(sq_to_sqminus45(sq))));
+		occupied_minus45 ^= SquareBB[sq_to_sqminus45(sq)];
+
+	}
+
+
+
+
 	void do_move(Move m, StateInfo* st);
 	void undo_move();
 
@@ -73,6 +99,12 @@ public:
 	Color sidetomove() const { return sidetomove_; }
 	Hand hand(Color c)const { return hands[c]; }
 	StateInfo* state() const { return st; }
+
+
+	void check_occbitboard();
+
+
+
 };
 
 std::ostream& operator<<(std::ostream& os, const Position& pos);

@@ -51,16 +51,18 @@ int main() {
 	cout << pos << endl;*/
 
 	//"sfen lnsgkgsnl/1r5b1/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL b - 1"
-	pos.set("sfen lnsgkgsnl/1r5b1/ppppppppp/P8/9/9/1PPPPPPPP/1B5R1/LNSGKGSNL b - 1");
+	//pos.set("sfen lnsgkgsnl/1r5b1/ppppppppp/P8/9/9/1PPPPPPPP/1B5R1/LNSGKGSNL b - 1");
 
 	StateInfo si;
 
 	Move m;
-	//m = make_move(SQ2G, SQ2F,PAWN);
-	m = make_movepropawn(SQ9D, SQ9C, PAWN);
+	m = make_move(SQ2G, SQ2F,PAWN);
+	//m = make_movepropawn(SQ9D, SQ9C, PAWN);
 	pos.do_move(m, &si);
-	cout << pos << endl;
+	//cout << pos << endl;
+	pos.check_occbitboard();
 	pos.undo_move();
-	cout << pos << endl;
+	//cout << pos << endl;
+	pos.check_occbitboard();
 	return 0;
 }

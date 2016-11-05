@@ -33,6 +33,16 @@ constexpr int sq2sq90[SQ_NUM] = {
 	80,71,62,53,44,35,26,17,8,
 
 };
+
+
+inline int sq_to_sq90(Square sq) {
+
+	ASSERT(is_ok(sq));
+	return sq2sq90[sq];
+
+}
+
+
 /*
 
 bitboard_plus45
@@ -47,6 +57,7 @@ bitboard_plus45
 716364656667686970
 727374757677787980
 
+おかしい可能性もあるので十分気をつける
 */
 constexpr int sq2sqplus45[SQ_NUM] = {
 
@@ -83,6 +94,7 @@ bitboard minus 45
  77979615243342516
 8071625344352617 8
 
+おかしい可能性もあるので十分気をつける
 */
 constexpr int sq2sqminus45[SQ_NUM] = {
 
