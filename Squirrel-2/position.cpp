@@ -333,19 +333,23 @@ void Position::undo_move()
 
 void Position::check_effect() {
 
+	//for (Square sq = SQ1A; sq < SQ_NUM; sq++) {
+
+	//	if (sq == SQ5I) {
+	//		cout << "b[1]" << endl;
+	//	}
+	//	cout << "index_tate" << index_tate(sq) << " shifttable " << shift_tate(sq);
+	//	int64_t obstacle_tate = (occ_all().b[index_tate(sq)] >> shift_tate(sq))&effectmask;
+	//	cout << "obstacle" << static_cast<std::bitset<7>>(obstacle_tate) << endl;
+	//	cout << LongRookEffect_tate[sq][obstacle_tate] << endl;
+	//}
+
 	for (Square sq = SQ1A; sq < SQ_NUM; sq++) {
-
-		if (sq == SQ5I) {
-			cout << "b[1]" << endl;
-		}
-		cout << "index_tate" << index_tate(sq) << " shifttable " << shift_tate(sq);
-		int64_t obstacle_tate = (occ_all().b[index_tate(sq)] >> shift_tate(sq))&effectmask;
-		cout << "obstacle" << static_cast<std::bitset<7>>(obstacle_tate) << endl;
-		//6筋目からなんか一つズレてる？？？
-		cout << LongRookEffect_tate[sq][obstacle_tate] << endl;
+		cout << "index_yoko" << index_yoko(sq) << " shifttable " << shift_yoko(sq);
+		int64_t obstacle_yoko = (occupied90.b[index_yoko(sq)] >> shift_yoko(sq))&effectmask;
+		cout << "obstacle" << static_cast<std::bitset<7>>(obstacle_yoko) << endl;
+		cout << LongRookEffect_yoko[sq][obstacle_yoko] << endl;
 	}
-
-
 }
 
 

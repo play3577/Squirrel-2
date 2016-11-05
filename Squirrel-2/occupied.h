@@ -129,7 +129,7 @@ constexpr int effectmask = (0b1111111);//7bit‚ª—§‚Á‚Ä‚¢‚éB
 
 /*
 c‚Ì—˜‚«@OK
-
+‚ ‚Æ‚Åconstexpr‚É‚·‚é‚©’l‚ðƒe[ƒuƒ‹‚ÉŠi”[‚·‚é‚©‚µ‚Ä‚‘¬‰»‚·‚é
 */
 inline int shift_tate(Square sq) {
 
@@ -144,5 +144,35 @@ inline int index_tate(Square sq) {
 
 	ASSERT(is_ok(sq));
 	return sq > 44 ? 1 : 0;
+
+}
+
+/*
+‰¡‚ÌŒø‚«
+
+*/
+
+inline int shift_yoko(Square sq) {
+
+	ASSERT(is_ok(sq));
+	Rank r = sqtorank(sq);
+	//File f = sqtofile(sq);
+	if (RankA <= r&&r <= RankD) {
+		return 1 + (9 * (3 - r));
+	}
+	else {
+		return 1 + (9 * (8 - r));
+	}
+
+	//‚±‚±‚É‚Í—ˆ‚È‚¢‚Í‚¸‚Å‚ ‚é
+	ASSERT(0);
+}
+
+inline int index_yoko(Square sq) {
+
+	ASSERT(is_ok(sq));
+	File f = sqtofile(sq);
+
+	return (9 * f <= sq&&sq <= 9 * f + 3) ? 1 : 0;
 
 }
