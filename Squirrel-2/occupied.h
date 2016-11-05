@@ -149,7 +149,7 @@ inline int index_tate(Square sq) {
 
 /*
 ‰¡‚ÌŒø‚«
-
+OK
 */
 
 inline int shift_yoko(Square sq) {
@@ -175,4 +175,27 @@ inline int index_yoko(Square sq) {
 
 	return (9 * f <= sq&&sq <= 9 * f + 3) ? 1 : 0;
 
+}
+/*
+ŽÎ‚ß{‚S‚T“x
+*/
+extern int indexPlus45[SQ_NUM];
+extern int shiftPlus45[SQ_NUM];
+
+void make_indexplus45();
+void make_shiftplus45();
+
+
+inline int index_plus45(Square sq) {
+
+	ASSERT(is_ok(sq));
+	//index‚ÍŠÔˆá‚Á‚Ä‚È‚©‚Á‚½B
+	return indexPlus45[sq];
+}
+
+inline int shift_plus45(Square sq) {
+
+	ASSERT(is_ok(sq));
+
+	return shiftPlus45[sq];
 }

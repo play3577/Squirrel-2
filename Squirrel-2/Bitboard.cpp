@@ -1,8 +1,9 @@
 #include "Bitboard.h"
 #include "bitop.h"
+#include "occupied.h"
 
 #include <bitset>
-
+#include <algorithm>
 using namespace std;
 
 
@@ -65,6 +66,15 @@ std::ostream & operator<<(std::ostream & os, const Bitboard & board)
 	return os;
 }
 
+
+int additional_plus45(Square sq) {
+
+	File f = sqtofile(sq);
+	Rank r = sqtorank(sq);
+
+	return std::max(int(f - r), 0);
+
+}
 
 void bitboard_init()
 {
@@ -236,19 +246,25 @@ void bitboard_init()
 		}
 	}
 
+
+
 	/*
 	よく考えると斜めもrankに射影してしまえば横と同じように処理できるか(´・ω・｀)
 	横のほうが処理が簡単なので横で計算する。
 	*/
 	//斜めプラス４５度
 	//この方法では上から角の効きが伸びてきてしまうということが起こりうる！！(解決済み)
+
+	/*
+	この方法でテーブル作るのはまずい！！！考え直し！！！！！
+	*/
 	for (Square sq = SQ1A; sq < SQ_NUM; sq++) {
-		//File sqfile = sqtofile(sq);
-		//Rank sqrank = sqtorank(sq);
+		File sqfile = sqtofile(sq);
+		Rank sqrank = sqtorank(sq);
 		for (int obstacle = 0; obstacle < 128; obstacle++) {
 
 			int direc_bishop_p45[2] = { -10, + 10 };
-			int obstacle2 = obstacle << 1;//1bitシフトさせる。
+			int obstacle2 = obstacle << (1+additional_plus45(sq));//1bitシフトさせる。
 
 			Rank torank;
 			File tofile;//横方向への射影。
@@ -269,15 +285,14 @@ void bitboard_init()
 					if (is_ok(to) && (to != sq)&&(abs(torank-oldrank)<2)) {
 						LongBishopEffect_plus45[sq][obstacle] ^= SquareBB[to];
 					}
-				} while ((!(obstacle2&(1 << tofile))) && is_ok(to) && (abs(torank - oldrank)<2));
+				} while (!(obstacle2&(1 << (tofile))) && is_ok(to) && (abs(torank - oldrank)<2));
 			}
 		}
 	}
-
 	//斜め-45度
 	for (Square sq = SQ1A; sq < SQ_NUM; sq++) {
-		//File sqfile = sqtofile(sq);
-		//Rank sqrank = sqtorank(sq);
+		File sqfile = sqtofile(sq);
+		Rank sqrank = sqtorank(sq);
 		for (int obstacle = 0; obstacle < 128; obstacle++) {
 
 			int direc_bishop_m45[2] = { -8, +8 };
@@ -302,10 +317,16 @@ void bitboard_init()
 					if (is_ok(to) && (to != sq) && (abs(torank - oldrank)<2)) {
 						LongBishopEffect_minus45[sq][obstacle] ^= SquareBB[to];
 					}
-				} while ((!(obstacle2&(1 << tofile))) && is_ok(to) && (abs(torank - oldrank)<2));
+				} while ((!(obstacle2&(1 << (tofile)))) && is_ok(to) && (abs(torank - oldrank)<2));
 			}
 		}
 	}
+
+	//indexの作成
+	make_indexplus45();
+	make_shiftplus45();
+
+	bitboard_debug();
 }
 
 
@@ -371,12 +392,15 @@ void bitboard_debug()
 		}
 	}*/
 
-	for (Color c = BLACK; c <= WHITE; c++) {
+	/*for (Color c = BLACK; c <= WHITE; c++) {
 
 		for (Rank r = RankA; r < Rank_Num; r++) {
 			cout << " color " << c << " rank " << r << endl;
 			cout << InFront_BB[c][r] << endl;
 		}
-	}
+	}*/
+
+	//テーブルがちゃんと作れていなかった
+	cout << LongBishopEffect_plus45[18][(0b1100010)] << endl;
 
 }
