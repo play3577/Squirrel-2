@@ -351,13 +351,20 @@ void Position::check_effect() {
 		cout << LongRookEffect_yoko[sq][obstacle_yoko] << endl;
 	}*/
 
-	for (Square sq = SQ1A; sq < SQ_NUM; sq++) {
+	/*for (Square sq = SQ1A; sq < SQ_NUM; sq++) {
 		cout <<"Square "<<int(sq)<<" "<<"index_plus45" << index_plus45(sq) << " shifttable " << shift_plus45(sq);
 		int64_t obstacle_plus45 = (occupied_plus45.b[index_plus45(sq)] >> shift_plus45(sq))&effectmask;
 		cout << "obstacle" << static_cast<std::bitset<7>>(obstacle_plus45) << endl;
 		cout << LongBishopEffect_plus45[sq][obstacle_plus45] << endl;
-	}
+	}*/
 
+	for (Square sq = SQ1A; sq < SQ_NUM; sq++) {
+		cout << "Square " << int(sq) << " " << "index_Minus45" << index_Minus45(sq) << " shifttable " << shift_Minus45(sq) << endl;;
+		int64_t obstacle_Minus45 = (occupied_minus45.b[index_Minus45(sq)] >> shift_Minus45(sq))&effectmask;
+		cout << "obstacle" << static_cast<std::bitset<7>>(obstacle_Minus45) << endl;
+		//cout << " change obstacle " << static_cast<std::bitset<7>>(change_indian(obstacle_Minus45)) << endl;
+		cout << LongBishopEffect_minus45[sq][obstacle_Minus45] << endl;
+	}
 }
 
 

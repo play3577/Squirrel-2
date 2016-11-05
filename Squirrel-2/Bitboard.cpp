@@ -66,6 +66,28 @@ std::ostream & operator<<(std::ostream & os, const Bitboard & board)
 	return os;
 }
 
+/*
+bitを上位下位入れ替えるための関数
+ここでは入ってくるbitは7bitであると仮定する。
+*/
+int change_indian(int i) {
+
+	//iは7bit以下でなければならない
+	_ASSERT((i >> 8) == 0);
+
+	int ret = 0;
+	for (int b = 0; b < 7; b++) {
+		if (i&(1 << b)) {
+			ret |= 1 << (6 - b);
+		}
+	}
+
+	return ret;
+}
+
+/*
+シフト三角行列
+*/
 
 int additional_plus45(Square sq) {
 
@@ -73,6 +95,15 @@ int additional_plus45(Square sq) {
 	Rank r = sqtorank(sq);
 
 	return std::max(int(f - r), 0);
+
+}
+
+int additional_minus45(Square sq) {
+
+	File f = sqtofile(sq);
+	Rank r = sqtorank(sq);
+
+	return std::max(int(8 - f - r), 0);
 
 }
 
@@ -295,8 +326,9 @@ void bitboard_init()
 		Rank sqrank = sqtorank(sq);
 		for (int obstacle = 0; obstacle < 128; obstacle++) {
 
+			int obstacle_ = change_indian(obstacle);
 			int direc_bishop_m45[2] = { -8, +8 };
-			int obstacle2 = obstacle << 1;//1bitシフトさせる。
+			int obstacle2 = obstacle_ << (1/*+additional_minus45(sq)*/);//
 
 			Rank torank;
 			File tofile;//横方向への射影。
@@ -315,9 +347,10 @@ void bitboard_init()
 					torank = sqtorank(to);
 					tofile = sqtofile(to);
 					if (is_ok(to) && (to != sq) && (abs(torank - oldrank)<2)) {
-						LongBishopEffect_minus45[sq][obstacle] ^= SquareBB[to];
+						//obstacleのbitを1を7に7を1にというように入れ替えなければならない。
+						LongBishopEffect_minus45[sq][(obstacle_)] ^= SquareBB[to];
 					}
-				} while ((!(obstacle2&(1 << (tofile)))) && is_ok(to) && (abs(torank - oldrank)<2));
+				} while ((!( obstacle2&(1 << (7-tofile)))) && is_ok(to) && (abs(torank - oldrank)<2));
 			}
 		}
 	}
@@ -325,6 +358,8 @@ void bitboard_init()
 	//indexの作成
 	make_indexplus45();
 	make_shiftplus45();
+
+	make_shiftMinus45();
 
 	bitboard_debug();
 }
@@ -401,6 +436,6 @@ void bitboard_debug()
 	}*/
 
 	//テーブルがちゃんと作れていなかった
-	cout << LongBishopEffect_plus45[18][(0b1100010)] << endl;
+	cout << LongBishopEffect_minus45[39][(0b0100010)] << endl;
 
 }

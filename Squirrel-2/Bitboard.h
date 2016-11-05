@@ -61,3 +61,5 @@ extern Bitboard LongBishopEffect_minus45[SQ_NUM][128];//OK
 
 void bitboard_debug();
 void bitboard_init();
+
+int change_indian(int i);

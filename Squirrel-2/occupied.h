@@ -199,3 +199,27 @@ inline int shift_plus45(Square sq) {
 
 	return shiftPlus45[sq];
 }
+
+/*
+斜めマイナス４５度
+*/
+extern int indexMinus45[SQ_NUM];
+extern int shiftMinus45[SQ_NUM];
+
+void make_indexMinus45();
+void make_shiftMinus45();
+
+
+inline int index_Minus45(Square sq) {
+
+	ASSERT(is_ok(sq));
+	//indexは間違ってなかった。
+	return indexMinus45[sq];
+}
+
+inline int shift_Minus45(Square sq) {
+
+	ASSERT(is_ok(sq));
+
+	return shiftMinus45[sq];
+}
