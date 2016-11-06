@@ -103,7 +103,7 @@ int additional_minus45(Square sq) {
 	File f = sqtofile(sq);
 	Rank r = sqtorank(sq);
 
-	return std::max(int(8 - f - r), 0);
+	return std::max(int(f+r-8), 0);
 
 }
 
@@ -320,15 +320,17 @@ void bitboard_init()
 			}
 		}
 	}
+
+
 	//ŽÎ‚ß-45“x
 	for (Square sq = SQ1A; sq < SQ_NUM; sq++) {
 		File sqfile = sqtofile(sq);
 		Rank sqrank = sqtorank(sq);
 		for (int obstacle = 0; obstacle < 128; obstacle++) {
 
-			int obstacle_ = change_indian(obstacle);
+			//int obstacle_ = change_indian(obstacle);
 			int direc_bishop_m45[2] = { -8, +8 };
-			int obstacle2 = obstacle_ << (1/*+additional_minus45(sq)*/);//
+			int obstacle2 = obstacle << (1+additional_minus45(sq));//
 
 			Rank torank;
 			File tofile;//‰¡•ûŒü‚Ö‚ÌŽË‰eB
@@ -348,9 +350,9 @@ void bitboard_init()
 					tofile = sqtofile(to);
 					if (is_ok(to) && (to != sq) && (abs(torank - oldrank)<2)) {
 						//obstacle‚Ìbit‚ð1‚ð7‚É7‚ð1‚É‚Æ‚¢‚¤‚æ‚¤‚É“ü‚ê‘Ö‚¦‚È‚¯‚ê‚Î‚È‚ç‚È‚¢B
-						LongBishopEffect_minus45[sq][(obstacle_)] ^= SquareBB[to];
+						LongBishopEffect_minus45[sq][(obstacle)] ^= SquareBB[to];
 					}
-				} while ((!( obstacle2&(1 << (7-tofile)))) && is_ok(to) && (abs(torank - oldrank)<2));
+				} while ((!( obstacle2&(1 << (tofile)))) && is_ok(to) && (abs(torank - oldrank)<2));
 			}
 		}
 	}

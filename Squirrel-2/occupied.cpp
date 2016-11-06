@@ -98,15 +98,17 @@ void make_shiftplus45() {
 
 
 int indexMinus45[SQ_NUM] = {
-0,0,0,0,1,1,1,1,/*8*/1,
-0,0,0,1,1,1,1,0,/*17*/0,
-0,0,1,1,1,1,0,0,/*26*/0,
-0,1,1,1,1,0,0,0,/*35*/0,
-1,1,1,1,0,0,0,0,/*44*/0,
-1,1,1,0,0,0,0,0,/*53*/1,
-1,1,0,0,0,0,0,1,/*62*/1,
-1,0,0,0,0,0,1,1,/*71*/1,
-0,0,0,0,0,1,1,1,/*80*/1,
+
+	0,0,0,0,1,1,1,1,0,//8
+	0,0,0,1,1,1,1,0,0,//17
+	0,0,1,1,1,1,0,0,0,//26
+	0,1,1,1,1,0,0,0,0,//35
+	1,1,1,1,0,0,0,0,0,//44
+	1,1,1,0,0,0,0,0,1,//53
+	1,1,0,0,0,0,0,1,1,//62
+	1,0,0,0,0,0,1,1,1,//71
+	0,0,0,0,0,1,1,1,1,
+
 
 };
 
@@ -141,47 +143,47 @@ void make_shiftMinus45()
 				shiftMinus45[sq] = 0;
 			}
 			else {
-				shiftMinus45[sq] = 2 + 9 * 1-1;
+				shiftMinus45[sq] = 2 + 9 * 1;
 			}
 		}
 		if (s == 2) {
 			if (sq <= 18) {
-				shiftMinus45[sq] = 1 + 9 * 3-5;
+				shiftMinus45[sq] = 1 + 9 * 3;
 			}
 			else {
-				shiftMinus45[sq] = 3 + 9 * 2-2;
+				shiftMinus45[sq] = 3 + 9 * 2;
 			}
 		}
 		if (s == 3) {
 			if (sq <= 27) {
-				shiftMinus45[sq] = 1 + 9 * 4-4;
+				shiftMinus45[sq] = 1 + 9 * 4;
 			}
 			else {
-				shiftMinus45[sq] = 4 + 9 * 3-3;
+				shiftMinus45[sq] = 4 + 9 * 3;
 			}
 		}
 		if (s == 4) {
 			if (sq <= 36) {
-				shiftMinus45[sq] = 1-3;
+				shiftMinus45[sq] = 1;
 			}
 			else {
-				shiftMinus45[sq] = 5 + 9 * 4-4;
+				shiftMinus45[sq] = 5 + 9 * 4;
 			}
 		}
 		if (s == 5) {
 			if (sq <= 45) {
-				shiftMinus45[sq] = 1 + 9 * 1-2;
+				shiftMinus45[sq] = 1 + 9 * 1;
 			}
 			else {
-				shiftMinus45[sq] = 6-5;
+				shiftMinus45[sq] = 6;
 			}
 		}
 		if (s == 6) {
 			if (sq <= 54) {
-				shiftMinus45[sq] = 1 + 9 * 2-1;
+				shiftMinus45[sq] = 1 + 9 * 2;
 			}
 			else {
-				shiftMinus45[sq] = 7 + 9 * 1-6;
+				shiftMinus45[sq] = 7 + 9 * 1;
 			}
 		}
 		if (s == 7) {

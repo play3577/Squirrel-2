@@ -363,7 +363,7 @@ void Position::check_effect() {
 		int64_t obstacle_Minus45 = (occupied_minus45.b[index_Minus45(sq)] >> shift_Minus45(sq))&effectmask;
 		cout << "obstacle" << static_cast<std::bitset<7>>(obstacle_Minus45) << endl;
 		//cout << " change obstacle " << static_cast<std::bitset<7>>(change_indian(obstacle_Minus45)) << endl;
-		cout << LongBishopEffect_minus45[sq][obstacle_Minus45] << endl;
+		cout << LongBishopEffect_minus45[sq][(obstacle_Minus45)] << endl;
 	}
 }
 
