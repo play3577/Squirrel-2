@@ -104,7 +104,9 @@ void Position::set(std::string sfen)
 		}
 		index++;
 	}
-	check_occbitboard();
+	init_eboard();
+	//check_eboard();
+	//check_occbitboard();
 
 #ifdef CHECKPOS
 	cout << *this << endl;
@@ -333,6 +335,11 @@ void Position::undo_move()
 
 void Position::check_effect() {
 
+
+	/*
+	èâä˙ã«ñ Ç≈è„éËÇ≠åæÇ¡ÇƒÇ¢ÇÈÇÃÇ≈ÇøÇ·ÇÒÇ∆é¿ëïÇ≈Ç´ÇΩÇ∆évÇ¢ÇΩÇ¢
+	*/
+
 	//for (Square sq = SQ1A; sq < SQ_NUM; sq++) {
 
 	//	if (sq == SQ5I) {
@@ -358,13 +365,13 @@ void Position::check_effect() {
 		cout << LongBishopEffect_plus45[sq][obstacle_plus45] << endl;
 	}*/
 
-	for (Square sq = SQ1A; sq < SQ_NUM; sq++) {
-		cout << "Square " << int(sq) << " " << "index_Minus45" << index_Minus45(sq) << " shifttable " << shift_Minus45(sq) << endl;;
-		int64_t obstacle_Minus45 = (occupied_minus45.b[index_Minus45(sq)] >> shift_Minus45(sq))&effectmask;
-		cout << "obstacle" << static_cast<std::bitset<7>>(obstacle_Minus45) << endl;
-		//cout << " change obstacle " << static_cast<std::bitset<7>>(change_indian(obstacle_Minus45)) << endl;
-		cout << LongBishopEffect_minus45[sq][(obstacle_Minus45)] << endl;
-	}
+	//for (Square sq = SQ1A; sq < SQ_NUM; sq++) {
+	//	cout << "Square " << int(sq) << " " << "index_Minus45" << index_Minus45(sq) << " shifttable " << shift_Minus45(sq) << endl;;
+	//	int64_t obstacle_Minus45 = (occupied_minus45.b[index_Minus45(sq)] >> shift_Minus45(sq))&effectmask;
+	//	cout << "obstacle" << static_cast<std::bitset<7>>(obstacle_Minus45) << endl;
+	//	//cout << " change obstacle " << static_cast<std::bitset<7>>(change_indian(obstacle_Minus45)) << endl;
+	//	cout << LongBishopEffect_minus45[sq][(obstacle_Minus45)] << endl;
+	//}
 }
 
 
@@ -380,6 +387,133 @@ inline void Position::check_occbitboard() {
 	cout << occupied_minus45 << endl;
 
 	return;
+}
+
+void Position::init_eboard()
+{
+	auto eboard = st->Eboard;
+	Piece pc;
+	std::memset(this->st->Eboard, 0, sizeof(this->st->Eboard[ColorALL][SQ_NUM]));//EboradÇÃèâä˙âª
+	for (Square sq = SQ_ZERO; sq < SQ_NUM; sq++) {
+
+		if ((pc = pcboard[sq]) != NO_PIECE) {
+
+			Color c = piece_color(pc);
+			Piece pt = piece_type(pc);
+
+			Bitboard effect;
+			//Ç±Ç±ÇÃèåèï™äÚÇ‡Ç§ÇøÇÂÇ¡Ç∆Ç»ÇÒÇ∆Ç©ê¨ÇÁÇ»Ç¢Ç©ÅH
+			if (pt == LANCE) {
+				int64_t obstacle_tate = (occ_all().b[index_tate(sq)] >> shift_tate(sq))&effectmask;
+				effect = LongRookEffect_tate[sq][obstacle_tate] & InFront_BB[c][sqtorank(sq)];
+				//cout << effect << endl;
+			}
+			else if (pt == ROOK) {
+				int64_t obstacle_tate = (occ_all().b[index_tate(sq)] >> shift_tate(sq))&effectmask;
+				int64_t obstacle_yoko = (occupied90.b[index_yoko(sq)] >> shift_yoko(sq))&effectmask;
+				effect = LongRookEffect_tate[sq][obstacle_tate] | LongRookEffect_yoko[sq][obstacle_yoko];
+				//	cout << effect << endl;
+			}
+			else if (pt == DRAGON) {
+				int64_t obstacle_tate = (occ_all().b[index_tate(sq)] >> shift_tate(sq))&effectmask;
+				int64_t obstacle_yoko = (occupied90.b[index_yoko(sq)] >> shift_yoko(sq))&effectmask;
+				effect = LongRookEffect_tate[sq][obstacle_tate] | LongRookEffect_yoko[sq][obstacle_yoko] | StepEffect[c][KING][sq];
+				//	cout << effect << endl;
+			}
+			else if (pt == BISHOP) {
+				int64_t obstacle_plus45 = (occupied_plus45.b[index_plus45(sq)] >> shift_plus45(sq))&effectmask;
+				int64_t obstacle_Minus45 = (occupied_minus45.b[index_Minus45(sq)] >> shift_Minus45(sq))&effectmask;
+				effect = LongBishopEffect_plus45[sq][obstacle_plus45] | LongBishopEffect_minus45[sq][(obstacle_Minus45)];
+				//	cout << effect << endl;
+			}
+			else if (pt == UNICORN) {
+				int64_t obstacle_plus45 = (occupied_plus45.b[index_plus45(sq)] >> shift_plus45(sq))&effectmask;
+				int64_t obstacle_Minus45 = (occupied_minus45.b[index_Minus45(sq)] >> shift_Minus45(sq))&effectmask;
+				effect = LongBishopEffect_plus45[sq][obstacle_plus45] | LongBishopEffect_minus45[sq][(obstacle_Minus45)] | StepEffect[c][KING][sq];
+				//	cout << effect << endl;
+			}
+			else {
+				effect = StepEffect[c][pt][sq];
+			}
+			cout << effect << endl;
+			while (effect.isNot()) {
+				Square esq = effect.pop();
+				eboard[c][esq]++;
+			}
+		}
+	}
+
+
+
+
+
+}
+
+void Position::add_effect(const Color c, const Piece pt, const Square sq)
+{
+	auto eboard = st->Eboard;
+
+	Bitboard effect;
+	//Ç±Ç±ÇÃèåèï™äÚÇ‡Ç§ÇøÇÂÇ¡Ç∆Ç»ÇÒÇ∆Ç©ê¨ÇÁÇ»Ç¢Ç©ÅH
+	if (pt == LANCE) {
+		int64_t obstacle_tate = (occ_all().b[index_tate(sq)] >> shift_tate(sq))&effectmask;
+		effect = LongRookEffect_tate[sq][obstacle_tate] & InFront_BB[c][sqtorank(sq)];
+		//cout << effect << endl;
+	}
+	else if (pt == ROOK) {
+		int64_t obstacle_tate = (occ_all().b[index_tate(sq)] >> shift_tate(sq))&effectmask;
+		int64_t obstacle_yoko = (occupied90.b[index_yoko(sq)] >> shift_yoko(sq))&effectmask;
+		effect = LongRookEffect_tate[sq][obstacle_tate] | LongRookEffect_yoko[sq][obstacle_yoko];
+	//	cout << effect << endl;
+	}
+	else if (pt == DRAGON) {
+		int64_t obstacle_tate = (occ_all().b[index_tate(sq)] >> shift_tate(sq))&effectmask;
+		int64_t obstacle_yoko = (occupied90.b[index_yoko(sq)] >> shift_yoko(sq))&effectmask;
+		effect = LongRookEffect_tate[sq][obstacle_tate] | LongRookEffect_yoko[sq][obstacle_yoko]|StepEffect[c][KING][sq];
+	//	cout << effect << endl;
+	}
+	else if (pt == BISHOP) {
+		int64_t obstacle_plus45 = (occupied_plus45.b[index_plus45(sq)] >> shift_plus45(sq))&effectmask;
+		int64_t obstacle_Minus45 = (occupied_minus45.b[index_Minus45(sq)] >> shift_Minus45(sq))&effectmask;
+		effect = LongBishopEffect_plus45[sq][obstacle_plus45] | LongBishopEffect_minus45[sq][(obstacle_Minus45)];
+	//	cout << effect << endl;
+	}
+	else if(pt==UNICORN){
+		int64_t obstacle_plus45 = (occupied_plus45.b[index_plus45(sq)] >> shift_plus45(sq))&effectmask;
+		int64_t obstacle_Minus45 = (occupied_minus45.b[index_Minus45(sq)] >> shift_Minus45(sq))&effectmask;
+		effect = LongBishopEffect_plus45[sq][obstacle_plus45] | LongBishopEffect_minus45[sq][(obstacle_Minus45)] | StepEffect[c][KING][sq];
+	//	cout << effect << endl;
+	}
+	else {
+		effect= StepEffect[c][pt][sq];
+	}
+	cout << effect << endl;
+	while (effect.isNot()) {
+
+		Square esq = effect.pop();
+		ASSERT(is_ok(esq));
+		eboard[c][esq]++;
+	}
+
+}
+
+void Position::check_eboard() const
+{
+	cout << "check eboard" << endl;
+	for (Color c = BLACK; c < ColorALL; c++) {
+		cout << "COLOR " << c << endl;
+		for (Rank r = RankA; r < Rank_Num; r++) {
+			for (File f = File9; f >= File1; f--) {
+				Square sq = make_square(r, f);
+				cout << int(st->Eboard[c][sq]);
+			}
+			cout << endl;
+		}
+
+		
+		cout << endl;
+	}
+
 }
 
 

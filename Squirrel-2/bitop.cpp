@@ -13,6 +13,7 @@ uint64_t find_lsb(uint64_t &bb)
 uint64_t pop_lsb(uint64_t & bb)
 {
 	uint64_t lsb = find_lsb(bb);
-	bb = bb&~(1 << lsb);
+	//bb = bb&~(1 << lsb);
+	bb &= bb - 1;
 	return lsb;
 }

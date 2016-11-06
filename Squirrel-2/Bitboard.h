@@ -42,6 +42,8 @@ std::ostream& operator<<(std::ostream& os, const Bitboard& board);
 
 inline Bitboard operator^(const Bitboard& b1, const Bitboard& b2) { Bitboard b3; b3.b[0] = (b1.b[0] ^ b2.b[0]); b3.b[1] = (b1.b[1] ^ b2.b[1]);  return b3; }
 inline Bitboard operator|(const Bitboard& b1, const Bitboard& b2) { Bitboard b3; b3.b[0] = (b1.b[0] | b2.b[0]); b3.b[1] = (b1.b[1] | b2.b[1]); return b3; }
+inline Bitboard operator&(const Bitboard& b1, const Bitboard& b2) { Bitboard b3; b3.b[0] = (b1.b[0] & b2.b[0]); b3.b[1] = (b1.b[1] & b2.b[1]); return b3; }
+
 
 //このbitboardの内容は絶対に後から変更してはいけない！！popしてはいけない！
 extern Bitboard SquareBB[SQ_NUM];
@@ -57,7 +59,7 @@ extern Bitboard LongRookEffect_tate[SQ_NUM][128];//OK(香車もコレを使うコレを香車
 extern Bitboard LongBishopEffect_plus45[SQ_NUM][128];//OK
 extern Bitboard LongBishopEffect_minus45[SQ_NUM][128];//OK
 
-
+extern Bitboard InFront_BB[ColorALL][Rank_Num];
 
 void bitboard_debug();
 void bitboard_init();

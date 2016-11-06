@@ -34,7 +34,7 @@ Bitboard InFront_BB[ColorALL][Rank_Num];//OK
 
 Square Bitboard::pop()
 {
-	return (b[0] != 0) ? Square(pop_lsb(b[0])) : Square(pop_lsb(b[1]));
+	return (b[0] != 0) ? Square(pop_lsb(b[0])) : Square(pop_lsb(b[1])+45);
 }
 
 std::ostream & operator<<(std::ostream & os, const Bitboard & board)
@@ -438,6 +438,6 @@ void bitboard_debug()
 	}*/
 
 	//ƒe[ƒuƒ‹‚ª‚¿‚á‚ñ‚Æì‚ê‚Ä‚¢‚È‚©‚Á‚½
-	cout << LongBishopEffect_minus45[39][(0b0100010)] << endl;
+	//cout << LongBishopEffect_minus45[39][(0b0100010)] << endl;
 
 }
