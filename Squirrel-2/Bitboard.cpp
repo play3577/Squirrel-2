@@ -30,6 +30,9 @@ Bitboard LongBishopEffect_minus45[SQ_NUM][128];//OK
 //Rankではなくてsquareで持とうかと思ったけどメモリの節約と、ｓｑからランクに変換するの簡単だからrankで持つことにする。
 Bitboard InFront_BB[ColorALL][Rank_Num];//OK
 
+//駒が移動できない領域が１になったbitboard
+Bitboard CantGo_PAWNLANCE[ColorALL];
+Bitboard CantGo_KNIGHT[ColorALL];
 
 
 Square Bitboard::pop()

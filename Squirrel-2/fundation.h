@@ -155,7 +155,7 @@ enum Move :uint32_t {
 	MOVE_FROM = (MOVE_TO << 7),
 	FLAG_DROP = 1 << 14,
 	FLAG_CAPTURE = 1 << 15,
-	FLAG_PROPAWN = 1 << 16,
+	FLAG_PROMOTE = 1 << 16,
 	FLAG_CAPPROPAWN = (0b11) << 15,
 	PIECE_MASK = (0b11111111) << 17,
 
@@ -165,20 +165,20 @@ inline Square move_from(const Move m) { return Square((m >> 7)&MOVE_TO); }
 inline Square move_to(const Move m) { return Square(m&MOVE_TO); }
 inline bool is_drop(const Move m) { return (m&FLAG_DROP); }
 inline bool is_capture(const Move m) { return (m&FLAG_CAPTURE); }
-inline bool is_propawn(const Move m) { return (m&FLAG_PROPAWN); }
+inline bool is_propawn(const Move m) { return (m&FLAG_PROMOTE); }
 inline bool is_capproppown(const Move m) { return (m&FLAG_CAPPROPAWN); }
 inline Piece moved_piece(const Move m) { return Piece((m >> 17) & 0xFF); }
 inline Move make_move(const Square from, const Square to, const Piece pc) { return Move((from << 7) + to + ((pc & 0xFF) << 17)); }
-inline Move make_movepropawn(const Square  from, const Square to, Piece pc) { return Move((from << 7) + to + ((pc & 0xFF) << 17) + FLAG_PROPAWN); }
+inline Move make_movepromote(const Square  from, const Square to, Piece pc) { return Move((from << 7) + to + ((pc & 0xFF) << 17) + FLAG_PROMOTE); }
 inline Move make_drop(const Square to, const Piece pc) { return Move(to + ((pc & 0xFF) << 17) + int(FLAG_DROP)); }
 
 //‚±‚Ì•Ó‚ÌŠÖ”Žg‚¤‚Ì’ˆÓ
 inline Move add_capture(const Move m) { return Move(m | FLAG_CAPTURE); }
-inline Move add_propawn(const Move m) { return Move(m | FLAG_PROPAWN); }
+inline Move add_promote(const Move m) { return Move(m | FLAG_PROMOTE); }
 
 //from,pc‚ðŽ–‘O‚ÉPC<<17,from<<7‚ð‚µ‚Ä‚¨‚­‚±‚Æ‚Å‚‘¬‰»‚ð}‚é‚Æ‚«‚Ìˆ×‚Ìmake_move();
 inline Move make_move2(const int from, const Square to, const int pc) { return Move(from + to + pc); }
-inline Move make_movepropawn2(const int from, const Square to, const int pc) { return Move(from + to + pc + FLAG_PROPAWN); }
+inline Move make_movepromote2(const int from, const Square to, const int pc) { return Move(from + to + pc + FLAG_PROMOTE); }
 inline Move make_drop2(const Square to, const int pc) { return Move(to + pc + int(FLAG_DROP)); }
 
 std::ostream& operator<<(std::ostream& os, const Move m);
