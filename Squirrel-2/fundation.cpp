@@ -83,7 +83,7 @@ std::ostream & operator<<(std::ostream & os, const Move m)
 	}
 	else {
 		os << from << to;
-		if (is_propawn(m)) {
+		if (is_promote(m)) {
 			os << "+";
 		}
 	}
@@ -92,15 +92,15 @@ std::ostream & operator<<(std::ostream & os, const Move m)
 
 void check_move(const Move m)
 {
-	std::cout << "from " << move_from(m) << " to " << move_to(m) << " moved_piece " << moved_piece(m) << " " << int(m) << std::endl;
+	std::cout << "from " << move_from(m) << " to " << move_to(m) << " moved_piece " << moved_piece(m) << " " << int(m)<<" ";
 	if (is_drop(m))
 		std::cout << " drop ";
 
-	if (is_capture(m))
+	/*if (is_capture(m))
 		std::cout << " capture ";
-
-	if (is_propawn(m))
-		std::cout << " propawn ";
+*/
+	if (is_promote(m))
+		std::cout << " promote ";
 
 	std::cout << std::endl;
 

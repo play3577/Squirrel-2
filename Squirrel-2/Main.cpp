@@ -1,6 +1,7 @@
 #include "fundation.h"
 #include "Bitboard.h"
 #include "position.h"
+#include "makemove.h"
 using namespace std;
 
 
@@ -65,7 +66,22 @@ int main() {
 	////cout << pos << endl;
 	//pos.check_occbitboard();
 
-	pos.check_effect();
+	//pos.check_effect();
+
+	pos.set("sfen lnsgkgsnl/1r5b1/ppppppppp/9/9/9/PP1P+P+PP2/1B5R1/LNSGKGSNL b - 1");
+
+	ExtMove moves_[600],*end;
+	end = moves_;
+
+	cout << pos << endl;
+	end = test_move_generation(pos, moves_);
+
+	for (ExtMove* i = moves_; i < end; i++) {
+		check_move(i->move);
+	}
+	cout << "movenum " << ptrdiff_t(end - moves_) << endl;
+
+
 
 
 

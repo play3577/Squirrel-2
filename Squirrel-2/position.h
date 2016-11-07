@@ -94,7 +94,11 @@ public:
 	inline Piece piece_on(Square sq)const { return pcboard[sq]; }
 	Bitboard occ_pt(Color c, Piece pt)const { return occupiedPt[c][pt]; }
 	Bitboard occ(Color c)const { return occupied[c]; }
+
 	Bitboard occ_all() const { return (occupied[BLACK]|occupied[WHITE]); }
+	Bitboard occ_90()const { return occupied90; }
+	Bitboard occ_plus45()const { return occupied_plus45; }
+	Bitboard occ_minus45()const { return occupied_minus45; }
 
 	Color sidetomove() const { return sidetomove_; }
 	Hand hand(Color c)const { return hands[c]; }

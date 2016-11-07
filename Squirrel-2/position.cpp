@@ -210,7 +210,7 @@ void Position::do_move(Move m, StateInfo * newst)
 		remove_piece(us, pt, from);
 		remove_rotate(from);
 		
-		if (!is_propawn(m)) {
+		if (!is_promote(m)) {
 			//ê¨Ç™Ç»Ç¢èÍçá
 			pcboard[to] = movedpiece;
 			put_piece(us, pt, to);
@@ -435,7 +435,7 @@ void Position::init_eboard()
 			else {
 				effect = StepEffect[c][pt][sq];
 			}
-			cout << effect << endl;
+			//cout << effect << endl;
 			while (effect.isNot()) {
 				Square esq = effect.pop();
 				eboard[c][esq]++;
@@ -529,7 +529,7 @@ std::ostream & operator<<(std::ostream & os, const Position & pos)
 		(c == BLACK) ? os << "    êÊéË " << std::endl : os << "    å„éË " << std::endl;
 		os << pos.hand(c) << endl;
 	}
-	for (Color c = BLACK; c <= WHITE; c++) {
+	/*for (Color c = BLACK; c <= WHITE; c++) {
 		os << " color " << c << endl << pos.occ(c) << endl;
 	}
 	os << "occ all" << endl << pos.occ_all() << endl;
@@ -538,7 +538,7 @@ std::ostream & operator<<(std::ostream & os, const Position & pos)
 		for (Piece pt = PAWN; pt < PT_ALL; pt++) {
 			os << " color " << c << " pt " << pt << endl << pos.occ_pt(c, pt) << endl;
 		}
-	}
+	}*/
 	
 	os << " éËî‘ " << pos.sidetomove() << endl;
 

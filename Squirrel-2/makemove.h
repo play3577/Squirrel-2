@@ -7,7 +7,7 @@
 
 enum Move_type {
 
-	Cap_Propawn,//ここは飛車の成を入れるとか、歩の成を省くとか色々考える必要がある
+	Cap_Propawn,//ここは飛車の成を入れるとか、歩の成を省くとかlance nightのナリを含めるとか 色々考える必要がある
 	Quiet,
 	Eversion,
 	Recapture,
