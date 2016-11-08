@@ -253,6 +253,43 @@ ExtMove* make_move_BISHOP(const Position& pos, const Bitboard& target, ExtMove* 
 }
 
 
+
+ExtMove* make_move_UNICORN(const Position& pos, const Bitboard& target, ExtMove* movelist) {
+
+	Color US = pos.sidetomove();
+
+	Bitboard occ_us = pos.occ_pt(US, UNICORN);
+	Bitboard target2;
+	Bitboard effect;
+	
+
+	while (occ_us.isNot()) {
+
+
+		Square sq = occ_us.pop();
+		Piece pc = pos.piece_on(sq);
+		int from = sq << 7;
+		int pc2 = pc << 17;
+		ASSERT(pc == add_color(UNICORN, US));
+
+
+		int obstacle_plus45 = (pos.occ_plus45().b[index_plus45(sq)] >> shift_plus45(sq))&effectmask;
+		int obstacle_Minus45 = (pos.occ_minus45().b[index_Minus45(sq)] >> shift_Minus45(sq))&effectmask;
+		effect = LongBishopEffect_plus45[sq][obstacle_plus45] | LongBishopEffect_minus45[sq][(obstacle_Minus45)]|StepEffect[US][KING][sq];
+		//cout << effect << endl;
+		target2 = target&effect;
+
+		while (target2.isNot()) {
+			Square to = target2.pop();
+
+			
+				movelist++->move = make_move2(from, to, pc2);
+
+		}
+	}
+	return movelist;
+}
+
 ExtMove* make_move_ROOK(const Position& pos, const Bitboard& target, ExtMove* movelist) {
 
 	Color US = pos.sidetomove();
@@ -297,6 +334,42 @@ ExtMove* make_move_ROOK(const Position& pos, const Bitboard& target, ExtMove* mo
 	return movelist;
 }
 
+
+ExtMove* make_move_DRAGON(const Position& pos, const Bitboard& target, ExtMove* movelist) {
+
+	Color US = pos.sidetomove();
+
+	Bitboard occ_us = pos.occ_pt(US, DRAGON);
+	Bitboard target2;
+	Bitboard effect;
+	//bool canpromote = false;
+
+	while (occ_us.isNot()) {
+		Square sq = occ_us.pop();
+		Piece pc = pos.piece_on(sq);
+		Piece pt = piece_type(pc);
+		ASSERT(pt == DRAGON);
+
+		
+		int from = sq << 7;
+		int pc2 = pc << 17;
+
+		int8_t obstacle_tate = (pos.occ_all().b[index_tate(sq)] >> shift_tate(sq))&effectmask;
+		int8_t obstacle_yoko = (pos.occ_90().b[index_yoko(sq)] >> shift_yoko(sq))&effectmask;
+		effect = LongRookEffect_tate[sq][obstacle_tate] | LongRookEffect_yoko[sq][obstacle_yoko] | StepEffect[US][KING][sq];
+		target2 = target&effect;
+		while (target2.isNot()) {
+
+			Square to = target2.pop();
+
+			
+				movelist++->move = make_move2(from, to, pc2);
+		}
+	}
+	return movelist;
+}
+
+
 //GOLD相当の駒の移動の生成
 ExtMove* make_move_ASGOLD(const Position& pos, const Bitboard& target, ExtMove* movelist) {
 
@@ -328,6 +401,111 @@ ExtMove* make_move_ASGOLD(const Position& pos, const Bitboard& target, ExtMove* 
 	}
 	return movelist;
 }
+
+//王の指し手生成（自殺手は生成してしまわないようにする）
+ExtMove* make_move_KING(const Position& pos, const Bitboard& target, ExtMove* movelist) {
+
+	Color US = pos.sidetomove();
+	Color ENEMY = opposite(US);
+	//こいつらは成れない
+
+
+	//GOLD相当の奴はひとつのocc_ptにまとめておいた方がいいかも
+	Bitboard occ_us = pos.occ_pt(US, KING);
+	Bitboard target2;
+	//Bitboard effect;
+
+
+	//この処理をb[0]とb[1]で並列化させたい！！！！
+	while (occ_us.isNot()) {
+		Square sq = occ_us.pop();
+		Piece pc = pos.piece_on(sq);
+
+		int from = sq << 7;
+		int pc2 = pc << 17;
+		target2 = target&StepEffect[US][GOLD][sq];
+
+		while (target2.isNot()) {
+			Square to = target2.pop();
+			//王の移動先に相手の効きが効いていることはめったにないことなのでここでわざわざ確認するのではなく後回しにした方がいいか？
+			if (!pos.return_effect(ENEMY, to)) {
+				movelist++->move = make_move2(from, to, pc2);
+			}
+		}
+
+	}
+
+
+	return movelist;
+}
+
+
+
+//駒打ち
+ExtMove* make_move_DROP(const Position& pos, const Bitboard& target, ExtMove* movelist) {
+
+	Color US = pos.sidetomove();
+	auto hands = pos.hand(US);
+	Square to;
+	Piece pc;
+	Bitboard target2;
+
+	if (have_hand(hands)) {
+
+		if (num_pt(hands, PAWN)) {
+			target2 = target&~CantGo_PAWNLANCE[US];
+			pc = add_color(PAWN, US);
+			int pc2 = pc << 17;
+			while (target2.isNot()) {
+				to = target2.pop();
+				ASSERT(is_ok(to));
+				//打ち歩詰めはめったにないことなのでdo_moveするときに確認する。
+				movelist++->move = make_drop2(to, pc2);
+			}
+		}
+
+		if (num_pt(hands, LANCE)) {
+			target2 = target&~CantGo_PAWNLANCE[US];
+			pc = add_color(LANCE, US);
+			int pc2 = pc << 17;
+			while (target2.isNot()) {
+				to = target2.pop();
+				ASSERT(is_ok(to));
+				movelist++->move = make_drop2(to, pc2);
+			}
+		}
+
+		if (num_pt(hands, KNIGHT)) {
+			target2 = target&~CantGo_KNIGHT[US];
+			pc = add_color(KNIGHT, US);
+			int pc2 = pc << 17;
+			while (target2.isNot()) {
+				to = target2.pop();
+				ASSERT(is_ok(to));
+				movelist++->move = make_drop2(to, pc2);
+			}
+		}
+
+		//ここ駒種別にforを回すのではなく一気に指し手生成して高速化できる。
+		for(Piece pt = SILVER; pt < KING; pt++) {
+
+			if (num_pt(hands, pt)) {
+
+				target2 = target;
+				pc = add_color(pt, US);
+				int pc2 = pc<<17;
+				while (target2.isNot()) {
+					to = target2.pop();
+					ASSERT(is_ok(to));
+					movelist++->move = make_drop2(to, pc2);
+				}
+			}
+		}
+	}
+
+	return movelist;
+}
+
 
 
 
@@ -369,11 +547,13 @@ ExtMove * move_generation(const Position& pos, ExtMove * movelist)
 		movelist = make_move_BISHOP(pos, target_nonPAWN, movelist);
 		movelist = make_move_ROOK(pos, target_nonPAWN, movelist);
 		movelist = make_move_ASGOLD(pos, target_nonPAWN, movelist);
-
+		movelist = make_move_UNICORN(pos, target_nonPAWN, movelist);
+		movelist = make_move_DRAGON(pos, target_nonPAWN, movelist);
+		movelist = make_move_KING(pos, target_nonPAWN, movelist);
 	}
 	else {
 		const Bitboard target_drop = ~pos.occ_all()&ALLBB;//ALLBBをマスクするのは番外にも１が立ってしまっている場所があるから
-
+		movelist = make_move_DROP(pos, target_drop, movelist);
 	}
 
 	return movelist;
@@ -385,7 +565,7 @@ ExtMove * test_move_generation(const Position & pos, ExtMove * movelist)
 
 	movelist = move_generation<Cap_Propawn>(pos, movelist);
 	movelist = move_generation<Quiet>(pos, movelist);
-
+	movelist = move_generation<Drop>(pos, movelist);
 	return movelist;
 }
 

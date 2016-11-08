@@ -61,6 +61,9 @@ extern Bitboard LongBishopEffect_minus45[SQ_NUM][128];//OK
 
 extern Bitboard InFront_BB[ColorALL][Rank_Num];
 
+extern Bitboard CantGo_PAWNLANCE[ColorALL];
+extern Bitboard CantGo_KNIGHT[ColorALL];
+
 void bitboard_debug();
 void bitboard_init();
 

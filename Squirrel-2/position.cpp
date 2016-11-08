@@ -375,7 +375,7 @@ void Position::check_effect() {
 }
 
 
-inline void Position::check_occbitboard() {
+void Position::check_occbitboard()const {
 
 	cout << "occupied " << endl;
 	cout << occ_all() << endl;

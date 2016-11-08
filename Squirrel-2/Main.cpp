@@ -54,7 +54,7 @@ int main() {
 	//"sfen lnsgkgsnl/1r5b1/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL b - 1"
 	//pos.set("sfen lnsgkgsnl/1r5b1/ppppppppp/P8/9/9/1PPPPPPPP/1B5R1/LNSGKGSNL b - 1");
 
-	//StateInfo si;
+	StateInfo si;
 
 	//Move m;
 	//m = make_move(SQ2G, SQ2F,PAWN);
@@ -68,8 +68,8 @@ int main() {
 
 	//pos.check_effect();
 
-	pos.set("sfen lnsgkgsnl/1r5b1/ppppppppp/9/9/9/PP1P+P+PP2/1B5R1/LNSGKGSNL b - 1");
-
+	//pos.set("sfen 1nsgkgsnl/1r5b1/ppppppppp/9/9/9/PP1P+P+PP2/1+B5R1/LNSGKGS1L b P 1");
+	pos.set("sfen lnsgkgsnl/1r5b1/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL b PLNGSBR 1");
 	ExtMove moves_[600],*end;
 	end = moves_;
 
@@ -78,7 +78,13 @@ int main() {
 
 	for (ExtMove* i = moves_; i < end; i++) {
 		check_move(i->move);
+	/*	pos.do_move(i->move, &si);
+		cout << pos << endl;
+		pos.undo_move();
+		cout << pos << endl;*/
 	}
+
+	pos.check_occbitboard();
 	cout << "movenum " << ptrdiff_t(end - moves_) << endl;
 
 

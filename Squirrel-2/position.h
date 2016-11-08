@@ -104,11 +104,12 @@ public:
 	Hand hand(Color c)const { return hands[c]; }
 	StateInfo* state() const { return st; }
 
-	void check_occbitboard();
+	void check_occbitboard()const;
 
 	void init_eboard();
 	void add_effect(const Color c, const Piece pt, const Square sq);
 	void sub_effect(const Color c, const Piece pt, const Square sq);
+	uint8_t return_effect(const Color c, const Square sq)const { return st->Eboard[c][sq]; }
 	void check_eboard()const;
 };
 
