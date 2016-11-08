@@ -66,5 +66,6 @@ extern Bitboard CantGo_KNIGHT[ColorALL];
 
 void bitboard_debug();
 void bitboard_init();
+Bitboard effectBB(const Position &pos, const Piece pt, const Color c, const Square sq);
 
 int change_indian(int i);

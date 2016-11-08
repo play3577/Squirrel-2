@@ -452,7 +452,7 @@ void bitboard_debug()
 }
 
 //”ò‚Ñ—˜‚«‚Å‚È‚¢ê‡‚Ípos‚ğ“n‚·‚Ì‚Í–³‘Ê‚É‚È‚Á‚Ä‚µ‚Ü‚¤‚Ì‚Å”ò‚Ñ—˜‚«—p‚Æ”ò‚Ñ—˜‚«‚Å‚È‚¢—p‚ÅŠÖ”‚ğ•ª‚¯‚½•û‚ª‚¢‚¢‚©H
-Bitboard return_effect(const Position &pos,const Piece pt, const Color c, const Square sq) {
+Bitboard effectBB(const Position &pos,const Piece pt, const Color c, const Square sq) {
 
 	//Bitboard effect;
 

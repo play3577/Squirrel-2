@@ -230,7 +230,7 @@ ExtMove* make_move_BISHOP(const Position& pos, const Bitboard& target, ExtMove* 
 		int obstacle_plus45 = (pos.occ_plus45().b[index_plus45(sq)] >> shift_plus45(sq))&effectmask;
 		int obstacle_Minus45 = (pos.occ_minus45().b[index_Minus45(sq)] >> shift_Minus45(sq))&effectmask;
 		effect = LongBishopEffect_plus45[sq][obstacle_plus45] | LongBishopEffect_minus45[sq][(obstacle_Minus45)];
-		//cout << effect << endl;
+	//	cout << effect << endl;
 		target2 = target&effect;
 		
 		while (target2.isNot()) {
@@ -314,6 +314,7 @@ ExtMove* make_move_ROOK(const Position& pos, const Bitboard& target, ExtMove* mo
 		int8_t obstacle_tate = (pos.occ_all().b[index_tate(sq)] >> shift_tate(sq))&effectmask;
 		int8_t obstacle_yoko = (pos.occ_90().b[index_yoko(sq)] >> shift_yoko(sq))&effectmask;
 		effect = LongRookEffect_tate[sq][obstacle_tate] | LongRookEffect_yoko[sq][obstacle_yoko];
+		//cout << effect << endl;
 		target2 = target&effect;
 		while (target2.isNot()) {
 

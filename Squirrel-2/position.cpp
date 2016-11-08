@@ -1,6 +1,6 @@
 #include "position.h"
 #include "misc.h"
-
+#include "Bitboard.h"
 #include <sstream>
 
 Sfen2Piece Sfen2Piece_;
@@ -57,6 +57,8 @@ void Position::set(std::string sfen)
 			Color c = piece_color(pc);
 			Square sq = make_square(r, f);
 
+			if (pt == KING) {st->ksq_[c] = sq;}
+
 			pcboard[sq] = pc;//OK
 			occupied[c] |= SquareBB[sq];
 			occupiedPt[c][pt] |= SquareBB[sq];
@@ -105,11 +107,18 @@ void Position::set(std::string sfen)
 		index++;
 	}
 	init_eboard();
-	//check_eboard();
-	//check_occbitboard();
+	
+	if (return_effect(opposite(sidetomove_), ksq(sidetomove_))) {
+		st->inCheck = true;
+		make_checker_sq(sidetomove());
+	}
+
+
 
 #ifdef CHECKPOS
 	cout << *this << endl;
+	//check_eboard();
+	//check_occbitboard();
 #endif
 }
 
@@ -143,6 +152,9 @@ void Position::put_piece(const Color c, const Piece pt, const Square sq)
 
 /*
 効きの更新（あとで）
+飛び機器があるため効きの更新はそんなに単純に計算はできない！！！！！！（どうすれば素早く機器の更新ができるのか......）
+
+
 リストの差分計算（あとで）
 駒得の差分計算（あとで）
 
@@ -185,6 +197,8 @@ void Position::do_move(Move m, StateInfo * newst)
 		put_piece(c, pt, to);
 		//rotatedにも駒を足す。
 		put_rotate(to);
+		//利きを追加する。
+		//add_effect(c, pt, to);
 	}
 	else {
 		/*
@@ -209,12 +223,15 @@ void Position::do_move(Move m, StateInfo * newst)
 		//occの更新処理
 		remove_piece(us, pt, from);
 		remove_rotate(from);
-		
+		//fromの機器を取り除く
+		sub_effect(us, pt, from);
+
 		if (!is_promote(m)) {
 			//成がない場合
 			pcboard[to] = movedpiece;
 			put_piece(us, pt, to);
-
+			//toに効きを追加する
+			//add_effect(us, pt, to);
 		}
 		else {
 			//成がある場合
@@ -222,8 +239,10 @@ void Position::do_move(Move m, StateInfo * newst)
 
 			pcboard[to] = promotepiece(movedpiece);
 			put_piece(us, propt, to);
-
+			//toに効きを追加する
+			//add_effect(us, propt, to);
 		}
+
 		//駒の捕獲
 		if (capture != NO_PIECE) {
 			st->DirtyPiece[1] = capture;
@@ -237,6 +256,8 @@ void Position::do_move(Move m, StateInfo * newst)
 			Color c = piece_color(capture);
 			ASSERT(c != sidetomove());//自分の駒を取ってしまってないか
 			remove_piece(c, cappt, to);
+			//取られた駒の利きを取る。
+		//	sub_effect(c, cappt, to);
 
 			int num = num_pt(hands[sidetomove()], pt2);
 			makehand(hands[sidetomove()], pt2, num + 1);
@@ -453,46 +474,158 @@ void Position::add_effect(const Color c, const Piece pt, const Square sq)
 {
 	auto eboard = st->Eboard;
 
+	uint8_t obstacle_tate;
+	uint8_t obstacle_yoko;
+	uint8_t obstacle_plus45;
+	uint8_t obstacle_Minus45;
+
+
 	Bitboard effect;
-	//ここの条件分岐もうちょっとなんとか成らないか？
-	if (pt == LANCE) {
-		int64_t obstacle_tate = (occ_all().b[index_tate(sq)] >> shift_tate(sq))&effectmask;
+	//ここの条件分岐もうちょっとなんとか成らないか？(switchぶんにする！！！！！！！！！)
+
+	switch (pt)
+	{
+	case PAWN:
+	case KNIGHT:
+	case SILVER:
+	case GOLD:
+	case PRO_PAWN:
+	case PRO_LANCE:
+	case PRO_NIGHT:
+	case PRO_SILVER:
+	case KING:
+		effect = StepEffect[c][pt][sq];
+		break;
+	case LANCE:
+		 obstacle_tate = (occ_all().b[index_tate(sq)] >> shift_tate(sq))&effectmask;
 		effect = LongRookEffect_tate[sq][obstacle_tate] & InFront_BB[c][sqtorank(sq)];
-		//cout << effect << endl;
-	}
-	else if (pt == ROOK) {
-		int64_t obstacle_tate = (occ_all().b[index_tate(sq)] >> shift_tate(sq))&effectmask;
-		int64_t obstacle_yoko = (occupied90.b[index_yoko(sq)] >> shift_yoko(sq))&effectmask;
-		effect = LongRookEffect_tate[sq][obstacle_tate] | LongRookEffect_yoko[sq][obstacle_yoko];
-	//	cout << effect << endl;
-	}
-	else if (pt == DRAGON) {
-		int64_t obstacle_tate = (occ_all().b[index_tate(sq)] >> shift_tate(sq))&effectmask;
-		int64_t obstacle_yoko = (occupied90.b[index_yoko(sq)] >> shift_yoko(sq))&effectmask;
-		effect = LongRookEffect_tate[sq][obstacle_tate] | LongRookEffect_yoko[sq][obstacle_yoko]|StepEffect[c][KING][sq];
-	//	cout << effect << endl;
-	}
-	else if (pt == BISHOP) {
-		int64_t obstacle_plus45 = (occupied_plus45.b[index_plus45(sq)] >> shift_plus45(sq))&effectmask;
-		int64_t obstacle_Minus45 = (occupied_minus45.b[index_Minus45(sq)] >> shift_Minus45(sq))&effectmask;
+		break;
+	case BISHOP:
+		 obstacle_plus45 = (occupied_plus45.b[index_plus45(sq)] >> shift_plus45(sq))&effectmask;
+		 obstacle_Minus45 = (occupied_minus45.b[index_Minus45(sq)] >> shift_Minus45(sq))&effectmask;
 		effect = LongBishopEffect_plus45[sq][obstacle_plus45] | LongBishopEffect_minus45[sq][(obstacle_Minus45)];
-	//	cout << effect << endl;
-	}
-	else if(pt==UNICORN){
-		int64_t obstacle_plus45 = (occupied_plus45.b[index_plus45(sq)] >> shift_plus45(sq))&effectmask;
-		int64_t obstacle_Minus45 = (occupied_minus45.b[index_Minus45(sq)] >> shift_Minus45(sq))&effectmask;
+		break;
+	case ROOK:
+		 obstacle_tate = (occ_all().b[index_tate(sq)] >> shift_tate(sq))&effectmask;
+		 obstacle_yoko = (occupied90.b[index_yoko(sq)] >> shift_yoko(sq))&effectmask;
+		effect = LongRookEffect_tate[sq][obstacle_tate] | LongRookEffect_yoko[sq][obstacle_yoko];
+		break;
+	case UNICORN:
+		 obstacle_plus45 = (occupied_plus45.b[index_plus45(sq)] >> shift_plus45(sq))&effectmask;
+		 obstacle_Minus45 = (occupied_minus45.b[index_Minus45(sq)] >> shift_Minus45(sq))&effectmask;
 		effect = LongBishopEffect_plus45[sq][obstacle_plus45] | LongBishopEffect_minus45[sq][(obstacle_Minus45)] | StepEffect[c][KING][sq];
-	//	cout << effect << endl;
+		break;
+	case DRAGON:
+		 obstacle_tate = (occ_all().b[index_tate(sq)] >> shift_tate(sq))&effectmask;
+		 obstacle_yoko = (occupied90.b[index_yoko(sq)] >> shift_yoko(sq))&effectmask;
+		effect = LongRookEffect_tate[sq][obstacle_tate] | LongRookEffect_yoko[sq][obstacle_yoko] | StepEffect[c][KING][sq];
+		break;
+	
+	default:
+		ASSERT(0);
+		break;
 	}
-	else {
-		effect= StepEffect[c][pt][sq];
-	}
-	cout << effect << endl;
+
+	//if (pt == LANCE) {
+	//	uint8_t obstacle_tate = (occ_all().b[index_tate(sq)] >> shift_tate(sq))&effectmask;
+	//	effect = LongRookEffect_tate[sq][obstacle_tate] & InFront_BB[c][sqtorank(sq)];
+	//	//cout << effect << endl;
+	//}
+	//else if (pt == ROOK) {
+	//	uint8_t obstacle_tate = (occ_all().b[index_tate(sq)] >> shift_tate(sq))&effectmask;
+	//	uint8_t obstacle_yoko = (occupied90.b[index_yoko(sq)] >> shift_yoko(sq))&effectmask;
+	//	effect = LongRookEffect_tate[sq][obstacle_tate] | LongRookEffect_yoko[sq][obstacle_yoko];
+	////	cout << effect << endl;
+	//}
+	//else if (pt == DRAGON) {
+	//	uint8_t obstacle_tate = (occ_all().b[index_tate(sq)] >> shift_tate(sq))&effectmask;
+	//	uint8_t obstacle_yoko = (occupied90.b[index_yoko(sq)] >> shift_yoko(sq))&effectmask;
+	//	effect = LongRookEffect_tate[sq][obstacle_tate] | LongRookEffect_yoko[sq][obstacle_yoko]|StepEffect[c][KING][sq];
+	////	cout << effect << endl;
+	//}
+	//else if (pt == BISHOP) {
+	//	uint8_t obstacle_plus45 = (occupied_plus45.b[index_plus45(sq)] >> shift_plus45(sq))&effectmask;
+	//	uint8_t obstacle_Minus45 = (occupied_minus45.b[index_Minus45(sq)] >> shift_Minus45(sq))&effectmask;
+	//	effect = LongBishopEffect_plus45[sq][obstacle_plus45] | LongBishopEffect_minus45[sq][(obstacle_Minus45)];
+	////	cout << effect << endl;
+	//}
+	//else if(pt==UNICORN){
+	//	uint8_t obstacle_plus45 = (occupied_plus45.b[index_plus45(sq)] >> shift_plus45(sq))&effectmask;
+	//	uint8_t obstacle_Minus45 = (occupied_minus45.b[index_Minus45(sq)] >> shift_Minus45(sq))&effectmask;
+	//	effect = LongBishopEffect_plus45[sq][obstacle_plus45] | LongBishopEffect_minus45[sq][(obstacle_Minus45)] | StepEffect[c][KING][sq];
+	////	cout << effect << endl;
+	//}
+	//else {
+	//	effect= StepEffect[c][pt][sq];
+	//}
+	//cout << effect << endl;
 	while (effect.isNot()) {
 
 		Square esq = effect.pop();
 		ASSERT(is_ok(esq));
 		eboard[c][esq]++;
+	}
+
+}
+
+void Position::sub_effect(const Color c, const Piece pt, const Square sq)
+{
+	auto eboard = st->Eboard;
+	uint8_t obstacle_tate;
+	uint8_t obstacle_yoko;
+	uint8_t obstacle_plus45;
+	uint8_t obstacle_Minus45;
+
+	Bitboard effect;
+	//ここの条件分岐もうちょっとなんとか成らないか？(switchぶんにする！！！！！！！！！)
+	switch (pt)
+	{
+	case PAWN:
+	case KNIGHT:
+	case SILVER:
+	case GOLD:
+	case PRO_PAWN:
+	case PRO_LANCE:
+	case PRO_NIGHT:
+	case PRO_SILVER:
+	case KING:
+		effect = StepEffect[c][pt][sq];
+		break;
+	case LANCE:
+		 obstacle_tate = (occ_all().b[index_tate(sq)] >> shift_tate(sq))&effectmask;
+		effect = LongRookEffect_tate[sq][obstacle_tate] & InFront_BB[c][sqtorank(sq)];
+		break;
+	case BISHOP:
+		 obstacle_plus45 = (occupied_plus45.b[index_plus45(sq)] >> shift_plus45(sq))&effectmask;
+		 obstacle_Minus45 = (occupied_minus45.b[index_Minus45(sq)] >> shift_Minus45(sq))&effectmask;
+		effect = LongBishopEffect_plus45[sq][obstacle_plus45] | LongBishopEffect_minus45[sq][(obstacle_Minus45)];
+		break;
+	case ROOK:
+		 obstacle_tate = (occ_all().b[index_tate(sq)] >> shift_tate(sq))&effectmask;
+		 obstacle_yoko = (occupied90.b[index_yoko(sq)] >> shift_yoko(sq))&effectmask;
+		effect = LongRookEffect_tate[sq][obstacle_tate] | LongRookEffect_yoko[sq][obstacle_yoko];
+		break;
+	case UNICORN:
+		 obstacle_plus45 = (occupied_plus45.b[index_plus45(sq)] >> shift_plus45(sq))&effectmask;
+		 obstacle_Minus45 = (occupied_minus45.b[index_Minus45(sq)] >> shift_Minus45(sq))&effectmask;
+		effect = LongBishopEffect_plus45[sq][obstacle_plus45] | LongBishopEffect_minus45[sq][(obstacle_Minus45)] | StepEffect[c][KING][sq];
+		break;
+	case DRAGON:
+		 obstacle_tate = (occ_all().b[index_tate(sq)] >> shift_tate(sq))&effectmask;
+		 obstacle_yoko = (occupied90.b[index_yoko(sq)] >> shift_yoko(sq))&effectmask;
+		effect = LongRookEffect_tate[sq][obstacle_tate] | LongRookEffect_yoko[sq][obstacle_yoko] | StepEffect[c][KING][sq];
+		break;
+	default:
+		ASSERT(0);
+		break;
+	}
+	//cout << effect << endl;
+	while (effect.isNot()) {
+
+		Square esq = effect.pop();
+		ASSERT(is_ok(esq));
+		ASSERT(eboard[c][esq] != 0);
+		eboard[c][esq]--;
 	}
 
 }
@@ -512,6 +645,27 @@ void Position::check_eboard() const
 
 		
 		cout << endl;
+	}
+
+}
+
+void Position::make_checker_sq(Color c) const
+{
+	//王のいる位置が１になっているbitboard
+	Bitboard k = SquareBB[ksq(c)];
+
+	Color enemy = opposite(c);
+	//もっと効率的な方法はないか？？？
+	for (Square sq = SQ_ZERO; sq < SQ_NUM; sq++) {
+
+		Piece pc = pcboard[sq];
+		Piece pt = piece_type(pc);
+		if (piece_color(pc) == enemy) {
+			if ((k&effectBB(this,pt,c,sq)).isNot()) {
+				ASSERT(is_ok(sq));
+				st->checker |= SquareBB[sq];
+			}
+		}
 	}
 
 }
@@ -542,6 +696,7 @@ std::ostream & operator<<(std::ostream & os, const Position & pos)
 	
 	os << " 手番 " << pos.sidetomove() << endl;
 
+	pos.check_eboard();
 	
 
 	return os;

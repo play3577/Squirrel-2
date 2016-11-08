@@ -103,6 +103,7 @@ public:
 	Color sidetomove() const { return sidetomove_; }
 	Hand hand(Color c)const { return hands[c]; }
 	StateInfo* state() const { return st; }
+	Square ksq(const Color c)const { return st->ksq_[c]; }
 	bool is_incheck()const { return st->inCheck; }
 
 	void check_occbitboard()const;
@@ -112,6 +113,8 @@ public:
 	void sub_effect(const Color c, const Piece pt, const Square sq);
 	uint8_t return_effect(const Color c, const Square sq)const { return st->Eboard[c][sq]; }
 	void check_eboard()const;
+	
+	void make_checker_sq(Color c)const;
 };
 
 std::ostream& operator<<(std::ostream& os, const Position& pos);
