@@ -559,6 +559,26 @@ ExtMove * move_generation(const Position& pos, ExtMove * movelist)
 	return movelist;
 }
 
+//‰¤è‚ğ‚©‚¯‚Ä‚¢‚é‹î‚Ì—˜‚«‚Ì’®‚¢‚Ä‚¢‚È‚¢‚Æ‚±‚ë‚É“¦‚°‚éB
+ExtMove * move_eversion(const Position& pos, ExtMove * movelist) {
+
+	//–¢À‘•
+
+
+
+
+	return movelist;
+
+}
+
+
+
+
+
+
+
+
+
 ExtMove * test_move_generation(const Position & pos, ExtMove * movelist)
 {
 

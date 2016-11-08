@@ -4,6 +4,8 @@
 
 #include <unordered_map>
 #include <string>
+#include <chrono>
+#include <thread>
 
 using namespace std;
 
@@ -43,4 +45,31 @@ public:
 	}
 
 };
+
+
+
+//
+//
+//時間計測関連
+
+typedef std::chrono::milliseconds::rep TimePoint;
+
+inline TimePoint now() {
+	return std::chrono::duration_cast<std::chrono::milliseconds>
+		(std::chrono::steady_clock::now().time_since_epoch()).count();
+}
+
+inline void sleep(int ms)
+{
+	std::this_thread::sleep_for(std::chrono::microseconds(ms));
+}
+
+
+//評価値を勝率に変換するための関数
+//この数式はponanzaに習っている。
+inline double eval2rate(double eval) {
+	const double a = 1.0 / 600.0;
+	return (1.0) / (1.0 + exp(-a*eval));
+}
+
 

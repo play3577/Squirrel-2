@@ -103,6 +103,7 @@ public:
 	Color sidetomove() const { return sidetomove_; }
 	Hand hand(Color c)const { return hands[c]; }
 	StateInfo* state() const { return st; }
+	bool is_incheck()const { return st->inCheck; }
 
 	void check_occbitboard()const;
 

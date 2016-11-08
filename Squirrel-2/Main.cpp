@@ -2,6 +2,7 @@
 #include "Bitboard.h"
 #include "position.h"
 #include "makemove.h"
+#include "benchmark.h"
 using namespace std;
 
 
@@ -69,26 +70,28 @@ int main() {
 	//pos.check_effect();
 
 	//pos.set("sfen 1nsgkgsnl/1r5b1/ppppppppp/9/9/9/PP1P+P+PP2/1+B5R1/LNSGKGS1L b P 1");
-	pos.set("sfen lnsgkgsnl/1r5b1/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL b PLNGSBR 1");
-	ExtMove moves_[600],*end;
-	end = moves_;
+	//pos.set("sfen lnsgkgsnl/1r5b1/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL b PLNGSBR 1");
 
-	cout << pos << endl;
-	end = test_move_generation(pos, moves_);
+	//ExtMove moves_[600],*end;
+	//end = moves_;
 
-	for (ExtMove* i = moves_; i < end; i++) {
-		check_move(i->move);
-	/*	pos.do_move(i->move, &si);
-		cout << pos << endl;
-		pos.undo_move();
-		cout << pos << endl;*/
-	}
+	//cout << pos << endl;
+	//end = test_move_generation(pos, moves_);
 
-	pos.check_occbitboard();
-	cout << "movenum " << ptrdiff_t(end - moves_) << endl;
+	//for (ExtMove* i = moves_; i < end; i++) {
+	//	check_move(i->move);
+	///*	pos.do_move(i->move, &si);
+	//	cout << pos << endl;
+	//	pos.undo_move();
+	//	cout << pos << endl;*/
+	//}
+
+	//pos.check_occbitboard();
+	//cout << "movenum " << ptrdiff_t(end - moves_) << endl;
 
 
-
+	pos.set("sfen l6nl/5+P1gk/2np1S3/p1p4Pp/3P2Sp1/1PPb2P1P/P5GS1/R8/LN4bKL w GR5pnsg 1");//Žw‚µŽè¶¬Õ‚è‚Ì‹Ç–Ê
+	speed_genmove(pos);
 
 
 	return 0;
