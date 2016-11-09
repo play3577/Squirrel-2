@@ -526,39 +526,7 @@ void Position::add_effect(const Color c, const Piece pt, const Square sq)
 		break;
 	}
 
-	//if (pt == LANCE) {
-	//	uint8_t obstacle_tate = (occ_all().b[index_tate(sq)] >> shift_tate(sq))&effectmask;
-	//	effect = LongRookEffect_tate[sq][obstacle_tate] & InFront_BB[c][sqtorank(sq)];
-	//	//cout << effect << endl;
-	//}
-	//else if (pt == ROOK) {
-	//	uint8_t obstacle_tate = (occ_all().b[index_tate(sq)] >> shift_tate(sq))&effectmask;
-	//	uint8_t obstacle_yoko = (occupied90.b[index_yoko(sq)] >> shift_yoko(sq))&effectmask;
-	//	effect = LongRookEffect_tate[sq][obstacle_tate] | LongRookEffect_yoko[sq][obstacle_yoko];
-	////	cout << effect << endl;
-	//}
-	//else if (pt == DRAGON) {
-	//	uint8_t obstacle_tate = (occ_all().b[index_tate(sq)] >> shift_tate(sq))&effectmask;
-	//	uint8_t obstacle_yoko = (occupied90.b[index_yoko(sq)] >> shift_yoko(sq))&effectmask;
-	//	effect = LongRookEffect_tate[sq][obstacle_tate] | LongRookEffect_yoko[sq][obstacle_yoko]|StepEffect[c][KING][sq];
-	////	cout << effect << endl;
-	//}
-	//else if (pt == BISHOP) {
-	//	uint8_t obstacle_plus45 = (occupied_plus45.b[index_plus45(sq)] >> shift_plus45(sq))&effectmask;
-	//	uint8_t obstacle_Minus45 = (occupied_minus45.b[index_Minus45(sq)] >> shift_Minus45(sq))&effectmask;
-	//	effect = LongBishopEffect_plus45[sq][obstacle_plus45] | LongBishopEffect_minus45[sq][(obstacle_Minus45)];
-	////	cout << effect << endl;
-	//}
-	//else if(pt==UNICORN){
-	//	uint8_t obstacle_plus45 = (occupied_plus45.b[index_plus45(sq)] >> shift_plus45(sq))&effectmask;
-	//	uint8_t obstacle_Minus45 = (occupied_minus45.b[index_Minus45(sq)] >> shift_Minus45(sq))&effectmask;
-	//	effect = LongBishopEffect_plus45[sq][obstacle_plus45] | LongBishopEffect_minus45[sq][(obstacle_Minus45)] | StepEffect[c][KING][sq];
-	////	cout << effect << endl;
-	//}
-	//else {
-	//	effect= StepEffect[c][pt][sq];
-	//}
-	//cout << effect << endl;
+	
 	while (effect.isNot()) {
 
 		Square esq = effect.pop();
@@ -656,6 +624,12 @@ void Position::make_checker_sq(Color c) const
 
 	Color enemy = opposite(c);
 	//もっと効率的な方法はないか？？？
+	/*
+	近接駒と跳駒を分けて考えると
+	近接ごまはfromにいてた駒の種類をtoに動かしたのでtoだけ見れば良くて、
+	ksqとfromのdirection関係がわかり、fromにそのdirectionからのトビ機器が効いており、toがksqとdirectionのあいだでなかった場合はdirectionにその飛び利きの原因ごまを探して王手をしているかどうか再確認する
+	
+	*/
 	for (Square sq = SQ_ZERO; sq < SQ_NUM; sq++) {
 
 		Piece pc = pcboard[sq];
@@ -667,7 +641,6 @@ void Position::make_checker_sq(Color c) const
 			}
 		}
 	}
-
 }
 
 
