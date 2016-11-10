@@ -246,6 +246,7 @@ public:
 	/*
 	指し手が省かれる確率は非常に低いため
 	指し手のloopでこの関数を呼び出すのは後ろの方でいいかもしれない（Stockfish方式）
+	＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝PINされている駒を動かさないようにする処理もいる！！！！！！！！
 	*/
 	bool is_legal(const Move m) {
 
@@ -259,6 +260,10 @@ public:
 		if (isDrop&& piece_type(movedpiece) == PAWN) {
 			if (is_uchihu(sidetomove_, move_to(m))) { return false; }
 		}
+
+		//pinされている駒を動かさないようにする
+
+
 
 		//動かす駒は自分の駒
 		ASSERT(piece_color(movedpiece) == c);

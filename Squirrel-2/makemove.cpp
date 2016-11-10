@@ -563,7 +563,11 @@ ExtMove * move_generation(const Position& pos, ExtMove * movelist)
 ExtMove * move_eversion(const Position& pos, ExtMove * movelist) {
 
 	//未実装
-
+	/*王手をかけてきている駒を取る。
+		pinごまは動かしてはいけない
+		トビ効きの間に割って入らせる。
+		王が効きから逃げる。
+	*/
 
 
 
