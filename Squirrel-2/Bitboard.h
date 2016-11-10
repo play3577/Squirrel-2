@@ -1,6 +1,9 @@
 #pragma once
 #include "fundation.h"
 
+
+struct Position;
+
 //
 //bitboardには縦型bitboardを用いる
 //
@@ -21,6 +24,12 @@ http://yaneuraou.yaneu.com/2015/10/11/%E7%B6%9A-haswell%E4%BB%A5%E9%99%8D%E5%B0%
 
 バグが伝播しやすいように、できるだけ（orやandではなく）xorを使うようにするべき
 歩を打てる場所のBitboardを保持して更新させるのはロスいのでやめるべき。（やろうとしていた）
+↑正直そんなにロスいとは思えない。
+歩に対する指し手生成が少なくて済むし、あとから二歩判定をするほうが駒打ちを生成するときに判定するよりもろすだと思う
+よってpositionで歩の打てる筋が１になったbitboardを作る！
+
+王の自殺手のチェックは後に回してもいいと思う（後からでも十分にできると思う）
+
 */
 struct Bitboard
 {
@@ -64,8 +73,11 @@ extern Bitboard InFront_BB[ColorALL][Rank_Num];
 extern Bitboard CantGo_PAWNLANCE[ColorALL];
 extern Bitboard CantGo_KNIGHT[ColorALL];
 
+extern Direction direct_table[SQ_NUM][SQ_NUM];
 void bitboard_debug();
 void bitboard_init();
 Bitboard effectBB(const Position &pos, const Piece pt, const Color c, const Square sq);
 
 int change_indian(int i);
+
+void check_directtable();

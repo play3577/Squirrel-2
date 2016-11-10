@@ -6,6 +6,7 @@
 
 #define ASSERT(x) _ASSERT(x)
 //#define ASSERT(x) ((void)0)//速度を出したいとき用
+#define UNREACHABLE ASSERT(0)
 
 
 //#define CHECKPOS
@@ -246,6 +247,155 @@ inline void makehand(Hand &hand,const Piece pt,const int num){
 }
 std::ostream& operator << (std::ostream& os, Hand h);
 
+
+//方向ベクトル
+//飛び利きとかを処理するために使いたいので桂馬の利きを含めた12方向ではなく、8方向だけを用意する
+
+/*
+これboardが縦型なのでそれに合わせて値も-1とか-9とかにするべき？
+した方が扱いやすいか....
+*/
+enum Direction :int8_t{
+	UP=-1,
+	RightUP=-10,
+	Right=-9,
+	RightDOWN=-8,
+	DOWN=1,
+	LeftDOWN=10,
+	Left=9,
+	LeftUP=8,
+
+	Direct_NUM=8,
+};
+
+constexpr Direction direct[Direct_NUM] = {
+	UP,
+	RightUP,
+	Right,
+	RightDOWN,
+	DOWN,
+	LeftDOWN ,
+	Left,
+	LeftUP,
+};
+
+std::ostream& operator << (std::ostream& os, Direction d);
+
+//effectboard用
+/*
+0~3 そのマスに効いている利きの数
+4~11 そのマスに8方向のどこから飛び利きが効いているか
+*/
+enum Effect :uint16_t {
+	ENUM_MASK = (0b111),
+	ELONG_UP = 1 << 4,
+	ELONG_RightUP = 1 << 5,
+	ELONG_Right = 1 << 6,
+	ELONG_RightDOWN = 1 << 7,
+	ELONG_DOWN = 1 << 8,
+	ELONG_LeftDOWN = 1 << 9,
+	ELONG_Left = 1 << 10,
+	ELONG_LeftUP = 1 << 11,
+};
+
+inline int efectnum(const Effect e) { return (e&ENUM_MASK);}
+inline bool is_havelongeffect(const Effect e) { return(e&(0b11111111000)); }
+
+
+////Bitboard& operator|=(const Bitboard& b1) { b[0] = (b[0] | b1.b[0]);  b[1] = (b[1] | b1.b[1]); return *this; }
+inline Effect operator|( Effect d1, const Effect d2) { return  Effect(int(d1) | int(d2)); }
+inline void operator|=(Effect d1, const Effect d2) { d1=Effect(int(d1) | int(d2)); }
+
+
+/*
+//王手関係
+ksqと動いた駒のfromのdirectionを求めeffect[from]にその方向からの利きが聞いていて、
+toがそのdirection方向でなければ飛び利きが聞いて王手になるかもしれない
+ーーーーーそのための関数がこれ
+
+
+//飛び利きの差分計算
+fromに飛び利きが聞いて居ていたら必ず飛び利きを差分計算しなければならない
+effect[from]のdirectionを求め、その-directionからその飛び利きの原因となる駒を求め
+その駒の飛び利きを差分計算する。
+-------これを計算するためにはまあこの関数を使ってdiretionのfor文を使えばいいか
+
+*/
+inline bool is_havelong_direct(const Effect e, const Direction d) {
+	switch (d)
+	{
+	case UP:
+		return e&ELONG_UP;
+		break;
+	case RightUP:
+		return e&ELONG_RightUP;
+		break;
+	case Right:
+		return e&ELONG_Right;
+		break;
+	case RightDOWN:
+		return e&ELONG_RightDOWN;
+		break;
+	case DOWN:
+		return e&ELONG_DOWN;
+		break;
+	case LeftDOWN:
+		return e&ELONG_LeftDOWN;
+		break;
+	case Left:
+		return e&ELONG_Left;
+		break;
+	case LeftUP:
+		return e&ELONG_LeftUP;
+		break;
+	default:
+		//UNREACHABLE;
+		ASSERT(0);
+		return false;
+		break;
+	}
+}
+
+
+inline void setlongefect(Effect& e, const Direction d) {
+
+	switch (d)
+	{
+	case UP:
+		 e=e|ELONG_UP;
+		break;
+	case RightUP:
+		 e=e|ELONG_RightUP;
+		break;
+	case Right:
+		e = e|ELONG_Right;
+		break;
+	case RightDOWN:
+		e = e|ELONG_RightDOWN;
+		break;
+	case DOWN:
+		e = e|ELONG_DOWN;
+		break;
+	case LeftDOWN:
+		e = e|ELONG_LeftDOWN;
+		break;
+	case Left:
+		e = e|ELONG_Left;
+		break;
+	case LeftUP:
+		e = e|ELONG_LeftUP;
+		break;
+	default:
+		UNREACHABLE;
+		break;
+	}
+
+}
+
+//effectboardの升それぞれについてこの関数を用いる
+std::ostream& operator << (std::ostream& os, const Effect e);
+
+
 #define ENABLE_OPERATORS_ON(T)                                                  \
   inline T operator+(const T d1, const T d2) { return T(int(d1) + int(d2)); }   \
   inline T operator-(const T d1, const T d2) { return T(int(d1) - int(d2)); }   \
@@ -270,3 +420,4 @@ ENABLE_OPERATORS_ON(File)
 ENABLE_OPERATORS_ON(Piece)
 ENABLE_OPERATORS_ON(Color)
 ENABLE_OPERATORS_ON(Hand)
+ENABLE_OPERATORS_ON(Effect);

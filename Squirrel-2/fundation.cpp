@@ -125,3 +125,57 @@ std::ostream & operator<<(std::ostream & os, Hand h)
 	return os;
 
 }
+
+
+std::ostream& operator << (std::ostream& os, Direction d) {
+
+	switch (d)
+	{
+	case UP:
+		os << "  U";
+		break;
+	case RightUP:
+		os << " RU";
+		break;
+	case Right:
+		os << "  R";
+		break;
+	case RightDOWN:
+		os << " RD";
+		break;
+	case DOWN:
+		os << "  D";
+		break;
+	case LeftDOWN:
+		os << " LD";
+		break;
+	case Left:
+		os << "  L";
+		break;
+	case LeftUP:
+		os << " LU";
+		break;
+	default:
+		os << "   ";
+		break;
+	}
+	return os;
+}
+
+std::ostream& operator << (std::ostream& os, const Effect e) {
+
+	//‚Ü‚¸‚Í—˜‚«‚Ì”
+	cout << int(e&ENUM_MASK) << " ";
+
+	//”ò‚Ñ—˜‚«‚ª‚Ç‚¿‚ç‘¤‚©‚ç•·‚¢‚Ä‚¢‚é‚©
+	for (int i = 0; i < Direct_NUM; i++) {
+		Direction d = direct[i];
+		if (is_havelong_direct(e, d)) {
+			cout << d << " ";
+		}
+	}
+
+	cout << endl;
+
+	return os;
+}

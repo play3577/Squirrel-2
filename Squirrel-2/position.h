@@ -13,11 +13,18 @@ using namespace std;
 #define  sfen_maturi "sfen l6nl/5+P1gk/2np1S3/p1p4Pp/3P2Sp1/1PPb2P1P/P5GS1/R8/LN4bKL w GR5pnsg 1"
 #define	 sfen_max    "sfen R8/2K1S1SSk/4B4/9/9/9/9/9/1L1L1L3 b RBGSNLP3g17p3n 1"
 
+
+
+/*
+やっぱ利きテーブルを持つの差分計算とか簡単じゃないのでやめる
+wordboardとか理解できるようになったなら持ってもいいかもしれない
+*/
+
 struct StateInfo
 {
 	int ply_from_root = 0;
 	Square ksq_[ColorALL];
-	uint8_t Eboard[ColorALL][SQ_NUM];//升にいくつの効きが聞いているかを保持するためのboard
+	Effect Eboard[ColorALL][SQ_NUM];//升にいくつの効きが聞いているかを保持するためのboard
 	//---------------ここまでdomoveでコピー
 
 	Move lastmove = MOVE_NONE;
@@ -114,7 +121,7 @@ public:
 	uint8_t return_effect(const Color c, const Square sq)const { return st->Eboard[c][sq]; }
 	void check_eboard()const;
 	
-	void make_checker_sq(Color c)const;
+	void init_checker_sq(Color c)const;
 };
 
 std::ostream& operator<<(std::ostream& os, const Position& pos);

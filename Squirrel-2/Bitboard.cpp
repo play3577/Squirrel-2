@@ -36,6 +36,14 @@ Bitboard CantGo_PAWNLANCE[ColorALL];
 Bitboard CantGo_KNIGHT[ColorALL];
 
 
+//directtable
+//[from][to]
+//fromから見たtoの位置関係。
+Direction direct_table[SQ_NUM][SQ_NUM];
+
+
+
+
 Square Bitboard::pop()
 {
 	return (b[0] != 0) ? Square(pop_lsb(b[0])) : Square(pop_lsb(b[1])+45);
@@ -88,6 +96,7 @@ int change_indian(int i) {
 
 	return ret;
 }
+
 
 /*
 シフト三角行列
@@ -372,6 +381,28 @@ void bitboard_init()
 
 	make_shiftMinus45();
 
+
+	for (Square from = SQ_ZERO; from < SQ_NUM; from++) {
+
+		Direction d;
+		for (int i = 0; i < Direct_NUM; i++) {
+
+			Square to,oldto;
+			d = direct[i];
+			to = from;
+			do {
+				oldto = to;
+				to += Square(d);
+
+				if (is_ok(to) &&to!=from&& abs(sqtorank(to) - sqtorank(oldto)) < 2 && abs(sqtofile(to) - sqtofile(oldto)) < 2) {
+					direct_table[from][to] = d;
+				}
+
+			} while (is_ok(to) && abs(sqtorank(to) - sqtorank(oldto)) < 2 && abs(sqtofile(to) - sqtofile(oldto)) < 2);
+		}
+	}
+
+	//check_directtable();
 	//bitboard_debug();
 }
 
@@ -582,5 +613,27 @@ Bitboard return_long_effect(const Position &pos, const Piece pt, const Color c, 
 		//return;
 		break;
 	}
+
+}
+
+
+
+
+void check_directtable()
+{
+	cout << "check direct table " << endl;
+
+	for (Square sq = SQ1A; sq < SQ_NUM; sq++) {
+		cout << "from " << sq << endl;
+		for (Rank r = RankA; r < Rank_Num; r++) {
+			for (File f = File9; f >= File1; f--) {
+				Square to = make_square(r, f);
+				cout << direct_table[sq][to];
+			}
+			cout << endl;
+		}
+	}
+	cout << endl;
+
 
 }

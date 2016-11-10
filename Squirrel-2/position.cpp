@@ -110,13 +110,13 @@ void Position::set(std::string sfen)
 	
 	if (return_effect(opposite(sidetomove_), ksq(sidetomove_))) {
 		st->inCheck = true;
-		make_checker_sq(sidetomove());
+		init_checker_sq(sidetomove());
 	}
 
-
+	cout << *this << endl;
 
 #ifdef CHECKPOS
-	cout << *this << endl;
+	
 	//check_eboard();
 	//check_occbitboard();
 #endif
@@ -414,9 +414,10 @@ void Position::init_eboard()
 {
 	auto eboard = st->Eboard;
 	Piece pc;
+	bool is_long=false;
 	std::memset(this->st->Eboard, 0, sizeof(this->st->Eboard[ColorALL][SQ_NUM]));//Eboradの初期化
 	for (Square sq = SQ_ZERO; sq < SQ_NUM; sq++) {
-
+		is_long = false;
 		if ((pc = pcboard[sq]) != NO_PIECE) {
 
 			Color c = piece_color(pc);
@@ -425,29 +426,35 @@ void Position::init_eboard()
 			Bitboard effect;
 			//ここの条件分岐もうちょっとなんとか成らないか？
 			if (pt == LANCE) {
+				is_long = true;
 				int64_t obstacle_tate = (occ_all().b[index_tate(sq)] >> shift_tate(sq))&effectmask;
 				effect = LongRookEffect_tate[sq][obstacle_tate] & InFront_BB[c][sqtorank(sq)];
 				//cout << effect << endl;
 			}
 			else if (pt == ROOK) {
+				is_long = true;
 				int64_t obstacle_tate = (occ_all().b[index_tate(sq)] >> shift_tate(sq))&effectmask;
 				int64_t obstacle_yoko = (occupied90.b[index_yoko(sq)] >> shift_yoko(sq))&effectmask;
 				effect = LongRookEffect_tate[sq][obstacle_tate] | LongRookEffect_yoko[sq][obstacle_yoko];
 				//	cout << effect << endl;
 			}
 			else if (pt == DRAGON) {
+				is_long = true;
+				//この方法だと龍の斜めの機器も飛び機器とみなしてしまう！！！！！！
 				int64_t obstacle_tate = (occ_all().b[index_tate(sq)] >> shift_tate(sq))&effectmask;
 				int64_t obstacle_yoko = (occupied90.b[index_yoko(sq)] >> shift_yoko(sq))&effectmask;
 				effect = LongRookEffect_tate[sq][obstacle_tate] | LongRookEffect_yoko[sq][obstacle_yoko] | StepEffect[c][KING][sq];
 				//	cout << effect << endl;
 			}
 			else if (pt == BISHOP) {
+				is_long = true;
 				int64_t obstacle_plus45 = (occupied_plus45.b[index_plus45(sq)] >> shift_plus45(sq))&effectmask;
 				int64_t obstacle_Minus45 = (occupied_minus45.b[index_Minus45(sq)] >> shift_Minus45(sq))&effectmask;
 				effect = LongBishopEffect_plus45[sq][obstacle_plus45] | LongBishopEffect_minus45[sq][(obstacle_Minus45)];
 				//	cout << effect << endl;
 			}
 			else if (pt == UNICORN) {
+				is_long = true;
 				int64_t obstacle_plus45 = (occupied_plus45.b[index_plus45(sq)] >> shift_plus45(sq))&effectmask;
 				int64_t obstacle_Minus45 = (occupied_minus45.b[index_Minus45(sq)] >> shift_Minus45(sq))&effectmask;
 				effect = LongBishopEffect_plus45[sq][obstacle_plus45] | LongBishopEffect_minus45[sq][(obstacle_Minus45)] | StepEffect[c][KING][sq];
@@ -459,15 +466,20 @@ void Position::init_eboard()
 			//cout << effect << endl;
 			while (effect.isNot()) {
 				Square esq = effect.pop();
-				eboard[c][esq]++;
+
+				if (is_long == true) {
+					eboard[c][esq]++;
+					//どちらから利きが効いているか
+					Direction d= direct_table[esq][sq];
+					setlongefect(eboard[c][esq], d);
+				
+				}
+				else {
+					eboard[c][esq]++;
+				}
 			}
 		}
 	}
-
-
-
-
-
 }
 
 void Position::add_effect(const Color c, const Piece pt, const Square sq)
@@ -606,7 +618,7 @@ void Position::check_eboard() const
 		for (Rank r = RankA; r < Rank_Num; r++) {
 			for (File f = File9; f >= File1; f--) {
 				Square sq = make_square(r, f);
-				cout << int(st->Eboard[c][sq]);
+				cout << st->Eboard[c][sq];
 			}
 			cout << endl;
 		}
@@ -617,7 +629,7 @@ void Position::check_eboard() const
 
 }
 
-void Position::make_checker_sq(Color c) const
+void Position::init_checker_sq(Color c) const
 {
 	//王のいる位置が１になっているbitboard
 	Bitboard k = SquareBB[ksq(c)];
@@ -627,15 +639,15 @@ void Position::make_checker_sq(Color c) const
 	/*
 	近接駒と跳駒を分けて考えると
 	近接ごまはfromにいてた駒の種類をtoに動かしたのでtoだけ見れば良くて、
-	ksqとfromのdirection関係がわかり、fromにそのdirectionからのトビ機器が効いており、toがksqとdirectionのあいだでなかった場合はdirectionにその飛び利きの原因ごまを探して王手をしているかどうか再確認する
-	
+	ksqとfromのdirection関係がわかり、fromにそのdirectionからのトビ機器が効いており、
+	toがksqとdirectionのあいだでなかった場合はdirectionにその飛び利きの原因ごまを探して王手をしているかどうか再確認する
 	*/
 	for (Square sq = SQ_ZERO; sq < SQ_NUM; sq++) {
 
 		Piece pc = pcboard[sq];
 		Piece pt = piece_type(pc);
 		if (piece_color(pc) == enemy) {
-			if ((k&effectBB(this,pt,c,sq)).isNot()) {
+			if ((k&effectBB(*this,pt,c,sq)).isNot()) {
 				ASSERT(is_ok(sq));
 				st->checker |= SquareBB[sq];
 			}
