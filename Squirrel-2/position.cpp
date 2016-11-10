@@ -106,12 +106,20 @@ void Position::set(std::string sfen)
 		}
 		index++;
 	}
-	/*init_eboard();
-	
-	if (return_effect(opposite(sidetomove_), ksq(sidetomove_))) {
-		st->inCheck = true;
-		init_checker_sq(sidetomove());
-	}*/
+
+	init_existpawnBB();
+
+
+	//手番側に王手がかかっているかどうかだけ初期化すればいい。（相手側に王手がかかっていたら一手で試合が終わるしそんなんUSIで入ってこやんやろ）
+	if (is_effect_to(opposite(sidetomove_), ksq(sidetomove_))) {
+		st->inCheck=true;
+		st->checker = effect_toBB(opposite(sidetomove_), ksq(sidetomove_));
+
+	}
+
+
+
+
 
 	cout << *this << endl;
 
@@ -197,8 +205,11 @@ void Position::do_move(Move m, StateInfo * newst)
 		put_piece(c, pt, to);
 		//rotatedにも駒を足す。
 		put_rotate(to);
-		//利きを追加する。
-		//add_effect(c, pt, to);
+		
+		//歩を打てない場所Bitboardを更新
+		if (pt == PAWN) {
+			add_existpawnBB(c, to);
+		}
 	}
 	else {
 		/*
@@ -265,6 +276,10 @@ void Position::do_move(Move m, StateInfo * newst)
 			int num = num_pt(hands[sidetomove()], pt2);
 			makehand(hands[sidetomove()], pt2, num + 1);
 			//コマの捕獲の場合はrotetedは足さなくていい
+
+			if (cappt == PAWN) {
+				remove_existpawnBB(c, to);
+			}
 		}
 		else {
 			st->DirtyPiece[1] = NO_PIECE;
@@ -277,6 +292,14 @@ void Position::do_move(Move m, StateInfo * newst)
 	st->ply_from_root++;
 	nodes++;
 	sidetomove_ = opposite(sidetomove_);//指す順番の入れ替え
+
+	//先程の指し手が相手側に王手をかけたか（王手をかけた場合はそのcheckerBBを更新する）
+	if (is_effect_to(opposite(sidetomove_), ksq(sidetomove_))) {
+		st->inCheck = true;
+		st->checker = effect_toBB(opposite(sidetomove_), ksq(sidetomove_));
+
+	}
+
 
 }
 
@@ -306,6 +329,9 @@ void Position::undo_move()
 
 		remove_piece(c, pt, to);
 		remove_rotate(to);
+		if (pt == PAWN) {
+			remove_existpawnBB(c, to);
+		}
 	}
 	else {
 		//コマの移動
@@ -324,12 +350,12 @@ void Position::undo_move()
 		if (capture != NO_PIECE) {
 			Piece pt;
 
-			pt = rowpiece(piece_type(capture));//captureから成と手番を除く 取られた駒なので成りは除かなければならない
+			pt = rowpiece(piece_type(capture));//captureから成と手番を除く 取られた駒を手駒から減算する操作なので成りは除かなければならない
 
 			Color enemy = opposite(sidetomove());
 			int num = num_pt(hands[enemy], pt);
 			makehand(hands[enemy], pt, num - 1);//持ち駒の処理がおかしい。
-			Piece cappt = piece_type(capture);
+			Piece cappt = piece_type(capture);//盤面に戻す操作なので成も残す
 			Color c = piece_color(capture);
 			//捕獲されていた駒
 			put_piece(c, cappt, to);
@@ -337,7 +363,10 @@ void Position::undo_move()
 			remove_piece(from_c, piece_type(afterpiece), to);
 			ASSERT(from_c != c);
 			//コマの捕獲の場合はtoにいたrotetedを消す必要はない
-
+			
+			if (cappt == PAWN) {
+				add_existpawnBB(c, to);
+			}
 
 		}
 		else {

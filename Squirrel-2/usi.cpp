@@ -50,7 +50,9 @@ void USI::loop()
 		}
 		else if (token == "hirate") { pos.set_hirate(); }
 		else if (token == "dp") { std::cout << pos << std::endl; }//debug position
-		
+		else if (token == "ebb") { pos.check_effecttoBB(); }
+		else if (token == "pbb") { pos.print_existpawnBB(); }
+
 
 	} while (token != "quit");
 

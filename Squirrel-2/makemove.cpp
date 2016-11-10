@@ -453,7 +453,7 @@ ExtMove* make_move_DROP(const Position& pos, const Bitboard& target, ExtMove* mo
 	if (have_hand(hands)) {
 
 		if (num_pt(hands, PAWN)) {
-			target2 = target&~CantGo_PAWNLANCE[US];
+			target2 = target&~CantGo_PAWNLANCE[US]&~pos.pawnbb(US);
 			pc = add_color(PAWN, US);
 			int pc2 = pc << 17;
 			while (target2.isNot()) {

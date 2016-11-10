@@ -61,8 +61,10 @@ extern Bitboard RankBB[Rank_Num];
 extern Bitboard ZeroBB, ALLBB;
 extern Bitboard canPromoteBB[ColorALL];
 
+//===============================
+//効き関連
+//================================
 extern Bitboard StepEffect[ColorALL][PT_ALL][SQ_NUM];
-
 extern Bitboard LongRookEffect_yoko[SQ_NUM][128];//OK
 extern Bitboard LongRookEffect_tate[SQ_NUM][128];//OK(香車もコレを使うコレを香車でも使うためにはinfrontBBを用意しなければならない)
 extern Bitboard LongBishopEffect_plus45[SQ_NUM][128];//OK
@@ -81,3 +83,9 @@ Bitboard effectBB(const Position &pos, const Piece pt, const Color c, const Squa
 int change_indian(int i);
 
 void check_directtable();
+
+//===============================
+//効き関連関数
+//================================
+Bitboard step_effect(const Color c, const Piece pt, const Square sq);
+Bitboard long_effect(const Position &pos, const Color c, const Piece pt,  const Square sq);

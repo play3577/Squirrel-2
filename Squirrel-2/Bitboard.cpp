@@ -544,39 +544,16 @@ Bitboard effectBB(const Position &pos,const Piece pt, const Color c, const Squar
 }
 
 //近接利き用で分けてみた。
-Bitboard return_step_effect(const Piece pt, const Color c, const Square sq) {
+Bitboard step_effect(const Color c, const Piece pt, const Square sq) {
 
-	switch (pt)
-	{
-	case PAWN:
-		return StepEffect[c][pt][sq];
-		break;
+	return StepEffect[c][pt][sq];
 	
-	case KNIGHT:
-		return StepEffect[c][pt][sq];
-		break;
-	case SILVER:
-		return StepEffect[c][pt][sq];
-		break;
-	
-	case GOLD:case PRO_PAWN:case PRO_LANCE:case PRO_NIGHT:case PRO_SILVER:
-		return StepEffect[c][GOLD][sq];
-		break;
-	case KING:
-		return StepEffect[c][KING][sq];
-		break;
-	
-	default:
-		ASSERT(0);
-		//return;
-		break;
-	}
 }
 
 
 
 //飛び利きでない場合はposを渡すのは無駄になってしまうので飛び利き用と飛び利きでない用で関数を分けた方がいいか？
-Bitboard return_long_effect(const Position &pos, const Piece pt, const Color c, const Square sq) {
+Bitboard long_effect(const Position &pos, const Color c, const Piece pt, const Square sq) {
 
 	//Bitboard effect;
 
@@ -587,6 +564,10 @@ Bitboard return_long_effect(const Position &pos, const Piece pt, const Color c, 
 
 	switch (pt)
 	{
+	case LANCE:
+		obstacle_tate = (pos.occ_all().b[index_tate(sq)] >> shift_tate(sq))&effectmask;//7bitしか必要ないのでintでいいか（で十分か？？？？）
+		return LongRookEffect_tate[sq][obstacle_tate] & InFront_BB[c][sqtorank(sq)];
+		break;
 	case BISHOP:
 		// の方が早く処理できるか？？
 		 obstacle_plus45 = (pos.occ_plus45().b[index_plus45(sq)] >> shift_plus45(sq))&effectmask;

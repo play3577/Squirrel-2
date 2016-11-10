@@ -49,6 +49,9 @@ private:
 	Bitboard occupied_plus45, occupied_minus45;
 
 	Bitboard occupiedPt[ColorALL][PT_ALL];
+
+	//歩の存在する升が1になっているbitboardコレをandnotすることで歩打ちのtargetを絞れる（２歩判定できる）
+	Bitboard ExistPawnBB[ColorALL];
 	Piece pcboard[SQ_NUM];
 
 	StateInfo* st;
@@ -107,6 +110,8 @@ public:
 	Bitboard occ_plus45()const { return occupied_plus45; }
 	Bitboard occ_minus45()const { return occupied_minus45; }
 
+	Bitboard pawnbb(const Color c)const { return ExistPawnBB[c]; }
+
 	Color sidetomove() const { return sidetomove_; }
 	Hand hand(Color c)const { return hands[c]; }
 	StateInfo* state() const { return st; }
@@ -115,7 +120,90 @@ public:
 
 	void check_occbitboard()const;
 
+
+
+
+
+	//c側の効きがtoに効いているかどうか調べる為の関数。
+	/*
+	調べ方は
+	駒種毎にtoに相手の色の駒を置いてみたときの効きの範囲にその駒種が存在すればそれはそのマスに利きが効いているということに成る
+	*/
+	Bitboard effect_toBB(const Color US, const Square to) {
+
+		Color ENEMY = opposite(US);
+
+		/*
+		盤上にUNICORN,DRAGONがいるかどうかも確認したほうが素早く処理できるか？？？
+		*/
+		return
+			(step_effect(ENEMY, PAWN, to)&occ_pt(US, PAWN))
+			| (long_effect(*this, ENEMY, LANCE, to)&occ_pt(US, LANCE))//利きを求めるにはoccupied が複数いるのでposを渡したほうが安全か？（あとでposを渡すときとoccをそれぞれ渡すときとで速さを調べる。）
+			| (step_effect(ENEMY, KNIGHT, to)&occ_pt(US, KNIGHT))
+			| (step_effect(ENEMY, SILVER, to)&occ_pt(US, SILVER))
+			| (step_effect(ENEMY, GOLD, to)&(occ_pt(US, GOLD) | occ_pt(US, PRO_PAWN) | occ_pt(US, PRO_LANCE) | occ_pt(US, PRO_NIGHT) | occ_pt(US, PRO_SILVER)))
+			| (step_effect(ENEMY, KING, to)&occ_pt(US, KING))
+			| (long_effect(*this, ENEMY, ROOK, to)&occ_pt(US, ROOK))
+			| (long_effect(*this, ENEMY, BISHOP, to)&occ_pt(US, BISHOP))
+			| (long_effect(*this, ENEMY, DRAGON, to)&occ_pt(US, DRAGON))
+			| (long_effect(*this, ENEMY, UNICORN, to)&occ_pt(US, UNICORN));
+	}
+
+	//c側の効きがtoに効いているかどうか調べる為の関数。
+	//利きを求めるにはoccupied が複数いるのでposを渡したほうが安全か？（あとでposを渡すときとoccをそれぞれ渡すときとで速さを調べる。）
+	bool is_effect_to(const Color US, const Square to) {
+
+		Color ENEMY = opposite(US);
+
+		if ((long_effect(*this, ENEMY, ROOK, to)&occ_pt(US, ROOK)).isNot()) { return true; }
+		if ((long_effect(*this, ENEMY, BISHOP, to)&occ_pt(US, BISHOP)).isNot()) { return true; }
+		if ((long_effect(*this, ENEMY, DRAGON, to)&occ_pt(US, DRAGON)).isNot()) { return true; }
+		if ((long_effect(*this, ENEMY, UNICORN, to)&occ_pt(US, UNICORN)).isNot()) { return true; }
+		if ((step_effect(ENEMY, PAWN, to)&occ_pt(US, PAWN)).isNot()) { return true; }
+		if ((long_effect(*this, ENEMY, LANCE, to)&occ_pt(US, LANCE)).isNot()) { return true; }
+		if ((step_effect(ENEMY, KNIGHT, to)&occ_pt(US, KNIGHT)).isNot()) { return true; }
+		if ((step_effect(ENEMY, SILVER, to)&occ_pt(US, SILVER)).isNot()) { return true; }
+		if ((step_effect(ENEMY, GOLD, to)&(occ_pt(US, GOLD) | occ_pt(US, PRO_PAWN) | occ_pt(US, PRO_LANCE) | occ_pt(US, PRO_NIGHT) | occ_pt(US, PRO_SILVER))).isNot()) { return true; }
+		if ((step_effect(ENEMY, KING, to)&occ_pt(US, KING)).isNot()) { return true; }
 	
+		
+		return false;
+	}
+
+	void check_effecttoBB() {
+		for (Color c = BLACK; c <= ColorALL; c++) {
+			cout << c << endl;
+			for (Square sq = SQ1A; sq < SQ_NUM; sq++) {
+				cout << "Square " << sq << endl;
+				cout << effect_toBB(c, sq) << endl;
+			}
+		}
+	}
+
+	void init_existpawnBB() {
+		for (Color c = BLACK; c < ColorALL; c++) {
+			Bitboard occ = occ_pt(c, PAWN);
+			while (occ.isNot()) {
+				Square sq = occ.pop();
+				ExistPawnBB[c] |= FileBB[sqtofile(sq)];
+			}
+		}
+	}
+	void remove_existpawnBB(const Color c,const Square sq) {
+		ExistPawnBB[c]=ExistPawnBB[c] & ~FileBB[sqtofile(sq)];
+	}
+	void add_existpawnBB(const Color c, const Square sq) {
+		ExistPawnBB[c] |=FileBB[sqtofile(sq)];
+	}
+
+	void print_existpawnBB() {
+		cout << " print existpawn BB " << endl;
+		for (Color c = BLACK; c < ColorALL; c++) {
+			cout << " color " << c << endl;
+			cout << ExistPawnBB[c] << endl;
+		}
+	}
+
 };
 
 std::ostream& operator<<(std::ostream& os, const Position& pos);
