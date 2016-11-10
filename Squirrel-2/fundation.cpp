@@ -161,21 +161,21 @@ std::ostream& operator << (std::ostream& os, Direction d) {
 	}
 	return os;
 }
-
-std::ostream& operator << (std::ostream& os, const Effect e) {
-
-	//‚Ü‚¸‚Í—˜‚«‚Ì”
-	cout << int(e&ENUM_MASK) << " ";
-
-	//”ò‚Ñ—˜‚«‚ª‚Ç‚¿‚ç‘¤‚©‚ç•·‚¢‚Ä‚¢‚é‚©
-	for (int i = 0; i < Direct_NUM; i++) {
-		Direction d = direct[i];
-		if (is_havelong_direct(e, d)) {
-			cout << d << " ";
-		}
-	}
-
-	cout << endl;
-
-	return os;
-}
+//
+//std::ostream& operator << (std::ostream& os, const Effect e) {
+//
+//	//‚Ü‚¸‚Í—˜‚«‚Ì”
+//	cout << int(e&ENUM_MASK) << " ";
+//
+//	//”ò‚Ñ—˜‚«‚ª‚Ç‚¿‚ç‘¤‚©‚ç•·‚¢‚Ä‚¢‚é‚©
+//	for (int i = 0; i < Direct_NUM; i++) {
+//		Direction d = direct[i];
+//		if (is_havelong_direct(e, d)) {
+//			cout << d << " ";
+//		}
+//	}
+//
+//	cout << endl;
+//
+//	return os;
+//}

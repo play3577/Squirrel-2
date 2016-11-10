@@ -24,7 +24,7 @@ struct StateInfo
 {
 	int ply_from_root = 0;
 	Square ksq_[ColorALL];
-	Effect Eboard[ColorALL][SQ_NUM];//¡‚É‚¢‚­‚Â‚ÌŒø‚«‚ª•·‚¢‚Ä‚¢‚é‚©‚ð•ÛŽ‚·‚é‚½‚ß‚Ìboard
+	//Effect Eboard[ColorALL][SQ_NUM];//¡‚É‚¢‚­‚Â‚ÌŒø‚«‚ª•·‚¢‚Ä‚¢‚é‚©‚ð•ÛŽ‚·‚é‚½‚ß‚Ìboard
 	//---------------‚±‚±‚Ü‚Ådomove‚ÅƒRƒs[
 
 	Move lastmove = MOVE_NONE;
@@ -115,13 +115,7 @@ public:
 
 	void check_occbitboard()const;
 
-	void init_eboard();
-	void add_effect(const Color c, const Piece pt, const Square sq);
-	void sub_effect(const Color c, const Piece pt, const Square sq);
-	uint8_t return_effect(const Color c, const Square sq)const { return st->Eboard[c][sq]; }
-	void check_eboard()const;
 	
-	void init_checker_sq(Color c)const;
 };
 
 std::ostream& operator<<(std::ostream& os, const Position& pos);

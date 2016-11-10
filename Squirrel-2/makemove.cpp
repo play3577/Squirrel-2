@@ -428,10 +428,9 @@ ExtMove* make_move_KING(const Position& pos, const Bitboard& target, ExtMove* mo
 
 		while (target2.isNot()) {
 			Square to = target2.pop();
-			//王の移動先に相手の効きが効いていることはめったにないことなのでここでわざわざ確認するのではなく後回しにした方がいいか？
-			if (!pos.return_effect(ENEMY, to)) {
-				movelist++->move = make_move2(from, to, pc2);
-			}
+			//王の移動先に相手の効きが効いていることはめったにないことなのでここで合法確認するのではなく後回しにする
+			movelist++->move = make_move2(from, to, pc2);
+			
 		}
 
 	}

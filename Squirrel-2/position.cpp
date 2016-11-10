@@ -106,12 +106,12 @@ void Position::set(std::string sfen)
 		}
 		index++;
 	}
-	init_eboard();
+	/*init_eboard();
 	
 	if (return_effect(opposite(sidetomove_), ksq(sidetomove_))) {
 		st->inCheck = true;
 		init_checker_sq(sidetomove());
-	}
+	}*/
 
 	cout << *this << endl;
 
@@ -207,10 +207,13 @@ void Position::do_move(Move m, StateInfo * newst)
 		Square from = move_from(m);
 		Color us = sidetomove_;
 		Piece pt = piece_type(movedpiece);
-		if (pt == KING&&st->Eboard[opposite(us)][to]) {
+
+		//===========================================================================
+		/*if (pt == KING&&st->Eboard[opposite(us)][to]) {
 			cout << *this << endl;
 			ASSERT(0);
-		}
+		}*/
+
 		ASSERT(movedpiece == pcboard[from]);
 		ASSERT(piece_color(movedpiece) == us);
 
@@ -224,7 +227,7 @@ void Position::do_move(Move m, StateInfo * newst)
 		remove_piece(us, pt, from);
 		remove_rotate(from);
 		//fromの機器を取り除く
-		sub_effect(us, pt, from);
+		
 
 		if (!is_promote(m)) {
 			//成がない場合
@@ -410,251 +413,6 @@ void Position::check_occbitboard()const {
 	return;
 }
 
-void Position::init_eboard()
-{
-	auto eboard = st->Eboard;
-	Piece pc;
-	bool is_long=false;
-	std::memset(this->st->Eboard, 0, sizeof(this->st->Eboard[ColorALL][SQ_NUM]));//Eboradの初期化
-	for (Square sq = SQ_ZERO; sq < SQ_NUM; sq++) {
-		is_long = false;
-		if ((pc = pcboard[sq]) != NO_PIECE) {
-
-			Color c = piece_color(pc);
-			Piece pt = piece_type(pc);
-
-			Bitboard effect;
-			//ここの条件分岐もうちょっとなんとか成らないか？
-			if (pt == LANCE) {
-				is_long = true;
-				int64_t obstacle_tate = (occ_all().b[index_tate(sq)] >> shift_tate(sq))&effectmask;
-				effect = LongRookEffect_tate[sq][obstacle_tate] & InFront_BB[c][sqtorank(sq)];
-				//cout << effect << endl;
-			}
-			else if (pt == ROOK) {
-				is_long = true;
-				int64_t obstacle_tate = (occ_all().b[index_tate(sq)] >> shift_tate(sq))&effectmask;
-				int64_t obstacle_yoko = (occupied90.b[index_yoko(sq)] >> shift_yoko(sq))&effectmask;
-				effect = LongRookEffect_tate[sq][obstacle_tate] | LongRookEffect_yoko[sq][obstacle_yoko];
-				//	cout << effect << endl;
-			}
-			else if (pt == DRAGON) {
-				is_long = true;
-				//この方法だと龍の斜めの機器も飛び機器とみなしてしまう！！！！！！
-				int64_t obstacle_tate = (occ_all().b[index_tate(sq)] >> shift_tate(sq))&effectmask;
-				int64_t obstacle_yoko = (occupied90.b[index_yoko(sq)] >> shift_yoko(sq))&effectmask;
-				effect = LongRookEffect_tate[sq][obstacle_tate] | LongRookEffect_yoko[sq][obstacle_yoko] | StepEffect[c][KING][sq];
-				//	cout << effect << endl;
-			}
-			else if (pt == BISHOP) {
-				is_long = true;
-				int64_t obstacle_plus45 = (occupied_plus45.b[index_plus45(sq)] >> shift_plus45(sq))&effectmask;
-				int64_t obstacle_Minus45 = (occupied_minus45.b[index_Minus45(sq)] >> shift_Minus45(sq))&effectmask;
-				effect = LongBishopEffect_plus45[sq][obstacle_plus45] | LongBishopEffect_minus45[sq][(obstacle_Minus45)];
-				//	cout << effect << endl;
-			}
-			else if (pt == UNICORN) {
-				is_long = true;
-				int64_t obstacle_plus45 = (occupied_plus45.b[index_plus45(sq)] >> shift_plus45(sq))&effectmask;
-				int64_t obstacle_Minus45 = (occupied_minus45.b[index_Minus45(sq)] >> shift_Minus45(sq))&effectmask;
-				effect = LongBishopEffect_plus45[sq][obstacle_plus45] | LongBishopEffect_minus45[sq][(obstacle_Minus45)] | StepEffect[c][KING][sq];
-				//	cout << effect << endl;
-			}
-			else {
-				effect = StepEffect[c][pt][sq];
-			}
-			//cout << effect << endl;
-			while (effect.isNot()) {
-				Square esq = effect.pop();
-
-				if (is_long == true) {
-					eboard[c][esq]++;
-					//どちらから利きが効いているか
-					Direction d= direct_table[esq][sq];
-					setlongefect(eboard[c][esq], d);
-				
-				}
-				else {
-					eboard[c][esq]++;
-				}
-			}
-		}
-	}
-}
-
-void Position::add_effect(const Color c, const Piece pt, const Square sq)
-{
-	auto eboard = st->Eboard;
-
-	uint8_t obstacle_tate;
-	uint8_t obstacle_yoko;
-	uint8_t obstacle_plus45;
-	uint8_t obstacle_Minus45;
-
-
-	Bitboard effect;
-	//ここの条件分岐もうちょっとなんとか成らないか？(switchぶんにする！！！！！！！！！)
-
-	switch (pt)
-	{
-	case PAWN:
-	case KNIGHT:
-	case SILVER:
-	case GOLD:
-	case PRO_PAWN:
-	case PRO_LANCE:
-	case PRO_NIGHT:
-	case PRO_SILVER:
-	case KING:
-		effect = StepEffect[c][pt][sq];
-		break;
-	case LANCE:
-		 obstacle_tate = (occ_all().b[index_tate(sq)] >> shift_tate(sq))&effectmask;
-		effect = LongRookEffect_tate[sq][obstacle_tate] & InFront_BB[c][sqtorank(sq)];
-		break;
-	case BISHOP:
-		 obstacle_plus45 = (occupied_plus45.b[index_plus45(sq)] >> shift_plus45(sq))&effectmask;
-		 obstacle_Minus45 = (occupied_minus45.b[index_Minus45(sq)] >> shift_Minus45(sq))&effectmask;
-		effect = LongBishopEffect_plus45[sq][obstacle_plus45] | LongBishopEffect_minus45[sq][(obstacle_Minus45)];
-		break;
-	case ROOK:
-		 obstacle_tate = (occ_all().b[index_tate(sq)] >> shift_tate(sq))&effectmask;
-		 obstacle_yoko = (occupied90.b[index_yoko(sq)] >> shift_yoko(sq))&effectmask;
-		effect = LongRookEffect_tate[sq][obstacle_tate] | LongRookEffect_yoko[sq][obstacle_yoko];
-		break;
-	case UNICORN:
-		 obstacle_plus45 = (occupied_plus45.b[index_plus45(sq)] >> shift_plus45(sq))&effectmask;
-		 obstacle_Minus45 = (occupied_minus45.b[index_Minus45(sq)] >> shift_Minus45(sq))&effectmask;
-		effect = LongBishopEffect_plus45[sq][obstacle_plus45] | LongBishopEffect_minus45[sq][(obstacle_Minus45)] | StepEffect[c][KING][sq];
-		break;
-	case DRAGON:
-		 obstacle_tate = (occ_all().b[index_tate(sq)] >> shift_tate(sq))&effectmask;
-		 obstacle_yoko = (occupied90.b[index_yoko(sq)] >> shift_yoko(sq))&effectmask;
-		effect = LongRookEffect_tate[sq][obstacle_tate] | LongRookEffect_yoko[sq][obstacle_yoko] | StepEffect[c][KING][sq];
-		break;
-	
-	default:
-		ASSERT(0);
-		break;
-	}
-
-	
-	while (effect.isNot()) {
-
-		Square esq = effect.pop();
-		ASSERT(is_ok(esq));
-		eboard[c][esq]++;
-	}
-
-}
-
-void Position::sub_effect(const Color c, const Piece pt, const Square sq)
-{
-	auto eboard = st->Eboard;
-	uint8_t obstacle_tate;
-	uint8_t obstacle_yoko;
-	uint8_t obstacle_plus45;
-	uint8_t obstacle_Minus45;
-
-	Bitboard effect;
-	//ここの条件分岐もうちょっとなんとか成らないか？(switchぶんにする！！！！！！！！！)
-	switch (pt)
-	{
-	case PAWN:
-	case KNIGHT:
-	case SILVER:
-	case GOLD:
-	case PRO_PAWN:
-	case PRO_LANCE:
-	case PRO_NIGHT:
-	case PRO_SILVER:
-	case KING:
-		effect = StepEffect[c][pt][sq];
-		break;
-	case LANCE:
-		 obstacle_tate = (occ_all().b[index_tate(sq)] >> shift_tate(sq))&effectmask;
-		effect = LongRookEffect_tate[sq][obstacle_tate] & InFront_BB[c][sqtorank(sq)];
-		break;
-	case BISHOP:
-		 obstacle_plus45 = (occupied_plus45.b[index_plus45(sq)] >> shift_plus45(sq))&effectmask;
-		 obstacle_Minus45 = (occupied_minus45.b[index_Minus45(sq)] >> shift_Minus45(sq))&effectmask;
-		effect = LongBishopEffect_plus45[sq][obstacle_plus45] | LongBishopEffect_minus45[sq][(obstacle_Minus45)];
-		break;
-	case ROOK:
-		 obstacle_tate = (occ_all().b[index_tate(sq)] >> shift_tate(sq))&effectmask;
-		 obstacle_yoko = (occupied90.b[index_yoko(sq)] >> shift_yoko(sq))&effectmask;
-		effect = LongRookEffect_tate[sq][obstacle_tate] | LongRookEffect_yoko[sq][obstacle_yoko];
-		break;
-	case UNICORN:
-		 obstacle_plus45 = (occupied_plus45.b[index_plus45(sq)] >> shift_plus45(sq))&effectmask;
-		 obstacle_Minus45 = (occupied_minus45.b[index_Minus45(sq)] >> shift_Minus45(sq))&effectmask;
-		effect = LongBishopEffect_plus45[sq][obstacle_plus45] | LongBishopEffect_minus45[sq][(obstacle_Minus45)] | StepEffect[c][KING][sq];
-		break;
-	case DRAGON:
-		 obstacle_tate = (occ_all().b[index_tate(sq)] >> shift_tate(sq))&effectmask;
-		 obstacle_yoko = (occupied90.b[index_yoko(sq)] >> shift_yoko(sq))&effectmask;
-		effect = LongRookEffect_tate[sq][obstacle_tate] | LongRookEffect_yoko[sq][obstacle_yoko] | StepEffect[c][KING][sq];
-		break;
-	default:
-		ASSERT(0);
-		break;
-	}
-	//cout << effect << endl;
-	while (effect.isNot()) {
-
-		Square esq = effect.pop();
-		ASSERT(is_ok(esq));
-		ASSERT(eboard[c][esq] != 0);
-		eboard[c][esq]--;
-	}
-
-}
-
-void Position::check_eboard() const
-{
-	cout << "check eboard" << endl;
-	for (Color c = BLACK; c < ColorALL; c++) {
-		cout << "COLOR " << c << endl;
-		for (Rank r = RankA; r < Rank_Num; r++) {
-			for (File f = File9; f >= File1; f--) {
-				Square sq = make_square(r, f);
-				cout << st->Eboard[c][sq];
-			}
-			cout << endl;
-		}
-
-		
-		cout << endl;
-	}
-
-}
-
-void Position::init_checker_sq(Color c) const
-{
-	//王のいる位置が１になっているbitboard
-	Bitboard k = SquareBB[ksq(c)];
-
-	Color enemy = opposite(c);
-	//もっと効率的な方法はないか？？？
-	/*
-	近接駒と跳駒を分けて考えると
-	近接ごまはfromにいてた駒の種類をtoに動かしたのでtoだけ見れば良くて、
-	ksqとfromのdirection関係がわかり、fromにそのdirectionからのトビ機器が効いており、
-	toがksqとdirectionのあいだでなかった場合はdirectionにその飛び利きの原因ごまを探して王手をしているかどうか再確認する
-	*/
-	for (Square sq = SQ_ZERO; sq < SQ_NUM; sq++) {
-
-		Piece pc = pcboard[sq];
-		Piece pt = piece_type(pc);
-		if (piece_color(pc) == enemy) {
-			if ((k&effectBB(*this,pt,c,sq)).isNot()) {
-				ASSERT(is_ok(sq));
-				st->checker |= SquareBB[sq];
-			}
-		}
-	}
-}
-
 
 std::ostream & operator<<(std::ostream & os, const Position & pos)
 {
@@ -681,7 +439,7 @@ std::ostream & operator<<(std::ostream & os, const Position & pos)
 	
 	os << " 手番 " << pos.sidetomove() << endl;
 
-	pos.check_eboard();
+
 	
 
 	return os;
