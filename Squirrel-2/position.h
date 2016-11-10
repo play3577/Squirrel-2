@@ -204,6 +204,73 @@ public:
 		}
 	}
 
+
+	
+
+	/*
+	これでは遅いよね.....
+	もっとスマートな処理が欲しい
+	*/
+	bool is_uchihu(const Color us, const Square pawnsq) {
+
+		Square frompawn;
+		Color ENEMY = opposite(us);
+		us == BLACK ? frompawn = Square(-1) : frompawn = Square(1);
+
+		//歩の前がKINGでなければそれは打ち歩詰めではない。
+		if (piece_on(pawnsq + frompawn) != KING) { return false; }
+
+		//王の機器は先手でも後手でも同じでも同じ
+		//逃げられる場所は王が動ける範囲で自分の駒がいない場所
+		Bitboard escape = StepEffect[BLACK][KING][pawnsq + frompawn] &~ occ(ENEMY);
+		while (escape.isNot()) {
+
+			Square to = escape.pop();
+			if (is_effect_to(ENEMY, to)) { return true; }
+		}
+
+		return false;
+	}
+
+
+	//toに相手の効きが効いていればそれは自殺手
+	bool is_king_suiside(const Color us, const Square kingto) {
+
+		Color ENEMY = opposite(us);
+		if (is_effect_to(ENEMY, kingto)) { return true; }
+		return false;
+
+	}
+
+	//この関数で打ち歩詰め、王の自殺手を省く。
+	/*
+	指し手が省かれる確率は非常に低いため
+	指し手のloopでこの関数を呼び出すのは後ろの方でいいかもしれない（Stockfish方式）
+	*/
+	bool is_legal(const Move m) {
+
+		Piece movedpiece = moved_piece(m);
+
+		if (piece_type(movedpiece) == KING) {
+			if (is_king_suiside(sidetomove_, move_to(m))) { return false; }
+		}
+
+		bool  isDrop = is_drop(m);
+		if (isDrop&& piece_type(movedpiece) == PAWN) {
+			if (is_uchihu(sidetomove_, move_to(m))) { return false; }
+		}
+
+		//動かす駒は自分の駒
+		ASSERT(piece_color(movedpiece) == c);
+		//fromにいる駒と動かそうとしている駒は同じ
+		ASSERT(!isDrop&&piece_on(move_from(m)) == movedpiece);
+		//取ろうとしている駒は自分の駒ではない
+		ASSERT(piece_on(move_to(m)) == NO_PIECE || piece_color(piece_on(move_to(m))) != c);
+
+		return true;
+	}
+
+
 };
 
 std::ostream& operator<<(std::ostream& os, const Position& pos);
