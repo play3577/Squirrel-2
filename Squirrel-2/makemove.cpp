@@ -560,16 +560,75 @@ ExtMove * move_generation(const Position& pos, ExtMove * movelist)
 }
 
 //王手をかけている駒の利きの聴いていないところに逃げる。
+//上手く動いているかどうかは明日確認する今日はもう眠いのだ(-_-)zzz
 ExtMove * move_eversion(const Position& pos, ExtMove * movelist) {
 
-	//未実装
 	/*王手をかけてきている駒を取る。
-		pinごまは動かしてはいけない
+		２重王手の場合は逃げるしか無い
+		pinごまは動かしてはいけない（コレはislegalで確認する）
 		トビ効きの間に割って入らせる。
 		王が効きから逃げる。
 	*/
+	/*
+	実装方法
+	checkersから王手をかけている駒の効きの場所が立っているbitboardの作成をする
+	checkersのビット数を数える
+	
+	王が逃げる手の作成をする
+	２重王手の場合は奥が逃げる手しか許されないためここで終わる。
+
+	一重王手の場合はここから先
+	王手をかけている駒を取る、betweenに割って入る指し手を生成する
+	*/
+
+	int num_checker = 0;
+	Square ksq = pos.ksq(pos.sidetomove());
+	Square esq;
+	Color ENEMY = opposite(pos.sidetomove());
+	Bitboard checkers = pos.state()->checker;
+	Bitboard enemy_effected = ZeroBB;
+
+	int from2 = ksq << 7;
+	int king2 = add_color(KING, pos.sidetomove())<<17;
 
 
+	while (checkers.isNot()) {
+		esq = checkers.pop();
+		++num_checker;
+		enemy_effected |= effectBB(pos, pos.piece_on(esq), ENEMY, esq);
+
+	}
+
+	ASSERT(num_checker);
+
+	//王の逃げ場
+	Bitboard cankingmove= step_effect(BLACK,KING, ksq)&~pos.occ(pos.sidetomove())&~enemy_effected;
+	//玉が移動した先に効きがあるかどうかはislegalで調べる
+	while (cankingmove.isNot()) {
+		Square to = cankingmove.pop();
+		movelist++->move = make_move2(from2, to, king2);
+	}
+	
+	//２重王手は逃げるしか無い
+	if (num_checker > 1) {
+		return movelist;
+	}
+
+	//後は王手をかけている指し手を取るか王手に割って入るかbetweenBBを開区間で作っておいてよかった..
+	Bitboard target = BetweenBB[ksq][esq] | SquareBB[esq];
+
+	movelist = make_move_PAWN<Cap_Propawn>(pos, target, movelist);
+	movelist = make_move_PAWN<Quiet>(pos, target, movelist);
+	movelist = make_move_LANCE(pos, target, movelist);
+	movelist = make_move_KNIGHT(pos, target, movelist);
+	movelist = make_move_SILVER(pos, target, movelist);
+	movelist = make_move_BISHOP(pos, target, movelist);
+	movelist = make_move_ROOK(pos, target, movelist);
+	movelist = make_move_ASGOLD(pos, target, movelist);
+	movelist = make_move_UNICORN(pos, target, movelist);
+	movelist = make_move_DRAGON(pos, target, movelist);
+	//movelist = make_move_KING(pos, target, movelist);
+	movelist = make_move_DROP(pos, target, movelist);
 
 	return movelist;
 
