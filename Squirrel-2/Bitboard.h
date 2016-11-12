@@ -76,6 +76,8 @@ extern Bitboard CantGo_PAWNLANCE[ColorALL];
 extern Bitboard CantGo_KNIGHT[ColorALL];
 
 extern Direction direct_table[SQ_NUM][SQ_NUM];
+extern Bitboard BetweenBB[SQ_NUM][SQ_NUM];//OK
+
 void bitboard_debug();
 void bitboard_init();
 Bitboard effectBB(const Position &pos, const Piece pt, const Color c, const Square sq);
@@ -83,6 +85,9 @@ Bitboard effectBB(const Position &pos, const Piece pt, const Color c, const Squa
 int change_indian(int i);
 
 void check_directtable();
+
+
+void check_between();
 
 //===============================
 //å¯Ç´ä÷òAä÷êî

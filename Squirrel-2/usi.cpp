@@ -77,6 +77,28 @@ void USI::loop()
 			bool uchihu= pos.is_uchihu(BLACK, SQ5E);
 			cout << uchihu << endl;
 		}
+		else if (token=="suicide") {
+			pos.set("sfen ln6n/s2RSR3/ppp1p1ppp/gb2k2bl/g2p1p2s/4G4/PPPP1PPPP/9/LN1GK1SNL w P 1");
+			Move m = make_move(SQ5D, SQ5E, W_KING);
+			bool suicide = pos.is_king_suiside(WHITE, move_to(m));
+			cout << (suicide)<< endl;
+		}
+		else if(token=="legal1")
+		{
+			//false‚É‚È‚é‚Í‚¸
+			pos.set("sfen lns1kgsnl/1r1p3b1/ppp1gpppp/9/9/4R4/PPPPPPPPP/1B7/LNSGKGSNL w p 1");
+			Move m = make_move(SQ5C, SQ6C,W_GOLD);
+			bool legal = pos.is_legal(m);
+			cout << legal << endl;
+		}
+		else if (token == "legal2")
+		{
+			//true‚É‚È‚é‚Í‚¸
+			pos.set("sfen lns1kgsnl/1r2p2b1/ppp1gpppp/9/9/4R4/PPPPPPPPP/1B7/LNSGKGSNL w p 1");
+			Move m = make_move(SQ5C, SQ6C, W_GOLD);
+			bool legal = pos.is_legal(m);
+			cout << legal << endl;
+		}
 
 	} while (token != "quit");
 

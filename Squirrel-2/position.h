@@ -316,8 +316,8 @@ public:
 	}
 
 
-	//toに相手の効きが効いていればそれは自殺手
-	bool is_king_suiside(const Color us, const Square kingto) {
+	//toに相手の効きが効いていればそれは自殺手//OK
+	bool is_king_suiside(const Color us, const Square kingto) const{
 
 		Color ENEMY = opposite(us);
 		if (is_effect_to(ENEMY, kingto)) { return true; }
@@ -331,8 +331,16 @@ public:
 	指し手が省かれる確率は非常に低いため
 	指し手のloopでこの関数を呼び出すのは後ろの方でいいかもしれない（Stockfish方式）
 	＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝PINされている駒を動かさないようにする処理もいる！！！！！！！！
+
+
+	この関数のpin駒の処理なかなか良くないので後で改良する
+
+	ちゃんと動くか確認する
+
+	２つの状況でだけ確認したがちゃんと動いてた
+	しかしすべての状況に対してちゃんと動くかどうかは分からないのでランダムプレイヤーで局面をすすめてテストする関数を用意する
 	*/
-	bool is_legal(const Move m) {
+	bool is_legal(const Move m)const {
 
 		Piece movedpiece = moved_piece(m);
 		Square from = move_from(m);
@@ -344,6 +352,7 @@ public:
 			if (is_king_suiside(sidetomove_, to)) { return false; }
 		}
 
+		//打ち歩詰め
 		bool  isDrop = is_drop(m);
 		if (isDrop&& piece_type(movedpiece) == PAWN) {
 			if (is_uchihu(sidetomove_, to)) { return false; }
@@ -367,14 +376,15 @@ public:
 			//fromが縦横ナナメの関係にいる。
 			if (d != Direction(0)) {
 
-				/*fromとksqの間に他の駒があるかどうかの確認も必要！*/
-
-				Direction ksq2to = direct_table[to][our_ksq];
-				//toが同じdirectionではない
-				if (ksq2to != d) {
-					//fromにd方向から飛び効きが効いていた場合は飛び効きを許してしまっている。
-					if (is_longeffectdirection(sidetomove(), from, d)) { return false; }
-
+				/*fromとksqの間に他の駒があるかどうかの確認も必要！*///betweenBBの作成が必要
+				//他の駒がある場合はそこで飛び効きが遮られるのでダイジョーブ
+				if (!(BetweenBB[from][our_ksq]&occ_all()).isNot()) {
+					Direction ksq2to = direct_table[to][our_ksq];
+					//toが同じdirectionではない
+					if (ksq2to != d) {
+						//fromにd方向から飛び効きが効いていた場合は飛び効きを許してしまっている。
+						if (is_longeffectdirection(sidetomove(), from, d)) { return false; }
+					}
 				}
 			}
 		}

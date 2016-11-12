@@ -17,6 +17,10 @@ Bitboard canPromoteBB[ColorALL];//OK
 
 Bitboard StepEffect[ColorALL][PT_ALL][SQ_NUM];//OK
 
+//SQ1とSQ2の間が1になっているbitboard
+//間というのは(SQ1,SQ2) つまり開区間とする
+Bitboard BetweenBB[SQ_NUM][SQ_NUM];
+
 //127・・7bitすべて１の場合 
 //飛車の効きと角の利きは前後対称
 //成った場合はlongeffectに王の機器を足せばいい。
@@ -303,10 +307,6 @@ void bitboard_init()
 	*/
 	//斜めプラス４５度
 	//この方法では上から角の効きが伸びてきてしまうということが起こりうる！！(解決済み)
-
-	/*
-	この方法でテーブル作るのはまずい！！！考え直し！！！！！
-	*/
 	for (Square sq = SQ1A; sq < SQ_NUM; sq++) {
 		File sqfile = sqtofile(sq);
 		Rank sqrank = sqtorank(sq);
@@ -381,7 +381,9 @@ void bitboard_init()
 
 	make_shiftMinus45();
 
-
+	//===================
+	//direction tableの作成（bitboardではないけれどここで作成してしまう）
+	//===================
 	for (Square from = SQ_ZERO; from < SQ_NUM; from++) {
 
 		Direction d;
@@ -402,6 +404,32 @@ void bitboard_init()
 		}
 	}
 
+
+	//============================bitweenBBの作成
+	//上で作成したdirectiontableを用いれば簡単に作成できると考えられる
+	for (Square from = SQ_ZERO; from < SQ_NUM; from++) {
+		for (Square to = SQ_ZERO; to < SQ_NUM; to++) {
+
+			Direction d = direct_table[from][to];
+
+			if (d != Direction(0)) {
+
+				Square beteen = from + Square(d);
+
+				//rankがずれてるかどうかとか確認してないけどdirection_tableでそのあたりは確認済みであるため大丈夫だと考えられる。
+				while(beteen!=to){
+				
+					BetweenBB[from][to] |= SquareBB[beteen];
+
+					beteen += Square(d);
+				
+				}
+			}
+
+		}
+	}
+
+	//check_between();
 	//check_directtable();
 	//bitboard_debug();
 }
@@ -662,6 +690,21 @@ void check_directtable()
 		}
 	}
 	cout << endl;
+
+
+}
+
+void check_between()
+{
+	for (Square from = SQ_ZERO; from < SQ_NUM; from++) {
+		for (Square to = SQ_ZERO; to < SQ_NUM; to++) {
+
+			cout << "from "<<from << " to "<<to<< endl;
+			cout << BetweenBB[from][to] << endl;
+
+
+		}
+	}
 
 
 }
