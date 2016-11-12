@@ -3,6 +3,8 @@
 #include "benchmark.h"
 #include "search.h"
 #include "misc.h"
+#include "fundation.h"
+//#include "makemove.h"
 
 #include <iostream>
 #include <string>
@@ -13,6 +15,11 @@ using namespace USI;
 
 const string maturi = "sfen l6nl/5+P1gk/2np1S3/p1p4Pp/3P2Sp1/1PPb2P1P/P5GS1/R8/LN4bKL w GR5pnsg 1";
 const string max = "sfen R8/2K1S1SSk/4B4/9/9/9/9/9/1L1L1L3 b RBGSNLP3g3n17p 1";
+
+//‘Å‚¿•à‹l‚ß‚Ì‹Ç–Ê
+//"sfen ln6n/s2RSR3/ppp1p1ppp/gb2k2bl/g2p1p2s/4G4/PPPP1PPPP/9/LN1GK1SNL b P 1"  
+
+
 
 void USI::loop()
 {
@@ -52,7 +59,24 @@ void USI::loop()
 		else if (token == "dp") { std::cout << pos << std::endl; }//debug position
 		else if (token == "ebb") { pos.check_effecttoBB(); }
 		else if (token == "pbb") { pos.print_existpawnBB(); }
-
+		else if (token == "testpbb") {
+			StateInfo si;
+			pos.set("sfen lnsgkgsnl/1r5b1/ppppppppp/P8/9/9/1PPPPPPPP/1B5R1/LNSGKGSNL b - 1");
+			Move m = make_movepromote(SQ9D, SQ9C,PAWN);
+			cout << pos << endl;
+			pos.do_move(m, &si);
+			cout << pos << endl;
+			pos.print_existpawnBB();
+			pos.undo_move();
+			cout << pos << endl;
+			pos.print_existpawnBB();
+		}
+		else if (token == "uchihu") {
+			//‘Å‚¿•à‹l‚ß‚Ì‹Ç–Ê
+			pos.set("sfen ln6n/s2RSR3/ppp1p1ppp/gb2k2bl/g2p1p2s/4G4/PPPP1PPPP/9/LN1GK1SNL b P 1");
+			bool uchihu= pos.is_uchihu(BLACK, SQ5E);
+			cout << uchihu << endl;
+		}
 
 	} while (token != "quit");
 

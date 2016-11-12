@@ -167,7 +167,7 @@ void Position::put_piece(const Color c, const Piece pt, const Square sq)
 駒得の差分計算（あとで）
 
 */
-
+//pbbの処理OK
 void Position::do_move(Move m, StateInfo * newst)
 {
 	//stateinfoの更新
@@ -253,8 +253,11 @@ void Position::do_move(Move m, StateInfo * newst)
 
 			pcboard[to] = promotepiece(movedpiece);
 			put_piece(us, propt, to);
-			//toに効きを追加する
-			//add_effect(us, propt, to);
+			//歩が成った場合はその筋にはpawnを打てるように成る
+			if (propt = PRO_PAWN) {
+				remove_existpawnBB(us, to);
+			}
+
 		}
 
 		//駒の捕獲
@@ -297,7 +300,6 @@ void Position::do_move(Move m, StateInfo * newst)
 	if (is_effect_to(opposite(sidetomove_), ksq(sidetomove_))) {
 		st->inCheck = true;
 		st->checker = effect_toBB(opposite(sidetomove_), ksq(sidetomove_));
-
 	}
 
 
@@ -346,6 +348,11 @@ void Position::undo_move()
 		Piece from_pt = piece_type(movedpiece);
 		put_piece(from_c, from_pt, from);
 		put_rotate(from);
+
+		if (is_promote(LMove) && piece_type(afterpiece) == PRO_PAWN) {
+			add_existpawnBB(piece_color(afterpiece), to);
+		}
+
 		//駒の捕獲がある場合
 		if (capture != NO_PIECE) {
 			Piece pt;

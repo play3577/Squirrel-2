@@ -129,38 +129,42 @@ public:
 	調べ方は
 	駒種毎にtoに相手の色の駒を置いてみたときの効きの範囲にその駒種が存在すればそれはそのマスに利きが効いているということに成る
 	*/
-	Bitboard effect_toBB(const Color US, const Square to) {
+	Bitboard effect_toBB(const Color US, const Square to)const {
 
 		Color ENEMY = opposite(US);
 
 		/*
 		盤上にUNICORN,DRAGONがいるかどうかも確認したほうが素早く処理できるか？？？
 		*/
+		//コレ飛び機器について毎回switch文で条件分岐しているから時間が無駄！飛び効きは駒種別に利きを求める関数を作成する！！！
+		//なんでこんなことにも気づかなかったのか(´；ω；｀)
 		return
 			(step_effect(ENEMY, PAWN, to)&occ_pt(US, PAWN))
-			| (long_effect(*this, ENEMY, LANCE, to)&occ_pt(US, LANCE))//利きを求めるにはoccupied が複数いるのでposを渡したほうが安全か？（あとでposを渡すときとoccをそれぞれ渡すときとで速さを調べる。）
+			| (lance_effect(occ_all(), ENEMY, to)&occ_pt(US, LANCE))
 			| (step_effect(ENEMY, KNIGHT, to)&occ_pt(US, KNIGHT))
 			| (step_effect(ENEMY, SILVER, to)&occ_pt(US, SILVER))
 			| (step_effect(ENEMY, GOLD, to)&(occ_pt(US, GOLD) | occ_pt(US, PRO_PAWN) | occ_pt(US, PRO_LANCE) | occ_pt(US, PRO_NIGHT) | occ_pt(US, PRO_SILVER)))
 			| (step_effect(ENEMY, KING, to)&occ_pt(US, KING))
-			| (long_effect(*this, ENEMY, ROOK, to)&occ_pt(US, ROOK))
-			| (long_effect(*this, ENEMY, BISHOP, to)&occ_pt(US, BISHOP))
-			| (long_effect(*this, ENEMY, DRAGON, to)&occ_pt(US, DRAGON))
-			| (long_effect(*this, ENEMY, UNICORN, to)&occ_pt(US, UNICORN));
+			| (rook_effect(occ_all(), occ_90(), to)&occ_pt(US, ROOK))
+			| (bishop_effect(occ_plus45(), occ_minus45(), to)&occ_pt(US, BISHOP))
+			| (occ_pt(US, DRAGON)&dragon_effect(occ_all(), occ_90(), to))
+			| (occ_pt(US, UNICORN)&unicorn_effect(occ_plus45(), occ_minus45(), to));
+			
 	}
 
 	//c側の効きがtoに効いているかどうか調べる為の関数。
 	//利きを求めるにはoccupied が複数いるのでposを渡したほうが安全か？（あとでposを渡すときとoccをそれぞれ渡すときとで速さを調べる。）
-	bool is_effect_to(const Color US, const Square to) {
+	bool is_effect_to(const Color US, const Square to)const {
 
 		Color ENEMY = opposite(US);
 
-		if ((long_effect(*this, ENEMY, ROOK, to)&occ_pt(US, ROOK)).isNot()) { return true; }
-		if ((long_effect(*this, ENEMY, BISHOP, to)&occ_pt(US, BISHOP)).isNot()) { return true; }
-		if ((long_effect(*this, ENEMY, DRAGON, to)&occ_pt(US, DRAGON)).isNot()) { return true; }
-		if ((long_effect(*this, ENEMY, UNICORN, to)&occ_pt(US, UNICORN)).isNot()) { return true; }
+		
+		if ((rook_effect(occ_all(), occ_90(), to)&occ_pt(US, ROOK)).isNot()) { return true; }
+		if ((bishop_effect(occ_plus45(), occ_minus45(), to)&occ_pt(US, BISHOP)).isNot()) { return true; }
+		if ((occ_pt(US, DRAGON)&dragon_effect(occ_all(), occ_90(), to)).isNot()) { return true; }
+		if ((occ_pt(US, UNICORN)&unicorn_effect(occ_plus45(), occ_minus45(), to)).isNot()) { return true; }
+		if ((lance_effect(occ_all(), ENEMY, to)&occ_pt(US, LANCE)).isNot()) { return true; }
 		if ((step_effect(ENEMY, PAWN, to)&occ_pt(US, PAWN)).isNot()) { return true; }
-		if ((long_effect(*this, ENEMY, LANCE, to)&occ_pt(US, LANCE)).isNot()) { return true; }
 		if ((step_effect(ENEMY, KNIGHT, to)&occ_pt(US, KNIGHT)).isNot()) { return true; }
 		if ((step_effect(ENEMY, SILVER, to)&occ_pt(US, SILVER)).isNot()) { return true; }
 		if ((step_effect(ENEMY, GOLD, to)&(occ_pt(US, GOLD) | occ_pt(US, PRO_PAWN) | occ_pt(US, PRO_LANCE) | occ_pt(US, PRO_NIGHT) | occ_pt(US, PRO_SILVER))).isNot()) { return true; }
@@ -170,7 +174,7 @@ public:
 		return false;
 	}
 
-	void check_effecttoBB() {
+	void check_effecttoBB()const {
 		for (Color c = BLACK; c <= ColorALL; c++) {
 			cout << c << endl;
 			for (Square sq = SQ1A; sq < SQ_NUM; sq++) {
@@ -196,29 +200,108 @@ public:
 		ExistPawnBB[c] |=FileBB[sqtofile(sq)];
 	}
 
-	void print_existpawnBB() {
+	void print_existpawnBB() const{
 		cout << " print existpawn BB " << endl;
 		for (Color c = BLACK; c < ColorALL; c++) {
 			cout << " color " << c << endl;
 			cout << ExistPawnBB[c] << endl;
 		}
 	}
+/*
+	uint8_t obstacle_plus45;
+	uint8_t obstacle_Minus45;
+
+	obstacle_plus45 = (occ_p45.b[index_plus45(sq)] >> shift_plus45(sq))&effectmask;
+	obstacle_Minus45 = (occ_m45.b[index_Minus45(sq)] >> shift_Minus45(sq))&effectmask;
+	return  LongBishopEffect_plus45[sq][obstacle_plus45] | LongBishopEffect_minus45[sq][(obstacle_Minus45)];
 
 
+	uint8_t obstacle_yoko;
+
+	obstacle_tate = (occ_tate.b[index_tate(sq)] >> shift_tate(sq))&effectmask;//7bitしか必要ないのでintでいいか（で十分か？？？？）
+	obstacle_yoko = (occ_yoko.b[index_yoko(sq)] >> shift_yoko(sq))&effectmask;
+	return LongRookEffect_tate[sq][obstacle_tate] | LongRookEffect_yoko[sq][obstacle_yoko];
+*/
+
+	//UPは手番に関係なく上方向
+	/*
+	Direction方向からの飛び効きが来ているかどうか
+	*/
+	bool is_longeffectdirection(const Color c,const Square sq,const Direction d) const{
+
+		Color ENEMY = opposite(c);
+		uint8_t obstacle_tate;
+		uint8_t obstacle_plus45;
+		uint8_t obstacle_Minus45;
+		uint8_t obstacle_yoko;
+		switch (d)
+		{
+
+		case UP:
+			obstacle_tate = (occ_all().b[index_tate(sq)] >> shift_tate(sq))&effectmask;
+			//UPの場合でもDOWNに跳駒がいるわけがないので（down方向には玉が入るため存在されては困る）＆INfrontofBBとかしなくてもいい
+			return ((LongRookEffect_tate[sq][obstacle_tate])&(occ_pt(ENEMY, ROOK) | occ_pt(ENEMY, DRAGON) | occ_pt(ENEMY, LANCE))).isNot();
+			break;
+
+		case RightUP:
+			obstacle_plus45 = (occ_plus45().b[index_plus45(sq)] >> shift_plus45(sq))&effectmask;
+			return (LongBishopEffect_plus45[sq][obstacle_plus45] & (occ_pt(ENEMY, BISHOP) | occ_pt(ENEMY, UNICORN))).isNot();
+			break;
+
+		case Right:
+			obstacle_yoko = (occ_90().b[index_yoko(sq)] >> shift_yoko(sq))&effectmask;
+			return (LongRookEffect_yoko[sq][obstacle_yoko] & (occ_pt(ENEMY, ROOK) | occ_pt(ENEMY, DRAGON))).isNot();
+			break;
+
+		case RightDOWN:
+			obstacle_Minus45 = (occ_minus45().b[index_Minus45(sq)] >> shift_Minus45(sq))&effectmask;
+			return  (LongBishopEffect_minus45[sq][(obstacle_Minus45)] & (occ_pt(ENEMY, BISHOP) | occ_pt(ENEMY, UNICORN))).isNot();
+			break;
+
+		case DOWN:
+			uint8_t obstacle_tate;
+			obstacle_tate = (occ_all().b[index_tate(sq)] >> shift_tate(sq))&effectmask;
+			return ((LongRookEffect_tate[sq][obstacle_tate])&(occ_pt(ENEMY, ROOK) |occ_pt(ENEMY,DRAGON)| occ_pt(ENEMY, LANCE))).isNot();
+			break;
+
+		case LeftDOWN:
+			obstacle_plus45 = (occ_plus45().b[index_plus45(sq)] >> shift_plus45(sq))&effectmask;
+			return (LongBishopEffect_plus45[sq][obstacle_plus45] & (occ_pt(ENEMY, BISHOP) | occ_pt(ENEMY, UNICORN))).isNot();
+			break;
+
+		case Left:
+			obstacle_yoko = (occ_90().b[index_yoko(sq)] >> shift_yoko(sq))&effectmask;
+			return (LongRookEffect_yoko[sq][obstacle_yoko] & (occ_pt(ENEMY, ROOK) | occ_pt(ENEMY, DRAGON))).isNot();
+			break;
+
+		case LeftUP:
+			obstacle_Minus45 = (occ_minus45().b[index_Minus45(sq)] >> shift_Minus45(sq))&effectmask;
+			return  (LongBishopEffect_minus45[sq][(obstacle_Minus45)] & (occ_pt(ENEMY, BISHOP) | occ_pt(ENEMY, UNICORN))).isNot();
+			break;
+
+		default:
+			UNREACHABLE;
+			return false;
+			break;
+		}
+
+	}
 	
 
 	/*
 	これでは遅いよね.....
 	もっとスマートな処理が欲しい
 	*/
-	bool is_uchihu(const Color us, const Square pawnsq) {
+	//ちゃんと動いてるかチェックする！！(ちゃんと動いた)
+	bool is_uchihu(const Color us, const Square pawnsq)const {
 
 		Square frompawn;
 		Color ENEMY = opposite(us);
 		us == BLACK ? frompawn = Square(-1) : frompawn = Square(1);
+		Piece ENEMYKING = (us == BLACK) ? W_KING : B_KING;
 
 		//歩の前がKINGでなければそれは打ち歩詰めではない。
-		if (piece_on(pawnsq + frompawn) != KING) { return false; }
+		if (piece_on(pawnsq + frompawn) != ENEMYKING) { return false; }
 
 		//王の機器は先手でも後手でも同じでも同じ
 		//逃げられる場所は王が動ける範囲で自分の駒がいない場所
@@ -226,10 +309,10 @@ public:
 		while (escape.isNot()) {
 
 			Square to = escape.pop();
-			if (is_effect_to(ENEMY, to)) { return true; }
+			if (!is_effect_to(ENEMY, to)) { return false; }
 		}
 
-		return false;
+		return true;
 	}
 
 
@@ -242,6 +325,7 @@ public:
 
 	}
 
+
 	//この関数で打ち歩詰め、王の自殺手を省く。
 	/*
 	指し手が省かれる確率は非常に低いため
@@ -251,27 +335,58 @@ public:
 	bool is_legal(const Move m) {
 
 		Piece movedpiece = moved_piece(m);
+		Square from = move_from(m);
+		Square to = move_to(m);
+		Square our_ksq = ksq(sidetomove());
 
+		//王の自殺手
 		if (piece_type(movedpiece) == KING) {
-			if (is_king_suiside(sidetomove_, move_to(m))) { return false; }
+			if (is_king_suiside(sidetomove_, to)) { return false; }
 		}
 
 		bool  isDrop = is_drop(m);
 		if (isDrop&& piece_type(movedpiece) == PAWN) {
-			if (is_uchihu(sidetomove_, move_to(m))) { return false; }
+			if (is_uchihu(sidetomove_, to)) { return false; }
 		}
 
-		//pinされている駒を動かさないようにする
+		/*
+		pinされていた駒を動かしてしまっても相手のトビ効きが玉を貫通しないかどうか確認
+		*/
+		//Bitboard occ2 = occ_all()|SquareBB[move_to(m)]&SquareBB[move_from(m)];
+		/*
+		飛び効きが貫通しないかどうか確認するには
+		駒と王が縦横斜めの関係に無いか調べる。
+		縦横斜めのいずれかの方向にあればfromにその方向からの飛び効きが来ていないか調べる。
+		来ていた場合はtoがその直線上の移動であるか調べる。
+		その直線から外れる移動であればそれはpinされていた駒が動いたことに成る
 
+		ーーーーーーーーーーーーーーーーfromとksqの間に他の駒があるかどうかの確認も必要！
+		*/
+		if (!isDrop) {
+			Direction d = direct_table[from][our_ksq];
+			//fromが縦横ナナメの関係にいる。
+			if (d != Direction(0)) {
 
+				/*fromとksqの間に他の駒があるかどうかの確認も必要！*/
+
+				Direction ksq2to = direct_table[to][our_ksq];
+				//toが同じdirectionではない
+				if (ksq2to != d) {
+					//fromにd方向から飛び効きが効いていた場合は飛び効きを許してしまっている。
+					if (is_longeffectdirection(sidetomove(), from, d)) { return false; }
+
+				}
+			}
+		}
 
 		//動かす駒は自分の駒
-		ASSERT(piece_color(movedpiece) == c);
+		ASSERT(piece_color(movedpiece) == sidetomove_);
 		//fromにいる駒と動かそうとしている駒は同じ
-		ASSERT(!isDrop&&piece_on(move_from(m)) == movedpiece);
+		ASSERT(!isDrop&&piece_on(from) == movedpiece);
 		//取ろうとしている駒は自分の駒ではない
-		ASSERT(piece_on(move_to(m)) == NO_PIECE || piece_color(piece_on(move_to(m))) != c);
-
+		ASSERT(piece_on(to) == NO_PIECE || piece_color(piece_on(to)) != sidetomove_);
+		//取ろうとしている駒は玉ではない
+		ASSERT(piece_type(piece_on(to)) != KING);
 		return true;
 	}
 

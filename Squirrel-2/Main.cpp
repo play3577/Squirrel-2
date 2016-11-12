@@ -11,6 +11,7 @@ int main() {
 
 	bitboard_init();
 
+#ifdef TEST
 	/*Position pos;*/
 
 	//bitboard_debug();
@@ -73,8 +74,6 @@ int main() {
 	//pos.set("sfen 1nsgkgsnl/1r5b1/ppppppppp/9/9/9/PP1P+P+PP2/1+B5R1/LNSGKGS1L b P 1");
 	//pos.set("sfen lnsgkgsnl/1r5b1/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL b PLNGSBR 1");
 
-
-	Position pos;
 	//StateInfo si;
 	//ExtMove moves_[600],*end;
 	//end = moves_;
@@ -97,6 +96,12 @@ int main() {
 	//pos.set("sfen l6nl/5+P1gk/2np1S3/p1p4Pp/3P2Sp1/1PPb2P1P/P5GS1/R8/LN4bKL w GR5pnsg 1");//éwÇµéËê∂ê¨ç’ÇËÇÃã«ñ 
 	//cout << pos << endl;
 	//speed_genmove(pos);
+#endif
+
+	/*Position pos;
+	StateInfo si;*/
+
+
 
 	USI::loop();
 	return 0;

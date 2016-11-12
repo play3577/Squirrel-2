@@ -597,8 +597,55 @@ Bitboard long_effect(const Position &pos, const Color c, const Piece pt, const S
 
 }
 
+Bitboard lance_effect(const Bitboard& occ, const Color c, const Square sq) {
 
+	uint8_t obstacle_tate;
 
+	obstacle_tate = (occ.b[index_tate(sq)] >> shift_tate(sq))&effectmask;//7bitしか必要ないのでintでいいか（で十分か？？？？）
+	return LongRookEffect_tate[sq][obstacle_tate] & InFront_BB[c][sqtorank(sq)];
+}
+
+Bitboard rook_effect(const Bitboard& occ_tate, const Bitboard& occ_yoko, const Square sq) {
+
+	uint8_t obstacle_tate;
+	uint8_t obstacle_yoko;
+
+	obstacle_tate = (occ_tate.b[index_tate(sq)] >> shift_tate(sq))&effectmask;//7bitしか必要ないのでintでいいか（で十分か？？？？）
+	obstacle_yoko = (occ_yoko.b[index_yoko(sq)] >> shift_yoko(sq))&effectmask;
+	return LongRookEffect_tate[sq][obstacle_tate] | LongRookEffect_yoko[sq][obstacle_yoko];
+}
+
+Bitboard bishop_effect(const Bitboard& occ_p45, const Bitboard& occ_m45, const Square sq) {
+
+	uint8_t obstacle_plus45;
+	uint8_t obstacle_Minus45;
+
+	obstacle_plus45 = (occ_p45.b[index_plus45(sq)] >> shift_plus45(sq))&effectmask;
+	obstacle_Minus45 = (occ_m45.b[index_Minus45(sq)] >> shift_Minus45(sq))&effectmask;
+	return  LongBishopEffect_plus45[sq][obstacle_plus45] | LongBishopEffect_minus45[sq][(obstacle_Minus45)];
+
+}
+
+Bitboard dragon_effect(const Bitboard& occ_tate, const Bitboard& occ_yoko, const Square sq) {
+
+	uint8_t obstacle_tate;
+	uint8_t obstacle_yoko;
+
+	obstacle_tate = (occ_tate.b[index_tate(sq)] >> shift_tate(sq))&effectmask;//7bitしか必要ないのでintでいいか（で十分か？？？？）
+	obstacle_yoko = (occ_yoko.b[index_yoko(sq)] >> shift_yoko(sq))&effectmask;
+	return LongRookEffect_tate[sq][obstacle_tate] | LongRookEffect_yoko[sq][obstacle_yoko] | StepEffect[BLACK][KING][sq];
+}
+
+Bitboard unicorn_effect(const Bitboard& occ_p45, const Bitboard& occ_m45, const Square sq) {
+
+	uint8_t obstacle_plus45;
+	uint8_t obstacle_Minus45;
+
+	obstacle_plus45 = (occ_p45.b[index_plus45(sq)] >> shift_plus45(sq))&effectmask;
+	obstacle_Minus45 = (occ_m45.b[index_Minus45(sq)] >> shift_Minus45(sq))&effectmask;
+	return  LongBishopEffect_plus45[sq][obstacle_plus45] | LongBishopEffect_minus45[sq][(obstacle_Minus45)] | StepEffect[BLACK][KING][sq];
+
+}
 
 void check_directtable()
 {
