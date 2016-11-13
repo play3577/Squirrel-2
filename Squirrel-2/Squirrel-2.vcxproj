@@ -152,6 +152,7 @@
     <ClInclude Include="fundation.h" />
     <ClInclude Include="makemove.h" />
     <ClInclude Include="misc.h" />
+    <ClInclude Include="movepicker.h" />
     <ClInclude Include="occupied.h" />
     <ClInclude Include="position.h" />
     <ClInclude Include="usi.h" />
@@ -163,6 +164,7 @@
     <ClCompile Include="fundation.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="makemove.cpp" />
+    <ClCompile Include="movepicker.cpp" />
     <ClCompile Include="occupied.cpp" />
     <ClCompile Include="position.cpp" />
     <ClCompile Include="usi.cpp" />

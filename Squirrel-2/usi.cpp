@@ -4,6 +4,7 @@
 #include "search.h"
 #include "misc.h"
 #include "fundation.h"
+#include "movepicker.h"
 //#include "makemove.h"
 
 #include <iostream>
@@ -98,6 +99,18 @@ void USI::loop()
 			Move m = make_move(SQ5C, SQ6C, W_GOLD);
 			bool legal = pos.is_legal(m);
 			cout << legal << endl;
+		}
+		else if (token == "mpick") {
+
+			movepicker mp(pos);
+			Move m;
+			StateInfo si;
+			while ((m = mp.return_nextmove()) != MOVE_NONE) {
+				cout << m << endl;
+				pos.do_move(m, &si);
+				pos.undo_move();
+			}
+
 		}
 
 	} while (token != "quit");
