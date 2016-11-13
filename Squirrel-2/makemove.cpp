@@ -563,6 +563,8 @@ ExtMove * move_generation(const Position& pos, ExtMove * movelist)
 //上手く動いているかどうかは明日確認する今日はもう眠いのだ(-_-)zzz
 ExtMove * move_eversion(const Position& pos, ExtMove * movelist) {
 
+	ASSERT(pos.is_incheck());
+	ASSERT(pos.state()->checker.isNot());
 	/*王手をかけてきている駒を取る。
 		２重王手の場合は逃げるしか無い
 		pinごまは動かしてはいけない（コレはislegalで確認する）
@@ -594,6 +596,12 @@ ExtMove * move_eversion(const Position& pos, ExtMove * movelist) {
 
 	while (checkers.isNot()) {
 		esq = checkers.pop();
+
+
+		//王手がかかっていないのにincheckになってしまっている
+		if (pos.piece_on(esq) == NO_PIECE) { cout << pos << endl; ASSERT(0); };
+		if(piece_color(pos.piece_on(esq)) != ENEMY) { cout << pos << endl; ASSERT(0); }
+
 		++num_checker;
 		enemy_effected |= effectBB(pos, piece_type(pos.piece_on(esq)), ENEMY, esq);
 
@@ -636,19 +644,16 @@ ExtMove * move_eversion(const Position& pos, ExtMove * movelist) {
 
 
 
-
-
-
-
-
-
 ExtMove * test_move_generation(const Position & pos, ExtMove * movelist)
 {
-
-
-	movelist = move_generation<Cap_Propawn>(pos, movelist);
-	movelist = move_generation<Quiet>(pos, movelist);
-	movelist = move_generation<Drop>(pos, movelist);
+	if (pos.is_incheck()) {
+		movelist = move_eversion(pos, movelist);
+	}
+	else {
+		movelist = move_generation<Cap_Propawn>(pos, movelist);
+		movelist = move_generation<Quiet>(pos, movelist);
+		movelist = move_generation<Drop>(pos, movelist);
+	}
 	return movelist;
 }
 

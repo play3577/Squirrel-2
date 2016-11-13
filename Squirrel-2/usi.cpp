@@ -5,6 +5,7 @@
 #include "misc.h"
 #include "fundation.h"
 #include "movepicker.h"
+#include "Thread.h"
 //#include "makemove.h"
 
 #include <iostream>
@@ -27,6 +28,7 @@ const string oute = "sfen lnsgk1snl/7b1/ppppppppp/9/4r4/9/PPPg1PPPP/1B5R1/LNSGKG
 void USI::loop()
 {
 	Position pos;
+	Thread th;
 	string token, cmd;
 
 	//pos.set_hirate();
@@ -45,8 +47,14 @@ void USI::loop()
 			cout << "usiok" << endl;
 		}
 		else if (token == "go") {
-			cout << "未実装" << endl;
-		
+			//cout << "未実装" << endl;
+			limit.starttime = now();
+			Value v;
+			th.set(pos);
+			v = th.think();
+			cout << " 評価値 " << v << endl;
+
+
 		}
 		else if (token == "gm") {
 			//指し手生成速度計測

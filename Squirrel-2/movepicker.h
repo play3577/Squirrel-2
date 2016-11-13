@@ -18,7 +18,6 @@ inline Stage operator++(Stage& d, int) { Stage prev = d; d = Stage(int(d) + 1); 
 
 class movepicker {
 
-
 private:
 	ExtMove move_[600], *current_, *end_;
 	Stage st;
@@ -40,7 +39,5 @@ public:
 	}
 
 	Move return_nextmove();
-
-
 
 };

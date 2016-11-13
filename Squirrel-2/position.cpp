@@ -1,6 +1,7 @@
 #include "position.h"
 #include "misc.h"
 #include "Bitboard.h"
+#include "evaluate.h"
 #include <sstream>
 
 Sfen2Piece Sfen2Piece_;
@@ -116,6 +117,10 @@ void Position::set(std::string sfen)
 		st->checker = effect_toBB(opposite(sidetomove_), ksq(sidetomove_));
 
 	}
+
+	st->material = Eval::eval_material(*this);
+
+
 
 	cout << *this << endl;
 
@@ -469,8 +474,11 @@ std::ostream & operator<<(std::ostream & os, const Position & pos)
 		}
 	}*/
 	
+	os << "ksq black " << pos.ksq(BLACK) << " white " << pos.ksq(WHITE) << endl;
+
 	os << " 手番 " << pos.sidetomove() << endl;
 
+	os << " 評価値　コマ割: " << pos.state()->material << endl;
 
 	
 

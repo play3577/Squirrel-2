@@ -282,6 +282,17 @@ constexpr Direction direct[Direct_NUM] = {
 std::ostream& operator << (std::ostream& os, Direction d);
 
 
+
+enum Depth {
+
+	HALF_PLY = 1,
+	ONE_PLY = 2,
+	MAX_DEPTH = 64,
+
+};
+
+
+
 #define ENABLE_OPERATORS_ON(T)                                                  \
   inline T operator+(const T d1, const T d2) { return T(int(d1) + int(d2)); }   \
   inline T operator-(const T d1, const T d2) { return T(int(d1) - int(d2)); }   \
@@ -306,3 +317,5 @@ ENABLE_OPERATORS_ON(File)
 ENABLE_OPERATORS_ON(Piece)
 ENABLE_OPERATORS_ON(Color)
 ENABLE_OPERATORS_ON(Hand)
+ENABLE_OPERATORS_ON(Depth)
+ENABLE_OPERATORS_ON(Value)

@@ -564,6 +564,7 @@ Bitboard effectBB(const Position &pos,const Piece pt, const Color c, const Squar
 		return LongRookEffect_tate[sq][obstacle_tate] | LongRookEffect_yoko[sq][obstacle_yoko] | StepEffect[c][KING][sq];
 		break;
 	default:
+		cout << pos << endl;
 		ASSERT(0);
 		//return;
 		break;

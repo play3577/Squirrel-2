@@ -14,6 +14,7 @@ using namespace std;
 #define	 sfen_max    "sfen R8/2K1S1SSk/4B4/9/9/9/9/9/1L1L1L3 b RBGSNLP3g17p3n 1"
 
 
+struct Thread;
 
 /*
 やっぱ利きテーブルを持つの差分計算とか簡単じゃないのでやめる
@@ -58,6 +59,8 @@ private:
 	StateInfo initSt;//st*が最初に指しておくStateinfo
 	Color sidetomove_;
 	Hand hands[ColorALL];
+
+	Thread* searcherthread;
 
 	uint64_t nodes;
 
@@ -120,9 +123,13 @@ public:
 
 	void check_occbitboard()const;
 
+	void set_searcherthread(Thread *th) {
+		searcherthread = th;
+	}
 
+	Thread* searcher() const { return searcherthread; }
 
-
+	uint64_t searched_nodes()const { return nodes; }
 
 	//c側の効きがtoに効いているかどうか調べる為の関数。
 	/*
