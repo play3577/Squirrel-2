@@ -392,7 +392,7 @@ public:
 		//“®‚©‚·‹î‚ÍŽ©•ª‚Ì‹î
 		ASSERT(piece_color(movedpiece) == sidetomove_);
 		//from‚É‚¢‚é‹î‚Æ“®‚©‚»‚¤‚Æ‚µ‚Ä‚¢‚é‹î‚Í“¯‚¶
-		ASSERT(!isDrop&&piece_on(from) == movedpiece);
+		if (!isDrop) { ASSERT(piece_on(from) == movedpiece); }
 		//Žæ‚ë‚¤‚Æ‚µ‚Ä‚¢‚é‹î‚ÍŽ©•ª‚Ì‹î‚Å‚Í‚È‚¢
 		ASSERT(piece_on(to) == NO_PIECE || piece_color(piece_on(to)) != sidetomove_);
 		//Žæ‚ë‚¤‚Æ‚µ‚Ä‚¢‚é‹î‚Í‹Ê‚Å‚Í‚È‚¢

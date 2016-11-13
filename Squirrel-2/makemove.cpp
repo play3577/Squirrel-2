@@ -595,7 +595,7 @@ ExtMove * move_eversion(const Position& pos, ExtMove * movelist) {
 	while (checkers.isNot()) {
 		esq = checkers.pop();
 		++num_checker;
-		enemy_effected |= effectBB(pos, pos.piece_on(esq), ENEMY, esq);
+		enemy_effected |= effectBB(pos, piece_type(pos.piece_on(esq)), ENEMY, esq);
 
 	}
 

@@ -117,10 +117,6 @@ void Position::set(std::string sfen)
 
 	}
 
-
-
-
-
 	cout << *this << endl;
 
 #ifdef CHECKPOS
