@@ -160,17 +160,28 @@ void Position::put_piece(const Color c, const Piece pt, const Square sq)
 }
 
 /*
-効きの更新（あとで）
-飛び機器があるため効きの更新はそんなに単純に計算はできない！！！！！！（どうすれば素早く機器の更新ができるのか......）
+効きの更新（あとで）←難しかったので実装取りやめ
 
 
 リストの差分計算（あとで）
 駒得の差分計算（あとで）
 
 */
-//pbbの処理OK
+//pawnbbの処理OK
 void Position::do_move(const Move m, StateInfo * newst)
 {
+
+	/*
+	評価値の差分計算
+
+	駒得
+	相手が駒を失ってマイナス、自分は駒を得てプラスで評価値は自分の側にこの２つ分正の方向に動く。
+
+	駒成り
+	自分が駒が成った分評価値がプラスされる。
+
+	*/
+
 	//stateinfoの更新
 	memcpy(newst, st, offsetof(StateInfo, lastmove));
 
@@ -189,7 +200,7 @@ void Position::do_move(const Move m, StateInfo * newst)
 	//undomoveの為の情報を用意
 	st->DirtyPiece[0] = movedpiece;//dirtypieceに動いた駒を入れる
 	st->lastmove = m;//今回指した指して
-
+	int16_t matterialdiff = 0;
 	ASSERT(is_ok(movedpiece));
 
 	if (is_drop(m)) {
@@ -260,6 +271,9 @@ void Position::do_move(const Move m, StateInfo * newst)
 			if (propt = PRO_PAWN) {
 				remove_existpawnBB(us, to);
 			}
+			//コマ割の差分
+			ASSERT(PAWN <= pt&&pt <= GOLD);
+			matterialdiff += Eval::diff_promote[pt];
 		}
 
 		//駒の捕獲
@@ -286,6 +300,8 @@ void Position::do_move(const Move m, StateInfo * newst)
 			if (cappt == PAWN) {
 				remove_existpawnBB(c, to);
 			}
+			//コマ割の差分
+			matterialdiff += Eval::capture_value[capture];
 		}
 		else {
 			st->DirtyPiece[1] = NO_PIECE;
@@ -294,6 +310,16 @@ void Position::do_move(const Move m, StateInfo * newst)
 		//ksqの更新
 		if (pt == KING) { st->ksq_[us] = to; }
 	}
+
+	//先手の場合駒割は正の方向にdiffだけ動く
+	if (sidetomove() == BLACK) {
+		st->material = st->previous->material + Value(matterialdiff);
+	}
+	else {
+		st->material = st->previous->material - Value(matterialdiff);
+	}
+
+
 
 	st->ply_from_root++;
 	nodes++;

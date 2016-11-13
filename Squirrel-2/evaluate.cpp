@@ -110,15 +110,20 @@ namespace Eval {
 
 	Value eval(const Position & pos)
 	{
-		//Value value = pos.state()->material;
+		Value value = pos.state()->material;
 
-		////駒得の差分計算ができているかチェック
-		//ASSERT(value == eval_material(pos));
+		Value  full = eval_material(pos);
+		//駒得の差分計算ができているかチェック
+		if (value != full) {
+			cout << pos << endl;
+			ASSERT(0);
+		}
 
-		//return (pos.sidetomove() == BLACK) ? value : -value;
 
-		Value value = eval_material(pos);
 		return (pos.sidetomove() == BLACK) ? value : -value;
+
+		/*Value value = eval_material(pos);
+		return (pos.sidetomove() == BLACK) ? value : -value;*/
 	}
 
 }
