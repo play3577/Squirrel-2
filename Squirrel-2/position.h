@@ -101,7 +101,7 @@ public:
 	void check_effect();
 
 
-	void do_move(Move m, StateInfo* st);
+	void do_move(const Move m, StateInfo* st);
 	void undo_move();
 
 	inline Piece piece_on(Square sq)const { return pcboard[sq]; }
@@ -180,6 +180,34 @@ public:
 		
 		return false;
 	}
+
+	//王の自殺手を調べるために自王のいる場所を&~したoccを用いて自殺かどうか調べる関数
+	//US側の効きがtoに効いているかどうか調べる為の関数。
+	bool is_effect_to_Removeking(const Color US, const Square to,const Square  ksq)const {
+
+		Color ENEMY = opposite(US);
+		//Bitboard ourksq= SquareBB[ksq];
+
+		Bitboard occR = occ_all()&~SquareBB[ksq];
+		Bitboard occ90R = occ_90() &~ SquareBB[sq_to_sq90(ksq)];
+		Bitboard occp45R = occ_plus45() &~ SquareBB[sq_to_sqplus45(ksq)];
+		Bitboard occm45R = occ_minus45() &~  SquareBB[sq_to_sqminus45(ksq)];
+
+		if ((rook_effect(occR, occ90R, to)&occ_pt(US, ROOK)).isNot()) { return true; }
+		if ((bishop_effect(occp45R, occm45R, to)&occ_pt(US, BISHOP)).isNot()) { return true; }
+		if ((occ_pt(US, DRAGON)&dragon_effect(occR, occ90R, to)).isNot()) { return true; }
+		if ((occ_pt(US, UNICORN)&unicorn_effect(occp45R, occm45R, to)).isNot()) { return true; }
+		if ((lance_effect(occR, ENEMY, to)&occ_pt(US, LANCE)).isNot()) { return true; }
+		if ((step_effect(ENEMY, PAWN, to)&occ_pt(US, PAWN)).isNot()) { return true; }
+		if ((step_effect(ENEMY, KNIGHT, to)&occ_pt(US, KNIGHT)).isNot()) { return true; }
+		if ((step_effect(ENEMY, SILVER, to)&occ_pt(US, SILVER)).isNot()) { return true; }
+		if ((step_effect(ENEMY, GOLD, to)&(occ_pt(US, GOLD) | occ_pt(US, PRO_PAWN) | occ_pt(US, PRO_LANCE) | occ_pt(US, PRO_NIGHT) | occ_pt(US, PRO_SILVER))).isNot()) { return true; }
+		if ((step_effect(ENEMY, KING, to)&occ_pt(US, KING)).isNot()) { return true; }
+
+
+		return false;
+	}
+
 
 	void check_effecttoBB()const {
 		for (Color c = BLACK; c <= ColorALL; c++) {
@@ -324,10 +352,10 @@ public:
 
 
 	//toに相手の効きが効いていればそれは自殺手//OK
-	bool is_king_suiside(const Color us, const Square kingto) const{
+	bool is_king_suiside(const Color us, const Square kingto,const Square from) const{
 
 		Color ENEMY = opposite(us);
-		if (is_effect_to(ENEMY, kingto)) { return true; }
+		if (is_effect_to_Removeking(ENEMY, kingto,from)) { return true; }
 		return false;
 
 	}
@@ -347,65 +375,7 @@ public:
 	２つの状況でだけ確認したがちゃんと動いてた
 	しかしすべての状況に対してちゃんと動くかどうかは分からないのでランダムプレイヤーで局面をすすめてテストする関数を用意する
 	*/
-	bool is_legal(const Move m)const {
-
-		Piece movedpiece = moved_piece(m);
-		Square from = move_from(m);
-		Square to = move_to(m);
-		Square our_ksq = ksq(sidetomove());
-
-		//王の自殺手
-		if (piece_type(movedpiece) == KING) {
-			if (is_king_suiside(sidetomove_, to)) { return false; }
-		}
-
-		//打ち歩詰め
-		bool  isDrop = is_drop(m);
-		if (isDrop&& piece_type(movedpiece) == PAWN) {
-			if (is_uchihu(sidetomove_, to)) { return false; }
-		}
-
-		/*
-		pinされていた駒を動かしてしまっても相手のトビ効きが玉を貫通しないかどうか確認
-		*/
-		//Bitboard occ2 = occ_all()|SquareBB[move_to(m)]&SquareBB[move_from(m)];
-		/*
-		飛び効きが貫通しないかどうか確認するには
-		駒と王が縦横斜めの関係に無いか調べる。
-		縦横斜めのいずれかの方向にあればfromにその方向からの飛び効きが来ていないか調べる。
-		来ていた場合はtoがその直線上の移動であるか調べる。
-		その直線から外れる移動であればそれはpinされていた駒が動いたことに成る
-
-		ーーーーーーーーーーーーーーーーfromとksqの間に他の駒があるかどうかの確認も必要！
-		*/
-		if (!isDrop) {
-			Direction d = direct_table[from][our_ksq];
-			//fromが縦横ナナメの関係にいる。
-			if (d != Direction(0)) {
-
-				/*fromとksqの間に他の駒があるかどうかの確認も必要！*///betweenBBの作成が必要
-				//他の駒がある場合はそこで飛び効きが遮られるのでダイジョーブ
-				if (!(BetweenBB[from][our_ksq]&occ_all()).isNot()) {
-					Direction ksq2to = direct_table[to][our_ksq];
-					//toが同じdirectionではない
-					if (ksq2to != d) {
-						//fromにd方向から飛び効きが効いていた場合は飛び効きを許してしまっている。
-						if (is_longeffectdirection(sidetomove(), from, d)) { return false; }
-					}
-				}
-			}
-		}
-
-		//動かす駒は自分の駒
-		ASSERT(piece_color(movedpiece) == sidetomove_);
-		//fromにいる駒と動かそうとしている駒は同じ
-		if (!isDrop) { ASSERT(piece_on(from) == movedpiece); }
-		//取ろうとしている駒は自分の駒ではない
-		ASSERT(piece_on(to) == NO_PIECE || piece_color(piece_on(to)) != sidetomove_);
-		//取ろうとしている駒は玉ではない
-		ASSERT(piece_type(piece_on(to)) != KING);
-		return true;
-	}
+	bool is_legal(const Move m)const;
 
 
 };

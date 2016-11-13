@@ -623,8 +623,8 @@ ExtMove * move_eversion(const Position& pos, ExtMove * movelist) {
 	}
 
 	//後は王手をかけている指し手を取るか王手に割って入るかbetweenBBを開区間で作っておいてよかった..
-	Bitboard target = BetweenBB[ksq][esq] | SquareBB[esq];
-
+	Bitboard target_drop = BetweenBB[ksq][esq];
+	Bitboard target = target_drop | SquareBB[esq];
 	movelist = make_move_PAWN<Cap_Propawn>(pos, target, movelist);
 	movelist = make_move_PAWN<Quiet>(pos, target, movelist);
 	movelist = make_move_LANCE(pos, target, movelist);
@@ -636,7 +636,9 @@ ExtMove * move_eversion(const Position& pos, ExtMove * movelist) {
 	movelist = make_move_UNICORN(pos, target, movelist);
 	movelist = make_move_DRAGON(pos, target, movelist);
 	//movelist = make_move_KING(pos, target, movelist);
-	movelist = make_move_DROP(pos, target, movelist);
+
+	//dropを打てるのは駒と駒の間だけ！！
+	movelist = make_move_DROP(pos, target_drop, movelist);
 
 	return movelist;
 

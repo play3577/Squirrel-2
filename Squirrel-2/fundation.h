@@ -4,7 +4,13 @@
 #include <crtdbg.h>
 #include <string>
 
+//やねうら王のアイデア
+#ifdef _DEBUG
 #define ASSERT(x) _ASSERT(x)
+#endif
+#ifndef _DEBUG
+#define ASSERT(X) { if (!(X)) *(int*)1 =0; }
+#endif
 //#define ASSERT(x) ((void)0)//速度を出したいとき用
 #define UNREACHABLE ASSERT(0)
 
@@ -203,7 +209,7 @@ inline bool is_ok(Move m) {
 struct ExtMove {
 
 	Move move;
-	Value value;
+	Value value=Value_Mated;
 
 	operator Move() { return move; }
 	void operator=(Move move_) { move = move_; }

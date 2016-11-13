@@ -169,7 +169,7 @@ void Position::put_piece(const Color c, const Piece pt, const Square sq)
 
 */
 //pbbの処理OK
-void Position::do_move(Move m, StateInfo * newst)
+void Position::do_move(const Move m, StateInfo * newst)
 {
 	//stateinfoの更新
 	memcpy(newst, st, offsetof(StateInfo, lastmove));
@@ -179,8 +179,9 @@ void Position::do_move(Move m, StateInfo * newst)
 
 	//指し手の情報の用意
 	Square to = move_to(m);//移動先
-	Piece movedpiece = moved_piece(m);//移動した駒
+	Piece movedpiece = moved_piece(m);//移動させる駒
 	Piece capture;
+	//取ろうとしている駒が王であることはありえない
 	if (piece_type(pcboard[to]) == KING) {
 		cout << *this << endl;
 		ASSERT(0);
@@ -193,6 +194,13 @@ void Position::do_move(Move m, StateInfo * newst)
 
 	if (is_drop(m)) {
 
+		//駒打ちなので移動先には駒はいないはず（コレがundo_moveでのエラーの原因か!!!!こんちくしょう）
+		//なんで駒打ちなのに移動先に駒がいる？（eversionで王手をかけている駒を取ろうとするときに駒を打って取ろうとしている！！！）
+		if (pcboard[to] != NO_PIECE) {
+			cout << *this << endl;
+			check_move(m);
+			ASSERT(0);
+		}
 		//打つ駒の準備
 		Piece pt = piece_type(movedpiece);
 		Color c = piece_color(movedpiece);
@@ -220,17 +228,12 @@ void Position::do_move(Move m, StateInfo * newst)
 		Color us = sidetomove_;
 		Piece pt = piece_type(movedpiece);
 
-		//===========================================================================
-		/*if (pt == KING&&st->Eboard[opposite(us)][to]) {
-			cout << *this << endl;
-			ASSERT(0);
-		}*/
-
+		//動かす駒はfromにいる駒
 		ASSERT(movedpiece == pcboard[from]);
-		ASSERT(piece_color(movedpiece) == us);
+		ASSERT(piece_color(movedpiece) == us);//動かす駒の色は手番と同じ
 
 		//コマの移動
-		//コマの移動
+		//コマの捕獲
 		pcboard[from] = NO_PIECE;
 		capture = pcboard[to];
 
@@ -245,28 +248,27 @@ void Position::do_move(Move m, StateInfo * newst)
 			//成がない場合
 			pcboard[to] = movedpiece;
 			put_piece(us, pt, to);
-			//toに効きを追加する
-			//add_effect(us, pt, to);
 		}
 		else {
 			//成がある場合
 			Piece propt = promotepiece(pt);
-
+			ASSERT(propt != NO_PIECE);
 			pcboard[to] = promotepiece(movedpiece);
+			ASSERT(pcboard[to] != NO_PIECE);
 			put_piece(us, propt, to);
 			//歩が成った場合はその筋にはpawnを打てるように成る
 			if (propt = PRO_PAWN) {
 				remove_existpawnBB(us, to);
 			}
-
 		}
 
 		//駒の捕獲
 		if (capture != NO_PIECE) {
 			st->DirtyPiece[1] = capture;
 
-			Piece pt2 = rowpiece(piece_type(capture));//成り駒を取った場合はなってない駒に戻す
+			Piece pt2 = rowpiece(piece_type(capture));//成り駒を取った場合はなってない駒に戻す（手駒に追加するため）
 			Piece cappt = piece_type(capture);
+			//王を捕獲はできない
 			if (cappt == KING) {
 				cout << *this << endl;
 				ASSERT(0);
@@ -302,22 +304,34 @@ void Position::do_move(Move m, StateInfo * newst)
 		st->inCheck = true;
 		st->checker = effect_toBB(opposite(sidetomove_), ksq(sidetomove_));
 	}
+	else {
+		st->inCheck = false;
+		st->checker = ZeroBB;
+	}
+	if (st->inCheck&&st->checker.isNot() == false) { ASSERT(0); }
 
-
+	if (pcboard[to] == NO_PIECE) {
+		cout << *this << endl;
+		ASSERT(0);
+	}
 }
 
-
+/*
+なんでoccには駒はいるはずなのにptboardには駒はいないのか
+*/
 void Position::undo_move()
 {
-	/*
-	stをpreviousに戻せば利きは元に戻るのでここではsubeffectなどはしなくていい。
-	この実装でほんとにいいのだろうか...メモリやアクセスの知識が必要だ
-	*/
-
-	Move LMove = st->lastmove;
-	Square to = move_to(LMove);
-	Piece movedpiece = st->DirtyPiece[0];
-	Piece capture = st->DirtyPiece[1];
+	
+	
+	Move LMove = st->lastmove;//前回の指し手
+	Square to = move_to(LMove);//前回の移動先
+	Piece movedpiece = st->DirtyPiece[0];//前回移動した駒
+	Piece capture = st->DirtyPiece[1];//捕獲された駒
+	if (pcboard[to] == NO_PIECE) {
+		cout << *this << endl;
+		ASSERT(0);
+	}
+	
 
 	//駒打ちの場合
 	if (is_drop(LMove)) {
@@ -339,9 +353,13 @@ void Position::undo_move()
 	else {
 		//コマの移動
 		Square from = move_from(LMove);
+		Piece afterpiece = pcboard[to];//移動した駒はなっている場合があるためpcboard[to]を使う
+		if (afterpiece == NO_PIECE) {
+			cout << *this << endl;
+			ASSERT(0);
+		}
 		pcboard[from] = movedpiece;
-		Piece afterpiece = pcboard[to];
-		ASSERT(afterpiece != NO_PIECE);
+		
 		pcboard[to] = capture;
 
 		//fromにoccupiedを追加
@@ -362,7 +380,7 @@ void Position::undo_move()
 
 			Color enemy = opposite(sidetomove());
 			int num = num_pt(hands[enemy], pt);
-			makehand(hands[enemy], pt, num - 1);//持ち駒の処理がおかしい。
+			makehand(hands[enemy], pt, num - 1);
 			Piece cappt = piece_type(capture);//盤面に戻す操作なので成も残す
 			Color c = piece_color(capture);
 			//捕獲されていた駒
@@ -385,7 +403,8 @@ void Position::undo_move()
 			remove_piece(c, pt, to);
 			remove_rotate(to);
 		}
-	}
+		ASSERT(pcboard[from] != NO_PIECE);
+	}//コマの移動
 	sidetomove_ = opposite(sidetomove_);
 
 	st = st->previous;
@@ -450,6 +469,87 @@ void Position::check_occbitboard()const {
 	return;
 }
 
+//この関数で打ち歩詰め、王の自殺手を省く。
+/*
+指し手が省かれる確率は非常に低いため
+指し手のloopでこの関数を呼び出すのは後ろの方でいいかもしれない（Stockfish方式）
+＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝PINされている駒を動かさないようにする処理もいる！！！！！！！！
+
+
+この関数のpin駒の処理なかなか良くないので後で改良する
+
+ちゃんと動くか確認する
+
+２つの状況でだけ確認したがちゃんと動いてた
+しかしすべての状況に対してちゃんと動くかどうかは分からないのでランダムプレイヤーで局面をすすめてテストする関数を用意する
+*/
+
+bool Position::is_legal(const Move m) const {
+
+	Piece movedpiece = moved_piece(m);
+	Square from = move_from(m);
+	Square to = move_to(m);
+	Square our_ksq = ksq(sidetomove());
+
+	//王の自殺手
+	//王が自殺しているかどうか調べるために使うoccupiedから王を場外しなければならない！！
+	if (piece_type(movedpiece) == KING) {
+		if (is_king_suiside(sidetomove_, to,from)) { return false; }
+	}
+
+	//打ち歩詰め
+	bool  isDrop = is_drop(m);
+	if (isDrop&& piece_type(movedpiece) == PAWN) {
+		if (is_uchihu(sidetomove_, to)) { return false; }
+	}
+
+	/*
+	pinされていた駒を動かしてしまっても相手のトビ効きが玉を貫通しないかどうか確認
+	*/
+	//Bitboard occ2 = occ_all()|SquareBB[move_to(m)]&SquareBB[move_from(m)];
+	/*
+	飛び効きが貫通しないかどうか確認するには
+	駒と王が縦横斜めの関係に無いか調べる。
+	縦横斜めのいずれかの方向にあればfromにその方向からの飛び効きが来ていないか調べる。
+	来ていた場合はtoがその直線上の移動であるか調べる。
+	その直線から外れる移動であればそれはpinされていた駒が動いたことに成る
+
+	ーーーーーーーーーーーーーーーーfromとksqの間に他の駒があるかどうかの確認も必要！
+	*/
+	if (!isDrop) {
+		Direction d = direct_table[from][our_ksq];
+		//fromが縦横ナナメの関係にいる。
+		if (d != Direction(0)) {
+
+			/*fromとksqの間に他の駒があるかどうかの確認も必要！*///betweenBBの作成が必要
+											//他の駒がある場合はそこで飛び効きが遮られるのでダイジョーブ
+			if (!(BetweenBB[from][our_ksq] & occ_all()).isNot()) {
+				Direction ksq2to = direct_table[to][our_ksq];
+				//toが同じdirectionではない
+				if (ksq2to != d) {
+					//fromにd方向から飛び効きが効いていた場合は飛び効きを許してしまっている。
+					if (is_longeffectdirection(sidetomove(), from, d)) { return false; }
+				}
+			}
+		}
+	}
+
+	//動かす駒は自分の駒
+	ASSERT(piece_color(movedpiece) == sidetomove_);
+	//fromにいる駒と動かそうとしている駒は同じ
+	if (!isDrop) { ASSERT(piece_on(from) == movedpiece); }
+	//取ろうとしている駒は自分の駒ではない
+	ASSERT(piece_on(to) == NO_PIECE || piece_color(piece_on(to)) != sidetomove_);
+	//取ろうとしている駒は玉ではない
+	if (piece_type(piece_on(to)) == KING) {
+
+		cout << *this << endl;
+		check_move(m);
+		ASSERT(0);
+	}
+	return true;
+}
+
 
 std::ostream & operator<<(std::ostream & os, const Position & pos)
 {
@@ -463,11 +563,15 @@ std::ostream & operator<<(std::ostream & os, const Position & pos)
 		(c == BLACK) ? os << "    先手 " << std::endl : os << "    後手 " << std::endl;
 		os << pos.hand(c) << endl;
 	}
-	/*for (Color c = BLACK; c <= WHITE; c++) {
+	for (Color c = BLACK; c <= WHITE; c++) {
 		os << " color " << c << endl << pos.occ(c) << endl;
 	}
 	os << "occ all" << endl << pos.occ_all() << endl;
 
+	os << "unicorn " << pos.occ_pt(WHITE, UNICORN) << endl;;
+
+
+	/*
 	for (Color c = BLACK; c <= WHITE; c++) {
 		for (Piece pt = PAWN; pt < PT_ALL; pt++) {
 			os << " color " << c << " pt " << pt << endl << pos.occ_pt(c, pt) << endl;
@@ -476,11 +580,12 @@ std::ostream & operator<<(std::ostream & os, const Position & pos)
 	
 	os << "ksq black " << pos.ksq(BLACK) << " white " << pos.ksq(WHITE) << endl;
 
-	os << " 手番 " << pos.sidetomove() << endl;
+	os << " 手番					" << pos.sidetomove() << endl;
 
 	os << " 評価値　コマ割: " << pos.state()->material << endl;
-
-	
-
+	os << "lastmove"; check_move(pos.state()->lastmove);
+	if (pos.state()->previous) {
+		os << " lastlastmove "; check_move(pos.state()->previous->lastmove);
+	}
 	return os;
 }

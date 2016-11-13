@@ -29,7 +29,7 @@ Value Thread::think() {
 	beta = Value_Mate;
 	rootdepth = 0;
 
-	while (++rootdepth <10) {
+	while (++rootdepth <13) {
 
 		//‚±‚±‚Å’TõŠÖ”‚ðŒÄ‚Ño‚·B
 		bestvalue = search<Root>(rootpos, ss, alpha, beta, rootdepth*ONE_PLY);
@@ -73,6 +73,7 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 	while ((move = mp.return_nextmove()) != MOVE_NONE) {
 
 		if (pos.is_legal(move) == false) { continue; }
+		if (NT == Root&&thisthread->find_rootmove(move) == nullptr) { continue; }
 		++movecount;
 		//check_move(move);
 		pos.do_move(move, &si);
@@ -81,8 +82,8 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 
 
 		if (!doFullDepthSearch) {
-			if (depth - 2*ONE_PLY > ONE_PLY) {
-				value = search<NonPV>(pos, ss + 1, -beta, -alpha, depth - 2*ONE_PLY);
+			if (depth - ONE_PLY > ONE_PLY) {
+				value = search<NonPV>(pos, ss + 1, -beta, -alpha, depth - ONE_PLY);
 			}
 			else {
 				value = Eval::eval(pos);
@@ -102,7 +103,7 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 				value = Eval::eval(pos);
 			}
 		}
-
+		//cout << "undo move " <<move<< endl;
 		pos.undo_move();
 
 

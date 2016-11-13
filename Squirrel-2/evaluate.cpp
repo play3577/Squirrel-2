@@ -101,7 +101,7 @@ namespace Eval {
 			const auto hands = pos.hand(c);
 
 			for (Piece pt = PAWN; pt <= GOLD; pt++) {
-				v += num_pt(hands, pt)*piece_value[pt];
+				v += (c == BLACK ? 1:-1)*num_pt(hands, pt)*piece_value[pt];
 			}
 
 		}
@@ -117,7 +117,8 @@ namespace Eval {
 
 		//return (pos.sidetomove() == BLACK) ? value : -value;
 
-		return eval_material(pos);
+		Value value = eval_material(pos);
+		return (pos.sidetomove() == BLACK) ? value : -value;
 	}
 
 }

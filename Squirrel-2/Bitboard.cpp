@@ -127,7 +127,7 @@ int additional_minus45(Square sq) {
 void bitboard_init()
 {
 	ZeroBB = Bitboard(0, 0);
-
+	ALLBB = ZeroBB;
 
 	//SquareBB作るのにも割りと注意が必要なんスねぇ(´・ω・｀)とりあえず1ui64を使えばいいらしい。たぶん他のコンパイラでは使えないような気がする。
 	/*まずはsquareBBの作成。

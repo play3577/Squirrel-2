@@ -20,6 +20,10 @@ const string max = "sfen R8/2K1S1SSk/4B4/9/9/9/9/9/1L1L1L3 b RBGSNLP3g3n17p 1";
 
 const string nijyuuoute = "sfen lnsgk1snl/7b1/ppppppppp/9/4r4/9/PPP2PPPP/1B1g3R1/LNSGKGSNL b 2P 1";
 const string oute = "sfen lnsgk1snl/7b1/ppppppppp/9/4r4/9/PPPg1PPPP/1B5R1/LNSGKGSNL b 2P 1";
+
+
+const string suicide = "sfen lnsgkgsnl/1r7/pppppp1pp/6p2/8P/6P2/PP1PPP1P1/1B3K1R1/LNSG+bGSNL b P 1";
+
 //‘Å‚¿•à‹l‚ß‚Ì‹Ç–Ê
 //"sfen ln6n/s2RSR3/ppp1p1ppp/gb2k2bl/g2p1p2s/4G4/PPPP1PPPP/9/LN1GK1SNL b P 1"  
 
@@ -91,7 +95,7 @@ void USI::loop()
 		else if (token=="suicide") {
 			pos.set("sfen ln6n/s2RSR3/ppp1p1ppp/gb2k2bl/g2p1p2s/4G4/PPPP1PPPP/9/LN1GK1SNL w P 1");
 			Move m = make_move(SQ5D, SQ5E, W_KING);
-			bool suicide = pos.is_king_suiside(WHITE, move_to(m));
+			bool suicide = pos.is_king_suiside(WHITE, move_to(m),move_from(m));
 			cout << (suicide)<< endl;
 		}
 		else if(token=="legal1")
@@ -135,6 +139,16 @@ void USI::loop()
 			while ((m = mp.return_nextmove()) != MOVE_NONE) {
 				cout << m << " " << pos.is_legal(m) << endl;
 			}
+		}
+		else if (token == "ks") {
+			pos.set(suicide);
+			movepicker mp(pos);
+			Move m=make_move(SQ4H,SQ3G,B_KING);
+			cout << m << " " << pos.is_legal(m) << endl;
+			check_move(m);
+			/*while ((m = mp.return_nextmove()) != MOVE_NONE) {
+				cout << m << " " << pos.is_legal(m) << endl;
+			}*/
 		}
 
 	} while (token != "quit");

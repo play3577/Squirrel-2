@@ -11,7 +11,7 @@ struct Thread {
 private:
 	Position rootpos;//rootposはスレッド毎に保つ必要があるので参照渡しではいけない気がする。
 	int rootdepth;
-	ExtMove RootMoves[200], *end;
+	ExtMove RootMoves[600], *end;
 
 public:
 

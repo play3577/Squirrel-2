@@ -8,6 +8,7 @@ using namespace std;
 
 void Thread::set(Position pos)
 {
+	end = RootMoves;
 	rootpos = pos;
 	end = test_move_generation(pos, RootMoves);
 	rootpos.set_searcherthread(this);
