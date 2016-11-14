@@ -15,18 +15,57 @@
 using namespace std;
 using namespace USI;
 
-const string maturi = "sfen l6nl/5+P1gk/2np1S3/p1p4Pp/3P2Sp1/1PPb2P1P/P5GS1/R8/LN4bKL w GR5pnsg 1";
-const string max = "sfen R8/2K1S1SSk/4B4/9/9/9/9/9/1L1L1L3 b RBGSNLP3g3n17p 1";
 
-const string nijyuuoute = "sfen lnsgk1snl/7b1/ppppppppp/9/4r4/9/PPP2PPPP/1B1g3R1/LNSGKGSNL b 2P 1";
-const string oute = "sfen lnsgk1snl/7b1/ppppppppp/9/4r4/9/PPPg1PPPP/1B5R1/LNSGKGSNL b 2P 1";
-
-
-const string suicide = "sfen lnsgkgsnl/1r7/pppppp1pp/6p2/8P/6P2/PP1PPP1P1/1B3K1R1/LNSG+bGSNL b P 1";
+USI::OptionMap Options;
 
 //打ち歩詰めの局面
 //"sfen ln6n/s2RSR3/ppp1p1ppp/gb2k2bl/g2p1p2s/4G4/PPPP1PPPP/9/LN1GK1SNL b P 1"  
+const string maturi = "sfen l6nl/5+P1gk/2np1S3/p1p4Pp/3P2Sp1/1PPb2P1P/P5GS1/R8/LN4bKL w GR5pnsg 1";
+const string max = "sfen R8/2K1S1SSk/4B4/9/9/9/9/9/1L1L1L3 b RBGSNLP3g3n17p 1";
+const string nijyuuoute = "sfen lnsgk1snl/7b1/ppppppppp/9/4r4/9/PPP2PPPP/1B1g3R1/LNSGKGSNL b 2P 1";
+const string oute = "sfen lnsgk1snl/7b1/ppppppppp/9/4r4/9/PPPg1PPPP/1B5R1/LNSGKGSNL b 2P 1";
+const string suicide = "sfen lnsgkgsnl/1r7/pppppp1pp/6p2/8P/6P2/PP1PPP1P1/1B3K1R1/LNSG+bGSNL b P 1";
 
+
+void USI::init_option(OptionMap &o)
+{
+	o["Ponder"] << USIOption(false);
+	o["Threads"] << USIOption(1, 1, 128);
+	o["eval"] << USIOption("c:/book/eval/");
+}
+
+
+/// operator<<() is used to print all the options default values in chronological
+/// insertion order (the idx field) and in the format defined by the UCI protocol.
+std::ostream& USI::operator<<(std::ostream& os, const OptionMap& om) {
+
+	for (size_t idx = 0; idx < om.size(); idx++) {
+
+		for (const auto& it : om) {
+			if (it.second.idx == idx)
+			{
+				const USIOption& o = it.second;
+				os << "\noption name " << it.first << " type " << o.type;
+
+				if (o.type != "button") {
+					os << " default " << o.value;
+				}
+
+				if (o.type == "spin") {
+					os << " min " << o.min << " max " << o.max;
+				}
+				if (o.type == "button") {
+					os << " defalt ";
+					if (o.value == "true") { os << "true"; }
+					else { os << "false"; }
+				}
+				break;
+			}
+		}
+	}
+
+	return os;
+}
 
 
 void USI::loop()
@@ -48,6 +87,7 @@ void USI::loop()
 		is >> skipws >> token;//間の空白文字は読み飛ばしてtokenに入れる。
 
 		if (token == "usi") {
+			cout << Options << endl;
 			cout << "usiok" << endl;
 		}
 		else if (token == "go") {
@@ -60,6 +100,49 @@ void USI::loop()
 
 
 		}
+		else if (token == "setoption") {
+/*
+>C:setoption name Threads value 2
+>C:setoption name Hash value 32
+>C:setoption name Ponder value true
+>C:setoption name WriteDebugLog value false
+>C:setoption name NetworkDelay value 41
+>C:quit
+
+こんな感じでoptionが入ってくる！！！
+>C:setoption name Progress value ./progress/
+>C:setoption name eval value ./eval/
+*/
+			string buffer, name, value,type;
+			is >> buffer;
+			is >> name;
+			is >> buffer;
+			is >> value;
+
+			USI::USIOption& option = Options[name];
+			/*
+			if (option == nullptr) {
+
+			}*/
+
+			type = option.return_type();
+			if (type == "button") {
+				value == "true" ? option.change(true) : option.change(false);
+			}
+			else if (type == "spin") {
+				option.change(stoi(value));
+			}
+			else if (type == "string") {
+				option.change(value.c_str());
+			}
+			else {
+				UNREACHABLE;
+			}
+
+		}
+		//====================
+		//ここから下はデバッグ用コマンド
+		//====================
 		else if (token == "gm") {
 			//指し手生成速度計測
 			speed_genmove(pos);
@@ -149,6 +232,9 @@ void USI::loop()
 			/*while ((m = mp.return_nextmove()) != MOVE_NONE) {
 				cout << m << " " << pos.is_legal(m) << endl;
 			}*/
+		}
+		else if (token == "random") {
+			wrap_randomwalker();
 		}
 
 	} while (token != "quit");

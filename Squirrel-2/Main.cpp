@@ -9,6 +9,7 @@ using namespace std;
 
 int main() {
 
+	USI::init_option(Options);
 	bitboard_init();
 
 #ifdef TEST

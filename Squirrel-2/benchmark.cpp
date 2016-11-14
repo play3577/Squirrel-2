@@ -1,7 +1,8 @@
 #include "benchmark.h"
 #include "makemove.h"
+#include "evaluate.h"
 #include "misc.h"
-
+#include <random>
 
 //指し手生成速度計測
 //計測方法が他のソフトと違うと比較できないので他のソフトに合わせる。
@@ -44,4 +45,63 @@ void speed_genmove(const Position & pos)
 	std::cout << std::endl;
 
 
+}
+
+void wrap_randomwalker()
+{
+	Position pos;
+
+	int num_played = 0;
+
+
+	while (num_played < 10000) {
+		pos.set_hirate();
+		randomwalker(pos, 256);
+		num_played++;
+		if (num_played % 100 == 0) {
+			cout << "," ;
+		}
+	}
+	cout << endl << "finished"<<endl;
+}
+
+
+
+//ここでのdepthは残り深さではなくて加算していくdepth
+void randomwalker(Position & pos, int maxdepth)
+{
+	ExtMove moves_[600], *end;
+	end = moves_;
+	std::random_device rd;
+	std::mt19937 mt(rd());
+	int depth = 0;
+	StateInfo si[300];
+	int continue_count = 0;
+	while (1) {
+		
+
+		//指し手の生成
+		end = test_move_generation(pos, moves_);
+		Eval::eval(pos);
+		ptrdiff_t num = end - moves_;
+		if (num == 0) { break; }
+		if (num == continue_count) { break; }
+		//cout << num << endl;
+		int rand = mt() % num;
+		ASSERT(rand <= num);
+		Move m = moves_[mt() % num];
+		if (pos.is_legal(m) == false) { ++continue_count;  continue;  }//すべての差し手がillegalつまり詰みの状態になればこれではおかしくなってしまうので修正
+		else { continue_count = 0; }
+		//一回ちゃんとdo-undoできるか確認をしてから
+		pos.do_move(m, &si[depth]);
+		pos.undo_move();
+
+		pos.do_move(m, &si[depth]);
+		depth++;
+		if (depth > maxdepth) {
+			break;
+		}
+			
+		
+	}//指し手のwhile
 }

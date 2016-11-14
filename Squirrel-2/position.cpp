@@ -122,7 +122,7 @@ void Position::set(std::string sfen)
 
 
 
-	cout << *this << endl;
+	//cout << *this << endl;
 
 #ifdef CHECKPOS
 	
@@ -585,7 +585,7 @@ std::ostream & operator<<(std::ostream & os, const Position & pos)
 		}
 		os << endl;
 	}
-	for (Color c = BLACK; c < ColorALL; c++) {
+	/*for (Color c = BLACK; c < ColorALL; c++) {
 		(c == BLACK) ? os << "    æŽè " << std::endl : os << "    ŒãŽè " << std::endl;
 		os << pos.hand(c) << endl;
 	}
@@ -595,7 +595,7 @@ std::ostream & operator<<(std::ostream & os, const Position & pos)
 	os << "occ all" << endl << pos.occ_all() << endl;
 
 	os << "unicorn " << pos.occ_pt(WHITE, UNICORN) << endl;;
-
+*/
 
 	/*
 	for (Color c = BLACK; c <= WHITE; c++) {

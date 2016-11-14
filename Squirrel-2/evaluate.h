@@ -33,7 +33,7 @@ namespace Eval {
 	//評価値は反転されるので符号はこれでいい
 	extern int16_t capture_value[PC_ALL];
 	//駒が成った分の差分
-	extern int16_t diff_promote[PT_ALL];
+	extern int16_t diff_promote[GOLD];
 
 
 	//コマ割全計算

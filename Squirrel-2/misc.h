@@ -1,7 +1,7 @@
 #pragma once
 
 #include "fundation.h"
-
+#include "position.h"
 #include <unordered_map>
 #include <string>
 #include <chrono>
@@ -46,7 +46,7 @@ public:
 
 };
 
-
+Move Sfen2Move(const string smove, const Position& pos);
 
 //
 //

@@ -73,14 +73,14 @@ namespace Eval {
 		DragonValue + RookValue,
 	};
 
-	int16_t diff_promote[PT_ALL] = {
+	int16_t diff_promote[GOLD] = {
+		0,
 		ProPawnValue-PawnValue,
 		ProLanceValue-LanceValue,
 		ProKnightValue-KnightValue,
 		ProSilverValue-SilverValue,
 		UnicornValue-BishopValue,
 		DragonValue-RookValue,
-		0,0,0,0,0,0,0,0,0,
 	};
 
 
