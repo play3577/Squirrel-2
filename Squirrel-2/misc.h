@@ -73,3 +73,5 @@ inline double eval2rate(double eval) {
 }
 
 
+extern Sfen2Piece Sfen2Piece_;
+

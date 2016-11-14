@@ -4,8 +4,10 @@
 #include "fundation.h"
 #include "Bitboard.h"
 #include "occupied.h"
+#include "evaluate.h"
 #include <string>
 #include <bitset>
+
 using namespace std;
 
 
@@ -61,6 +63,7 @@ private:
 	Hand hands[ColorALL];
 
 	Thread* searcherthread;
+	Eval::BonaPList list;
 
 	uint64_t nodes;
 

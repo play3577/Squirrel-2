@@ -120,7 +120,8 @@ void Position::set(std::string sfen)
 
 	st->material = Eval::eval_material(*this);
 
-
+	list.makebonaPlist(*this);
+	list.print_bplist();
 
 	//cout << *this << endl;
 

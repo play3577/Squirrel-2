@@ -21,7 +21,7 @@ USI::OptionMap Options;
 //‘Å‚¿•à‹l‚ß‚Ì‹Ç–Ê
 //"sfen ln6n/s2RSR3/ppp1p1ppp/gb2k2bl/g2p1p2s/4G4/PPPP1PPPP/9/LN1GK1SNL b P 1"  
 const string maturi = "sfen l6nl/5+P1gk/2np1S3/p1p4Pp/3P2Sp1/1PPb2P1P/P5GS1/R8/LN4bKL w GR5pnsg 1";
-const string max = "sfen R8/2K1S1SSk/4B4/9/9/9/9/9/1L1L1L3 b RBGSNLP3g3n17p 1";
+const string max_pos = "sfen R8/2K1S1SSk/4B4/9/9/9/9/9/1L1L1L3 b RBGSNLP3g3n17p 1";
 const string nijyuuoute = "sfen lnsgk1snl/7b1/ppppppppp/9/4r4/9/PPP2PPPP/1B1g3R1/LNSGKGSNL b 2P 1";
 const string oute = "sfen lnsgk1snl/7b1/ppppppppp/9/4r4/9/PPPg1PPPP/1B5R1/LNSGKGSNL b 2P 1";
 const string suicide = "sfen lnsgkgsnl/1r7/pppppp1pp/6p2/8P/6P2/PP1PPP1P1/1B3K1R1/LNSG+bGSNL b P 1";
@@ -151,7 +151,7 @@ void USI::loop()
 			pos.set(maturi);
 		}
 		else if (token == "max") {
-			pos.set(max);
+			pos.set(max_pos);
 		}
 		else if (token == "hirate") { pos.set_hirate(); }
 		else if (token == "dp") { std::cout << pos << std::endl; }//debug position
@@ -235,6 +235,12 @@ void USI::loop()
 		}
 		else if (token == "random") {
 			wrap_randomwalker();
+		}
+		else if (token == "smove") {
+
+			string move;
+			is >> move;
+			Sfen2Move(move, pos);
 		}
 
 	} while (token != "quit");
