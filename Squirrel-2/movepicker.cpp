@@ -24,6 +24,14 @@ void movepicker::generatemove()
 		ASSERT(pos_.is_incheck());
 		end_ = move_eversion(pos_, move_);
 		break;
+	case START_Qsearch:
+		current_ = end_;
+		st = STOP;
+		break;
+	case RECAPTURE:
+		//w‚µè‚Ì¶¬ŠÖ”‚ğ‚±‚±‚É“ü‚ê‚é
+		end_ = move_recapture(pos_, move_, recapsq_);
+		break;
 	case STOP:
 		break;
 	default:
@@ -56,6 +64,12 @@ Move movepicker::return_nextmove()
 	case START_Eversion:
 		break;
 	case EVERSION:
+		m = current_++->move;
+		return m;
+		break;
+	case START_Qsearch:
+		break;
+	case RECAPTURE:
 		m = current_++->move;
 		return m;
 		break;

@@ -18,4 +18,7 @@ template<Move_type mt>ExtMove* move_generation(const Position& pos, ExtMove* mov
 
 ExtMove * move_eversion(const Position& pos, ExtMove * movelist);
 
+ExtMove * move_recapture(const Position& pos, ExtMove * movelist,Square recapsq);
+
+
 ExtMove * test_move_generation(const Position& pos, ExtMove * movelist);

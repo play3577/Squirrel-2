@@ -644,6 +644,24 @@ ExtMove * move_eversion(const Position& pos, ExtMove * movelist) {
 
 }
 
+ExtMove * move_recapture(const Position & pos, ExtMove * movelist, Square recapsq)
+{
+	const Bitboard target = SquareBB[recapsq];
+
+	movelist = make_move_PAWN<Cap_Propawn>(pos, target, movelist);//recaptureÇ»ÇÃÇ≈cappropawnÇ≈Ç¢Ç¢Ç∆çlÇ¶ÇÁÇÍÇÈ
+	movelist = make_move_LANCE(pos, target, movelist);
+	movelist = make_move_KNIGHT(pos, target, movelist);
+	movelist = make_move_SILVER(pos, target, movelist);
+	movelist = make_move_BISHOP(pos, target, movelist);
+	movelist = make_move_ROOK(pos, target, movelist);
+	movelist = make_move_ASGOLD(pos, target, movelist);
+	movelist = make_move_UNICORN(pos, target, movelist);
+	movelist = make_move_DRAGON(pos, target, movelist);
+	movelist = make_move_KING(pos, target, movelist);
+
+	return movelist;
+}
+
 
 
 ExtMove * test_move_generation(const Position & pos, ExtMove * movelist)

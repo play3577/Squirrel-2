@@ -291,6 +291,7 @@ std::ostream& operator << (std::ostream& os, Direction d);
 
 enum Depth {
 
+	DEPTH_ZERO=0,
 	HALF_PLY = 1,
 	ONE_PLY = 2,
 	MAX_DEPTH = 64,

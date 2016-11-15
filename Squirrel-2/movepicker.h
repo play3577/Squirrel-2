@@ -9,6 +9,8 @@ enum Stage {
 	QUIET,
 	START_Eversion,
 	EVERSION,
+	START_Qsearch,
+	RECAPTURE,
 	STOP,
 
 };
@@ -22,10 +24,11 @@ private:
 	ExtMove move_[600], *current_, *end_;
 	Stage st;
 	const Position& pos_;
-
+	Square recapsq_;
 	void generatemove();
 
 public:
+	//通常探索用コンストラクタ
 	movepicker(const Position& pos) :pos_(pos) {
 
 		current_ = end_ = move_;
@@ -37,6 +40,20 @@ public:
 			st = START_Normal;
 		}
 	}
+
+	//精子探索用コンストラクタ
+	movepicker(const Position& pos, Square recapsq) :pos_(pos) {
+		current_ = end_ = move_;
+
+		if (pos.is_incheck()) {
+			st = START_Eversion;
+		}
+		else {
+			st = START_Qsearch;
+			recapsq_ = recapsq;
+		}
+	}
+
 
 	Move return_nextmove();
 

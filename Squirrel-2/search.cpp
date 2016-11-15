@@ -82,11 +82,13 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 
 
 		if (!doFullDepthSearch) {
-			if (depth - ONE_PLY > ONE_PLY) {
-				value = search<NonPV>(pos, ss + 1, -beta, -alpha, depth - ONE_PLY);
+			if (depth - ONE_PLY >= ONE_PLY) {
+				//null window search
+				value = -search<NonPV>(pos, ss + 1, -(alpha+1), -alpha, depth - ONE_PLY);
 			}
 			else {
-				value = Eval::eval(pos);
+				//value = Eval::eval(pos);
+				value = -qsearch<NonPV>(pos, ss + 1, -(alpha + 1), -alpha, depth - ONE_PLY);
 			}
 			doFullDepthSearch = (value > alpha);
 		}
@@ -96,11 +98,12 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 			//ss->pvmove = move;
 			(ss + 1)->pv = pv;
 			(ss + 1)->pv[0] = MOVE_NONE;
-			if (depth - ONE_PLY > ONE_PLY) {
-				value = search<PV>(pos, ss + 1, -beta, -alpha, depth - ONE_PLY);
+			if (depth - ONE_PLY >= ONE_PLY) {
+				value = -search<PV>(pos, ss + 1, -beta, -alpha, depth - ONE_PLY);
 			}
 			else {
-				value = Eval::eval(pos);
+				//value = Eval::eval(pos);
+				value = -qsearch<PV>(pos, ss + 1, -beta, -alpha, depth - ONE_PLY);
 			}
 		}
 		//cout << "undo move " <<move<< endl;
@@ -143,4 +146,64 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 
 	return alpha;
 
+}
+
+//ê√é~íTçı
+//http://yaneuraou.yaneu.com/2016/11/03/%E6%8E%A2%E7%B4%A2%E3%81%AB%E3%81%8A%E3%81%91%E3%82%8B%E6%9E%9D%E5%88%88%E3%82%8A%E3%81%AE%E9%9A%8E%E5%B1%A4%E6%80%A7/
+template <Nodetype NT>
+Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
+
+	const bool is_pv = (NT == PV);
+	ASSERT(depth <= DEPTH_ZERO);
+	ASSERT(alpha < beta);
+
+	Move pv[MAX_PLY + 1];
+	Move move;
+	Move bestMove;
+	Value bestvalue;
+	Value value;
+	StateInfo si;
+	Value staticeval;
+	int movecount = 0;
+	bool incheck = pos.is_incheck();
+	Thread* thisthread = pos.searcher();
+
+	//Ç±Ç±Ç…ëOå¸Ç´é}êÿÇËÇÃÉRÅ[ÉhÇèëÇ≠
+
+
+	//ê∏éqíTçıÇÕãÓÇÃéÊÇËçáÇ¢ÇæÇØêÊâÑÇŒÇµÇƒíTçıÇë±ÇØÇÈÇ±Ç∆Ç≈íTçıÇÃññí[ï]âøílÇï‚ê≥ÇµÅAÇÊÇËê≥ämÇ…Ç∑ÇÈÇ‡ÇÃÇ≈Ç†ÇÈÇ∆évÇ¡ÇƒÇ¢ÇÈÅB
+	bestvalue=staticeval = Eval::eval(pos);
+
+	//ÉRÉåÇ≈è„éËÇ≠ëOÇÃéwÇµéËÇÃà⁄ìÆêÊÇó^Ç¶ÇÁÇÍÇƒÇ¢ÇÈÇ∆évÇ§
+	movepicker mp(pos, move_to(pos.state()->lastmove));
+
+	while ((move = mp.return_nextmove()) != MOVE_NONE) {
+
+		if (pos.is_legal(move) == false) { continue; }
+		movecount++;
+		pos.do_move(move, &si);
+		value = -qsearch<NT>(pos, ss + 1, -beta, -alpha, depth - ONE_PLY);
+		pos.undo_move();
+
+		if (value > bestvalue) {
+			//éÊÇËçáÇ¢Çì«ÇÒÇæï™ï]âøílÇÕÇÊÇËê≥ämÇ…Ç»Ç¡ÇΩ
+			bestvalue = value;
+
+			//alphaílÇÕíÍè„Ç∞Ç≥ÇÍÇΩ
+			if (value > alpha) {
+				alpha = value;
+
+				//beta cut!
+				if (alpha >= beta) {
+					return alpha;
+				}
+			}
+		}
+	}
+	//â§éËÇÇ©ÇØÇÁÇÍÇƒÇ¢Çƒçáñ@éËÇ™Ç»ÇØÇÍÇŒÇªÇÍÇÕãlÇ›
+	if (incheck&&movecount == 0) {
+		return mated_in_ply(pos.state()->ply_from_root);
+	}
+
+	return bestvalue;
 }
