@@ -83,6 +83,7 @@ namespace Eval {
 		 fe_end2 = e_king + 81, 
 
 	};
+	inline BonaPiece operator++(BonaPiece& d, int) { BonaPiece prev = d; d = BonaPiece(int(d) + 1); return prev; }
 
 	//‹î‚Ì”w”Ô†
 	enum UniformNumber :int8_t{
@@ -152,5 +153,10 @@ namespace Eval {
 
 	//‚Q‹îŠÖŒW(32bit‚Ì¸“x‚Å‚Á‚Ä‚¨‚¢‚½‚Ù‚¤‚ª‹­‚­‚È‚é‚Æv‚¤)
 	extern int32_t PP[fe_end2][fe_end2];
+
+	void read_PP();
+
+
+	inline void init() { read_PP(); }
 
 };

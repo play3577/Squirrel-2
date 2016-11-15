@@ -4,6 +4,9 @@
 
 namespace Eval {
 
+
+	int32_t PP[fe_end2][fe_end2];
+
 	int16_t piece_value[PC_ALL] = {
 		Value_Zero,
 
@@ -82,9 +85,8 @@ namespace Eval {
 		UnicornValue-BishopValue,
 		DragonValue-RookValue,
 	};
-
-
-	int32_t PP[fe_end2][fe_end2];
+	
+	
 
 
 	//çïî‘Ç©ÇÁå©ÇΩbonapieceÇï‘Ç∑ÅB

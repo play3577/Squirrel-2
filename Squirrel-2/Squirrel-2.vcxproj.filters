@@ -54,6 +54,9 @@
     <ClInclude Include="evaluate.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="learner.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="fundation.cpp">
@@ -96,6 +99,9 @@
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="misc.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="learner.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
   </ItemGroup>

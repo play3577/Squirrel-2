@@ -1,6 +1,8 @@
 #include "misc.h"
 #include "fundation.h"
 
+#include <random>
+
 File Sfen2File(const char c) {
 
 	return File(c - '1');
@@ -56,4 +58,15 @@ Move Sfen2Move(const string smove, const Position& pos)
 	check_move(m);
 	return m;
 
+}
+
+
+
+
+inline double normal_dist(double mean, double stddiv)
+{
+	std::default_random_engine generator;
+	std::normal_distribution<double> dist(mean, stddiv);
+
+	return dist(generator);
 }

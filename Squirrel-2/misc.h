@@ -64,6 +64,9 @@ inline void sleep(int ms)
 	std::this_thread::sleep_for(std::chrono::microseconds(ms));
 }
 
+extern Sfen2Piece Sfen2Piece_;
+
+
 
 //評価値を勝率に変換するための関数
 //この数式はponanzaに習っている。
@@ -71,7 +74,14 @@ inline double eval2rate(double eval) {
 	const double a = 1.0 / 600.0;
 	return (1.0) / (1.0 + exp(-a*eval));
 }
+//シグモイド関数
+inline double sigmoid(const double x) {
+	return (1.0) / (1.0 + exp(-x));
+}
+//シグモイド関数の微分
+inline double dsigmoid(const double x) {
+	return sigmoid(x) * (1.0 - sigmoid(x));
+}
 
-
-extern Sfen2Piece Sfen2Piece_;
+inline double normal_dist(double mean, double stddiv);
 

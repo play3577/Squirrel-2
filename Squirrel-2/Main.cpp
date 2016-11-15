@@ -4,6 +4,8 @@
 #include "makemove.h"
 #include "benchmark.h"
 #include "usi.h"
+#include "learner.h"
+#include "evaluate.h"
 using namespace std;
 
 
@@ -11,7 +13,7 @@ int main() {
 
 	USI::init_option(Options);
 	bitboard_init();
-
+	Eval::init();
 #ifdef TEST
 	/*Position pos;*/
 
@@ -97,11 +99,16 @@ int main() {
 	//pos.set("sfen l6nl/5+P1gk/2np1S3/p1p4Pp/3P2Sp1/1PPb2P1P/P5GS1/R8/LN4bKL w GR5pnsg 1");//éwÇµéËê∂ê¨ç’ÇËÇÃã«ñ 
 	//cout << pos << endl;
 	//speed_genmove(pos);
+
+
+	//Eval::initialize_Param();
+
 #endif
 
 	//Position pos;
 	//StateInfo si;
 
+	
 
 
 	USI::loop();
