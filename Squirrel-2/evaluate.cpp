@@ -84,6 +84,9 @@ namespace Eval {
 	};
 
 
+	int32_t PP[fe_end2][fe_end2];
+
+
 	//黒番から見たbonapieceを返す。
 	BonaPiece bonapiece(const Square sq, const Piece pc)
 	{
@@ -96,7 +99,7 @@ namespace Eval {
 			return BonaPiece(f_lance+sq);
 			break;
 		case B_KNIGHT:
-			return BonaPiece(f_bishop+sq);
+			return BonaPiece(f_knight+sq);
 			break;
 		case B_SILVER:
 			return BonaPiece(f_silver+sq);
@@ -274,7 +277,7 @@ namespace Eval {
 
 		//駒番号の為のカウンタ(グローバルではなく関数内に置くことでこの関数に来る度に値が初期化されるはず)
 		UniformNumber uniform[9] = {
-			no_uniform,
+			Num_Uniform,
 			pawn1,//pawn1を0にしないとリスト[0]に空きが出てしまう！！
 			lance1,
 			knight1,
@@ -357,7 +360,7 @@ namespace Eval {
 
 					if (num = num_pt(h, pt)) {
 
-						for (int i = 0; i < num + 1; i++) {
+						for (int i = 1; i < num + 1; i++) {
 							bplist_fb[uniform[pt]] = bonapiece(hc, pt, i);
 							hand2Uniform[hc][pt][i] = uniform[pt];
 							uniform[pt]++;
@@ -440,7 +443,7 @@ namespace Eval {
 					cout << "e_lance + " << int(bp - e_lance) << endl;
 				}
 				else if (f_knight <= bp&&bp < e_knight) {
-					cout << "fknight + " << int(bp - f_knight) << endl;
+					cout << "f_knight + " << int(bp - f_knight) << endl;
 				}
 				else if (e_knight <= bp &&bp< f_silver) {
 					cout << "e_knight + " << int(bp - e_knight) << endl;
@@ -490,15 +493,8 @@ namespace Eval {
 				else {
 					UNREACHABLE;
 				}
-
 			}
-
-
-
 		}
-
-
-
 	}//endof print bp
 	
 

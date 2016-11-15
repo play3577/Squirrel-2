@@ -6,6 +6,7 @@
 #include "fundation.h"
 #include "movepicker.h"
 #include "Thread.h"
+#include "makemove.h"
 //#include "makemove.h"
 
 #include <iostream>
@@ -25,7 +26,8 @@ const string max_pos = "sfen R8/2K1S1SSk/4B4/9/9/9/9/9/1L1L1L3 b RBGSNLP3g3n17p 
 const string nijyuuoute = "sfen lnsgk1snl/7b1/ppppppppp/9/4r4/9/PPP2PPPP/1B1g3R1/LNSGKGSNL b 2P 1";
 const string oute = "sfen lnsgk1snl/7b1/ppppppppp/9/4r4/9/PPPg1PPPP/1B5R1/LNSGKGSNL b 2P 1";
 const string suicide = "sfen lnsgkgsnl/1r7/pppppp1pp/6p2/8P/6P2/PP1PPP1P1/1B3K1R1/LNSG+bGSNL b P 1";
-
+const string capturepromote = "sfen lnsgkgsnl/1r5b1/ppppppppp/9/9/2P6/PP1PPPPPP/1B5R1/LNSGKGSNL b - 1";
+const string drop = "sfen lnsgkgsnl/1r5b1/ppppppppp/9/9/9/PP1PPPPPP/1B5R1/LNSGKGSNL b P 1";
 
 void USI::init_option(OptionMap &o)
 {
@@ -242,6 +244,44 @@ void USI::loop()
 			is >> move;
 			Sfen2Move(move, pos);
 		}
+		else if (token == "test") {
+			StateInfo si;
+			ExtMove moves_[600],*end;
+			end = moves_;
+
+			cout << pos << endl;
+			end = test_move_generation(pos, moves_);
+
+			for (ExtMove* i = moves_; i < end; i++) {
+				check_move(i->move);
+				pos.do_move(i->move, &si);
+				cout << pos << endl;
+				pos.undo_move();
+				cout << pos << endl;
+			}
+		}
+		else if (token == "cappro") {
+			StateInfo si;
+			pos.set(capturepromote);
+			const Move m = make_movepromote(SQ8H, SQ3C, BISHOP);
+			cout << pos << endl;
+			pos.do_move(m, &si);
+			cout << pos << endl;
+			pos.undo_move();
+			cout << pos << endl;
+
+		}
+		else if (token == "drop") {
+			StateInfo si;
+			pos.set(drop);
+			Move m = make_drop(SQ7G, PAWN);
+			cout << pos << endl;
+			pos.do_move(m, &si);
+			cout << pos << endl;
+			pos.undo_move();
+			cout << pos << endl;
+		}
+
 
 	} while (token != "quit");
 

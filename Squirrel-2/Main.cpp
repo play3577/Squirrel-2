@@ -99,8 +99,8 @@ int main() {
 	//speed_genmove(pos);
 #endif
 
-	/*Position pos;
-	StateInfo si;*/
+	//Position pos;
+	//StateInfo si;
 
 
 

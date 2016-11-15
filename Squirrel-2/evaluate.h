@@ -86,7 +86,7 @@ namespace Eval {
 
 	//駒の背番号
 	enum UniformNumber :int8_t{
-		no_uniform,
+		//no_uniform,
 		//成ったとしても背番号はなる前のものでいいと考えられる
 		pawn1, pawn2, pawn3, pawn4, pawn5, pawn6, pawn7, pawn8, pawn9, pawn10, pawn11, pawn12, pawn13, pawn14, pawn15, pawn16, pawn17, pawn18,
 		lance1, lance2,lance3,lance4,
@@ -123,8 +123,18 @@ namespace Eval {
 		void init() {
 			//コレで初期化出来ているはず
 			memset(bplist_fb, 0, sizeof(bplist_fb));
-			memset(sq2Uniform, 0, sizeof(sq2Uniform));
-			memset(hand2Uniform, 0, sizeof(hand2Uniform));
+			//memset(sq2Uniform, 0, sizeof(sq2Uniform));
+			//memset(hand2Uniform, 0, sizeof(hand2Uniform));
+			for (Square sq = SQ_ZERO; sq < SQ_NUM; sq++) {
+				sq2Uniform[sq] = Num_Uniform;
+			}
+			for (Color c = BLACK; c < ColorALL; c++) {
+				for (Piece pt = NO_PIECE; pt < KING; pt++) {
+					for (int num = 0; num < 3; num++) {
+						hand2Uniform[c][pt][num] = Num_Uniform;
+					}
+				}
+			}
 		}
 
 		void makebonaPlist(const Position &pos);
@@ -139,5 +149,8 @@ namespace Eval {
 
 	//評価値計算
 	Value eval(const Position& pos);
+
+	//２駒関係(32bitの精度で持っておいたほうが強くなると思う)
+	extern int32_t PP[fe_end2][fe_end2];
 
 };

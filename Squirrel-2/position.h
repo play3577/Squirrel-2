@@ -39,6 +39,11 @@ struct StateInfo
 	Value material;
 	Value pp;
 
+	//動いた駒0 取られた駒1
+	Eval::BonaPiece dirtybonap_fb[2];
+	Eval::UniformNumber dirtyuniform[2];
+
+
 	StateInfo* previous = nullptr;//undo_moveで以前の局面に戻る為の単方向リスト
 };
 
@@ -102,6 +107,10 @@ public:
 	}
 
 	void check_effect();
+
+
+	Eval::BonaPList evallist() const { return list; }
+
 
 
 	void do_move(const Move m, StateInfo* st);
