@@ -272,6 +272,22 @@ namespace Eval {
 		return (pos.sidetomove() == BLACK) ? value : -value;*/
 	}
 
+	/*Value eval_PP(const Position & pos)
+	{
+		int32_t bPP, wPP;
+		BonaPiece *list_fb, *list_fw;
+
+		for (int i = 0; i < 40; i++) {
+			for (int j = 0; j < i; j++) {
+				bPP += PP[list_fb[i]][list_fb[j]];
+				wPP -= PP[list_fw[i]][list_fw[j]];
+			}
+		}
+		pos.state()->bpp = Value(bPP);
+		pos.state()->wpp = (Value)wPP;
+		return Value((bPP+wPP) / FV_SCALE);
+	}
+*/
 	void BonaPList::makebonaPlist(const Position & pos)
 	{
 		//èâä˙âª

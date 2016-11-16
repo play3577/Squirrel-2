@@ -58,6 +58,8 @@ enum  Square:int8_t
 	SQ_NUM,Error_SQ=99,
 };
 
+
+inline constexpr Square hihumin_eye(const Square sq) { return Square(- 1 +SQ_NUM - sq); }
 constexpr bool is_ok(const Square sq) { return(SQ1A <= sq&&sq <= SQ9I); }
 //USIo—Í
 std::ostream& operator<<(std::ostream& os, const Square sq);

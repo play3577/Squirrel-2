@@ -10,6 +10,8 @@ namespace Eval {
 	void initialize_PP();
 
 
+	//パラメーターの更新のための関数
+	void add_PP(const Position& pos, const int32_t** inc);
 
 
 

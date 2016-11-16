@@ -101,9 +101,11 @@ int main() {
 	//speed_genmove(pos);
 
 
-	//Eval::initialize_Param();
+	
 
 #endif
+
+	Eval::initialize_PP();
 
 	//Position pos;
 	//StateInfo si;

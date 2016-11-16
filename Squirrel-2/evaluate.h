@@ -10,6 +10,8 @@ struct Position;
 
 namespace Eval {
 
+	const int32_t FV_SCALE = (0b11111111);
+
 	//コマ割はやねうら王（やねうら王のコマ割はbonanza6）
 	enum :int16_t {
 		PawnValue = 86,
@@ -150,6 +152,8 @@ namespace Eval {
 
 	//評価値計算
 	Value eval(const Position& pos);
+
+	Value eval_PP(const Position& pos);
 
 	//２駒関係(32bitの精度で持っておいたほうが強くなると思う)
 	extern int32_t PP[fe_end2][fe_end2];
