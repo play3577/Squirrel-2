@@ -124,12 +124,10 @@ void Position::set(std::string sfen)
 
 	list.makebonaPlist(*this);
 
-/*
-	cout << *this << endl;
+//	cout << *this << endl;
 	
 	list.print_bplist();
 
-	*/
 
 #ifdef CHECKPOS
 	
@@ -233,11 +231,12 @@ void Position::do_move(const Move m, StateInfo * newst)
 		st->dirtyuniform[0] = list.hand2Uniform[c][pt][num];
 		ASSERT(st->dirtyuniform[0] != Eval::Num_Uniform);
 		st->dirtybonap_fb[0] = list.bplist_fb[st->dirtyuniform[0]];
+		st->dirtybonap_fw[0] = list.bplist_fw[st->dirtyuniform[0]];
 		//listの更新
 		list.hand2Uniform[c][pt][num] = Eval::Num_Uniform;
 		list.sq2Uniform[to] = st->dirtyuniform[0];
 		list.bplist_fb[st->dirtyuniform[0]] = Eval::bonapiece(to, movedpiece);
-
+		list.bplist_fw[st->dirtyuniform[0]] = Eval::bonapiece(hihumin_eye(to), inverse(movedpiece));
 
 
 		makehand(hands[sidetomove()], pt, num - 1);//持ち駒から駒を一枚減らす
@@ -275,11 +274,14 @@ void Position::do_move(const Move m, StateInfo * newst)
 		st->dirtyuniform[0] = list.sq2Uniform[from];
 		ASSERT(st->dirtyuniform[0] != Eval::Num_Uniform);
 		st->dirtybonap_fb[0] = list.bplist_fb[st->dirtyuniform[0]];
+		st->dirtybonap_fw[0] = list.bplist_fw[st->dirtyuniform[0]];
+
 		//listの更新
 		if (capture != NO_PIECE) {
 			st->dirtyuniform[1] = list.sq2Uniform[to];
 			ASSERT(st->dirtyuniform[1] != Eval::Num_Uniform);
 			st->dirtybonap_fb[1] = list.bplist_fb[st->dirtyuniform[1]];
+			st->dirtybonap_fw[1] = list.bplist_fw[st->dirtyuniform[1]];
 		}
 		list.sq2Uniform[from] = Eval::Num_Uniform;
 		list.sq2Uniform[to] = st->dirtyuniform[0];
@@ -300,7 +302,7 @@ void Position::do_move(const Move m, StateInfo * newst)
 
 			//listの更新
 			list.bplist_fb[list.sq2Uniform[to]] = bonapiece(to, movedpiece);
-
+			list.bplist_fw[list.sq2Uniform[to]] = bonapiece(hihumin_eye(to), inverse(movedpiece));
 		}
 		else {
 			//成がある場合
@@ -319,6 +321,7 @@ void Position::do_move(const Move m, StateInfo * newst)
 
 			//listの更新
 			list.bplist_fb[list.sq2Uniform[to]] = bonapiece(to, promotepiece(movedpiece));
+			list.bplist_fw[list.sq2Uniform[to]] = bonapiece(hihumin_eye(to), inverse(promotepiece(movedpiece)));
 		}
 
 		//駒の捕獲
@@ -350,6 +353,7 @@ void Position::do_move(const Move m, StateInfo * newst)
 
 			//listの更新(ここコレでいいか怪しい。)
 			list.bplist_fb[st->dirtyuniform[1]] = bonapiece(us, pt2, num + 1);
+			list.bplist_fw[st->dirtyuniform[1]] = bonapiece(opposite(us), pt2, num + 1);
 			list.hand2Uniform[us][pt2][num + 1] = st->dirtyuniform[1];
 		}
 		else {
@@ -409,6 +413,8 @@ void Position::undo_move()
 	//evallistの差分用
 	const Eval::BonaPiece movedbonap_fb = st->dirtybonap_fb[0];
 	const Eval::BonaPiece capturedbonap_fb = st->dirtybonap_fb[1];
+	const Eval::BonaPiece movedbonap_fw = st->dirtybonap_fw[0];
+	const Eval::BonaPiece capturedbonap_fw = st->dirtybonap_fw[1];
 	const Eval::UniformNumber moveduniform = st->dirtyuniform[0];
 	const Eval::UniformNumber captureduniform = st->dirtyuniform[1];
 
@@ -431,6 +437,7 @@ void Position::undo_move()
 			remove_existpawnBB(c, to);
 		}
 		list.bplist_fb[moveduniform] = movedbonap_fb;//元の位置に戻す。
+		list.bplist_fw[moveduniform] = movedbonap_fw;
 		list.sq2Uniform[to] = Eval::Num_Uniform;//toには何もなかった
 		list.hand2Uniform[c][pt][num + 1] = moveduniform;//持ち駒に戻る。
 
@@ -459,12 +466,14 @@ void Position::undo_move()
 
 		//fromのいちに戻ってくるのは捕獲であろうと、成であろうと共通
 		list.bplist_fb[moveduniform] = movedbonap_fb;//元の位置に戻す。(成りの場合でもコレでいいと考えられる。)
+		list.bplist_fw[moveduniform] = movedbonap_fw;
 		if (capture == NO_PIECE) {
 			list.sq2Uniform[to] = Eval::Num_Uniform;
 		}
 		else {
 			list.sq2Uniform[to] = captureduniform;
 			list.bplist_fb[captureduniform] = capturedbonap_fb;
+			list.bplist_fw[captureduniform] = capturedbonap_fw;
 		}
 		list.sq2Uniform[from] = moveduniform;
 

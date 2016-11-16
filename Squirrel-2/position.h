@@ -41,6 +41,7 @@ struct StateInfo
 
 	//“®‚¢‚½‹î0 Žæ‚ç‚ê‚½‹î1
 	Eval::BonaPiece dirtybonap_fb[2];
+	Eval::BonaPiece dirtybonap_fw[2];
 	Eval::UniformNumber dirtyuniform[2];
 
 

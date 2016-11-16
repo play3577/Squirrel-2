@@ -100,12 +100,12 @@ int main() {
 	//cout << pos << endl;
 	//speed_genmove(pos);
 
-
+	//Eval::initialize_PP();
 	
 
 #endif
 
-	Eval::initialize_PP();
+	
 
 	//Position pos;
 	//StateInfo si;

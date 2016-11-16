@@ -115,8 +115,9 @@ namespace Eval {
 	//本将棋では駒は40枚
 	struct BonaPList {
 
-		//kppはかぶらないように計算されるのでｆとeの場所が入れ違っても大丈夫だと考えられる。
+		//ppはかぶらないように計算されるのでｆとeの場所が入れ違っても大丈夫だと考えられる。
 		BonaPiece bplist_fb[Num_Uniform];
+		BonaPiece bplist_fw[Num_Uniform];
 		//sqにいる駒のUniformnumverを返す。この方法には無駄が多いようなきがするけどコレしか思いつかなかったのでしゃーない
 		UniformNumber sq2Uniform[SQ_NUM];
 		// 手番駒種枚数に対応するUniformNumberを返す。
@@ -126,6 +127,7 @@ namespace Eval {
 		void init() {
 			//コレで初期化出来ているはず
 			memset(bplist_fb, 0, sizeof(bplist_fb));
+			memset(bplist_fw, 0, sizeof(bplist_fw));
 			//memset(sq2Uniform, 0, sizeof(sq2Uniform));
 			//memset(hand2Uniform, 0, sizeof(hand2Uniform));
 			for (Square sq = SQ_ZERO; sq < SQ_NUM; sq++) {

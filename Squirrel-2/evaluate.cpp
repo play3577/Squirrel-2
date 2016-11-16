@@ -320,41 +320,49 @@ namespace Eval {
 			{
 			case PAWN:case PRO_PAWN:
 				bplist_fb[uniform[PAWN]] = bonapiece(sq, pc);
+				bplist_fw[uniform[PAWN]] = bonapiece(hihumin_eye(sq),inverse(pc));
 				sq2Uniform[sq] = uniform[PAWN];
 				uniform[PAWN]++;
 				break;
 			case LANCE:case PRO_LANCE:
 				bplist_fb[uniform[LANCE]] = bonapiece(sq, pc);
+				bplist_fw[uniform[LANCE]] = bonapiece(hihumin_eye(sq), inverse(pc));
 				sq2Uniform[sq] = uniform[LANCE];
 				uniform[LANCE]++;
 				break;
 			case KNIGHT:case PRO_NIGHT:
 				bplist_fb[uniform[KNIGHT]] = bonapiece(sq, pc);
+				bplist_fw[uniform[KNIGHT]] = bonapiece(hihumin_eye(sq), inverse(pc));
 				sq2Uniform[sq] = uniform[KNIGHT];
 				uniform[KNIGHT]++;
 				break;
 			case SILVER:case PRO_SILVER:
 				bplist_fb[uniform[SILVER]] = bonapiece(sq, pc);
+				bplist_fw[uniform[SILVER]] = bonapiece(hihumin_eye(sq), inverse(pc));
 				sq2Uniform[sq] = uniform[SILVER];
 				uniform[SILVER]++;
 				break;
 			case BISHOP:case UNICORN:
 				bplist_fb[uniform[BISHOP]] = bonapiece(sq, pc);
+				bplist_fw[uniform[BISHOP]] = bonapiece(hihumin_eye(sq), inverse(pc));
 				sq2Uniform[sq] = uniform[BISHOP];
 				uniform[BISHOP]++;
 				break;
 			case ROOK:case DRAGON:
 				bplist_fb[uniform[ROOK]] = bonapiece(sq, pc);
+				bplist_fw[uniform[ROOK]] = bonapiece(hihumin_eye(sq), inverse(pc));
 				sq2Uniform[sq] = uniform[ROOK];
 				uniform[ROOK]++;
 				break;
 			case GOLD:
 				bplist_fb[uniform[GOLD]] = bonapiece(sq, pc);
+				bplist_fw[uniform[GOLD]] = bonapiece(hihumin_eye(sq), inverse(pc));
 				sq2Uniform[sq] = uniform[GOLD];
 				uniform[GOLD]++;
 				break;
 			case KING:
 				bplist_fb[uniform[KING]] = bonapiece(sq, pc);
+				bplist_fw[uniform[KING]] = bonapiece(hihumin_eye(sq), inverse(pc));
 				sq2Uniform[sq] = uniform[KING];
 				uniform[KING]++;
 				break;
@@ -380,6 +388,7 @@ namespace Eval {
 
 						for (int i = 1; i < num + 1; i++) {
 							bplist_fb[uniform[pt]] = bonapiece(hc, pt, i);
+							bplist_fw[uniform[pt]] = bonapiece(opposite(hc), pt, i);
 							hand2Uniform[hc][pt][i] = uniform[pt];
 							uniform[pt]++;
 						}
@@ -512,7 +521,133 @@ namespace Eval {
 					UNREACHABLE;
 				}
 			}
-		}
+		}//from black
+
+		cout << endl << "from white" << endl << endl;
+
+		for (int i = 0; i < Num_Uniform; i++) {
+
+			auto bp = bplist_fw[i];
+
+			//bp<fe_handendであればそれは手駒
+			if (bp < fe_hand_end) {
+
+				//ここもうちょっとなんとかなるようなきがするんだけど,,,
+				if (f_hand_pawn <= bp&&bp < e_hand_pawn) {
+					cout << "f_handpawn + " << int(bp - f_hand_pawn) << endl;
+				}
+				else if (e_hand_pawn <= bp&&bp < f_hand_lance) {
+					cout << "e_handpawn + " << int(bp - e_hand_pawn) << endl;
+				}
+				else if (f_hand_lance <= bp&&bp < e_hand_lance) {
+					cout << "f_hand lance + " << int(bp - f_hand_lance) << endl;
+				}
+				else if (e_hand_lance <= bp&&bp < f_hand_knight) {
+					cout << "e_handlance + " << int(bp - e_hand_lance) << endl;
+				}
+				else if (f_hand_knight <= bp&&bp < e_hand_knight) {
+					cout << "f_handknight + " << int(bp - f_hand_knight) << endl;
+				}
+				else if (e_hand_knight <= bp&&bp < f_hand_silver) {
+					cout << "e_hand_knight + " << int(bp - e_hand_knight) << endl;
+				}
+				else if (bp < e_hand_silver) {//条件はコレだけで十分か？？
+					cout << "f_hand_silver + " << int(bp - f_hand_silver) << endl;
+				}
+				else if (bp < f_hand_gold) {
+					cout << "e_hand_silver + " << int(bp - e_hand_silver) << endl;
+				}
+				else if (bp < e_hand_gold) {
+					cout << "f_hand_gold + " << int(bp - f_hand_gold) << endl;
+				}
+				else if (bp < f_hand_bishop) {
+					cout << "e_hand_gold + " << int(bp - e_hand_gold) << endl;
+				}
+				else if (bp < e_hand_bishop) {
+					cout << "f_hand_bishop + " << int(bp - f_hand_bishop) << endl;
+				}
+				else if (bp < f_hand_rook) {
+					cout << "e_hand_bishop + " << int(bp - e_hand_bishop) << endl;
+				}
+				else if (bp < e_hand_rook) {
+					cout << "f_hand_rook + " << int(bp - f_hand_rook) << endl;
+				}
+				else if (bp < fe_hand_end) {
+					cout << "e_hand_rook + " << int(bp - e_hand_rook) << endl;
+				}
+
+			}
+			else {
+				//盤上の駒
+				if (f_pawn <= bp&&bp < e_pawn) {
+					cout << "f_pawn + " << int(bp - f_pawn) << endl;
+				}
+				else if (e_pawn <= bp&&bp < f_lance) {
+					cout << "e_pawn + " << int(bp - e_pawn) << endl;
+				}
+				else if (f_lance <= bp&&bp < e_lance) {
+					cout << "f_lance + " << int(bp - f_lance) << endl;
+				}
+				else if (e_lance <= bp&&bp < f_knight) {
+					cout << "e_lance + " << int(bp - e_lance) << endl;
+				}
+				else if (f_knight <= bp&&bp < e_knight) {
+					cout << "f_knight + " << int(bp - f_knight) << endl;
+				}
+				else if (e_knight <= bp &&bp< f_silver) {
+					cout << "e_knight + " << int(bp - e_knight) << endl;
+				}
+				else if (f_silver <= bp&&bp < e_silver) {
+					cout << "f_silver + " << int(bp - f_silver) << endl;
+				}
+				else if (e_silver <= bp&&bp < f_gold) {
+					cout << "e_silver + " << int(bp - e_silver) << endl;
+				}
+				else if (f_gold <= bp&&bp < e_gold) {
+					cout << "f_gold + " << int(bp - f_gold) << endl;
+				}
+				else if (e_gold <= bp&&bp < f_bishop) {
+					cout << "e_gold + " << int(bp - e_gold) << endl;
+				}
+				else if (bp<e_bishop) {
+					cout << "f_bishop + " << int(bp - f_bishop) << endl;
+				}
+				else if (bp<f_unicorn) {
+					cout << "e_bishop + " << int(bp - e_bishop) << endl;
+				}
+				else if (bp < e_unicorn) {
+					cout << "f_unicorn + " << int(bp - f_unicorn) << endl;
+				}
+				else if (bp < f_rook) {
+					cout << "e_unicorn + " << int(bp - e_unicorn) << endl;
+				}
+				else if (bp < e_rook) {
+					cout << "f_rook + " << int(bp - f_rook) << endl;
+				}
+				else if (bp < f_dragon) {
+					cout << "e_rook + " << int(bp - e_rook) << endl;
+				}
+				else if (bp < e_dragon) {
+					cout << "f_dragon + " << int(bp - f_dragon) << endl;
+				}
+				else if (bp < f_king) {
+					cout << "e_dragon + " << int(bp - e_dragon) << endl;
+				}
+				else if (bp < e_king) {
+					cout << "f_king + " << int(bp - f_king) << endl;
+				}
+				else if (bp < fe_end2) {
+					cout << "e_king + " << int(bp - e_king) << endl;
+				}
+				else {
+					UNREACHABLE;
+				}
+			}
+		}//from white
+
+
+
+
 	}//endof print bp
 	
 
