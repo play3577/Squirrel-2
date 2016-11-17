@@ -37,13 +37,14 @@ struct StateInfo
 	Bitboard checker = ZeroBB;//将棋では2重王手になることがあるためbitboardでもたねばならない。
 
 	Value material;
-	Value bpp,wpp;
+	Value bpp=Value_error,wpp=Value_error;
 
 	//動いた駒0 取られた駒1
 	Eval::BonaPiece dirtybonap_fb[2];
 	Eval::BonaPiece dirtybonap_fw[2];
-	Eval::UniformNumber dirtyuniform[2];
+	Eval::UniformNumber dirtyuniform[2] = { Eval::Num_Uniform, Eval::Num_Uniform};
 
+	friend struct Position;
 
 	StateInfo* previous = nullptr;//undo_moveで以前の局面に戻る為の単方向リスト
 };

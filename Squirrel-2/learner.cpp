@@ -47,7 +47,7 @@ void Eval::initialize_PP()
 	for (BonaPiece bp1 = f_hand_pawn; bp1 < fe_end2; bp1++) {
 		for (BonaPiece bp2 = f_hand_pawn; bp2 < bp1; bp2++) {
 
-			PP[bp1][bp2]=PP[bp2][bp1]= int32_t(mt());
+			PP[bp1][bp2]=PP[bp2][bp1]= int32_t(mt())%1000;
 
 		}
 	}

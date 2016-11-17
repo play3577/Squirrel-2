@@ -135,6 +135,7 @@ enum Value :int16_t {
 	Value_mate_in_maxply = int(Value_Mate) - MAX_PLY,
 	Value_mated_in_maxply = int(Value_Mated) + MAX_PLY,
 
+	Value_error = -32011,
 	//‹î‚Ì‰¿’l
 	/*Hiyoko_value = 100,
 	Zou_value = 150,

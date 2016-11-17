@@ -281,6 +281,10 @@ void USI::loop()
 			pos.undo_move();
 			cout << pos << endl;
 		}
+		else if (token == "eval") {
+			cout << Eval::eval(pos) << endl;;
+
+		}
 
 
 	} while (token != "quit");

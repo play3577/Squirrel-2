@@ -9,7 +9,7 @@ struct Position;
 
 
 namespace Eval {
-
+	//このFV_SCALEでホントに評価値16bit値に収まってくれるか？？
 	const int32_t FV_SCALE = (0b11111111);
 
 	//コマ割はやねうら王（やねうら王のコマ割はbonanza6）
@@ -156,6 +156,8 @@ namespace Eval {
 	Value eval(const Position& pos);
 
 	Value eval_PP(const Position& pos);
+
+	Value eval_diff_PP(const Position& pos);
 
 	//２駒関係(32bitの精度で持っておいたほうが強くなると思う)
 	extern int32_t PP[fe_end2][fe_end2];

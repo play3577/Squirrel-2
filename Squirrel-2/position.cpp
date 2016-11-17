@@ -126,7 +126,7 @@ void Position::set(std::string sfen)
 
 //	cout << *this << endl;
 	
-	list.print_bplist();
+	//list.print_bplist();
 
 
 #ifdef CHECKPOS
@@ -207,8 +207,6 @@ void Position::do_move(const Move m, StateInfo * newst)
 	st->lastmove = m;//¡‰ñw‚µ‚½w‚µ‚Ä
 	int16_t matterialdiff = 0;
 	ASSERT(is_ok(movedpiece));
-
-
 
 
 

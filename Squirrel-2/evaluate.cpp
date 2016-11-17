@@ -256,14 +256,41 @@ namespace Eval {
 
 	Value eval(const Position & pos)
 	{
-		Value value = pos.state()->material;
+		Value pp,value;
+		Value material= pos.state()->material;
 
-		Value  full = eval_material(pos);
-		//駒得の差分計算ができているかチェック
-		if (value != full) {
-			cout << pos << endl;
-			ASSERT(0);
+
+		//計算済み
+		if (pos.state()->bpp != Value_error) {
+			ASSERT(pos.state()->wpp != Value_error);
+			pp=Value((pos.state()->bpp + pos.state()->wpp) / FV_SCALE);
+
 		}
+		else if (pos.state()->previous->bpp != Value_error) {
+			//差分計算可能
+			ASSERT(pos.state()->previous->wpp != Value_error);
+
+			pp = eval_diff_PP(pos);
+		}
+		else {
+			//全計算！
+			pp = eval_PP(pos);
+		}
+
+		if (pp != eval_PP(pos)) {
+			cout << " diff " << pp << " evalfull " << eval_PP(pos) << endl;
+		}
+		//pp = eval_PP(pos);
+
+		value = material + pp;
+
+		//コレは確認済み
+		//Value  full = eval_material(pos);
+		////駒得の差分計算ができているかチェック
+		//if (value != full) {
+		//	cout << pos << endl;
+		//	ASSERT(0);
+		//}
 
 
 		return (pos.sidetomove() == BLACK) ? value : -value;
@@ -272,10 +299,10 @@ namespace Eval {
 		return (pos.sidetomove() == BLACK) ? value : -value;*/
 	}
 
-	/*Value eval_PP(const Position & pos)
+	Value eval_PP(const Position & pos)
 	{
-		int32_t bPP, wPP;
-		BonaPiece *list_fb, *list_fw;
+		int32_t bPP=0, wPP=0;
+		BonaPiece *list_fb=pos.evallist().bplist_fb, *list_fw=pos.evallist().bplist_fw;
 
 		for (int i = 0; i < 40; i++) {
 			for (int j = 0; j < i; j++) {
@@ -285,9 +312,122 @@ namespace Eval {
 		}
 		pos.state()->bpp = Value(bPP);
 		pos.state()->wpp = (Value)wPP;
+		//評価値ホントに16bitで収まるかどうか確認
+		ASSERT(abs(bPP + wPP) / FV_SCALE < INT16_MAX);
+
 		return Value((bPP+wPP) / FV_SCALE);
 	}
-*/
+
+	//差分計算
+	Value eval_diff_PP(const Position & pos)
+	{
+		const StateInfo *now = pos.state();
+		const StateInfo *prev = pos.state()->previous;
+		const auto list = pos.evallist();
+		int32_t bPP, wPP;
+		bPP = prev->bpp;
+		wPP = prev->wpp;
+
+		ASSERT(bPP != Value_error&&wPP != Value_error);
+
+	
+		//dirtybonaPがゼロになっている！
+		//dirtyuniformもゼロになってる！
+		//dirty uniformがおかしいのでdo_moveでおかしくなってないか確認する。
+		const Eval::BonaPiece oldbp1_fb = now->dirtybonap_fb[0];
+		const Eval::BonaPiece oldbp2_fb = now->dirtybonap_fb[1];
+		const Eval::BonaPiece oldbp1_fw = now->dirtybonap_fw[0];
+		const Eval::BonaPiece oldbp2_fw = now->dirtybonap_fw[1];
+		const Eval::UniformNumber moveduniform1 = now->dirtyuniform[0];
+		const Eval::UniformNumber moveduniform2 = now->dirtyuniform[1];
+		
+		
+
+
+		const auto now_list_fb = list.bplist_fb;
+		const auto now_list_fw = list.bplist_fw;
+
+		const Eval::BonaPiece newbp1_fb = list.bplist_fb[now->dirtyuniform[0]];
+		const Eval::BonaPiece newbp2_fb = list.bplist_fb[now->dirtyuniform[1]];
+		const Eval::BonaPiece newbp1_fw = list.bplist_fw[now->dirtyuniform[0]];
+		const Eval::BonaPiece newbp2_fw = list.bplist_fw[now->dirtyuniform[1]];
+
+
+		Eval::BonaPiece old_list_fb[40];
+		Eval::BonaPiece old_list_fw[40];
+
+
+		//========================
+		//oldlistの作成
+		//========================
+		//ここのコピーに時間がかかりそうなんだよなぁ(memcopyでコピーするか)
+		memcpy(old_list_fb, now_list_fb, sizeof(old_list_fb));
+		memcpy(old_list_fw, now_list_fw, sizeof(old_list_fw));
+
+		old_list_fb[moveduniform1] = oldbp1_fb;
+		old_list_fw[moveduniform1] = oldbp1_fw;
+		if (moveduniform2 != Num_Uniform) {
+			old_list_fb[moveduniform2] = oldbp2_fb;
+			old_list_fw[moveduniform2] = oldbp2_fw;
+		}
+		
+		//動いた駒が一つ
+		if (moveduniform2 == Num_Uniform) {
+			//差分計算の実行
+			for (int i = 0; i < 40; i++) {
+				//dirtyになってしまった分bPPから引く
+				bPP -= PP[oldbp1_fb][old_list_fb[i]];
+				wPP += PP[oldbp1_fw][old_list_fw[i]];
+				//新しいbPPのぶんを足す
+				bPP += PP[newbp1_fb][now_list_fb[i]];
+				wPP -= PP[newbp1_fw][now_list_fw[i]];
+			}
+			/*
+			ここで引きすぎ、足しすぎを補正しなければならないがPP[i][i]=0であるはずなのでこの場合補正は必要ない
+			*/
+			//まあ一応確認しておく。
+			ASSERT(PP[oldbp1_fb][oldbp1_fb] == 0);
+			ASSERT(PP[oldbp1_fw][oldbp1_fw] == 0);
+			ASSERT(PP[newbp1_fb][newbp1_fb] == 0);
+			ASSERT(PP[newbp1_fw][newbp1_fw] == 0);
+		}
+		else {
+			//動いた駒が２つ
+			for (int i = 0; i < 40; i++) {
+				//dirtyになってしまった分を引く
+				bPP -= PP[oldbp1_fb][old_list_fb[i]];
+				bPP -= PP[oldbp2_fb][old_list_fb[i]];
+				wPP += PP[oldbp1_fw][old_list_fw[i]];
+				wPP += PP[oldbp2_fw][old_list_fw[i]];
+				//新しい分を足す
+				bPP += PP[newbp1_fb][now_list_fb[i]];
+				bPP += PP[newbp2_fb][now_list_fb[i]];
+				wPP -= PP[newbp1_fw][now_list_fw[i]];
+				wPP -= PP[newbp2_fw][now_list_fw[i]];
+			}
+			//引き過ぎを補正する
+			bPP += PP[oldbp1_fb][oldbp2_fb];
+			//足し過ぎを補正する
+			bPP -= PP[newbp1_fb][newbp2_fb];
+
+			//まあ一応確認しておく。
+			ASSERT(PP[oldbp1_fb][oldbp1_fb] == 0);
+			ASSERT(PP[oldbp1_fw][oldbp1_fw] == 0);
+			ASSERT(PP[newbp1_fb][newbp1_fb] == 0);
+			ASSERT(PP[newbp1_fw][newbp1_fw] == 0);
+			ASSERT(PP[oldbp2_fb][oldbp2_fb] == 0);
+			ASSERT(PP[oldbp2_fw][oldbp2_fw] == 0);
+			ASSERT(PP[newbp2_fb][newbp2_fb] == 0);
+			ASSERT(PP[newbp2_fw][newbp2_fw] == 0);
+		}
+
+		pos.state()->bpp = (Value)bPP;
+		pos.state()->wpp = (Value)wPP;
+
+		return Value((bPP + wPP) / FV_SCALE);
+
+	}//差分計算
+
 	void BonaPList::makebonaPlist(const Position & pos)
 	{
 		//初期化
