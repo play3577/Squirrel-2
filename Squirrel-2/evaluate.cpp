@@ -416,11 +416,30 @@ namespace Eval {
 
 			ASSERT(is_ok(moveduniform1));
 			//差分計算の実行
-			for (int i = 0; i < 40; i++) {
+			//for (int i = 0; i < 40; i++) {
+			//	//dirtyになってしまった分bPPから引く
+			//	bPP -= PP[oldbp1_fb][old_list_fb[i]];//ここでpp[old1][old1]を引きすぎる。
+			//	wPP += PP[oldbp1_fw][old_list_fw[i]];//ここでpp[old1][old1]を足しすぎる。
+			//	//新しいbPPのぶんを足す
+			//	bPP += PP[newbp1_fb][now_list_fb[i]];//ここでpp[new1][new1]を足しすぎる
+			//	wPP -= PP[newbp1_fw][now_list_fw[i]];//ここでpp[new1][new1]を引きすぎる。
+			//}
+
+
+			//２つに分けることでpp[i][i]がかぶらないようにする
+			for (int i = 0; i < moveduniform1; i++) {
 				//dirtyになってしまった分bPPから引く
 				bPP -= PP[oldbp1_fb][old_list_fb[i]];//ここでpp[old1][old1]を引きすぎる。
 				wPP += PP[oldbp1_fw][old_list_fw[i]];//ここでpp[old1][old1]を足しすぎる。
-				//新しいbPPのぶんを足す
+													 //新しいbPPのぶんを足す
+				bPP += PP[newbp1_fb][now_list_fb[i]];//ここでpp[new1][new1]を足しすぎる
+				wPP -= PP[newbp1_fw][now_list_fw[i]];//ここでpp[new1][new1]を引きすぎる。
+			}
+			for (int i = moveduniform1+1; i < 40; i++) {
+				//dirtyになってしまった分bPPから引く
+				bPP -= PP[oldbp1_fb][old_list_fb[i]];//ここでpp[old1][old1]を引きすぎる。
+				wPP += PP[oldbp1_fw][old_list_fw[i]];//ここでpp[old1][old1]を足しすぎる。
+													 //新しいbPPのぶんを足す
 				bPP += PP[newbp1_fb][now_list_fb[i]];//ここでpp[new1][new1]を足しすぎる
 				wPP -= PP[newbp1_fw][now_list_fw[i]];//ここでpp[new1][new1]を引きすぎる。
 			}
@@ -446,24 +465,48 @@ namespace Eval {
 			ASSERT(is_ok(moveduniform1));
 			ASSERT(is_ok(moveduniform2));
 			//動いた駒が２つ
-			for (int i = 0; i < 40; i++) {
+			//for (int i = 0; i < 40; i++) {
+			//	//dirtyになってしまった分を引く
+			//	bPP -= PP[oldbp1_fb][old_list_fb[i]];//ここでpp[old1][old1]　pp[old1][old2]を引いている
+			//	bPP -= PP[oldbp2_fb][old_list_fb[i]];//ここでpp[old2][old2]　pp[old2][old1]を引きすぎる。
+			//	wPP += PP[oldbp1_fw][old_list_fw[i]];//ここでpp[old1][old1]　pp[old1][old2]を足している。
+			//	wPP += PP[oldbp2_fw][old_list_fw[i]];//ここでpp[old2][old2]　pp[old2][old1]を足しすぎる。
+			//	//新しい分を足す
+			//	bPP += PP[newbp1_fb][now_list_fb[i]];//ここでpp[new1][new1]  pp[new1][new2]を足してる
+			//	bPP += PP[newbp2_fb][now_list_fb[i]];//ここでpp[new2][new2]　pp[new2][new1]を足しすぎる
+			//	wPP -= PP[newbp1_fw][now_list_fw[i]];//ここでpp[new1][new1]  pp[new1][new2]を引いてる
+			//	wPP -= PP[newbp2_fw][now_list_fw[i]];//ここでpp[new2][new2]  pp[new2][new1]を引きすぎ
+			//}
+			////引き過ぎを補正する
+			//bPP += PP[oldbp1_fb][oldbp2_fb];
+			//wPP -= PP[oldbp1_fw][oldbp2_fw];
+			////足し過ぎを補正する
+			//bPP -= PP[newbp1_fb][newbp2_fb];
+			//wPP += PP[newbp1_fw][newbp2_fw];
+			for (int i = 0; i < moveduniform1; i++) {
 				//dirtyになってしまった分を引く
-				bPP -= PP[oldbp1_fb][old_list_fb[i]];//ここでpp[old1][old1]　pp[old1][old2]を引いている
-				bPP -= PP[oldbp2_fb][old_list_fb[i]];//ここでpp[old2][old2]　pp[old2][old1]を引きすぎる。
-				wPP += PP[oldbp1_fw][old_list_fw[i]];//ここでpp[old1][old1]　pp[old1][old2]を足している。
-				wPP += PP[oldbp2_fw][old_list_fw[i]];//ここでpp[old2][old2]　pp[old2][old1]を足しすぎる。
+				bPP -= PP[oldbp1_fb][old_list_fb[i]];//　pp[old1][old2]を引いている
+				bPP -= PP[oldbp2_fb][old_list_fb[i]];//
+				wPP += PP[oldbp1_fw][old_list_fw[i]];//ここでpp[old1][old2]を足している。
+				wPP += PP[oldbp2_fw][old_list_fw[i]];//
 				//新しい分を足す
 				bPP += PP[newbp1_fb][now_list_fb[i]];//ここでpp[new1][new1]  pp[new1][new2]を足してる
-				bPP += PP[newbp2_fb][now_list_fb[i]];//ここでpp[new2][new2]　pp[new2][new1]を足しすぎる
+				bPP += PP[newbp2_fb][now_list_fb[i]];//
 				wPP -= PP[newbp1_fw][now_list_fw[i]];//ここでpp[new1][new1]  pp[new1][new2]を引いてる
-				wPP -= PP[newbp2_fw][now_list_fw[i]];//ここでpp[new2][new2]  pp[new2][new1]を引きすぎ
+				wPP -= PP[newbp2_fw][now_list_fw[i]];//
 			}
-			//引き過ぎを補正する
-			bPP += PP[oldbp1_fb][oldbp2_fb];
-			wPP -= PP[oldbp1_fw][oldbp2_fw];
-			//足し過ぎを補正する
-			bPP -= PP[newbp1_fb][newbp2_fb];
-			wPP += PP[newbp1_fw][newbp2_fw];
+			for (int i = moveduniform1+1; i < 40; i++) {
+				//dirtyになってしまった分を引く
+				bPP -= PP[oldbp1_fb][old_list_fb[i]];//ここでpp[old1][old1]　pp[old1][old2]を引いている
+				bPP -= PP[oldbp2_fb][old_list_fb[i]];//
+				wPP += PP[oldbp1_fw][old_list_fw[i]];//ここでpp[old1][old1]　pp[old1][old2]を足している。
+				wPP += PP[oldbp2_fw][old_list_fw[i]];//
+													 //新しい分を足す
+				bPP += PP[newbp1_fb][now_list_fb[i]];//ここでpp[new1][new1]  pp[new1][new2]を足してる
+				bPP += PP[newbp2_fb][now_list_fb[i]];//
+				wPP -= PP[newbp1_fw][now_list_fw[i]];//ここでpp[new1][new1]  pp[new1][new2]を引いてる
+				wPP -= PP[newbp2_fw][now_list_fw[i]];//
+			}
 
 			//対称性があるはず。
 			ASSERT(PP[oldbp1_fb][oldbp2_fb] == PP[oldbp2_fb][oldbp1_fb]);
