@@ -14,6 +14,7 @@ using namespace std;
 class Sfen2Piece :public std::unordered_map<char, Piece> {
 
 public:
+	//成り駒が入ってないやん！(まあusaの場合は外側に+があるかどうかで処理できるか...)
 	Sfen2Piece() {
 
 		(*this)['P'] = B_PAWN;
@@ -46,7 +47,63 @@ public:
 
 };
 
+//CSA
+/*
+
+（移動元（file）(Rank)）（移動先(file)(Rank)）(駒種)というようになっている
+2824HI
+8586FU
+8786FU
+8286HI
+5958OU
+8676HI
+8877KA
+5152OU
+2434HI
+7626HI
+0028FU
+6172KI
+3736FU
+0083FU
+2937KE
+2277UM
+
+*/
+class CSA2Piece :public std::unordered_map<string, Piece> {
+
+public:
+	CSA2Piece() {
+		//成り駒が入ってないやん(こっちは問題)
+		(*this)["FU"] = PAWN;
+		(*this)["KY"] = LANCE;
+		(*this)["KE"] = KNIGHT;
+		(*this)["GI"] = SILVER;
+		(*this)["KA"] = BISHOP;
+		(*this)["HI"] = ROOK;
+		(*this)["KI"] = GOLD;
+		(*this)["OU"] = KING;
+		(*this)["TO"] = PRO_PAWN;
+		(*this)["NY"] = PRO_LANCE;
+		(*this)["NK"] = PRO_NIGHT;
+		(*this)["NG"] = PRO_SILVER;
+		(*this)["UM"] = UNICORN;
+		(*this)["RY"] = DRAGON;
+	}
+
+	bool is_ok(const string psuedo_piece) const {
+		return (this->find(psuedo_piece) != this->end());
+	}
+
+	Piece csa_to_piece(string piece) const {
+		return this->find(piece)->second;
+	}
+
+};
+
+extern CSA2Piece CSA2Piece_;
+
 Move Sfen2Move(const string smove, const Position& pos);
+Move CSA2Move(const string smove, const Position& pos);
 
 //
 //

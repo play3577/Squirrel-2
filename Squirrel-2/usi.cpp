@@ -7,6 +7,7 @@
 #include "movepicker.h"
 #include "Thread.h"
 #include "makemove.h"
+#include "learner.h"
 //#include "makemove.h"
 
 #include <iostream>
@@ -141,6 +142,13 @@ void USI::loop()
 				UNREACHABLE;
 			}
 
+		}
+		else if (token == "l") {
+			string yn;
+			cout << "do you really wanna learning fv? [y/n]  " ;
+			cin >> yn;
+			if (yn != "y") { cout << "OK I do not  learning"; break; }
+			Eval::learner(th);
 		}
 		//====================
 		//ここから下はデバッグ用コマンド
@@ -283,7 +291,11 @@ void USI::loop()
 		}
 		else if (token == "eval") {
 			cout << Eval::eval(pos) << endl;;
-
+		}
+		else if (token == "csa") {
+			string csa;
+			is >> csa;
+			cout << CSA2Move(csa, pos) << endl;
 		}
 
 

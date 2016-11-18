@@ -29,7 +29,7 @@ Value Thread::think() {
 	beta = Value_Mate;
 	rootdepth = 0;
 
-	while (++rootdepth <13) {
+	while (++rootdepth <2) {
 
 		//‚±‚±‚Å’TõŠÖ”‚ðŒÄ‚Ño‚·B
 		bestvalue = search<Root>(rootpos, ss, alpha, beta, rootdepth*ONE_PLY);

@@ -11,6 +11,7 @@ using namespace std;
 
 int main() {
 
+	//Eval::initialize_PP();
 	USI::init_option(Options);
 	bitboard_init();
 	Eval::init();
@@ -104,7 +105,7 @@ int main() {
 	
 
 #endif
-	//Eval::initialize_PP();
+	
 	
 
 	//Position pos;

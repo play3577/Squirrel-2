@@ -2,7 +2,7 @@
 
 #include "evaluate.h"
 #include <fstream>
-
+#include "Thread.h"
 namespace Eval {
 
 	void write_PP();
@@ -13,11 +13,21 @@ namespace Eval {
 	//パラメーターの更新のための関数
 	void add_PP(const Position& pos, const int32_t** inc);
 
+	void learner(Thread& th);
 
 
 
+	struct MoveInfo {
 
+		Move move;
+		vector<Move> pv;
+		Value score;
 
+		MoveInfo(const Move m, const vector<Move> pv_, Value s) {
+			move = m; pv = pv_; score = s;
+		}
+
+	};
 
 
 

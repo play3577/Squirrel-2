@@ -87,6 +87,9 @@ namespace Eval {
 	};
 	inline BonaPiece operator++(BonaPiece& d, int) { BonaPiece prev = d; d = BonaPiece(int(d) + 1); return prev; }
 
+	//‹î—Ž‚¿‚É‘Î‰ž‚·‚é‚½‚ß‚ÉBP_ZERO‚ð‹–‚·
+	inline bool is_ok(BonaPiece bp) { return (BONA_PIECE_ZERO <= bp&&bp < fe_end2); }
+	inline std::ostream& operator<<(std::ostream& os, const BonaPiece bp);
 	//‹î‚Ì”w”Ô†
 	enum UniformNumber :int8_t{
 		//no_uniform,
@@ -103,6 +106,8 @@ namespace Eval {
 	};
 	inline UniformNumber& operator++(UniformNumber& d) { return d = UniformNumber(int(d) + 1); }
 	inline UniformNumber operator++(UniformNumber& d, int) { UniformNumber prev = d; d = UniformNumber(int(d) + 1); return prev; }
+
+	inline bool is_ok(UniformNumber un) { return (pawn1 <= un&&un <= Num_Uniform); }
 
 	//•”Ô‚©‚çŒ©‚½bonapiece‚ð•Ô‚·B
 	BonaPiece bonapiece(const Square sq, const Piece pc);
