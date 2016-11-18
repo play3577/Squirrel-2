@@ -262,28 +262,28 @@ namespace Eval {
 		Value material= pos.state()->material;
 
 
-		////計算済み
-		//if (pos.state()->bpp != Value_error) {
-		//	ASSERT(pos.state()->wpp != Value_error);
-		//	pp=Value((pos.state()->bpp + pos.state()->wpp) / FV_SCALE);
+		//計算済み
+		if (pos.state()->bpp != Value_error) {
+			ASSERT(pos.state()->wpp != Value_error);
+			pp=Value((pos.state()->bpp + pos.state()->wpp) / FV_SCALE);
 
-		//}
-		//else if (pos.state()->previous->bpp != Value_error) {
-		//	//差分計算可能
-		//	ASSERT(pos.state()->previous->wpp != Value_error);
+		}
+		else if (pos.state()->previous->bpp != Value_error) {
+			//差分計算可能
+			ASSERT(pos.state()->previous->wpp != Value_error);
 
-		//	pp = eval_diff_PP(pos);
-		//}
-		//else {
-		//	//全計算！
-		//	pp = eval_PP(pos);
-		//}
+			pp = eval_diff_PP(pos);
+		}
+		else {
+			//全計算！
+			pp = eval_PP(pos);
+		}
 
 		/*if (pp != eval_PP(pos)) {
 			cout << " diff " << pp << " evalfull " << eval_PP(pos) << endl;
 			UNREACHABLE;
 		}*/
-		pp = eval_PP(pos);
+		//pp = eval_PP(pos);
 
 		value = material + pp;
 
@@ -309,12 +309,13 @@ namespace Eval {
 
 		for (int i = 0; i < 40; i++) {
 			for (int j = 0; j < i; j++) {
+				//listの内容の順番はどうでもいいと思うのだけれど...
 				bPP += PP[list_fb[i]][list_fb[j]];
 				wPP -= PP[list_fw[i]][list_fw[j]];
 			}
 		}
-		pos.state()->bpp = Value(bPP);
-		pos.state()->wpp = (Value)wPP;
+		pos.state()->bpp = (bPP);
+		pos.state()->wpp = wPP;
 		//評価値ホントに16bitで収まるかどうか確認
 		ASSERT(abs(bPP + wPP) / FV_SCALE < INT16_MAX);
 
@@ -373,11 +374,36 @@ namespace Eval {
 			old_list_fb[moveduniform2] = oldbp2_fb;
 			old_list_fw[moveduniform2] = oldbp2_fw;
 		}
-		
-		//======================================
-		//アルゴリズム考え直す必要があるか....
-		//======================================
+		//assertに引っかかった局面でもlistはちゃんと生成できていた（fwを確認してなかった！！）（fwも上手く行っていた）
 
+
+		//======================================
+		//アルゴリズム考え直す必要があるか....？いくら考えてもコレしか思いつかない。
+		//======================================
+		/*
+		
+		ABCD
+		ABCD
+
+		BA CA CB DA DB DC ①
+
+		ABED
+		ABED
+
+		BA EA EB DA DB DE　②
+
+		①-(CA CB CD CC)+(EA EB ED EE)=②
+
+		AEFD
+		AEFD
+
+		EA FA FE DA DE DF ③
+
+		①-(BA BC BD BB  CA CB CC CD)+BC+(EA EF ED EE FA FE FD FF)-EF=③
+		
+
+		やっぱりコレでうまくいっているはずなのだ...
+		*/
 
 		//動いた駒が一つ
 		//---------------------動いた駒が一つの時も差分計算ミスってる？
@@ -388,14 +414,15 @@ namespace Eval {
 			ASSERT(is_ok(newbp1_fb));
 			ASSERT(is_ok(newbp1_fw));
 
+			ASSERT(is_ok(moveduniform1));
 			//差分計算の実行
 			for (int i = 0; i < 40; i++) {
 				//dirtyになってしまった分bPPから引く
-				bPP -= PP[oldbp1_fb][old_list_fb[i]];
-				wPP += PP[oldbp1_fw][old_list_fw[i]];
+				bPP -= PP[oldbp1_fb][old_list_fb[i]];//ここでpp[old1][old1]を引きすぎる。
+				wPP += PP[oldbp1_fw][old_list_fw[i]];//ここでpp[old1][old1]を足しすぎる。
 				//新しいbPPのぶんを足す
-				bPP += PP[newbp1_fb][now_list_fb[i]];
-				wPP -= PP[newbp1_fw][now_list_fw[i]];
+				bPP += PP[newbp1_fb][now_list_fb[i]];//ここでpp[new1][new1]を足しすぎる
+				wPP -= PP[newbp1_fw][now_list_fw[i]];//ここでpp[new1][new1]を引きすぎる。
 			}
 			/*
 			ここで引きすぎ、足しすぎを補正しなければならないがPP[i][i]=0であるはずなのでこの場合補正は必要ない
@@ -415,18 +442,21 @@ namespace Eval {
 			ASSERT(is_ok(oldbp2_fw));
 			ASSERT(is_ok(newbp2_fb));
 			ASSERT(is_ok(newbp2_fw));
+
+			ASSERT(is_ok(moveduniform1));
+			ASSERT(is_ok(moveduniform2));
 			//動いた駒が２つ
 			for (int i = 0; i < 40; i++) {
 				//dirtyになってしまった分を引く
-				bPP -= PP[oldbp1_fb][old_list_fb[i]];
-				bPP -= PP[oldbp2_fb][old_list_fb[i]];
-				wPP += PP[oldbp1_fw][old_list_fw[i]];
-				wPP += PP[oldbp2_fw][old_list_fw[i]];
+				bPP -= PP[oldbp1_fb][old_list_fb[i]];//ここでpp[old1][old1]　pp[old1][old2]を引いている
+				bPP -= PP[oldbp2_fb][old_list_fb[i]];//ここでpp[old2][old2]　pp[old2][old1]を引きすぎる。
+				wPP += PP[oldbp1_fw][old_list_fw[i]];//ここでpp[old1][old1]　pp[old1][old2]を足している。
+				wPP += PP[oldbp2_fw][old_list_fw[i]];//ここでpp[old2][old2]　pp[old2][old1]を足しすぎる。
 				//新しい分を足す
-				bPP += PP[newbp1_fb][now_list_fb[i]];
-				bPP += PP[newbp2_fb][now_list_fb[i]];
-				wPP -= PP[newbp1_fw][now_list_fw[i]];
-				wPP -= PP[newbp2_fw][now_list_fw[i]];
+				bPP += PP[newbp1_fb][now_list_fb[i]];//ここでpp[new1][new1]  pp[new1][new2]を足してる
+				bPP += PP[newbp2_fb][now_list_fb[i]];//ここでpp[new2][new2]　pp[new2][new1]を足しすぎる
+				wPP -= PP[newbp1_fw][now_list_fw[i]];//ここでpp[new1][new1]  pp[new1][new2]を引いてる
+				wPP -= PP[newbp2_fw][now_list_fw[i]];//ここでpp[new2][new2]  pp[new2][new1]を引きすぎ
 			}
 			//引き過ぎを補正する
 			bPP += PP[oldbp1_fb][oldbp2_fb];
@@ -435,7 +465,11 @@ namespace Eval {
 			bPP -= PP[newbp1_fb][newbp2_fb];
 			wPP += PP[newbp1_fw][newbp2_fw];
 
-
+			//対称性があるはず。
+			ASSERT(PP[oldbp1_fb][oldbp2_fb] == PP[oldbp2_fb][oldbp1_fb]);
+			ASSERT(PP[oldbp1_fw][oldbp2_fw]== PP[oldbp2_fw][oldbp1_fw]);
+			ASSERT(PP[newbp1_fb][newbp2_fb]== PP[newbp2_fb][newbp1_fb]);
+			ASSERT(PP[newbp1_fw][newbp2_fw]== PP[newbp2_fw][newbp1_fw]);
 
 			//まあ一応確認しておく。
 			ASSERT(PP[oldbp1_fb][oldbp1_fb] == 0);
@@ -448,17 +482,22 @@ namespace Eval {
 			ASSERT(PP[newbp2_fw][newbp2_fw] == 0);
 		}//2つ駒が動いた
 
-		pos.state()->bpp = (Value)bPP;
-		pos.state()->wpp = (Value)wPP;
+		pos.state()->bpp = bPP;
+		pos.state()->wpp = wPP;
 
+		eval_PP(pos);
+		//if (Value((bPP + wPP) / FV_SCALE) != eval_PP(pos)) {
+		if (bPP!=pos.state()->bpp||wPP!=pos.state()->wpp) {
 
-		if (Value((bPP + wPP) / FV_SCALE) != eval_PP(pos)) {
-			cout << " diff " << Value((bPP + wPP) / FV_SCALE) << " evalfull " << eval_PP(pos) << endl;
 			cout << pos << endl;
 			cout << "oldlist" << endl;
 			for (int i = 0; i < Num_Uniform; i++) {
-				cout << old_list_fb[i];
+				cout <<"fb:"<< old_list_fb[i];
+				cout << "fw:" << old_list_fw[i] << endl;
 			}
+			cout << " diff " << Value((bPP + wPP) / FV_SCALE) << " evalfull " << eval_PP(pos) << endl;
+			cout << "bpp " << bPP << " " << pos.state()->bpp << endl;
+			cout << "wpp " << wPP << " " << pos.state()->wpp << endl;
 			UNREACHABLE;
 		}
 
@@ -579,127 +618,137 @@ namespace Eval {
 
 	void BonaPList::print_bplist()
 	{
-		cout << "from black" << endl << endl;
+
+
 
 		for (int i = 0; i < Num_Uniform; i++) {
+			cout << "fb:" << bplist_fb[i];
+			cout << "fw:" << bplist_fw[i] << endl;
+		}
 
-			auto bp = bplist_fb[i];
 
-			//bp<fe_handendであればそれは手駒
-			if (bp < fe_hand_end) {
 
-				//ここもうちょっとなんとかなるようなきがするんだけど,,,
-				if (f_hand_pawn <= bp&&bp < e_hand_pawn) {
-					cout << "f_handpawn + " << int(bp - f_hand_pawn) << endl;
-				}
-				else if (e_hand_pawn <= bp&&bp < f_hand_lance) {
-					cout << "e_handpawn + " << int(bp - e_hand_pawn) << endl;
-				}
-				else if (f_hand_lance <= bp&&bp < e_hand_lance) {
-					cout << "f_hand lance + " << int(bp - f_hand_lance) << endl;
-				}
-				else if (e_hand_lance <= bp&&bp < f_hand_knight) {
-					cout << "e_handlance + " << int(bp - e_hand_lance) << endl;
-				}
-				else if (f_hand_knight <= bp&&bp < e_hand_knight) {
-					cout << "f_handknight + " << int(bp - f_hand_knight) << endl;
-				}
-				else if (e_hand_knight <= bp&&bp < f_hand_silver) {
-					cout << "e_hand_knight + " << int(bp - e_hand_knight) << endl;
-				}
-				else if (bp < e_hand_silver) {//条件はコレだけで十分か？？
-					cout << "f_hand_silver + " << int(bp - f_hand_silver) << endl;
-				}
-				else if (bp < f_hand_gold) {
-					cout << "e_hand_silver + " << int(bp - e_hand_silver) << endl;
-				}
-				else if (bp < e_hand_gold) {
-					cout << "f_hand_gold + " << int(bp - f_hand_gold) << endl;
-				}
-				else if(bp < f_hand_bishop) {
-					cout << "e_hand_gold + " << int(bp - e_hand_gold) << endl;
-				}
-				else if (bp < e_hand_bishop) {
-					cout << "f_hand_bishop + " << int(bp - f_hand_bishop) << endl;
-				}
-				else if (bp < f_hand_rook) {
-					cout << "e_hand_bishop + " << int(bp - e_hand_bishop) << endl;
-				}
-				else if (bp < e_hand_rook) {
-					cout << "f_hand_rook + " << int(bp - f_hand_rook) << endl;
-				}
-				else if (bp < fe_hand_end) {
-					cout << "e_hand_rook + " << int(bp - e_hand_rook) << endl;
-				}
+		//cout << "from black" << endl << endl;
 
-			}
-			else {
-				//盤上の駒
-				if (f_pawn <= bp&&bp < e_pawn) {
-					cout << "f_pawn + " << int(bp - f_pawn) << endl;
-				}
-				else if (e_pawn <= bp&&bp < f_lance) {
-					cout << "e_pawn + " << int(bp - e_pawn) << endl;
-				}
-				else if (f_lance <= bp&&bp < e_lance) {
-					cout << "f_lance + " << int(bp - f_lance) << endl;
-				}
-				else if (e_lance <= bp&&bp < f_knight) {
-					cout << "e_lance + " << int(bp - e_lance) << endl;
-				}
-				else if (f_knight <= bp&&bp < e_knight) {
-					cout << "f_knight + " << int(bp - f_knight) << endl;
-				}
-				else if (e_knight <= bp &&bp< f_silver) {
-					cout << "e_knight + " << int(bp - e_knight) << endl;
-				}
-				else if (f_silver <= bp&&bp < e_silver) {
-					cout << "f_silver + " << int(bp - f_silver) << endl;
-				}
-				else if (e_silver <= bp&&bp < f_gold) {
-					cout << "e_silver + " << int(bp - e_silver) << endl;
-				}
-				else if (f_gold <= bp&&bp < e_gold) {
-					cout << "f_gold + " << int(bp - f_gold) << endl;
-				}
-				else if (e_gold <= bp&&bp < f_bishop) {
-					cout << "e_gold + " << int(bp - e_gold) << endl;
-				}
-				else if (bp<e_bishop) {
-					cout << "f_bishop + " << int(bp - f_bishop) << endl;
-				}
-				else if (bp<f_unicorn) {
-					cout << "e_bishop + " << int(bp - e_bishop) << endl;
-				}
-				else if (bp < e_unicorn) {
-					cout << "f_unicorn + " << int(bp - f_unicorn) << endl;
-				}
-				else if (bp < f_rook) {
-					cout << "e_unicorn + " << int(bp - e_unicorn) << endl;
-				}
-				else if (bp < e_rook) {
-					cout << "f_rook + " << int(bp - f_rook) << endl;
-				}
-				else if (bp < f_dragon) {
-					cout << "e_rook + " << int(bp - e_rook) << endl;
-				}
-				else if (bp < e_dragon) {
-					cout << "f_dragon + " << int(bp - f_dragon) << endl;
-				}
-				else if (bp < f_king) {
-					cout << "e_dragon + " << int(bp - e_dragon) << endl;
-				}
-				else if (bp < e_king) {
-					cout << "f_king + " << int(bp - f_king) << endl;
-				}
-				else if (bp < fe_end2) {
-					cout << "e_king + " << int(bp - e_king) << endl;
-				}
-				else {
-					UNREACHABLE;
-				}
-			}
-		}//from black
+		//for (int i = 0; i < Num_Uniform; i++) {
+
+		//	auto bp = bplist_fb[i];
+
+		//	//bp<fe_handendであればそれは手駒
+		//	if (bp < fe_hand_end) {
+
+		//		//ここもうちょっとなんとかなるようなきがするんだけど,,,
+		//		if (f_hand_pawn <= bp&&bp < e_hand_pawn) {
+		//			cout << "f_handpawn + " << int(bp - f_hand_pawn) << endl;
+		//		}
+		//		else if (e_hand_pawn <= bp&&bp < f_hand_lance) {
+		//			cout << "e_handpawn + " << int(bp - e_hand_pawn) << endl;
+		//		}
+		//		else if (f_hand_lance <= bp&&bp < e_hand_lance) {
+		//			cout << "f_hand lance + " << int(bp - f_hand_lance) << endl;
+		//		}
+		//		else if (e_hand_lance <= bp&&bp < f_hand_knight) {
+		//			cout << "e_handlance + " << int(bp - e_hand_lance) << endl;
+		//		}
+		//		else if (f_hand_knight <= bp&&bp < e_hand_knight) {
+		//			cout << "f_handknight + " << int(bp - f_hand_knight) << endl;
+		//		}
+		//		else if (e_hand_knight <= bp&&bp < f_hand_silver) {
+		//			cout << "e_hand_knight + " << int(bp - e_hand_knight) << endl;
+		//		}
+		//		else if (bp < e_hand_silver) {//条件はコレだけで十分か？？
+		//			cout << "f_hand_silver + " << int(bp - f_hand_silver) << endl;
+		//		}
+		//		else if (bp < f_hand_gold) {
+		//			cout << "e_hand_silver + " << int(bp - e_hand_silver) << endl;
+		//		}
+		//		else if (bp < e_hand_gold) {
+		//			cout << "f_hand_gold + " << int(bp - f_hand_gold) << endl;
+		//		}
+		//		else if(bp < f_hand_bishop) {
+		//			cout << "e_hand_gold + " << int(bp - e_hand_gold) << endl;
+		//		}
+		//		else if (bp < e_hand_bishop) {
+		//			cout << "f_hand_bishop + " << int(bp - f_hand_bishop) << endl;
+		//		}
+		//		else if (bp < f_hand_rook) {
+		//			cout << "e_hand_bishop + " << int(bp - e_hand_bishop) << endl;
+		//		}
+		//		else if (bp < e_hand_rook) {
+		//			cout << "f_hand_rook + " << int(bp - f_hand_rook) << endl;
+		//		}
+		//		else if (bp < fe_hand_end) {
+		//			cout << "e_hand_rook + " << int(bp - e_hand_rook) << endl;
+		//		}
+
+		//	}
+		//	else {
+		//		//盤上の駒
+		//		if (f_pawn <= bp&&bp < e_pawn) {
+		//			cout << "f_pawn + " << int(bp - f_pawn) << endl;
+		//		}
+		//		else if (e_pawn <= bp&&bp < f_lance) {
+		//			cout << "e_pawn + " << int(bp - e_pawn) << endl;
+		//		}
+		//		else if (f_lance <= bp&&bp < e_lance) {
+		//			cout << "f_lance + " << int(bp - f_lance) << endl;
+		//		}
+		//		else if (e_lance <= bp&&bp < f_knight) {
+		//			cout << "e_lance + " << int(bp - e_lance) << endl;
+		//		}
+		//		else if (f_knight <= bp&&bp < e_knight) {
+		//			cout << "f_knight + " << int(bp - f_knight) << endl;
+		//		}
+		//		else if (e_knight <= bp &&bp< f_silver) {
+		//			cout << "e_knight + " << int(bp - e_knight) << endl;
+		//		}
+		//		else if (f_silver <= bp&&bp < e_silver) {
+		//			cout << "f_silver + " << int(bp - f_silver) << endl;
+		//		}
+		//		else if (e_silver <= bp&&bp < f_gold) {
+		//			cout << "e_silver + " << int(bp - e_silver) << endl;
+		//		}
+		//		else if (f_gold <= bp&&bp < e_gold) {
+		//			cout << "f_gold + " << int(bp - f_gold) << endl;
+		//		}
+		//		else if (e_gold <= bp&&bp < f_bishop) {
+		//			cout << "e_gold + " << int(bp - e_gold) << endl;
+		//		}
+		//		else if (bp<e_bishop) {
+		//			cout << "f_bishop + " << int(bp - f_bishop) << endl;
+		//		}
+		//		else if (bp<f_unicorn) {
+		//			cout << "e_bishop + " << int(bp - e_bishop) << endl;
+		//		}
+		//		else if (bp < e_unicorn) {
+		//			cout << "f_unicorn + " << int(bp - f_unicorn) << endl;
+		//		}
+		//		else if (bp < f_rook) {
+		//			cout << "e_unicorn + " << int(bp - e_unicorn) << endl;
+		//		}
+		//		else if (bp < e_rook) {
+		//			cout << "f_rook + " << int(bp - f_rook) << endl;
+		//		}
+		//		else if (bp < f_dragon) {
+		//			cout << "e_rook + " << int(bp - e_rook) << endl;
+		//		}
+		//		else if (bp < e_dragon) {
+		//			cout << "f_dragon + " << int(bp - f_dragon) << endl;
+		//		}
+		//		else if (bp < f_king) {
+		//			cout << "e_dragon + " << int(bp - e_dragon) << endl;
+		//		}
+		//		else if (bp < e_king) {
+		//			cout << "f_king + " << int(bp - f_king) << endl;
+		//		}
+		//		else if (bp < fe_end2) {
+		//			cout << "e_king + " << int(bp - e_king) << endl;
+		//		}
+		//		else {
+		//			UNREACHABLE;
+		//		}
+		//	}
+		//}//from black
 
 		//cout << endl << "from white" << endl << endl;
 

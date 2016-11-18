@@ -124,7 +124,7 @@ void Position::set(std::string sfen)
 
 	list.makebonaPlist(*this);
 
-	Eval::eval(*this);
+	Eval::eval_PP(*this);
 
 //	cout << *this << endl;
 	

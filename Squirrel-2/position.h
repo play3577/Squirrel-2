@@ -37,7 +37,7 @@ struct StateInfo
 	Bitboard checker = ZeroBB;//«Šû‚Å‚Í2d‰¤è‚É‚È‚é‚±‚Æ‚ª‚ ‚é‚½‚ßbitboard‚Å‚à‚½‚Ë‚Î‚È‚ç‚È‚¢B
 
 	Value material;
-	Value bpp=Value_error,wpp=Value_error;
+	int32_t bpp=Value_error,wpp=Value_error;
 
 	//“®‚¢‚½‹î0 æ‚ç‚ê‚½‹î1
 	Eval::BonaPiece dirtybonap_fb[2];
