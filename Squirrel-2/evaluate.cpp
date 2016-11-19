@@ -7,7 +7,7 @@
 
 namespace Eval {
 
-
+	//三角テーブルにすべきか....??
 	int32_t PP[fe_end2][fe_end2];
 
 	int16_t piece_value[PC_ALL] = {
@@ -270,8 +270,26 @@ namespace Eval {
 			ASSERT(pos.state()->wpp != Value_error);
 			pp=Value((pos.state()->bpp + pos.state()->wpp) / FV_SCALE);
 
+#if 0
+			int bPP = pos.state()->bpp, wPP = pos.state()->wpp;
+
+			if (pp != eval_PP(pos)) {
+				cout << " diff " << pp << " evalfull " << eval_PP(pos) << endl;
+
+				cout << pos << endl;
+					/*cout << "oldlist" << endl;
+					for (int i = 0; i < Num_Uniform; i++) {
+					cout <<"fb:"<< old_list_fb[i];
+					cout << "fw:" << old_list_fw[i] << endl;
+					}*/
+				cout << " diff " << Value((bPP + wPP) / FV_SCALE) << " evalfull " << eval_PP(pos) << endl;;
+				cout << "bpp " << bPP << " " << pos.state()->bpp << endl;;
+				cout << "wpp " << wPP << " " << pos.state()->wpp << endl;;
+				UNREACHABLE;;
+			}
+#endif
 		}
-		else if (pos.state()->previous->bpp != Value_error) {
+		if (pos.state()->previous!=nullptr&&pos.state()->previous->bpp != Value_error) {
 			//差分計算可能
 			ASSERT(pos.state()->previous->wpp != Value_error);
 
@@ -586,7 +604,7 @@ namespace Eval {
 
 		pos.state()->bpp = bPP;
 		pos.state()->wpp = wPP;
-
+#if 0
 		eval_PP(pos);
 		//if (Value((bPP + wPP) / FV_SCALE) != eval_PP(pos)) {
 		if (bPP!=pos.state()->bpp||wPP!=pos.state()->wpp) {
@@ -602,7 +620,7 @@ namespace Eval {
 			cout << "wpp " << wPP << " " << pos.state()->wpp << endl;
 			UNREACHABLE;
 		}
-
+#endif
 		return Value((bPP + wPP) / FV_SCALE);
 
 	}//差分計算

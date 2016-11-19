@@ -177,7 +177,9 @@ void Position::put_piece(const Color c, const Piece pt, const Square sq)
 //pawnbbの処理OK
 void Position::do_move(const Move m, StateInfo * newst)
 {
-
+	//ここでst->PPをクリアーしておかないと差分計算上手く行かない
+	//兄弟ノードを探索したときの値が入っているから
+	newst->clear_stPP();
 	/*
 	評価値の差分計算
 

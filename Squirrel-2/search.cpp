@@ -28,7 +28,7 @@ Value Thread::think() {
 	bestvalue = alpha = Value_Mated;
 	beta = Value_Mate;
 	rootdepth = 0;
-
+//	Eval::eval(rootpos);
 	while (++rootdepth <10) {
 
 		//ここで探索関数を呼び出す。
@@ -67,6 +67,9 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 	//}
 
 	//ここに前向き枝切りのコードを書く
+
+	//if (NT != Root&&pos.state()->bpp != Value_error) { ASSERT(0); }
+	staticeval= Eval::eval(pos);
 
 	movepicker mp(pos);
 

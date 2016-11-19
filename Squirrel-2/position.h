@@ -44,6 +44,11 @@ struct StateInfo
 	Eval::BonaPiece dirtybonap_fw[2];
 	Eval::UniformNumber dirtyuniform[2] = { Eval::Num_Uniform, Eval::Num_Uniform};
 
+	void clear_stPP() {
+		bpp = Value_error; wpp = Value_error;
+	}
+
+
 	friend struct Position;
 
 	StateInfo* previous = nullptr;//undo_moveで以前の局面に戻る為の単方向リスト

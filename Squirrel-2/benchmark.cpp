@@ -56,7 +56,7 @@ void wrap_randomwalker()
 
 	while (num_played < 10000) {
 		pos.set_hirate();
-		randomwalker(pos, 256);
+		randomwalker(pos, 499);
 		num_played++;
 		if (num_played % 100 == 0) {
 			cout << "," ;
@@ -75,7 +75,7 @@ void randomwalker(Position & pos, int maxdepth)
 	std::random_device rd;
 	std::mt19937 mt(rd());
 	int depth = 0;
-	StateInfo si[300];
+	StateInfo si[500];
 	int continue_count = 0;
 	while (1) {
 		
@@ -85,11 +85,14 @@ void randomwalker(Position & pos, int maxdepth)
 		Eval::eval(pos);
 		ptrdiff_t num = end - moves_;
 		if (num == 0) { break; }
-		if (num == continue_count) { break; }
+		if (num == continue_count) { cout << "mated" << endl;  break; }
 		//cout << num << endl;
 		int rand = mt() % num;
 		ASSERT(rand <= num);
 		Move m = moves_[mt() % num];
+		//if (pos.piece_on(move_to(m)) != NO_PIECE) { cout << "capture" << endl; }
+		
+
 		if (pos.is_legal(m) == false) { ++continue_count;  continue;  }//‚·‚×‚Ä‚Ì·‚µŽè‚ªillegal‚Â‚Ü‚è‹l‚Ý‚Ìó‘Ô‚É‚È‚ê‚Î‚±‚ê‚Å‚Í‚¨‚©‚µ‚­‚È‚Á‚Ä‚µ‚Ü‚¤‚Ì‚ÅC³
 		else { continue_count = 0; }
 		//ˆê‰ñ‚¿‚á‚ñ‚Ædo-undo‚Å‚«‚é‚©Šm”F‚ð‚µ‚Ä‚©‚ç
