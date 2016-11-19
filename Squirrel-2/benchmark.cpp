@@ -85,7 +85,7 @@ void randomwalker(Position & pos, int maxdepth)
 		Eval::eval(pos);
 		ptrdiff_t num = end - moves_;
 		if (num == 0) { break; }
-		if (num == continue_count) { cout << "mated" << endl;  break; }
+		if (num == continue_count) { /*cout << "mated" << endl;*/  break; }
 		//cout << num << endl;
 		int rand = mt() % num;
 		ASSERT(rand <= num);

@@ -37,6 +37,8 @@ namespace Eval {
 	//‹î‚ª¬‚Á‚½•ª‚Ì·•ª
 	extern int16_t diff_promote[GOLD];
 
+	void komawari_check();
+
 	//•Ï”–¼‚Í‚â‚Ë‚¤‚ç‰¤‚É‡‚í‚¹‚½i‚â‚Ë‚¤‚ç‰¤‚Íbonanza‚É‡‚í‚¹‚Ä‚¢‚éj
 	enum BonaPiece : int16_t
 	{
@@ -83,7 +85,7 @@ namespace Eval {
 		 f_king = fe_end,
 		 e_king = f_king + 81,
 		 fe_end2 = e_king + 81, 
-
+		 
 	};
 	inline BonaPiece operator++(BonaPiece& d, int) { BonaPiece prev = d; d = BonaPiece(int(d) + 1); return prev; }
 
