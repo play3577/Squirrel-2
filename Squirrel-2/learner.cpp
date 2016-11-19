@@ -79,29 +79,29 @@ void Eval::initialize_PP()
 	cout << "initialize param PP!" << endl;
 }
 
-//
-////パラメーターの更新のための関数
-//void Eval::add_PP(const Position & pos, const int32_t ** inc) {
-//
-//	//そうだ list_fbだけじゃなくてlist_fwも用意しないとだめじゃん...
-//
-//	auto list1 = pos.evallist();
-//
-//	BonaPiece *list_fb = list1.bplist_fb, *list_fw;
-//
-//	for (int i = 0; i < 40; i++) {
-//		for (int j = 0; j < i; j++) {
-//			PP[list_fb[i]][list_fb[j]] += inc[list_fb[i]][list_fb[j]] * FV_SCALE;
-//			PP[list_fw[i]][list_fw[j]] += inc[list_fw[i]][list_fw[j]] * FV_SCALE;
-//			//PP対称性を考えて
-//			PP[list_fb[j]][list_fb[i]] += inc[list_fb[j]][list_fb[i]] * FV_SCALE;
-//			PP[list_fw[j]][list_fw[i]] += inc[list_fw[j]][list_fw[i]] * FV_SCALE;
-//		}
-//	}
-//	//書き出した後読み込むことで値を更新する（ここでしないほうがいいかもしれない）
-//	/*write_PP();
-//	read_PP();*/
-//}
+
+//パラメーターの更新のための関数
+void Eval::renewal_PP(const Position & pos, const int32_t ** inc) {
+
+	//そうだ list_fbだけじゃなくてlist_fwも用意しないとだめじゃん...
+
+	auto list1 = pos.evallist();
+
+	BonaPiece *list_fb = list1.bplist_fb, *list_fw=list1.bplist_fw;
+
+	for (int i = 0; i < 40; i++) {
+		for (int j = 0; j < i; j++) {
+			PP[list_fb[i]][list_fb[j]] += inc[list_fb[i]][list_fb[j]] * FV_SCALE;
+			PP[list_fw[i]][list_fw[j]] += inc[list_fw[i]][list_fw[j]] * FV_SCALE;
+			//PP対称性を考えて
+			PP[list_fb[j]][list_fb[i]] += inc[list_fb[j]][list_fb[i]] * FV_SCALE;
+			PP[list_fw[j]][list_fw[i]] += inc[list_fw[j]][list_fw[i]] * FV_SCALE;
+		}
+	}
+	//書き出した後読み込むことで値を更新する（ここでしないほうがいいかもしれない）
+	/*write_PP();
+	read_PP();*/
+}
 
 
 //学習用関数

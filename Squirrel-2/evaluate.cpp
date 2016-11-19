@@ -1,6 +1,9 @@
+
+
 #include "evaluate.h"
 #include "position.h"
 
+#include <utility>
 
 namespace Eval {
 
@@ -342,8 +345,9 @@ namespace Eval {
 		const Eval::BonaPiece oldbp2_fb = now->dirtybonap_fb[1];
 		const Eval::BonaPiece oldbp1_fw = now->dirtybonap_fw[0];
 		const Eval::BonaPiece oldbp2_fw = now->dirtybonap_fw[1];
-		const Eval::UniformNumber moveduniform1 = now->dirtyuniform[0];
-		const Eval::UniformNumber moveduniform2 = now->dirtyuniform[1];
+		//swapする可能性があるためここはconstにしない
+		Eval::UniformNumber moveduniform1 = now->dirtyuniform[0];
+		Eval::UniformNumber moveduniform2 = now->dirtyuniform[1];
 		
 		
 
@@ -356,7 +360,7 @@ namespace Eval {
 		const Eval::BonaPiece newbp1_fw = list.bplist_fw[now->dirtyuniform[0]];
 		const Eval::BonaPiece newbp2_fw = list.bplist_fw[now->dirtyuniform[1]];
 
-
+#if 0
 		Eval::BonaPiece old_list_fb[40];
 		Eval::BonaPiece old_list_fw[40];
 
@@ -524,6 +528,61 @@ namespace Eval {
 			ASSERT(PP[newbp2_fb][newbp2_fb] == 0);
 			ASSERT(PP[newbp2_fw][newbp2_fw] == 0);
 		}//2つ駒が動いた
+#endif
+#if 1
+#define ADD_PP(oldbp,oldwp,newbp,newwp){ \
+		bPP -= PP[oldbp][now_list_fb[i]];\
+		bPP += PP[newbp][now_list_fb[i]];\
+		wPP += PP[oldwp][now_list_fw[i]];\
+		wPP -= PP[newwp][now_list_fw[i]];\
+}
+
+		int i;
+
+		
+		if (moveduniform2 == Num_Uniform) {
+			//駒が①つ動いた
+
+			//このようにして②つに分けることでPP[old1][new1]を引いてしまうのを防ぎ,PP[new][new]を足してしまうのを防ぐ。(賢い...さすがはやねうら王...)
+			for (i = 0; i < moveduniform1; ++i) {
+				ADD_PP(oldbp1_fb, oldbp1_fw, newbp1_fb, newbp1_fw);
+			}
+			for (++i; i < 40; ++i) {
+				ADD_PP(oldbp1_fb, oldbp1_fw, newbp1_fb, newbp1_fw);
+			}
+
+		}
+		else {
+			//駒が②つ動いた
+
+			//pawn1<=dirty<dirty2<fe_end2　にしておく
+			if (moveduniform1 > moveduniform2) { std:swap(moveduniform1, moveduniform2); }
+
+			for (i = 0; i < moveduniform1; ++i) {
+				ADD_PP(oldbp1_fb, oldbp1_fw, newbp1_fb, newbp1_fw);//コレで[old1][old2]回避
+				ADD_PP(oldbp2_fb, oldbp2_fw, newbp2_fb, newbp2_fw);
+			}
+			for (++i; i < moveduniform2; ++i) {
+				ADD_PP(oldbp1_fb, oldbp1_fw, newbp1_fb, newbp1_fw);//コレで[old1][old2] [new1][new2]回避
+				ADD_PP(oldbp2_fb, oldbp2_fw, newbp2_fb, newbp2_fw);
+			}
+			for (++i; i < 40; ++i) {
+				ADD_PP(oldbp1_fb, oldbp1_fw, newbp1_fb, newbp1_fw);
+				ADD_PP(oldbp2_fb, oldbp2_fw, newbp2_fb, newbp2_fw);
+			}
+			//ここで回避してしまった[old1][old2] [new1][new2]を補正する。
+			bPP -= PP[oldbp1_fb][oldbp2_fb];
+			bPP += PP[newbp1_fb][newbp2_fb];
+			wPP += PP[oldbp1_fw][oldbp2_fw];
+			wPP -= PP[newbp1_fw][newbp2_fw];
+
+		}
+
+
+#endif
+
+
+
 
 		pos.state()->bpp = bPP;
 		pos.state()->wpp = wPP;
@@ -533,11 +592,11 @@ namespace Eval {
 		if (bPP!=pos.state()->bpp||wPP!=pos.state()->wpp) {
 
 			cout << pos << endl;
-			cout << "oldlist" << endl;
+			/*cout << "oldlist" << endl;
 			for (int i = 0; i < Num_Uniform; i++) {
 				cout <<"fb:"<< old_list_fb[i];
 				cout << "fw:" << old_list_fw[i] << endl;
-			}
+			}*/
 			cout << " diff " << Value((bPP + wPP) / FV_SCALE) << " evalfull " << eval_PP(pos) << endl;
 			cout << "bpp " << bPP << " " << pos.state()->bpp << endl;
 			cout << "wpp " << wPP << " " << pos.state()->wpp << endl;
