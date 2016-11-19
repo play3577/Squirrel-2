@@ -297,7 +297,10 @@ void USI::loop()
 			is >> csa;
 			cout << CSA2Move(csa, pos) << endl;
 		}
+		else if (token == "komaw") {
+			Eval::komawari_check();
 
+		}
 
 	} while (token != "quit");
 

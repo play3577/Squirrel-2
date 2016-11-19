@@ -16,7 +16,7 @@
 
 
 //#define CHECKPOS
-
+#define LEARN
 
 //やねうら王のアイディア
 #if defined(_MSC_VER)
@@ -24,7 +24,7 @@
 #pragma warning(disable : 4800)
 #endif
 
-
+//#define DIFFTEST
 
 
 //==========================================================
