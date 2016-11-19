@@ -11,7 +11,7 @@ namespace Eval {
 
 
 	//パラメーターの更新のための関数
-	//void renewal_PP(const Position& pos, const double **dJ);
+	void renewal_PP(const Position& pos, const int32_t** inc);
 
 	void learner(Thread& th);
 

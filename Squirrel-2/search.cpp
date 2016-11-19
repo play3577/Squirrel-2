@@ -28,19 +28,8 @@ Value Thread::think() {
 	bestvalue = alpha = Value_Mated;
 	beta = Value_Mate;
 	rootdepth = 0;
-	int maxdepth;
-
-
-#ifdef LEARN
-	maxdepth = 2;
-#endif
-#ifndef LEARN
-	maxdepth = 100;
-#endif // !LEARN
-
-
 //	Eval::eval(rootpos);
-	while (++rootdepth <maxdepth) {
+	while (++rootdepth <10) {
 
 		//ここで探索関数を呼び出す。
 		bestvalue = search<Root>(rootpos, ss, alpha, beta, rootdepth*ONE_PLY);
@@ -77,12 +66,10 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 	//	cout << "incheck" << endl;
 	//}
 
-	//評価関数は毎回呼び出したほうが差分計算でお得
-	staticeval = Eval::eval(pos);
-
 	//ここに前向き枝切りのコードを書く
 
-	
+	//if (NT != Root&&pos.state()->bpp != Value_error) { ASSERT(0); }
+	staticeval= Eval::eval(pos);
 
 	movepicker mp(pos);
 
@@ -187,7 +174,7 @@ Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
 	//ここに前向き枝切りのコードを書く
 
 
-	//静止探索は駒の取り合いのような評価値が不安定な局面を先延ばして探索を続けることで探索の末端評価値を補正し、より正確にするものであると思っている。
+	//精子探索は駒の取り合いだけ先延ばして探索を続けることで探索の末端評価値を補正し、より正確にするものであると思っている。
 	bestvalue=staticeval = Eval::eval(pos);
 
 	//コレで上手く前の指し手の移動先を与えられていると思う

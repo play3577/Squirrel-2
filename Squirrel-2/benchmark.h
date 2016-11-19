@@ -10,4 +10,3 @@ void wrap_randomwalker();
 
 //randomwalker
 void randomwalker(Position& pos, int maxdepth);
-

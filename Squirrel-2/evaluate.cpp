@@ -270,7 +270,7 @@ namespace Eval {
 			ASSERT(pos.state()->wpp != Value_error);
 			pp=Value((pos.state()->bpp + pos.state()->wpp) / FV_SCALE);
 
-#ifdef DIFFTEST
+#if 0
 			int bPP = pos.state()->bpp, wPP = pos.state()->wpp;
 
 			if (pp != eval_PP(pos)) {
@@ -574,7 +574,7 @@ namespace Eval {
 			//駒が②つ動いた
 
 			//pawn1<=dirty<dirty2<fe_end2　にしておく
-			if (moveduniform1 > moveduniform2) { std::swap(moveduniform1, moveduniform2); }
+			if (moveduniform1 > moveduniform2) { std:swap(moveduniform1, moveduniform2); }
 
 			for (i = 0; i < moveduniform1; ++i) {
 				ADD_PP(oldbp1_fb, oldbp1_fw, newbp1_fb, newbp1_fw);//コレで[old1][old2]回避
@@ -604,7 +604,7 @@ namespace Eval {
 
 		pos.state()->bpp = bPP;
 		pos.state()->wpp = wPP;
-#ifdef DIFFTEST
+#if 0
 		eval_PP(pos);
 		//if (Value((bPP + wPP) / FV_SCALE) != eval_PP(pos)) {
 		if (bPP!=pos.state()->bpp||wPP!=pos.state()->wpp) {
@@ -999,8 +999,6 @@ namespace Eval {
 	
 
 
-	
-
 	std::ostream & operator<<(std::ostream & os, const Eval::BonaPiece bp)
 	{
 		//bp<fe_handendであればそれは手駒
@@ -1119,21 +1117,4 @@ namespace Eval {
 		}
 		return os;
 	}
-
-	//コマ割をチェックするための関数（カツ丼将棋がコマ割の値がおかしかったそうで怖くなってきたので確認しておく。）
-	void komawari_check()
-	{
-		for (Piece p = B_PAWN; p < PC_ALL;p++) {
-
-			if (p < KING) {
-				cout << p << " piecevalue " << piece_value[p]<< " capture" << capture_value[p]  << " promote" << diff_promote[p] << endl;
-			}
-			else {
-				cout << p << " piecevalue " << piece_value[p] << " capture" << capture_value[p] << endl;
-			}
-		}
-	}
-
-
-
 }
