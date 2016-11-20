@@ -46,11 +46,15 @@ Value Thread::think() {
 		bestvalue = search<Root>(rootpos, ss, alpha, beta, rootdepth*ONE_PLY);
 
 		sort_RootMove();
-
+#ifndef LEARN
 		print_pv(rootdepth, ss);
+#endif
 	}
-
+#ifndef LEARN
 	cout << "bestmove " << RootMoves[0] << endl;
+#endif // !LEARN
+
+
 
 	return bestvalue;
 

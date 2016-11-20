@@ -30,11 +30,10 @@ void update_dJ(const Position pos, const double diff) {
 	}
 }
 
-
+//コレだとd==0の場合の特徴量がどんどんマイナスに大きくなってしまう(修正済み)　と言うか出てこない特徴量はsparseにしていきたい。
  int sign(const double d) {
-	 return (d > 0) ? 1 : -1;
+	 return (d > 0) ? 1 : (d<0)?-1:0;
 }
-
 
 //教師手の指し手をmoves配列の一番先頭に持ってくるための関数
 //moves配列の先頭ポインタ　num要素数　m教師手の指し手
@@ -121,7 +120,8 @@ void renewal_PP() {
 	//対称性はdJの中に含まれているのでここでは考えなくていい
 	for (BonaPiece i = f_hand_pawn; i < fe_end2; i++) {
 		for (BonaPiece j = f_hand_pawn; j < fe_end2; j++) {
-			PP[i][j] += h*sign(dJ[i][j]);
+			int inc = h*sign(dJ[i][j]);
+			PP[i][j] += inc;
 		}
 	}
 	//書き出した後読み込むことで値を更新する
@@ -134,8 +134,8 @@ void renewal_PP() {
 void Eval::learner(Thread & th)
 {
 	//初期化
-	const int numgames = 50;
-	const int numiteration = 100;
+	const int numgames = 1000;
+	const int numiteration = 10;
 	ifstream gamedata(gamedatabasefile);
 	GameDataStream gamedatastream(gamedata);
 	std::vector<Game> games;
@@ -148,6 +148,8 @@ void Eval::learner(Thread & th)
 			games.push_back(game);
 		}
 	}
+
+	cout << "read kihu OK!" << endl;
 
 	//ーーーーーーーーーーーーーここまでちゃんと動いたことを確認済み
 
@@ -166,6 +168,8 @@ void Eval::learner(Thread & th)
 
 		for (int g = 0; g < numgames; g++) {
 
+			cout << "game number: " << g <<"/ maxgamenum: "<<numgames<< endl;
+
 			auto thisgame = games[g];
 			pos.set_hirate();
 			for (int ply = 0; ply < thisgame.ply; ply++) {
@@ -182,7 +186,7 @@ void Eval::learner(Thread & th)
 
 
 				//差し手に対して探索を行う。探索をしたら探索したPVと指し手と探索した評価値をペアにして格納
-				for (int move_i = 0; move_i < num_moves; num_moves++) {
+				for (int move_i = 0; move_i < num_moves; move_i++) {
 
 					Move m = moves[move_i];
 					if (pos.is_legal(m) == false) { continue; }
@@ -227,19 +231,24 @@ void Eval::learner(Thread & th)
 
 						StateInfo si2[3];//最大でも深さ３
 						int j = 0;
+						//教師手とPVで局面をすすめる
+						pos.do_move(minfo_list[i].move, &si[ply]);
 						for (Move m : minfo_list[i].pv) {
 							pos.do_move(m, &si2[j]);
 							j++;
 						}
 						update_dJ(pos, -diffsig);//pvの先端（leaf node）に移動してdJを計算するのがTD-leafということ？？
+						//局面を戻す
 						for (int jj = 0; jj < j; jj++) {
 							pos.undo_move();
 						}
+						pos.undo_move();
 					}//end of (教師手以外の指してに対して)
 
 					StateInfo si2[3];//最大でも深さ３
 					int j = 0;
 					//教師手に対してdJ/dviを更新
+					pos.do_move(minfo_list[0].move, &si[ply]);
 					for (Move m : minfo_list[0].pv) {
 						pos.do_move(m, &si2[j]);
 						j++;
@@ -248,9 +257,11 @@ void Eval::learner(Thread & th)
 					for (int jj = 0; jj < j; jj++) {
 						pos.undo_move();
 					}
-
+					pos.undo_move();
 
 				}//勾配計算
+				
+				//次の局面へ
 				pos.do_move(teacher_move, &si[ply]);
 			}// for gameply
 		}//for numgames
@@ -259,8 +270,8 @@ void Eval::learner(Thread & th)
 		renewal_PP();
 
 
-		//ここで何か指し手の一致率みたいな情報を表示できればいいんだけれど...
-		std::cout << "iteration" << iteration+1 << std::endl;
+		//ここで指し手の一致率みたいな情報を表示できればいいんだけれど...
+		std::cout << "iteration" << iteration<<"/maxiteration :"<<numiteration << std::endl;
 
 
 	}//for num iteration
