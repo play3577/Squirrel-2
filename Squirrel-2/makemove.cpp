@@ -194,9 +194,9 @@ ExtMove* make_move_SILVER(const Position& pos, const Bitboard& target, ExtMove* 
 		while (target2.isNot()) {
 
 			Square to = target2.pop();
-			if (canpromote == false)
-				if((SquareBB[sq] & canPromoteBB[US]).isNot()) { canpromote = true;}
-
+			if (canpromote == false) {
+				if ((SquareBB[to] & canPromoteBB[US]).isNot()) { canpromote = true; }
+			}
 			if (canpromote) { movelist++->move = make_movepromote2(from, to, pc2);}
 			movelist++->move = make_move2(from, to, pc2);//Ç»ÇÁÇ»Ç¢éwÇµéËÇ‡ê∂ê¨ÇµÇƒÇ®Ç≠
 				
@@ -424,7 +424,7 @@ ExtMove* make_move_KING(const Position& pos, const Bitboard& target, ExtMove* mo
 
 		int from = sq << 7;
 		int pc2 = pc << 17;
-		target2 = target&StepEffect[US][GOLD][sq];
+		target2 = target&StepEffect[US][KING][sq];
 
 		while (target2.isNot()) {
 			Square to = target2.pop();

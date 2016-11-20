@@ -38,11 +38,11 @@ void update_dJ(const Position pos, const double diff) {
 //教師手の指し手をmoves配列の一番先頭に持ってくるための関数
 //moves配列の先頭ポインタ　num要素数　m教師手の指し手
 //配列の中に教師手が含まれない場合falseを返す
-bool swapmove(ExtMove* moves, int num, Move m) {
+bool swapmove(ExtMove* moves,const int num,const Move m) {
 
 	ExtMove first = moves[0];
 
-	for (int i = 0; i < num; i++) {
+	for (int i = 0; i < num+1; i++) {
 
 		if (moves[i].move == m) {
 
@@ -134,12 +134,14 @@ void renewal_PP() {
 void Eval::learner(Thread & th)
 {
 	//初期化
-	const int numgames = 1000;
-	const int numiteration = 10;
+	const int numgames = 200;
+	const int numiteration = 20;
 	ifstream gamedata(gamedatabasefile);
 	GameDataStream gamedatastream(gamedata);
 	std::vector<Game> games;
 	
+	int didmoves = 0;
+	int diddepth = 0;
 
 	//棋譜を読み込む
 	for (int i = 0; i < numgames; ++i) {
@@ -162,17 +164,21 @@ void Eval::learner(Thread & th)
 	//Thread th;
 	end = moves;
 
+	//何故か教師データで用いるdepthが浅い？？
+
 	for (int iteration = 0; iteration < numiteration; iteration++) {
 		//iterationの最初に初期化する（それ以外ではしてはいけない）
 		memset(dJ, 0, sizeof(dJ));
-
+		
 		for (int g = 0; g < numgames; g++) {
-
-			cout << "game number: " << g <<"/ maxgamenum: "<<numgames<< endl;
+			diddepth = 0;
+			didmoves = 0;
+			
 
 			auto thisgame = games[g];
 			pos.set_hirate();
 			for (int ply = 0; ply < thisgame.ply; ply++) {
+				diddepth = ply;
 				minfo_list.clear();
 
 				//この局面の差し手を生成する
@@ -182,14 +188,31 @@ void Eval::learner(Thread & th)
 
 				//棋譜の差し手を指し手リストの一番最初に持ってくる。
 				Move teacher_move = thisgame.moves[ply];
-				if (!swapmove(moves, int(num_moves), teacher_move)) { break; }
+				//if (pos.is_legal(teacher_move) == false) { goto ERROR_OCCURED; }
+				//合法てリストに教師手が入っていなければここから先おかしくなってしまうのでこの棋譜を使っての学週はここで中断
 
+				//is_okで落ちてくれるのは最後まで利用できたということなのでありがたい
+				if(is_ok(teacher_move)==false){ cout << "is not ok" << endl; goto ERROR_OCCURED; }
+				//ほとんどcantswapで教師手が否定されてしまう！！
+				//殆どの指してがk r bの指して！！指して生成がおかしい！！
+
+
+				//たまに駒打ちがおかしかったりすることがあるのでoccbitboardの更新部がおかしいのか？
+
+				/*
+				とりあえずsfenの逆関数を作り、エラーとなった局面を吐かせて、それらの局面で正しくまずはトビ機器を生成できているかどうか確認する。
+				もしこの段階では飛びコマの移動をちゃんと生成できているということであればそれはoccに問題があるということである。
+				*/
+
+				if (!swapmove(moves, int(num_moves), teacher_move)) { cout << "cant swap" << endl; cout << pos.sidetomove(); check_move(teacher_move); goto ERROR_OCCURED; }
+				if (pos.is_legal(teacher_move) == false) { cout << "teacher ilegal" << endl; goto ERROR_OCCURED; }
 
 				//差し手に対して探索を行う。探索をしたら探索したPVと指し手と探索した評価値をペアにして格納
 				for (int move_i = 0; move_i < num_moves; move_i++) {
 
 					Move m = moves[move_i];
 					if (pos.is_legal(m) == false) { continue; }
+					didmoves++;
 					pos.do_move(m, &si[ply]);
 					th.set(pos);
 					Value  score = th.think();
@@ -212,6 +235,7 @@ void Eval::learner(Thread & th)
 					そのためのsum_diff。
 					*/
 					double sum_diff = Value_Zero;
+					if (minfo_list.size() == 0) { cout << "listsize==0" << endl; goto ERROR_OCCURED; }
 
 					//教師手以外の指してに対して
 					for (size_t i = 1; i < minfo_list.size(); i++) {
@@ -244,12 +268,16 @@ void Eval::learner(Thread & th)
 						}
 						pos.undo_move();
 					}//end of (教師手以外の指してに対して)
-
+					
+					
 					StateInfo si2[3];//最大でも深さ３
 					int j = 0;
 					//教師手に対してdJ/dviを更新
+					if (pos.is_legal(minfo_list[0].move) == false) { ASSERT(0); }
 					pos.do_move(minfo_list[0].move, &si[ply]);
+					//pvの指し手が非合法手になっている事がある？？
 					for (Move m : minfo_list[0].pv) {
+						if (pos.is_legal(m) == false) { ASSERT(0); }
 						pos.do_move(m, &si2[j]);
 						j++;
 					}
@@ -264,6 +292,10 @@ void Eval::learner(Thread & th)
 				//次の局面へ
 				pos.do_move(teacher_move, &si[ply]);
 			}// for gameply
+
+		ERROR_OCCURED:;
+			cout << "game number: " << g << "/ maxgamenum: " << numgames <<" didmoves " << didmoves << " diddepth " << diddepth<<endl;
+
 		}//for numgames
 
 		//dJは全指し手と全棋譜に対して足し上げられたのでここからbonanzaで言うparse2

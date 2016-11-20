@@ -301,7 +301,14 @@ void USI::loop()
 			Eval::komawari_check();
 
 		}
+		else if (token == "mcheck") {
+			Move m;
+			string ms;
+			is >> ms;
+			m = Move(stoi(ms));
+			check_move(m);
 
+		}
 	} while (token != "quit");
 
 

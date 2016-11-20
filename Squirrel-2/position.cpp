@@ -645,7 +645,7 @@ bool Position::is_legal(const Move m) const {
 	}
 
 	//“®‚©‚·‹î‚ÍŽ©•ª‚Ì‹î
-	ASSERT(piece_color(movedpiece) == sidetomove_);
+	if (piece_color(movedpiece) != sidetomove_) { goto Error; }
 	//from‚É‚¢‚é‹î‚Æ“®‚©‚»‚¤‚Æ‚µ‚Ä‚¢‚é‹î‚Í“¯‚¶
 	if (!isDrop) { ASSERT(piece_on(from) == movedpiece); }
 	//Žæ‚ë‚¤‚Æ‚µ‚Ä‚¢‚é‹î‚ÍŽ©•ª‚Ì‹î‚Å‚Í‚È‚¢
@@ -658,6 +658,15 @@ bool Position::is_legal(const Move m) const {
 		ASSERT(0);
 	}
 	return true;
+
+
+Error:;
+
+	cout << *this << endl;
+	cout << "~~~~ error move" << m << endl;
+	ASSERT(0);
+	return false;
+
 }
 
 
@@ -675,7 +684,7 @@ std::ostream & operator<<(std::ostream & os, const Position & pos)
 		os << pos.hand(c) << endl;
 	}
 
-	pos.evallist().print_bplist();
+	//pos.evallist().print_bplist();
 
 
 	/*for (Color c = BLACK; c <= WHITE; c++) {
