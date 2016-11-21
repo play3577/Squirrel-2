@@ -85,6 +85,7 @@ public:
 	void set(std::string sfen);
 	void set_hirate() { set(sfen_hirate); }//•½Žè‚ÉƒZƒbƒg‚ÍOK
 
+	string make_sfen();
 	void clear();
 
 	void remove_piece(const Color c, const Piece pt, const Square sq);

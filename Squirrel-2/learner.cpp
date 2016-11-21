@@ -3,12 +3,15 @@
 #include "learner.h"
 #include <random>
 #include <vector>
+#include <time.h>       /* time_t, struct tm, time, localtime */
+#include <fstream>
 #include "position.h"
 #include "game_database.h"
 #include "makemove.h"
 using namespace Eval;
 using namespace std;
 
+#define LOG
 
 
 double dJ[fe_end2][fe_end2];
@@ -154,6 +157,30 @@ void Eval::learner(Thread & th)
 	cout << "read kihu OK!" << endl;
 
 	//ーーーーーーーーーーーーーここまでちゃんと動いたことを確認済み
+#ifdef LOG
+	std::string str, filepath;
+	time_t rawtime;
+	struct tm * timeinfo;
+	time(&rawtime);
+	timeinfo = localtime(&rawtime);
+	str = asctime(timeinfo);
+	
+	size_t hoge;
+	while ((hoge = str.find_first_of(" ")) != string::npos) {
+		str.erase(hoge, 1);
+	}
+	while ((hoge = str.find_first_of("\n")) != string::npos) {
+		str.erase(hoge, 1);
+	}
+	while ((hoge = str.find_first_of(":")) != string::npos) {
+		str.erase(hoge, 1);
+	}
+	filepath = "c:/book2/log/" + str + ".txt";
+	ofstream ofs(filepath);
+	if (ofs.fail()) { cout << "log fileError"; }
+
+#endif
+
 
 
 
@@ -210,6 +237,10 @@ void Eval::learner(Thread & th)
 					cout << pos << endl;
 					check_move(teacher_move); 
 					//ASSERT(0);
+#ifdef LOG
+					ofs << " swap error position :" << pos.make_sfen() << " error move " << teacher_move << endl;
+#endif
+					
 					goto ERROR_OCCURED;
 				}
 				if (pos.is_legal(teacher_move) == false) { cout << "teacher ilegal" << endl; goto ERROR_OCCURED; }

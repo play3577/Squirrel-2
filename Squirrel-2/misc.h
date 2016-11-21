@@ -9,6 +9,9 @@
 
 using namespace std;
 
+
+string itos(int number);
+
 //sfenの文字列を駒の種類に変換するためのマップ
 //unorderd_map ...mapより高速であるが順序付けはされていない
 class Sfen2Piece :public std::unordered_map<char, Piece> {

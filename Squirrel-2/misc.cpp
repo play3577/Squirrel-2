@@ -1,6 +1,7 @@
 #include "misc.h"
 #include "fundation.h"
 
+#include <sstream>
 #include <random>
 
 CSA2Piece CSA2Piece_;
@@ -22,6 +23,14 @@ File CSA2File(const char c) {
 }
 Rank CSA2Rank(const char c) {
 	return Rank(c - '1');
+}
+
+
+string itos(int number)
+{
+	stringstream ss;
+	ss << number;
+	return ss.str();
 }
 
 

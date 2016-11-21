@@ -321,6 +321,13 @@ void USI::loop()
 			cout << pos << endl;
 			pos.check_longeffect();
 		}
+		//sfen‚Ì¶¬
+		else if (token == "sfen") {
+			cout << pos.make_sfen() << endl;
+		}
+
+
+
 	} while (token != "quit");
 
 

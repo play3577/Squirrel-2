@@ -138,6 +138,8 @@ void Position::set(std::string sfen)
 #endif
 }
 
+
+
 void Position::clear()
 {
 	std::memset(this, 0, sizeof(Position));
@@ -667,6 +669,87 @@ Error:;
 	ASSERT(0);
 	return false;
 
+}
+
+/*
+現在局面に対応するsfen文字列を生成するための関数（デバッグ用であり、定跡を管理するためにも用いる）
+
+持ち駒は一意には定まらないが
+先手の歩から駒の価値毎に並べ次に後手の歩から駒の価値毎に並べていくスタイルでSquirrelでは一意に定める。
+
+*/
+string Position::make_sfen()
+{
+	string sfen;
+
+	int space = 0;
+
+	//先頭にはsfenをつける
+	sfen += "sfen ";
+
+	//----------------------------------------盤上
+	for (Rank r = RankA; r <= RankI; r++) {
+		for (File f = File9; f >= File1; f--) {
+
+			const Square sq = make_square(r, f);
+			const Piece pc = piece_on(sq);
+
+			if (pc != NO_PIECE) {
+
+				if (space != 0) {
+					sfen += itos(space);
+					space = 0;
+				}
+
+				//駒があればその駒のUSIPieceをsfenに足す。
+				sfen += USIPiece[pc];
+			}
+			else {
+				//駒がない場所であれば駒のない場所の数をインクリメント
+				space++;
+			}
+
+		}
+		if (space != 0) {
+			sfen += itos(space);
+			space = 0;
+		}
+		if (r != RankI) {
+			sfen += "/";
+		}
+	}
+
+	//--------------------------------------------手番
+	sidetomove() == BLACK ? sfen += " b" : sfen += " w";
+
+	//--------------------------------------------手駒
+	int num;
+
+	if (have_hand(hand(BLACK)) == false && have_hand(hand(WHITE)) == false) {
+		sfen += " -";
+	}
+	else {
+		sfen += " ";
+		for (Color c = BLACK; c <= WHITE; c++) {
+
+			const Hand h = hand(c);
+			for (Piece pt = PAWN; pt < KING; pt++) {
+
+				if ((num = num_pt(h, pt)) != 0) {
+
+					if (num != 1) {
+						sfen += itos(num);
+					}
+					sfen += USIPiece[add_color(pt, c)];
+				}
+			}
+		}
+	}
+	
+	sfen += " 1";
+
+
+	return sfen;
 }
 
 
