@@ -431,7 +431,7 @@ void bitboard_init()
 
 	//check_between();
 	//check_directtable();
-	//bitboard_debug();
+	bitboard_debug();
 }
 
 

@@ -212,10 +212,11 @@ ExtMove* make_move_BISHOP(const Position& pos, const Bitboard& target, ExtMove* 
 	Bitboard occ_us = pos.occ_pt(US, BISHOP);
 	Bitboard target2;
 	Bitboard effect;
-	bool canpromote = false;
+	bool canpromotefrom = false;
 
 	while (occ_us.isNot()) {
-
+		//ここでfalseに戻さなければならない！
+		canpromotefrom = false;
 
 		Square sq = occ_us.pop();
 		Piece pc = pos.piece_on(sq);
@@ -224,7 +225,7 @@ ExtMove* make_move_BISHOP(const Position& pos, const Bitboard& target, ExtMove* 
 		ASSERT(pc == add_color(BISHOP, US));
 
 		if ((SquareBB[sq] & canPromoteBB[US]).isNot()) {
-			canpromote = true;
+			canpromotefrom = true;
 		}
 
 		int obstacle_plus45 = (pos.occ_plus45().b[index_plus45(sq)] >> shift_plus45(sq))&effectmask;
@@ -234,14 +235,18 @@ ExtMove* make_move_BISHOP(const Position& pos, const Bitboard& target, ExtMove* 
 		target2 = target&effect;
 		
 		while (target2.isNot()) {
+			bool canpromoteto = false;
 			Square to = target2.pop();
 
-			if (canpromote == false)
-				if((SquareBB[to] & canPromoteBB[US]).isNot()) { canpromote = true; }
-
+			if (canpromotefrom == false) {
+				if ((SquareBB[to] & canPromoteBB[US]).isNot()) { canpromoteto = true; }
+			}
 			//成れるときはからなず成らせる
-			if (canpromote) {
+			if (canpromotefrom==true||canpromoteto==true) {
 				movelist++->move = make_movepromote2(from, to, pc2);
+#ifdef LEARN 
+				movelist++->move = make_move2(from, to, pc2);
+#endif
 			}
 			else {
 				movelist++->move = make_move2(from, to, pc2);
@@ -297,16 +302,21 @@ ExtMove* make_move_ROOK(const Position& pos, const Bitboard& target, ExtMove* mo
 	Bitboard occ_us = pos.occ_pt(US, ROOK);
 	Bitboard target2;
 	Bitboard effect;
-	bool canpromote = false;
+	bool canpromotefrom = false;
+	
 
 	while (occ_us.isNot()) {
-		Square sq = occ_us.pop();
-		Piece pc = pos.piece_on(sq);
-		Piece pt = piece_type(pc);
+		//ここでfalseに戻さなければならない！
+		canpromotefrom = false;
+		
+
+		const Square sq = occ_us.pop();
+		const Piece pc = pos.piece_on(sq);
+		const Piece pt = piece_type(pc);
 		ASSERT(pt == ROOK);
 
 		if ((SquareBB[sq] & canPromoteBB[US]).isNot()) {
-			canpromote = true;
+			canpromotefrom = true;
 		}
 		int from = sq << 7;
 		int pc2 = pc << 17;
@@ -317,15 +327,21 @@ ExtMove* make_move_ROOK(const Position& pos, const Bitboard& target, ExtMove* mo
 		//cout << effect << endl;
 		target2 = target&effect;
 		while (target2.isNot()) {
+			bool canpromoteto = false;
 
 			Square to = target2.pop();
 
-			if (canpromote == false)
-				if((SquareBB[to] & canPromoteBB[US]).isNot()) { canpromote = true; }
+			if (canpromotefrom == false) {
+				if ((SquareBB[to] & canPromoteBB[US]).isNot()) { canpromoteto = true; }
+			}
 
-			if (canpromote) {
-				//なれる場合は必ず成る
+			if (canpromotefrom==true||canpromoteto==true) {
+				//なれる場合は必ず成る(棋譜に成らずが含まれていることがあったので学習時は成らずも生成する)
+				ASSERT((SquareBB[sq] & canPromoteBB[US]).isNot() || (SquareBB[to] & canPromoteBB[US]).isNot());
 				movelist++->move = make_movepromote2(from, to, pc2);
+#ifdef LEARN 
+				movelist++->move = make_move2(from, to, pc2);
+#endif
 			}
 			else {
 				movelist++->move = make_move2(from, to, pc2);
@@ -364,7 +380,7 @@ ExtMove* make_move_DRAGON(const Position& pos, const Bitboard& target, ExtMove* 
 			Square to = target2.pop();
 
 			
-				movelist++->move = make_move2(from, to, pc2);
+			movelist++->move = make_move2(from, to, pc2);
 		}
 	}
 	return movelist;

@@ -9,8 +9,8 @@ struct Position;
 
 
 namespace Eval {
-	//このFV_SCALEでホントに評価値16bit値に収まってくれるか？？
-	const int32_t FV_SCALE = (0b11111111);
+	//あまり大きすぎるとパラメーターが変わりにくいのでbonanza6の値で合わせる
+	const int32_t FV_SCALE = 32;
 
 	//コマ割はやねうら王（やねうら王のコマ割はbonanza6）
 	enum :int16_t {

@@ -663,7 +663,7 @@ bool Position::is_legal(const Move m) const {
 Error:;
 
 	cout << *this << endl;
-	cout << "~~~~ error move" << m << endl;
+	cout << "----error move" << m << endl;
 	ASSERT(0);
 	return false;
 
@@ -678,23 +678,23 @@ std::ostream & operator<<(std::ostream & os, const Position & pos)
 		}
 		os << endl;
 	}
+	
+	//pos.evallist().print_bplist();
+	/*for (Color c = BLACK; c <= WHITE; c++) {
+		os << " color " << c << endl << pos.occ(c) << endl;
+	}*/
+	os << "occ all" << endl << pos.occ_all() << endl;
+	os << " occ 90" << endl << pos.occ_90() << endl;
+	os << "occ +45 " << endl << pos.occ_plus45() << endl;
+	os << " occ -45 " << endl << pos.occ_minus45() << endl;
+	//os << "unicorn " << pos.occ_pt(WHITE, UNICORN) << endl;;
+
 	for (Color c = BLACK; c < ColorALL; c++) {
 		cout << "_______Ž‚¿‹î_______" << endl;
 		(c == BLACK) ? os << "    æŽè " << std::endl : os << "    ŒãŽè " << std::endl;
 		os << pos.hand(c) << endl;
 	}
 
-	//pos.evallist().print_bplist();
-
-
-	/*for (Color c = BLACK; c <= WHITE; c++) {
-		os << " color " << c << endl << pos.occ(c) << endl;
-	}
-	os << "occ all" << endl << pos.occ_all() << endl;
-
-	os << "unicorn " << pos.occ_pt(WHITE, UNICORN) << endl;;
-
-*/
 	/*
 	for (Color c = BLACK; c <= WHITE; c++) {
 		for (Piece pt = PAWN; pt < PT_ALL; pt++) {
@@ -714,3 +714,33 @@ std::ostream & operator<<(std::ostream & os, const Position & pos)
 	
 	return os;
 }
+
+void Position::check_longeffect() {
+
+
+	Bitboard rook = occ_pt(WHITE, ROOK) | occ_pt(BLACK, ROOK) | occ_pt(WHITE, DRAGON) | occ_pt(BLACK, DRAGON);
+	Bitboard effect;
+
+
+	while (rook.isNot()) {
+
+		Square sq = rook.pop();
+		int8_t obstacle_tate = (occ_all().b[index_tate(sq)] >> shift_tate(sq))&effectmask;
+		int8_t obstacle_yoko = (occ_90().b[index_yoko(sq)] >> shift_yoko(sq))&effectmask;
+		effect = LongRookEffect_tate[sq][obstacle_tate] | LongRookEffect_yoko[sq][obstacle_yoko];
+
+		cout << "ROOK sq " << sq << endl << effect << endl;
+
+	}
+	Bitboard bishop = occ_pt(WHITE, BISHOP) | occ_pt(BLACK, BISHOP) | occ_pt(WHITE, UNICORN) | occ_pt(BLACK, UNICORN);
+
+	while (bishop.isNot()) {
+		Square sq = bishop.pop();
+		int obstacle_plus45 = (occ_plus45().b[index_plus45(sq)] >> shift_plus45(sq))&effectmask;
+		int obstacle_Minus45 = (occ_minus45().b[index_Minus45(sq)] >> shift_Minus45(sq))&effectmask;
+		effect = LongBishopEffect_plus45[sq][obstacle_plus45] | LongBishopEffect_minus45[sq][(obstacle_Minus45)];
+
+		cout << "BISHOP sq " << sq << endl << effect << endl;
+	}
+}
+

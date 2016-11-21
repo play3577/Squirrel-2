@@ -9,7 +9,7 @@
 #include <vector>
 using namespace std;
 
-#define gamedatabasefile  "C:/Users/daruma/Desktop/wdoor2015/records_sum.txt"
+#define gamedatabasefile  "C:/book2/records_sum.txt"
 
 
 enum GameResult

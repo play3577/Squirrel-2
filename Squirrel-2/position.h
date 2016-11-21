@@ -114,7 +114,7 @@ public:
 	}
 
 	void check_effect();
-
+	void check_longeffect();
 
 	Eval::BonaPList evallist() const { return list; }
 

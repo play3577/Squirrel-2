@@ -204,10 +204,22 @@ void Eval::learner(Thread & th)
 				もしこの段階では飛びコマの移動をちゃんと生成できているということであればそれはoccに問題があるということである。
 				*/
 
-				if (!swapmove(moves, int(num_moves), teacher_move)) { cout << "cant swap" << endl; cout << pos.sidetomove(); check_move(teacher_move); goto ERROR_OCCURED; }
+				if (!swapmove(moves, int(num_moves), teacher_move)) { 
+					cout << "cant swap" << endl;
+					//cout << pos.sidetomove(); //sidetomoveはオッケーだった
+					cout << pos << endl;
+					check_move(teacher_move); 
+					//ASSERT(0);
+					goto ERROR_OCCURED;
+				}
 				if (pos.is_legal(teacher_move) == false) { cout << "teacher ilegal" << endl; goto ERROR_OCCURED; }
 
 				//差し手に対して探索を行う。探索をしたら探索したPVと指し手と探索した評価値をペアにして格納
+				//これは少し制限して一局面最大（15手ぐらいにした方がいいか？）
+
+				//num_moves = std::max(int(num_moves), 15);
+
+				//num_moves > 15 ? num_moves = 15: num_moves=num_moves;
 				for (int move_i = 0; move_i < num_moves; move_i++) {
 
 					Move m = moves[move_i];

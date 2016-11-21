@@ -29,6 +29,8 @@ const string oute = "sfen lnsgk1snl/7b1/ppppppppp/9/4r4/9/PPPg1PPPP/1B5R1/LNSGKG
 const string suicide = "sfen lnsgkgsnl/1r7/pppppp1pp/6p2/8P/6P2/PP1PPP1P1/1B3K1R1/LNSG+bGSNL b P 1";
 const string capturepromote = "sfen lnsgkgsnl/1r5b1/ppppppppp/9/9/2P6/PP1PPPPPP/1B5R1/LNSGKGSNL b - 1";
 const string drop = "sfen lnsgkgsnl/1r5b1/ppppppppp/9/9/9/PP1PPPPPP/1B5R1/LNSGKGSNL b P 1";
+const string debug1 = "sfen 5k2l/1r7/S2bp1gs1/1N2sp2p/2P7/4SP3/LP2PGN1P/3GN2r1/PK6L w 1";
+const string debug2 = "sfen +S3+P3l/9/p1ppn1b2/4+R4/4Pnpk1/1P1KNr1n1/P1LP1P1+s+p/1G7/L1S1+bG2L w 1";
 
 void USI::init_option(OptionMap &o)
 {
@@ -308,6 +310,16 @@ void USI::loop()
 			m = Move(stoi(ms));
 			check_move(m);
 
+		}
+		else if (token == "debug1") {
+			pos.set(debug1);
+			cout << pos << endl;
+			pos.check_longeffect();
+		}
+		else if (token == "debug2") {
+			pos.set(debug2);
+			cout << pos << endl;
+			pos.check_longeffect();
 		}
 	} while (token != "quit");
 

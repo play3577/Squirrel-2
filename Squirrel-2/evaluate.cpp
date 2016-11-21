@@ -266,7 +266,7 @@ namespace Eval {
 
 
 		//ŒvŽZÏ‚Ý
-		if (pos.state()->bpp != Value_error) {
+		if (pos.state()->bpp != Value_error&&pos.state()->wpp != Value_error) {
 			ASSERT(pos.state()->wpp != Value_error);
 			pp=Value((pos.state()->bpp + pos.state()->wpp) / FV_SCALE);
 
@@ -289,7 +289,7 @@ namespace Eval {
 			}
 #endif
 		}
-		if (pos.state()->previous!=nullptr&&pos.state()->previous->bpp != Value_error) {
+		if (pos.state()->previous!=nullptr&&pos.state()->previous->bpp != Value_error&&pos.state()->previous->wpp != Value_error) {
 			//·•ªŒvŽZ‰Â”\
 			ASSERT(pos.state()->previous->wpp != Value_error);
 
@@ -621,6 +621,7 @@ namespace Eval {
 			UNREACHABLE;
 		}
 #endif
+		ASSERT(((bPP + wPP) / FV_SCALE) < INT16_MAX);
 		return Value((bPP + wPP) / FV_SCALE);
 
 	}//·•ªŒvŽZ
