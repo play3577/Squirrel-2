@@ -248,9 +248,9 @@ void Eval::learner(Thread & th)
 				//·‚µè‚É‘Î‚µ‚Ä’Tõ‚ğs‚¤B’Tõ‚ğ‚µ‚½‚ç’Tõ‚µ‚½PV‚Æw‚µè‚Æ’Tõ‚µ‚½•]‰¿’l‚ğƒyƒA‚É‚µ‚ÄŠi”[
 				//‚±‚ê‚Í­‚µ§ŒÀ‚µ‚Äˆê‹Ç–ÊÅ‘åi15è‚®‚ç‚¢‚É‚µ‚½•û‚ª‚¢‚¢‚©Hj
 
-				//num_moves = std::max(int(num_moves), 15);
-
-				//num_moves > 15 ? num_moves = 15: num_moves=num_moves;
+				num_moves = std::min(int(num_moves), 15);
+				cout << "num_moves " << num_moves << endl;
+				
 				for (int move_i = 0; move_i < num_moves; move_i++) {
 
 					Move m = moves[move_i];
