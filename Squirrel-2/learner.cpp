@@ -8,6 +8,7 @@
 #include "position.h"
 #include "game_database.h"
 #include "makemove.h"
+#include "usi.h"
 using namespace Eval;
 using namespace std;
 
@@ -62,7 +63,7 @@ bool swapmove(ExtMove* moves,const int num,const Move m) {
 void Eval::write_PP()
 {
 	// ファイルへの書き出し（ここパスをusioptionで変更できるようにする。）
-	FILE* fp = std::fopen("c:/book2/fv_PP.bin", "wb");
+	FILE* fp = std::fopen(Options["eval"].str().c_str(), "wb");
 	std::fwrite(&PP, sizeof(PP), 1, fp);
 	std::fclose(fp);
 
@@ -71,7 +72,7 @@ void Eval::write_PP()
 void Eval::read_PP() {
 
 	//ここパスをusioptionで変更できるようにする。
-	FILE* fp = std::fopen("c:/book2/fv_PP.bin", "rb");
+	FILE* fp = std::fopen(Options["eval"].str().c_str(), "rb");
 	if (fp != NULL) {
 		std::fread(&PP, sizeof(PP), 1, fp);
 	}

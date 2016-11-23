@@ -16,7 +16,7 @@
 
 
 //#define CHECKPOS
-#define LEARN
+//#define LEARN
 
 //やねうら王のアイディア
 #if defined(_MSC_VER)

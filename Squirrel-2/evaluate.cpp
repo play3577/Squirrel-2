@@ -300,10 +300,10 @@ namespace Eval {
 			pp = eval_PP(pos);
 		}
 
-		/*if (pp != eval_PP(pos)) {
+		if (pp != eval_PP(pos)) {
 			cout << " diff " << pp << " evalfull " << eval_PP(pos) << endl;
 			UNREACHABLE;
-		}*/
+		}
 		//pp = eval_PP(pos);
 
 		value = material + pp;

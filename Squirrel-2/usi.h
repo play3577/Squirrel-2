@@ -54,6 +54,10 @@ namespace USI {
 			idx = insert_order++;
 		}
 
+		string str() {
+			ASSERT(type == "string");
+			return value;
+		}
 
 		/*======================
 		値を変更するために用いる。
@@ -92,6 +96,7 @@ namespace USI {
 			ASSERT(type == "string");
 			return value;
 		}
+
 	};
 
 	void init_option(OptionMap& o);

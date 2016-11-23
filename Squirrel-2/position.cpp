@@ -766,10 +766,10 @@ std::ostream & operator<<(std::ostream & os, const Position & pos)
 	/*for (Color c = BLACK; c <= WHITE; c++) {
 		os << " color " << c << endl << pos.occ(c) << endl;
 	}*/
-	os << "occ all" << endl << pos.occ_all() << endl;
+	/*os << "occ all" << endl << pos.occ_all() << endl;
 	os << " occ 90" << endl << pos.occ_90() << endl;
 	os << "occ +45 " << endl << pos.occ_plus45() << endl;
-	os << " occ -45 " << endl << pos.occ_minus45() << endl;
+	os << " occ -45 " << endl << pos.occ_minus45() << endl;*/
 	//os << "unicorn " << pos.occ_pt(WHITE, UNICORN) << endl;;
 
 	for (Color c = BLACK; c < ColorALL; c++) {

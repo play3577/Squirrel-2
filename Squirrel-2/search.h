@@ -24,7 +24,26 @@ struct Stack {
 struct SearchLimit {
 	SearchLimit() { memset(this, 0, sizeof(SearchLimit)); }
 	TimePoint starttime;
+	TimePoint remain_time[ColorALL];//残り時間
+	TimePoint byoyomi[ColorALL];//秒読み時間
+	TimePoint inc_time[ColorALL];//フィッシャールール用
+	bool is_ponder = false;
 };
+
+//デバッグ用関数　こんなの実装しなくてもいいかもしれないが無いよりあったほうがいいだろう
+inline std::ostream& operator<<(std::ostream& os, const SearchLimit& sl) {
+
+	os << " starttime " << sl.starttime << endl;
+	os << "remain black " << sl.remain_time[BLACK] << " white " << sl.remain_time[WHITE] << endl;
+	if (sl.byoyomi[BLACK] != 0)
+	{
+		os << " byoyomi " << sl.byoyomi[BLACK] << endl;
+	}
+	if (sl.inc_time[BLACK] != 0) {
+		os << sl.inc_time[BLACK] << endl;
+	}
+	return os;
+}
 
 extern SearchLimit limit;
 

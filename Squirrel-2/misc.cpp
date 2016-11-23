@@ -75,7 +75,7 @@ Move Sfen2Move(const string smove, const Position& pos)
 		m = make_drop(to, pc);
 	}
 
-	cout << m << endl;
+	//cout << m << endl;
 	check_move(m);
 	return m;
 

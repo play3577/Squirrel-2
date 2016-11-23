@@ -17,6 +17,9 @@
 using namespace std;
 using namespace USI;
 
+//positionコマンドで局面を移動させるためのstateinfo
+//コレならpositionコマンドから抜けてしまってもstateinfoが消えることはないはずである
+static StateInfo g_st[257];
 
 USI::OptionMap Options;
 
@@ -36,7 +39,7 @@ void USI::init_option(OptionMap &o)
 {
 	o["Ponder"] << USIOption(false);
 	o["Threads"] << USIOption(1, 1, 128);
-	o["eval"] << USIOption("c:/book/eval/");
+	o["eval"] << USIOption("c:/book2/fv_PP.bin");
 }
 
 
@@ -72,6 +75,112 @@ std::ostream& USI::operator<<(std::ostream& os, const OptionMap& om) {
 	return os;
 }
 
+//usiで自己紹介をするための関数
+const string self_introduction() {
+
+	stringstream ss;
+
+	ss << "id name Squirrel_";
+#ifdef _DEBUG
+	ss << "debug ";
+#endif
+#ifndef _DEBUG
+	ss << "release ";
+#endif
+	ss << endl;
+	ss << "id name Kotaro Suganuma";
+	return ss.str();
+}
+
+//isreadyでセッティングするための関数
+void is_ready() {
+	//evalのパスが変更されているかもしれないためもう一回読み直す。
+	//と言うか先にusiに返事してからreadさせたほうがいいか？
+	Eval::read_PP();
+}
+
+void go(Position& pos, istringstream& is, Thread& th) {
+
+	limit.starttime = now();
+	Value v;
+	string token,buffer;
+	TimePoint t;
+	while (is >> token) {
+
+		if(token=="btime"){ 
+			is >> buffer;
+			limit.remain_time[BLACK] = stoi(buffer);
+		}
+		else if (token == "wtime") {
+			is >> buffer;
+			limit.remain_time[WHITE] = stoi(buffer);
+		}
+		else if (token == "byoyomi") {
+			is >> buffer;
+			limit.byoyomi[BLACK]=limit.byoyomi[WHITE]= stoi(buffer);
+		}
+		else if (token == "binc") {
+			is >> buffer;
+			limit.inc_time[BLACK] = stoi(buffer);
+		}
+		else if (token == "winc") {
+			is >> buffer;
+			limit.inc_time[WHITE] = stoi(buffer);
+		}
+	}
+
+#ifdef TEST
+	cout << limit << endl;
+#endif
+
+
+	th.set(pos);
+	v = th.think();
+	cout << " 評価値 " << v << endl;
+
+}
+
+
+void position(Position& pos, istringstream& is) {
+
+	/*
+	こんなんが入ってくる
+
+	position startpos moves 7g7f 8c8d 7i6h 3c3d 6h7g 7a6b 2g2f 3a4b 3i4h 4a3b 6i7h 5a4a 5i6i 5c5d 5g5f 6a5b 3g3f 7c7d 4i5h 4b3c 8h7i 2b3a 1g1f 1c1d
+	*/
+
+	string token,sfen="sfen ";
+	is >> token;
+
+	//ここまでは初期局面設定
+
+	if (token == "startpos") { pos.set_hirate(); }
+	else if (token == "sfen") {
+
+		while (is >> token) {
+			if (token == "moves") { break; }
+			sfen += token + " ";
+		}
+		pos.set(sfen);
+	}
+
+	Move m;
+	int ply=0;
+	//ここからは初期局面からの移動
+	while (is >> token) {
+
+		if (token == "moves") { continue; }
+		//まあ変な指し手入ってくることないやろ
+		m = Sfen2Move(token, pos);
+		pos.do_move(m, &g_st[ply]);
+		ply++;
+	}
+
+
+	cout << pos << endl;
+
+}
+
 
 void USI::loop()
 {
@@ -92,19 +201,13 @@ void USI::loop()
 		is >> skipws >> token;//間の空白文字は読み飛ばしてtokenに入れる。
 
 		if (token == "usi") {
+			cout << self_introduction() << endl;
 			cout << Options << endl;
 			cout << "usiok" << endl;
 		}
-		else if (token == "go") {
-			//cout << "未実装" << endl;
-			limit.starttime = now();
-			Value v;
-			th.set(pos);
-			v = th.think();
-			cout << " 評価値 " << v << endl;
-
-
-		}
+		else if (token == "isready") { is_ready(); cout << "readyok" << endl; }
+		else if (token == "position") { position(pos, is); }
+		else if (token == "go") { go(pos, is, th); }
 		else if (token == "setoption") {
 /*
 >C:setoption name Threads value 2
@@ -143,14 +246,20 @@ void USI::loop()
 			else {
 				UNREACHABLE;
 			}
-
 		}
+		//学習用コマンド”アイ”ではなく"エル"
 		else if (token == "l") {
+
+#ifdef LEARN
 			string yn;
 			cout << "do you really wanna learning fv? [y/n]  " ;
 			cin >> yn;
 			if (yn != "y") { cout << "OK I do not  learning"; break; }
 			Eval::learner();
+#endif
+#ifndef LEARN
+			cout << "not learning mode" << endl;
+#endif
 		}
 		//====================
 		//ここから下はデバッグ用コマンド
