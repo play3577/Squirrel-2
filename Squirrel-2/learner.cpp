@@ -12,7 +12,7 @@ using namespace Eval;
 using namespace std;
 
 #define LOG
-
+//#define USE_PENALTY
 
 double dJ[fe_end2][fe_end2];
 
@@ -25,10 +25,10 @@ void update_dJ(const Position pos, const double diff) {
 	for (int i = 0; i < 40; i++) {
 		for (int j = 0; j < i; j++) {
 			dJ[list_fb[i]][list_fb[j]] += diff;
-			dJ[list_fw[i]][list_fw[j]] += diff;
+			dJ[list_fw[i]][list_fw[j]] -= diff;
 			//PP対称性を考えて
 			dJ[list_fb[j]][list_fb[i]] += diff;
-			dJ[list_fw[j]][list_fw[i]] += diff;
+			dJ[list_fw[j]][list_fw[i]] -= diff;
 		}
 	}
 }
@@ -114,15 +114,30 @@ void renewal_PP() {
 
 	std::random_device rd;
 	std::mt19937 mt(rd());
+
 	//hはなんぼぐらいの値に設定すればええんや？？(bonanzaでは0,1,2の値を取る乱数にしているらしい。進歩本６)
+	//コレは学習の進行度に合わせて変化させる必要があると思うのだが...。
+	//最初は大雑把にだんだん正確に動かすように変化させる。
+	//bonanzaはpharse 2を32回繰り返すらしいのでその回数を損失が小さくなっていく毎に減らしていけばいいと考えられる。
 	int h;
 
 	//こんなんでいいのか？
-	h =  std::abs(int8_t(mt())) % 2 + 1;
+	h =  std::abs(int8_t(mt())) % 3;
 
 	//対称性はdJの中に含まれているのでここでは考えなくていい
 	for (BonaPiece i = f_hand_pawn; i < fe_end2; i++) {
 		for (BonaPiece j = f_hand_pawn; j < fe_end2; j++) {
+
+#ifdef USE_PENALTY
+			/*
+			ペナルティ項をつけることで値がPP[i][j]から大きく離れることはなくなる
+			しかしどれぐらいの大きさのペナルティ項を用意すればいいものか...
+
+			*/
+			if (PP[i][j]>0) { dJ[i][j] - (double)0.002; }
+			else if (PP[i][j]<0) { dJ[i][j] + (double)0.002; }
+#endif
+
 			int inc = h*sign(dJ[i][j]);
 			PP[i][j] += inc;
 		}
@@ -134,11 +149,16 @@ void renewal_PP() {
 
 
 //学習用関数
-void Eval::learner(Thread & th)
+void Eval::learner()
 {
 	//初期化
+	int readgames = 2000;
 	const int numgames = 200;
 	const int numiteration = 20;
+	/*bonanzaではparse2を３２回繰り返すらしいんでそれを参考にする。
+	学習の損失の現象が進むに連れてnum_parse2の値を減らしていく
+	*/
+	int num_parse2 = 32;
 	ifstream gamedata(gamedatabasefile);
 	GameDataStream gamedatastream(gamedata);
 	std::vector<Game> games;
@@ -146,17 +166,24 @@ void Eval::learner(Thread & th)
 	int didmoves = 0;
 	int diddepth = 0;
 
+	//目的関数。コレが小さくなってくれば学習が進んでいるとみなせる。(はずっ！)
+	double objective_function = 0;
+
+
 	//棋譜を読み込む
-	for (int i = 0; i < numgames; ++i) {
+	for (int i = 0; i < readgames; ++i) {
 		Game game;
-		if (gamedatastream.read_onegame(&game)) {
+
+		if (gamedatastream.read_onegame(&game)
+			&&game.ply>=60
+			&&game.result!=draw)
+		{
 			games.push_back(game);
 		}
 	}
 
 	cout << "read kihu OK!" << endl;
 
-	//ーーーーーーーーーーーーーここまでちゃんと動いたことを確認済み
 #ifdef LOG
 	std::string str, filepath;
 	time_t rawtime;
@@ -182,21 +209,24 @@ void Eval::learner(Thread & th)
 #endif
 
 
-
-
 	Position pos;
 	StateInfo si[256];
 	ExtMove moves[600],*end;
 	vector<MoveInfo> minfo_list;
-	//Thread th;
+	Thread th;
 	end = moves;
 
-	//何故か教師データで用いるdepthが浅い？？
 
 	for (int iteration = 0; iteration < numiteration; iteration++) {
+
+		//棋譜のシャッフル
+		std::random_shuffle(games.begin(), games.end());
 		//iterationの最初に初期化する（それ以外ではしてはいけない）
 		memset(dJ, 0, sizeof(dJ));
-		
+		//目的関数
+		objective_function = 0;
+
+
 		for (int g = 0; g < numgames; g++) {
 			diddepth = 0;
 			didmoves = 0;
@@ -207,6 +237,8 @@ void Eval::learner(Thread & th)
 			for (int ply = 0; ply < thisgame.ply; ply++) {
 				diddepth = ply;
 				minfo_list.clear();
+
+				const Color rootColor = pos.sidetomove();
 
 				//この局面の差し手を生成する
 				end = test_move_generation(pos, moves);
@@ -220,36 +252,26 @@ void Eval::learner(Thread & th)
 
 				//is_okで落ちてくれるのは最後まで利用できたということなのでありがたい
 				if(is_ok(teacher_move)==false){ cout << "is not ok" << endl; goto ERROR_OCCURED; }
-				//ほとんどcantswapで教師手が否定されてしまう！！
-				//殆どの指してがk r bの指して！！指して生成がおかしい！！
-
-
-				//たまに駒打ちがおかしかったりすることがあるのでoccbitboardの更新部がおかしいのか？
-
-				/*
-				とりあえずsfenの逆関数を作り、エラーとなった局面を吐かせて、それらの局面で正しくまずはトビ機器を生成できているかどうか確認する。
-				もしこの段階では飛びコマの移動をちゃんと生成できているということであればそれはoccに問題があるということである。
-				*/
 
 				if (!swapmove(moves, int(num_moves), teacher_move)) { 
 					cout << "cant swap" << endl;
-					//cout << pos.sidetomove(); //sidetomoveはオッケーだった
-					cout << pos << endl;
-					check_move(teacher_move); 
-					//ASSERT(0);
-#ifdef LOG
-					ofs << " swap error position :" << pos.make_sfen() << " error move " << teacher_move << endl;
-#endif
-					
+//					cout << pos << endl;
+//					check_move(teacher_move); 
+//					//ASSERT(0);
+//#ifdef LOG
+//					ofs << " swap error position :" << pos.make_sfen() << " error move " << teacher_move << endl;
+//#endif
+//					
 					goto ERROR_OCCURED;
 				}
 				if (pos.is_legal(teacher_move) == false) { cout << "teacher ilegal" << endl; goto ERROR_OCCURED; }
 
 				//差し手に対して探索を行う。探索をしたら探索したPVと指し手と探索した評価値をペアにして格納
 				//これは少し制限して一局面最大（15手ぐらいにした方がいいか？）
-
-				num_moves = std::min(int(num_moves), 15);
-				cout << "num_moves " << num_moves << endl;
+				//↑局面あたりの指し手の数の制限はすべきではないかもしれない
+				//bonanzaでは全合法手に対しておこなっていたのでSquirrelでもやらないことに決めた
+				//num_moves = std::min(int(num_moves), 15);
+				//cout << "num_moves " << num_moves << endl;
 				
 				for (int move_i = 0; move_i < num_moves; move_i++) {
 
@@ -286,15 +308,41 @@ void Eval::learner(Thread & th)
 						//評価値と教師手の差分を取る。
 						const Value diff = minfo_list[i].score - minfo_list[0].score;
 
-						//教師手とあまりにも離れた価値の指しての影響を少なくするためにdsigmoidに入れるのだと考えている。
 						/*
-						コンピューター将棋中級者がやねうら王ブログの難しすぎるlong distance libraryの話をよんでも自分のためにならないし,
-						sfenのような簡単すぎる話を聞いても自分のためにはならない。
+						http://kifuwarabe.warabenture.com/2016/11/23/%E3%81%A9%E3%81%86%E3%81%B6%E3%81%A4%E3%81%97%E3%82%87%E3%81%86%E3%81%8E%E3%82%92%E3%83%97%E3%83%AD%E3%82%B0%E3%83%A9%E3%82%82%E3%81%86%E3%81%9C%E2%98%86%EF%BC%88%EF%BC%92%EF%BC%94%EF%BC%89%E3%80%80/
+						シグモイド関数に値を入れるのは教師手の価値と同じぐらいの価値の指し手に対して学習をし、
+						悪い手を更に悪く、教師手を更に良く学習させないようにし、
+						値が大きく離れたらそのパラメーターをいじったりしないようにし、収束させるためである。
 
-						自分にあったレベルの指し手から学習するのが良いのではないかと考えられるということだと思っている。
+						しかし教師手よりもかなり高く良い手だとコンピューターが誤判断している指し手がシグモイド関数の微分に入ってきてしまった場合それに対する出て来る値も小さくなってしまい、
+						値が下げられないのではないか？
+						それは良くない気がするのだけれど実際どうなんだろうか？
 						*/
-						const double diffsig = dsigmoid(diff);
+
+
+						//=======================================================================================================================
+						//bonanzaなどでは手番の色によってdiffsigの符号を変えているがそんなことする必要あるのか？？なぜ？？
+						//=======================================================================================================================
+
+						/*
+						この指し手の価値が教師手よりも大きかったため、価値を下げたい場合を考える。
+						黒番の場合は最終的にupdate_dJに入るのは-dsig
+						白番の場合は最終的にupdate_dJに入るのはdsigになる。
+						
+						ppはbppとwppにわけられる。
+						ppを下げたければbppを下げてwppを上げれば良い。
+						
+						黒盤のときはbppを中心にして見ていて
+						白番のときはwppを中心にしてみている。
+						コレで説明がつくはず
+						
+						*/
+						double diffsig = dsigmoid(diff);
+						diffsig = (rootColor == BLACK ? diffsig : -diffsig);
+						
 						sum_diff += diffsig;
+						objective_function += sigmoid(diff);
+
 
 						StateInfo si2[3];//最大でも深さ３
 						int j = 0;
@@ -342,16 +390,22 @@ void Eval::learner(Thread & th)
 		}//for numgames
 
 		//dJは全指し手と全棋譜に対して足し上げられたのでここからbonanzaで言うparse2
-		renewal_PP();
+		
+		//num_parse2回パラメーターを更新する。コレで-64から+64の範囲内でパラメーターが動くことになる。
+		//bonanzaではこの32回の間にdJが罰金項によってどんどんゼロに近づけられている。
+		for (int i = 0; i < num_parse2; i++) {
+			renewal_PP();
+		}
 
-
-		//ここで指し手の一致率みたいな情報を表示できればいいんだけれど...
-		std::cout << "iteration" << iteration<<"/maxiteration :"<<numiteration << std::endl;
-
+		//ここで統計情報を表示できればいいんだけれど...
+		std::cout << "iteration" << iteration<<"/maxiteration :"<<numiteration << " objfunc" << objective_function << std::endl;
+#ifdef LOG
+		ofs << " iteration " << iteration << " objfunc" << objective_function << endl;
+#endif
 
 	}//for num iteration
 	
 
-
+	ofs.close();
 }
 

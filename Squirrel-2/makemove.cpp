@@ -244,9 +244,7 @@ ExtMove* make_move_BISHOP(const Position& pos, const Bitboard& target, ExtMove* 
 			//成れるときはからなず成らせる
 			if (canpromotefrom==true||canpromoteto==true) {
 				movelist++->move = make_movepromote2(from, to, pc2);
-#ifdef LEARN 
-				movelist++->move = make_move2(from, to, pc2);
-#endif
+				//棋譜に不成が入ってい棋譜があったので学習中は生成してみたがやはりそんな局面学習する必要もないので生成やめ
 			}
 			else {
 				movelist++->move = make_move2(from, to, pc2);
@@ -339,9 +337,6 @@ ExtMove* make_move_ROOK(const Position& pos, const Bitboard& target, ExtMove* mo
 				//なれる場合は必ず成る(棋譜に成らずが含まれていることがあったので学習時は成らずも生成する)
 				ASSERT((SquareBB[sq] & canPromoteBB[US]).isNot() || (SquareBB[to] & canPromoteBB[US]).isNot());
 				movelist++->move = make_movepromote2(from, to, pc2);
-#ifdef LEARN 
-				movelist++->move = make_move2(from, to, pc2);
-#endif
 			}
 			else {
 				movelist++->move = make_move2(from, to, pc2);

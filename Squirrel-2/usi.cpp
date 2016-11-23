@@ -150,7 +150,7 @@ void USI::loop()
 			cout << "do you really wanna learning fv? [y/n]  " ;
 			cin >> yn;
 			if (yn != "y") { cout << "OK I do not  learning"; break; }
-			Eval::learner(th);
+			Eval::learner();
 		}
 		//====================
 		//ここから下はデバッグ用コマンド
