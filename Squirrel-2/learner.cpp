@@ -143,9 +143,10 @@ void renewal_PP() {
 			PP[i][j] += inc;
 		}
 	}
-	//書き出した後読み込むことで値を更新する
-	write_PP();
-	read_PP();
+	//書き出した後読み込むことで値を更新する　ここで32回も書き出し書き込みを行うのは無駄最後にまとめて行う
+	//write_PP();
+	//read_PP();
+	
 }
 
 
@@ -159,7 +160,7 @@ void Eval::learner()
 	/*bonanzaではparse2を３２回繰り返すらしいんでそれを参考にする。
 	学習の損失の現象が進むに連れてnum_parse2の値を減らしていく
 	*/
-	int num_parse2 = 32;
+	const int num_parse2 = 32;
 	ifstream gamedata(gamedatabasefile);
 	GameDataStream gamedatastream(gamedata);
 	std::vector<Game> games;
@@ -193,7 +194,7 @@ void Eval::learner()
 	timeinfo = localtime(&rawtime);
 	str = asctime(timeinfo);
 	
-	size_t hoge;
+	int hoge;
 	while ((hoge = str.find_first_of(" ")) != string::npos) {
 		str.erase(hoge, 1);
 	}
@@ -218,10 +219,20 @@ void Eval::learner()
 	end = moves;
 
 
+	//学習中に無限ループに陥ってしまうことがあった。どこで起こったのか？
+
+
 	for (int iteration = 0; iteration < numiteration; iteration++) {
 
+		//時間計測の開始
+		limit.starttime = now();
+
 		//棋譜のシャッフル
-		std::random_shuffle(games.begin(), games.end());
+		//random_shuffleを使うと同じ並べ替えられ方になったのでshuffle()を使ってみる
+		std::random_device rd;
+		std::mt19937 g(rd());
+		std::shuffle(games.begin(), games.end(),g);
+
 		//iterationの最初に初期化する（それ以外ではしてはいけない）
 		memset(dJ, 0, sizeof(dJ));
 		//目的関数
@@ -259,10 +270,10 @@ void Eval::learner()
 //					cout << pos << endl;
 //					check_move(teacher_move); 
 //					//ASSERT(0);
-//#ifdef LOG
-//					ofs << " swap error position :" << pos.make_sfen() << " error move " << teacher_move << endl;
-//#endif
-//					
+#ifdef LOG
+					ofs << " swap error position :" << pos.make_sfen() << " error move " << teacher_move << endl;
+#endif
+					
 					goto ERROR_OCCURED;
 				}
 				if (pos.is_legal(teacher_move) == false) { cout << "teacher ilegal" << endl; goto ERROR_OCCURED; }
@@ -304,7 +315,7 @@ void Eval::learner()
 					if (minfo_list.size() == 0) { cout << "listsize==0" << endl; goto ERROR_OCCURED; }
 
 					//教師手以外の指してに対して
-					for (size_t i = 1; i < minfo_list.size(); i++) {
+					for (int i = 1; i < minfo_list.size(); i++) {
 
 						//評価値と教師手の差分を取る。
 						const Value diff = minfo_list[i].score - minfo_list[0].score;
@@ -397,11 +408,14 @@ void Eval::learner()
 		for (int i = 0; i < num_parse2; i++) {
 			renewal_PP();
 		}
+		//書き出し読み込みをここで行って値の更新
+		write_PP();
+		read_PP();
 
 		//ここで統計情報を表示できればいいんだけれど...
 		std::cout << "iteration" << iteration<<"/maxiteration :"<<numiteration << " objfunc" << objective_function << std::endl;
 #ifdef LOG
-		ofs << " iteration " << iteration << " objfunc" << objective_function << endl;
+		ofs << " iteration " << iteration << " objfunc" << objective_function << " elasped " << (now() - limit.starttime + 1) / (1000 * 60) << " minitus" << endl;
 #endif
 
 	}//for num iteration
