@@ -220,7 +220,8 @@ void Eval::learner()
 
 
 	//学習中に無限ループに陥ってしまうことがあった。どこで起こったのか？
-
+	//無限ループに陥っていたわけではなかったただ探索にかなりの時間を費やしてしまっていた。
+	//学習時は生死探索の深さを制限する？
 
 	for (int iteration = 0; iteration < numiteration; iteration++) {
 

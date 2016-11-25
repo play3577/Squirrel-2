@@ -194,6 +194,11 @@ Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
 	//静止探索は駒の取り合いのような評価値が不安定な局面を先延ばして探索を続けることで探索の末端評価値を補正し、より正確にするものであると思っている。
 	bestvalue=staticeval = Eval::eval(pos);
 
+	
+#ifdef LEARN
+	//学習時は精子探索深さ３までで止める。（こんなことはせずバッサリ枝を切れる枝切り方法を導入したい）
+	if (depth < -3 * ONE_PLY) { return bestvalue; }
+#endif
 	//コレで上手く前の指し手の移動先を与えられていると思う
 	movepicker mp(pos, move_to(pos.state()->lastmove));
 

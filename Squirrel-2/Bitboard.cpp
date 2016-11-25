@@ -376,9 +376,13 @@ void bitboard_init()
 	}
 
 	//index‚Ìì¬
+	make_shifttate();
+	make_indextate();
+	make_shiftyoko();
+	make_indexyoko();
 	make_indexplus45();
 	make_shiftplus45();
-
+	//indexminus45‚Í’¼Ú’l‚ğ“ü‚ê‚Ä‰Šú‰»‚³‚ê‚Ä‚¢‚é‚Ì‚Å‘åä•v
 	make_shiftMinus45();
 
 	//===================
@@ -470,9 +474,9 @@ void bitboard_debug()
 			cout << LongRookEffect_yoko[sq][obstacle] << endl;
 
 		}
-	}*/
-	//
-	/*for (Square sq = SQ1A; sq < SQ_NUM; sq++) {
+	}
+	
+	for (Square sq = SQ1A; sq < SQ_NUM; sq++) {
 		for (int obstacle = 0; obstacle < 128; obstacle++) {
 
 			cout << "ROOK sq " << sq << " obstacle " << static_cast<std::bitset<7>>(obstacle) << endl;

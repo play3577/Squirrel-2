@@ -126,25 +126,36 @@ constexpr int effectmask = (0b1111111);//7bitが立っている。
 利きを求めるために何ビットシフトさせないといけないか
 
 */
-//int shift_table_tate[SQ_NUM];
+extern int shift_table_tate[SQ_NUM];
+extern int index_table_tate[SQ_NUM];
+inline void make_shifttate() {
 
+	for (Square sq = SQ_ZERO; sq < SQ_NUM; sq++) {
+		shift_table_tate[sq]= int(1 + 9 * (sqtofile(sq) % 5));
+	}
+}
+inline void make_indextate() {
+	for (Square sq = SQ_ZERO; sq < SQ_NUM; sq++) {
+		sq > 44 ? index_table_tate[sq] = 1 : index_table_tate[sq] = 0;
+	}
+}
 /*
 縦の利き　OK
 あとでconstexprにするか値をテーブルに格納するかして高速化する
 */
-inline int shift_tate(Square sq) {
+constexpr int shift_tate(Square sq) {
 
 	ASSERT(is_ok(sq));
 	//return shift_table_tate[sq];
 	//6段目からはb[1]になるので
-	return int(1 + 9 * (sqtofile(sq)%5));//0からはじまる！
+	return shift_table_tate[sq];//0からはじまる！
 
 }
 
-inline int index_tate(Square sq) {
+constexpr int index_tate(Square sq) {
 
 	ASSERT(is_ok(sq));
-	return sq > 44 ? 1 : 0;
+	return index_table_tate[sq];
 
 }
 
@@ -152,29 +163,40 @@ inline int index_tate(Square sq) {
 横の効き
 OK
 */
+extern int shift_table_yoko[SQ_NUM];
+extern int index_table_yoko[SQ_NUM];
 
-inline int shift_yoko(Square sq) {
+inline void make_shiftyoko() {
+
+	for (Square sq = SQ_ZERO; sq < SQ_NUM; sq++) {
+		Rank r = sqtorank(sq);
+		//File f = sqtofile(sq);
+		if (RankA <= r&&r <= RankD) {
+			shift_table_yoko[sq]= (1 + (9 * (3 - r)));
+		}
+		else {
+			shift_table_yoko[sq] = (1 + (9 * (8 - r)));
+		}
+	}
+}
+inline void make_indexyoko() {
+
+	for (Square sq = SQ_ZERO; sq < SQ_NUM; sq++) {
+		File f = sqtofile(sq);
+		(9 * f <= sq&&sq <= 9 * f + 3) ? index_table_yoko[sq]= 1 : index_table_yoko[sq]= 0;
+	}
+}
+constexpr int shift_yoko(Square sq) {
 
 	ASSERT(is_ok(sq));
-	Rank r = sqtorank(sq);
-	//File f = sqtofile(sq);
-	if (RankA <= r&&r <= RankD) {
-		return 1 + (9 * (3 - r));
-	}
-	else {
-		return 1 + (9 * (8 - r));
-	}
+	return shift_table_yoko[sq];
 
-	//ここには来ないはずである
-	ASSERT(0);
 }
 
-inline int index_yoko(Square sq) {
+constexpr int index_yoko(Square sq) {
 
 	ASSERT(is_ok(sq));
-	File f = sqtofile(sq);
-
-	return (9 * f <= sq&&sq <= 9 * f + 3) ? 1 : 0;
+	return index_table_yoko[sq];
 
 }
 /*
@@ -187,14 +209,14 @@ void make_indexplus45();
 void make_shiftplus45();
 
 
-inline int index_plus45(Square sq) {
+constexpr int index_plus45(Square sq) {
 
 	ASSERT(is_ok(sq));
 	//indexは間違ってなかった。
 	return indexPlus45[sq];
 }
 
-inline int shift_plus45(Square sq) {
+constexpr int shift_plus45(Square sq) {
 
 	ASSERT(is_ok(sq));
 
@@ -207,18 +229,18 @@ inline int shift_plus45(Square sq) {
 extern int indexMinus45[SQ_NUM];
 extern int shiftMinus45[SQ_NUM];
 
-void make_indexMinus45();
+//void make_indexMinus45();
 void make_shiftMinus45();
 
 
-inline int index_Minus45(Square sq) {
+constexpr int index_Minus45(Square sq) {
 
 	ASSERT(is_ok(sq));
 	//indexは間違ってなかった。
 	return indexMinus45[sq];
 }
 
-inline int shift_Minus45(Square sq) {
+constexpr int shift_Minus45(Square sq) {
 
 	ASSERT(is_ok(sq));
 

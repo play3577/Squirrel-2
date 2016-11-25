@@ -114,12 +114,12 @@ int indexMinus45[SQ_NUM] = {
 
 int shiftMinus45[SQ_NUM];
 
-
-void make_indexMinus45()
-{
-
-
-}
+//
+//void make_indexMinus45()
+//{
+//
+//
+//}
 
 void make_shiftMinus45()
 {
@@ -198,3 +198,11 @@ void make_shiftMinus45()
 	}
 
 }
+
+
+
+int shift_table_tate[SQ_NUM];
+int index_table_tate[SQ_NUM];
+
+int shift_table_yoko[SQ_NUM];
+int index_table_yoko[SQ_NUM];

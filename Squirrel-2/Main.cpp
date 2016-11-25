@@ -17,10 +17,11 @@ int main() {
 	USI::init_option(Options);
 	bitboard_init();
 	Eval::init();
+	//bitboard_debug();
+
 #ifdef TEST
 	/*Position pos;*/
 
-	bitboard_debug();
 	
 	/*
 	for (Square a = SQ1A; a < SQ_NUM; a++) {
@@ -104,14 +105,14 @@ int main() {
 	speed_genmove(pos);
 
 	Eval::initialize_PP();
-	
-
-#endif
-	//Position pos;
+	Position pos;
 	//StateInfo si;
 
-	
+	pos.check_effecttoBB();
 
+
+#endif
+	
 
 	USI::loop();
 	return 0;
