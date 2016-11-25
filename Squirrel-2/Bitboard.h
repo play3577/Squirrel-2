@@ -1,6 +1,15 @@
 #pragma once
 #include "fundation.h"
 
+#if defined(HAVE_SSE2) || defined(HAVE_SSE4)
+#if defined(HAVE_SSE4)
+// SSE4
+#  include <smmintrin.h>
+#else
+// SSE4なしでSSE2
+#  include <emmintrin.h>
+#endif
+#endif
 
 struct Position;
 
@@ -31,10 +40,19 @@ http://yaneuraou.yaneu.com/2015/10/11/%E7%B6%9A-haswell%E4%BB%A5%E9%99%8D%E5%B0%
 王の自殺手のチェックは後に回してもいいと思う（後からでも十分にできると思う）
 
 */
+/*
+SSEを用いたbit演算の高速化
+http://d.hatena.ne.jp/LS3600/20110909
+*/
 struct Bitboard
 {
 	//コレがボード
-	uint64_t b[2];//sq<=44まではb[0]sq>44はb[1]に
+	union {
+		uint64_t b[2];//sq<=44まではb[0]sq>44はb[1]に
+#if defined(HAVE_SSE2) || defined(HAVE_SSE4)
+		__m128i m;
+#endif
+	};
 	//コンストラクタ
 	Bitboard() {}
 	Bitboard(uint64_t num1, uint64_t num2) { b[0] = num1; b[1] = num2; }
@@ -42,23 +60,39 @@ struct Bitboard
 	Square pop();
 
 	Bitboard& operator=(const Bitboard& b1) { b[0] = b1.b[0];b[1]=b1.b[1]; return *this; }
+
+	//https://msdn.microsoft.com/en-us/library/1beaceh8(v=vs.100).aspx
+#if defined(HAVE_SSE2) || defined(HAVE_SSE4)
+	Bitboard& operator^=(const Bitboard& b1) { m= _mm_xor_si128(m, b1.m); return *this; }
+	Bitboard& operator|=(const Bitboard& b1) { m = _mm_or_si128(m, b1.m); return *this; }
+	Bitboard& andnot(const Bitboard& b1) { m = _mm_andnot_si128(b1.m, m); return *this; }//順番注意
+#else
 	Bitboard& operator^=(const Bitboard& b1) { b[0] = (b[0] ^ b1.b[0]);  b[1] = (b[1] ^ b1.b[1]); return *this; }
 	Bitboard& operator|=(const Bitboard& b1) { b[0] = (b[0] | b1.b[0]);  b[1] = (b[1] | b1.b[1]); return *this; }
 	Bitboard& andnot(const Bitboard& b1) { b[0] = (b[0] &~b1.b[0]); b[1] = (b[1] & ~b1.b[1]); return *this; }
+#endif
 	bool isNot() { return ((b[0] | b[1]) != 0); }
 };
 std::ostream& operator<<(std::ostream& os, const Bitboard& board);
 
+extern Bitboard ZeroBB, ALLBB;
+
+#if defined(HAVE_SSE2) || defined(HAVE_SSE4)
+inline Bitboard operator^(const Bitboard& b1, const Bitboard& b2) { Bitboard b3; b3.m= _mm_xor_si128(b1.m, b2.m);  return b3; }
+inline Bitboard operator|(const Bitboard& b1, const Bitboard& b2) { Bitboard b3; b3.m = _mm_or_si128(b1.m, b2.m); return b3; }
+inline Bitboard operator&(const Bitboard& b1, const Bitboard& b2) { Bitboard b3; b3.m = _mm_and_si128(b1.m, b2.m); return b3; }
+inline Bitboard operator~(const Bitboard& b1) { Bitboard b3; b3.m = _mm_xor_si128(b1.m, ALLBB.m); return b3; }//ALLBBでxorマスクするのは番外にも１が立ってしまっている場所出来てしまうから
+#else
 inline Bitboard operator^(const Bitboard& b1, const Bitboard& b2) { Bitboard b3; b3.b[0] = (b1.b[0] ^ b2.b[0]); b3.b[1] = (b1.b[1] ^ b2.b[1]);  return b3; }
 inline Bitboard operator|(const Bitboard& b1, const Bitboard& b2) { Bitboard b3; b3.b[0] = (b1.b[0] | b2.b[0]); b3.b[1] = (b1.b[1] | b2.b[1]); return b3; }
 inline Bitboard operator&(const Bitboard& b1, const Bitboard& b2) { Bitboard b3; b3.b[0] = (b1.b[0] & b2.b[0]); b3.b[1] = (b1.b[1] & b2.b[1]); return b3; }
 inline Bitboard operator~(const Bitboard& b1) { Bitboard b3; b3.b[0] = ~b1.b[0]; b3.b[1] = ~b1.b[1]; return b3; }
-
+#endif
 //このbitboardの内容は絶対に後から変更してはいけない！！popしてはいけない！
 extern Bitboard SquareBB[SQ_NUM];
 extern Bitboard FileBB[File_Num];
 extern Bitboard RankBB[Rank_Num];
-extern Bitboard ZeroBB, ALLBB;
+
 extern Bitboard canPromoteBB[ColorALL];
 
 //===============================

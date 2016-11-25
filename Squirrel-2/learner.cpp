@@ -194,7 +194,7 @@ void Eval::learner()
 	timeinfo = localtime(&rawtime);
 	str = asctime(timeinfo);
 	
-	int hoge;
+	size_t hoge;
 	while ((hoge = str.find_first_of(" ")) != string::npos) {
 		str.erase(hoge, 1);
 	}

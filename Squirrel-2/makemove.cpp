@@ -540,14 +540,14 @@ ExtMove * move_generation(const Position& pos, ExtMove * movelist)
 
 		const Bitboard target_nonPAWN =
 			(mt == Cap_Propawn) ? pos.occ(ENEMY) :
-			(mt == Quiet) ? ~pos.occ_all()&ALLBB ://このALLBBはいる？
+			(mt == Quiet) ? ~pos.occ_all() ://このALLBBはいる？
 			(mt == Recapture) ? SquareBB[move_to(pos.state()->lastmove)] :
 			ALLBB;
 
 		//ここでcanpromoteを用意して差し手を本生成するときにもcanpromoteを確認するのはばかばかしい。
 		const Bitboard target_PAWN =
 			(mt == Cap_Propawn) ? pos.occ(ENEMY) | (canPromoteBB[US] & ~pos.occ(US)) :
-			(mt == Quiet) ? (~pos.occ_all()&ALLBB)&~canPromoteBB[US]:
+			(mt == Quiet) ? (~pos.occ_all())&~canPromoteBB[US]:
 			target_nonPAWN;
 
 		//ここの並ぶ順番も考えた方がいいか？（あとでorderingするのでそこまでする必要はないか）
@@ -563,7 +563,7 @@ ExtMove * move_generation(const Position& pos, ExtMove * movelist)
 		movelist = make_move_KING(pos, target_nonPAWN, movelist);
 	}
 	else {
-		const Bitboard target_drop = ~pos.occ_all()&ALLBB;//ALLBBをマスクするのは番外にも１が立ってしまっている場所があるから
+		const Bitboard target_drop = ~pos.occ_all();//ALLBBをマスクするのは番外にも１が立ってしまっている場所があるから
 		movelist = make_move_DROP(pos, target_drop, movelist);
 	}
 

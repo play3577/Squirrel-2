@@ -104,7 +104,7 @@ void go(Position& pos, istringstream& is, Thread& th) {
 	limit.starttime = now();
 	Value v;
 	string token,buffer;
-	TimePoint t;
+	
 	while (is >> token) {
 
 		if(token=="btime"){ 
@@ -434,9 +434,34 @@ void USI::loop()
 		else if (token == "sfen") {
 			cout << pos.make_sfen() << endl;
 		}
-
-
-
+		else if(token=="xor"){
+			int sq;
+			is >> sq;
+			cout << (pos.occ_all() ^= SquareBB[sq]) << endl;
+			cout << (pos.occ_all() ^ SquareBB[hihumin_eye(Square(sq))]) << endl;
+		}
+		else if (token == "and") {
+			int sq;
+			is >> sq;
+			cout << (pos.occ_all() & SquareBB[sq]) << endl;
+			//cout << (pos.occ_all() &= SquareBB[hihumin_eye(Square(sq))]) << endl;
+		}
+		else if (token == "andnot") {
+			int sq;
+			is >> sq;
+			cout << (pos.occ_all().andnot(SquareBB[sq])) << endl;
+			//cout << (pos.occ_all() ^ SquareBB[hihumin_eye(Square(sq))]) << endl;
+		}
+		else if (token == "or") {
+			int sq;
+			is >> sq;
+			cout << (pos.occ_all() |= SquareBB[sq]) << endl;
+			cout << (pos.occ_all() | SquareBB[hihumin_eye(Square(sq))]) << endl;
+		}
+		else if(token=="not"){
+			cout << (~pos.occ_all()) << endl;
+			//cout << (pos.occ_all() ^ SquareBB[hihumin_eye(Square(sq))]) << endl;
+		}
 	} while (token != "quit");
 
 

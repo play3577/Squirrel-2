@@ -78,6 +78,7 @@ Move movepicker::return_nextmove()
 		break;
 	default:
 		UNREACHABLE;
+		return MOVE_NONE;
 		break;
 	}
 

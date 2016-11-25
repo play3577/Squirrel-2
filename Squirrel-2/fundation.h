@@ -11,8 +11,11 @@
 #ifndef _DEBUG
 #define ASSERT(X) { if (!(X)) *(int*)1 =0; }
 #endif
-//#define ASSERT(x) ((void)0)//速度を出したいとき用
+//#define ASSERT(x) ((void)0)//すべてをかなぐり捨てて速度を出したいとき用
 #define UNREACHABLE ASSERT(0)
+
+#define HAVE_SSE2
+#define HAVE_SSE4 //しかしうちのCPUはSSE4.1までしか持っていない..orz
 
 
 //#define CHECKPOS
