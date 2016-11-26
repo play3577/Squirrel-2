@@ -4,10 +4,18 @@
 #include "position.h"
 #include "misc.h"
 
+#include <atomic>
+
 enum Nodetype {
 	Root,
 	PV,
 	NonPV,
+
+};
+
+struct Signal {
+
+	std::atomic_bool stop;
 
 };
 
@@ -25,9 +33,9 @@ struct SearchLimit {
 	SearchLimit() { memset(this, 0, sizeof(SearchLimit)); }
 	TimePoint starttime;
 	TimePoint remain_time[ColorALL];//残り時間
-	TimePoint byoyomi[ColorALL];//秒読み時間
-	TimePoint inc_time[ColorALL];//フィッシャールール用
-	TimePoint maxtime;
+	TimePoint byoyomi;//秒読み時間
+	TimePoint inc_time;//フィッシャールール用
+	TimePoint endtime;
 	bool is_ponder = false;
 };
 
@@ -36,12 +44,12 @@ inline std::ostream& operator<<(std::ostream& os, const SearchLimit& sl) {
 
 	os << " starttime " << sl.starttime << endl;
 	os << "remain black " << sl.remain_time[BLACK] << " white " << sl.remain_time[WHITE] << endl;
-	if (sl.byoyomi[BLACK] != 0)
+	if (sl.byoyomi != 0)
 	{
-		os << " byoyomi " << sl.byoyomi[BLACK] << endl;
+		os << " byoyomi " << sl.byoyomi << endl;
 	}
-	if (sl.inc_time[BLACK] != 0) {
-		os << sl.inc_time[BLACK] << endl;
+	if (sl.inc_time != 0) {
+		os << sl.inc_time << endl;
 	}
 	return os;
 }

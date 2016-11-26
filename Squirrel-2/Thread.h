@@ -3,6 +3,7 @@
 #include "position.h"
 #include "search.h"
 #include <vector>
+#include <atomic>
 
 using namespace std;
 
@@ -12,7 +13,10 @@ private:
 	Position rootpos;//rootposはスレッド毎に保つ必要があるので参照渡しではいけない気がする。
 	int rootdepth;
 	ExtMove RootMoves[600], *end;
-
+public:
+	std::atomic_bool resetCalls;//atomicにすることでスレッド観競合が起こらないようにする
+	int call_count = 0;
+	int seldepth = 0;
 public:
 
 	std::vector<Move> pv;//読み筋

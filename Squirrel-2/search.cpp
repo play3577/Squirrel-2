@@ -4,6 +4,7 @@
 #include "evaluate.h"
 
 SearchLimit limit;
+Signal signal;
 
 void update_pv(Move* pv, Move move, Move* childPv) {
 
@@ -15,6 +16,13 @@ void update_pv(Move* pv, Move move, Move* childPv) {
 		*pv++ = *childPv++;
 	//pvの最後はMOVENONE
 	*pv = MOVE_NONE;
+}
+
+void check_time() {
+	TimePoint now_ = now();
+	if (now_ - limit.endtime > 10) {
+		signal.stop = true;
+	}
 }
 
 Value Thread::think() {
@@ -30,20 +38,26 @@ Value Thread::think() {
 	rootdepth = 0;
 	int maxdepth;
 
+
+
 	//時間制御
-	if (limit.remain_time[rootpos.sidetomove()]/40 < limit.byoyomi[rootpos.sidetomove()]) {
-		limit.maxtime = limit.byoyomi[rootpos.sidetomove()];
+	signal.stop = false;
+	this->resetCalls = false;
+	this->call_count = 0;
+	//超テキトーな時間制御のコードあとで何とかする
+	if (limit.remain_time[rootpos.sidetomove()]/40 < limit.byoyomi) {
+		limit.endtime = limit.byoyomi+limit.starttime;
 	}
 	else {
-		limit.maxtime = limit.remain_time[rootpos.sidetomove()];
+		limit.endtime = limit.remain_time[rootpos.sidetomove()]/40+limit.starttime;
 	}
 
-
+	//cout << limit.endtime << endl;
 #ifdef LEARN
 	maxdepth = 2;
 #endif
 #ifndef LEARN
-	maxdepth = 5;
+	maxdepth = MAX_DEPTH;
 #endif // !LEARN
 
 
@@ -54,18 +68,21 @@ Value Thread::think() {
 		bestvalue = search<Root>(rootpos, ss, alpha, beta, rootdepth*ONE_PLY);
 
 		sort_RootMove();
+
+		if (signal.stop) {
+			//cout << "signal stop" << endl;
+			break;
+		}
+
 #ifndef LEARN
 		print_pv(rootdepth, ss);
 #endif
-	}
+	}//end of 反復深化
 #ifndef LEARN
 	cout << "bestmove " << RootMoves[0] << endl;
 #endif // !LEARN
 
-
-
 	return bestvalue;
-
 }
 
 template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value beta, Depth depth) {
@@ -85,6 +102,33 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 	int movecount = 0;
 	bool incheck = pos.is_incheck();
 	Thread* thisthread = pos.searcher();
+
+
+	//timer threadを用意せずにここで時間を確認する。
+	//stockfish方式
+	if (thisthread->resetCalls.load(std::memory_order_relaxed)) {
+
+		thisthread->resetCalls = false;
+		thisthread->call_count = 0;
+
+	}
+	if (++thisthread->call_count > 4096) {
+		//並列化のときはすべてのスレッドでこの操作を行う。
+		thisthread->resetCalls = true;
+		check_time();
+	}
+
+	//seldepthの更新をここで行う
+
+
+	if (NT != Root) {
+		//step2
+		if (signal.stop.load(std::memory_order_relaxed)) {
+			return Eval::eval(pos);
+		}
+	}
+
+
 	//if (incheck) {
 	//	cout << "incheck" << endl;
 	//}
@@ -137,6 +181,10 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 		//cout << "undo move " <<move<< endl;
 		pos.undo_move();
 
+		//時間切れなのでbestmoveとPVを汚さないうちに値を返す。
+		if (signal.stop.load(std::memory_order_relaxed)) {
+			return Value_Zero;
+		}
 
 		if (NT == Root) {
 			ExtMove* rm = thisthread->find_rootmove(move);
@@ -164,7 +212,6 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 			if (alpha >= beta) {
 				break;
 			}
-
 		}
 	}//指し手のwhile
 

@@ -106,6 +106,8 @@ void go(Position& pos, istringstream& is, Thread& th) {
 	Value v;
 	string token,buffer;
 	
+	limit.byoyomi = 1000;
+
 	while (is >> token) {
 
 		if(token=="btime"){ 
@@ -118,15 +120,15 @@ void go(Position& pos, istringstream& is, Thread& th) {
 		}
 		else if (token == "byoyomi") {
 			is >> buffer;
-			limit.byoyomi[BLACK]=limit.byoyomi[WHITE]= stoi(buffer);
+			limit.byoyomi= stoi(buffer);
 		}
 		else if (token == "binc") {
 			is >> buffer;
-			limit.inc_time[BLACK] = stoi(buffer);
+			limit.inc_time = stoi(buffer);
 		}
 		else if (token == "winc") {
 			is >> buffer;
-			limit.inc_time[WHITE] = stoi(buffer);
+			limit.inc_time = stoi(buffer);
 		}
 	}
 
