@@ -30,12 +30,20 @@ Value Thread::think() {
 	rootdepth = 0;
 	int maxdepth;
 
+	//ŠÔ§Œä
+	if (limit.remain_time[rootpos.sidetomove()]/40 < limit.byoyomi[rootpos.sidetomove()]) {
+		limit.maxtime = limit.byoyomi[rootpos.sidetomove()];
+	}
+	else {
+		limit.maxtime = limit.remain_time[rootpos.sidetomove()];
+	}
+
 
 #ifdef LEARN
 	maxdepth = 2;
 #endif
 #ifndef LEARN
-	maxdepth = 100;
+	maxdepth = 5;
 #endif // !LEARN
 
 

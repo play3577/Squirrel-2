@@ -27,6 +27,7 @@ struct SearchLimit {
 	TimePoint remain_time[ColorALL];//残り時間
 	TimePoint byoyomi[ColorALL];//秒読み時間
 	TimePoint inc_time[ColorALL];//フィッシャールール用
+	TimePoint maxtime;
 	bool is_ponder = false;
 };
 

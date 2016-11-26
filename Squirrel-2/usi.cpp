@@ -37,9 +37,10 @@ const string debug2 = "sfen +S3+P3l/9/p1ppn1b2/4+R4/4Pnpk1/1P1KNr1n1/P1LP1P1+s+p
 
 void USI::init_option(OptionMap &o)
 {
-	o["Ponder"] << USIOption(false);
+	o["USI_Ponder"] << USIOption(false);
 	o["Threads"] << USIOption(1, 1, 128);
 	o["eval"] << USIOption("c:/book2/fv_PP.bin");
+	o["USI_Hash"] << USIOption(1, 1, 256);
 }
 
 
@@ -88,7 +89,7 @@ const string self_introduction() {
 	ss << "release ";
 #endif
 	ss << endl;
-	ss << "id name Kotaro Suganuma";
+	ss << "id author Kotaro Suganuma";
 	return ss.str();
 }
 
