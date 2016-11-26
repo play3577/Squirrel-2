@@ -462,6 +462,8 @@ void USI::loop()
 			cout << (~pos.occ_all()) << endl;
 			//cout << (pos.occ_all() ^ SquareBB[hihumin_eye(Square(sq))]) << endl;
 		}
+		
+
 	} while (token != "quit");
 
 

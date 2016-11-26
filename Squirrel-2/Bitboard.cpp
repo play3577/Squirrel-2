@@ -28,9 +28,11 @@ Bitboard BetweenBB[SQ_NUM][SQ_NUM];
 roteted bitboardを使っているbonanzaは利きは縦横別で持っていたのでそれに習う
 */
 Bitboard LongRookEffect_yoko[SQ_NUM][128];//OK
-Bitboard LongRookEffect_tate[SQ_NUM][128];//OK(香車もコレを使うコレを香車でも使うためにはinfrontBBを用意しなければならない)
+Bitboard LongRookEffect_tate[SQ_NUM][128];//OK
 Bitboard LongBishopEffect_plus45[SQ_NUM][128];//OK
 Bitboard LongBishopEffect_minus45[SQ_NUM][128];//OK
+
+Bitboard LanceEffect[ColorALL][SQ_NUM][128];//香車の利きを求めるのに毎回tate&Infrontをするのは無駄なのでテーブルとして保持しておく。
 
 //Rankではなくてsquareで持とうかと思ったけどメモリの節約と、ｓｑからランクに変換するの簡単だからrankで持つことにする。
 Bitboard InFront_BB[ColorALL][Rank_Num];//OK
@@ -247,15 +249,7 @@ void bitboard_init()
 		}
 	}
 	//LongEffect
-	/*
-	long effectはちゃんとroteted bitboard理解してから実装した方がいいよね..
-	テーブルの用意だけなら今できるのでいましておこうか...
-	*/
-
-	/*
-	縦と横を分けて格納するのか？？
-	*/
-
+	
 	for (Square sq = SQ1A; sq < SQ_NUM; sq++) {
 		for (int obstacle = 0; obstacle < 128; obstacle++) {
 			int obstacle2 = obstacle<<1;//一つシフトしてやらないといけない！！！
@@ -298,7 +292,14 @@ void bitboard_init()
 			}
 		}
 	}
-
+	//香車の効きテーブルの作成
+	for (Color c = BLACK; c < ColorALL; c++) {
+		for (Square sq = SQ_ZERO; sq < SQ_NUM; sq++) {
+			for (int obstacle = 0; obstacle < 128; obstacle++) {
+				LanceEffect[c][sq][obstacle] = (LongRookEffect_tate[sq][obstacle] & InFront_BB[c][sqtorank(sq)]);
+			}
+		}
+	}
 
 
 	/*
@@ -435,7 +436,7 @@ void bitboard_init()
 
 	//check_between();
 	//check_directtable();
-	bitboard_debug();
+	//bitboard_debug();
 }
 
 

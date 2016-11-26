@@ -47,16 +47,27 @@ ExtMove* make_move_PAWN(const Position& pos, const Bitboard& target, ExtMove* mo
 					movelist++->move = make_movepromote2(from, to, pc2);
 				}
 				else {
-					//rank A Iへのならずの移動は許されない
-					if ((sqtorank(to) != RankA) && (sqtorank(to) != RankI)) {
+					//rank A Iへのならずの移動は許されない(この条件は必要ない)targetでそんなtarget入ってこない
+					/*if ((sqtorank(to) != RankA) && (sqtorank(to) != RankI)) {
 						movelist++->move = make_move2(from, to, pc2);
-					}
+					}*/
+					movelist++->move = make_move2(from, to, pc2);
 				}
 
 			}
-			else {
-				//rank A Iへのならずの移動は許されない
-				if ((sqtorank(to) != RankA) && (sqtorank(to) != RankI)) {
+			else if(mt==Quiet) {
+				//rank A Iへのならずの移動は許されない（この条件は必要ない targetでそんなtarget入ってこない）
+				/*if ((sqtorank(to) != RankA) && (sqtorank(to) != RankI)) {
+					movelist++->move = make_move2(from, to, pc2);
+				}*/
+				movelist++->move = make_move2(from, to, pc2);
+			}
+			else if (mt == Eversion) {
+				canpromoteto = (SquareBB[to] & canPromoteBB[US]).isNot();
+				if (canpromoteto) {
+					movelist++->move = make_movepromote2(from, to, pc2);
+				}
+				else {
 					movelist++->move = make_move2(from, to, pc2);
 				}
 			}
@@ -89,7 +100,8 @@ ExtMove* make_move_LANCE(const Position& pos, const Bitboard& target, ExtMove* m
 		ASSERT(is_ok(sq));
 		
 		int obstacle_tate = (pos.occ_all().b[index_tate(sq)] >> shift_tate(sq))&effectmask;//7bitしか必要ないのでintでいいか（uint8_tで十分か？？？？）
-		target2 = target&LongRookEffect_tate[sq][obstacle_tate] & InFront_BB[US][sqtorank(sq)];
+		//target2 = target&LongRookEffect_tate[sq][obstacle_tate] & InFront_BB[US][sqtorank(sq)];
+		target2 = target&LanceEffect[US][sq][obstacle_tate];
 		int from = sq << 7;
 		int pc2 = pc << 17;
 
@@ -540,7 +552,7 @@ ExtMove * move_generation(const Position& pos, ExtMove * movelist)
 
 		const Bitboard target_nonPAWN =
 			(mt == Cap_Propawn) ? pos.occ(ENEMY) :
-			(mt == Quiet) ? ~pos.occ_all() ://このALLBBはいる？
+			(mt == Quiet) ? ~pos.occ_all() :
 			(mt == Recapture) ? SquareBB[move_to(pos.state()->lastmove)] :
 			ALLBB;
 
@@ -636,8 +648,9 @@ ExtMove * move_eversion(const Position& pos, ExtMove * movelist) {
 	//後は王手をかけている指し手を取るか王手に割って入るかbetweenBBを開区間で作っておいてよかった..
 	Bitboard target_drop = BetweenBB[ksq][esq];
 	Bitboard target = target_drop | SquareBB[esq];
-	movelist = make_move_PAWN<Cap_Propawn>(pos, target, movelist);
-	movelist = make_move_PAWN<Quiet>(pos, target, movelist);
+	/*movelist = make_move_PAWN<Cap_Propawn>(pos, target, movelist);
+	movelist = make_move_PAWN<Quiet>(pos, target, movelist);*/
+	movelist = make_move_PAWN<Eversion>(pos, target, movelist);
 	movelist = make_move_LANCE(pos, target, movelist);
 	movelist = make_move_KNIGHT(pos, target, movelist);
 	movelist = make_move_SILVER(pos, target, movelist);
