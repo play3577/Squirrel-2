@@ -12,6 +12,7 @@ struct Thread {
 private:
 	Position rootpos;//rootposはスレッド毎に保つ必要があるので参照渡しではいけない気がする。
 	int rootdepth;
+	//rootmovesに非合法手が入ってくるのを防がなければならない
 	ExtMove RootMoves[600], *end;
 public:
 	std::atomic_bool resetCalls;//atomicにすることでスレッド観競合が起こらないようにする

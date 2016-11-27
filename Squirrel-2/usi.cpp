@@ -23,6 +23,13 @@ static StateInfo g_st[257];
 
 USI::OptionMap Options;
 
+/*
+error position
+position startpos moves 2g2f 3c3d 2f2e 2b3c 7g7f 4c4d 5g5f 5c5d 3g3f 3a2b 2i3g 7c7d 5f5e 5d5e 8h5e 8b5b
+
+*/
+
+
 //‘Å‚¿•à‹l‚ß‚Ì‹Ç–Ê
 //"sfen ln6n/s2RSR3/ppp1p1ppp/gb2k2bl/g2p1p2s/4G4/PPPP1PPPP/9/LN1GK1SNL b P 1"  
 const string maturi = "sfen l6nl/5+P1gk/2np1S3/p1p4Pp/3P2Sp1/1PPb2P1P/P5GS1/R8/LN4bKL w GR5pnsg 1";
@@ -465,7 +472,13 @@ void USI::loop()
 			cout << (~pos.occ_all()) << endl;
 			//cout << (pos.occ_all() ^ SquareBB[hihumin_eye(Square(sq))]) << endl;
 		}
-		
+		else if (token == "islegal") {
+			string smove;
+			Move m;
+			is >> smove;
+			m = Sfen2Move(smove, pos);
+			cout << pos.is_legal(m) << endl;
+		}
 
 	} while (token != "quit");
 
