@@ -28,7 +28,7 @@ error position
 position startpos moves 2g2f 3c3d 2f2e 2b3c 7g7f 4c4d 5g5f 5c5d 3g3f 3a2b 2i3g 7c7d 5f5e 5d5e 8h5e 8b5b
 
 */
-
+//2歩を指した！PawnBBの差分にバグが有る？？？
 
 //打ち歩詰めの局面
 //"sfen ln6n/s2RSR3/ppp1p1ppp/gb2k2bl/g2p1p2s/4G4/PPPP1PPPP/9/LN1GK1SNL b P 1"  
@@ -41,7 +41,7 @@ const string capturepromote = "sfen lnsgkgsnl/1r5b1/ppppppppp/9/9/2P6/PP1PPPPPP/
 const string drop = "sfen lnsgkgsnl/1r5b1/ppppppppp/9/9/9/PP1PPPPPP/1B5R1/LNSGKGSNL b P 1";
 const string debug1 = "sfen 5k2l/1r7/S2bp1gs1/1N2sp2p/2P7/4SP3/LP2PGN1P/3GN2r1/PK6L w 1";
 const string debug2 = "sfen +S3+P3l/9/p1ppn1b2/4+R4/4Pnpk1/1P1KNr1n1/P1LP1P1+s+p/1G7/L1S1+bG2L w 1";
-
+const string nuhu = "sfen l6nl/1r3kgs1/p1+Bspp2p/6pp1/1p7/9/PPG1PPPPP/6SK1/+r4G1NL 2PNGB2plns w 1";
 void USI::init_option(OptionMap &o)
 {
 	o["USI_Ponder"] << USIOption(false);
@@ -478,6 +478,12 @@ void USI::loop()
 			is >> smove;
 			m = Sfen2Move(smove, pos);
 			cout << pos.is_legal(m) << endl;
+		}
+		else if (token == "nihu") {
+			pos.set(nuhu);
+			cout << pos << endl;
+			cout<<pos.pawnbb(BLACK)<<endl;
+			cout<<pos.pawnbb(WHITE)<<endl;
 		}
 
 	} while (token != "quit");

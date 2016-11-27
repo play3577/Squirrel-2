@@ -8,9 +8,28 @@ using namespace std;
 
 void Thread::set(Position pos)
 {
-	end = RootMoves;
+	/*end = RootMoves;
 	rootpos = pos;
-	end = test_move_generation(pos, RootMoves);
+	end = test_move_generation(pos, RootMoves);*/
+	//root‚É”ñ‡–@è‚ª“ü‚Á‚Ä‚­‚é‚Ì‚ğ–h‚®
+
+
+	rootpos = pos;
+	ExtMove psuedo[600],*pe;
+	pe = psuedo;
+	pe = test_move_generation(pos, psuedo);
+	ptrdiff_t num_move= pe - psuedo;
+	int j = 0;
+	for (int i = 0; i < num_move; i++) {
+
+		if (pos.is_legal(psuedo[i].move)) {
+			RootMoves[j] = psuedo[i];
+			j++;
+		}
+	}
+	cout << "movenum " << j << endl;
+	end = RootMoves + j;
+
 	rootpos.set_searcherthread(this);
 
 

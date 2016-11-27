@@ -176,7 +176,7 @@ void Position::put_piece(const Color c, const Piece pt, const Square sq)
 駒得の差分計算（あとで）
 
 */
-//pawnbbの処理OK
+//ニフを打った！！ちゃんとどこが悪いか確認する！！！！！！
 void Position::do_move(const Move m, StateInfo * newst)
 {
 	//ここでst->PPをクリアーしておかないと差分計算上手く行かない
