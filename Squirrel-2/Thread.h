@@ -33,6 +33,6 @@ public:
 		return nullptr;
 	}
 	void sort_RootMove();
-	void print_pv(const int depth, Stack* ss);
+	void print_pv(const int depth, Value v, Stack* ss);
 
 };

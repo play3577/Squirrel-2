@@ -41,11 +41,11 @@ void Thread::sort_RootMove()
 }
 
 
-void Thread::print_pv(const int depth, Stack* ss)
+void Thread::print_pv(const int depth,Value v, Stack* ss)
 {
 	TimePoint elapsed = (now() - limit.starttime + 1);//ƒ[ƒ‚Å‚í‚ç“à—e‚É‚·‚é‚½‚ß‚É‚P‚ğ‘«‚µ‚Ä‚¨‚­
 
-	std::cout << "info depth " << depth <<"/"<<seldepth<< " score cp " << int(RootMoves[0].value*100/Eval::PawnValue) << " time " << elapsed << " nodes " << rootpos.searched_nodes()
+	std::cout << "info depth " << depth <<"/"<<seldepth<< /*" score cp " <<v*100/Eval::PawnValue int(RootMoves[0].value*100/Eval::PawnValue) <<*/ " time " << elapsed << " nodes " << rootpos.searched_nodes()
 		<< " nps " << rootpos.searched_nodes() / uint64_t(elapsed) << "k";
 
 	std::cout << " pv ";
@@ -53,6 +53,6 @@ void Thread::print_pv(const int depth, Stack* ss)
 	for (Move m : pv) {
 		cout << " " << m;
 	}
-	std::cout << endl;
+	//std::cout << endl;
 
 }

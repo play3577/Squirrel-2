@@ -27,7 +27,7 @@
 #pragma warning(disable : 4800)
 #endif
 
-#define DIFFTEST
+//#define DIFFTEST
 
 
 //==========================================================

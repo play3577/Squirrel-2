@@ -28,6 +28,9 @@ void check_time() {
 Value Thread::think() {
 
 	if (end == RootMoves) {
+#ifndef LEARN
+		cout << "bestmove resign" << endl;
+#endif // !LEARN
 		return Value_Mated;
 	}
 
@@ -38,7 +41,7 @@ Value Thread::think() {
 	rootdepth = 0;
 	int maxdepth;
 
-
+	seldepth = 0;
 
 	//時間制御
 	signal.stop = false;
@@ -79,8 +82,8 @@ Value Thread::think() {
 		}
 
 #ifndef LEARN
-		print_pv(rootdepth, ss);
-		cout <<" bestvalue"<< bestvalue << endl;
+		print_pv(rootdepth,bestvalue, ss);
+		cout <<" score cp "<< int(bestvalue) << endl;
 #endif
 	}//end of 反復深化
 #ifndef LEARN
@@ -152,6 +155,9 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 		（要約）４手詰めが見つかっている場合に５手詰めを探す必要はない
 		===============================================================================================================================*/
 
+		//=====================================================================================================================
+		//state->plyfrom_rootでは駄目！！startposからの手数になってしまう！！！（Stackにrootからの手数を格納するしか無いか）
+		//=====================================================================================================================
 		alpha = std::max(mated_in_ply(pos.state()->ply_from_root), alpha);//alpha=max(-mate+ply,alpha)　alphaの値は現在つまされている値よりも小さくは成れない つまりalphaは最小でも-mate+ply
 		beta = std::min(mate_in_ply(pos.state()->ply_from_root + 1), beta);//beta=min(mate-ply,beta)  betaの値は次の指し手で詰む値よりも大きくはなれない　つまりbetaは最大でもmate-(ply+1)
 
