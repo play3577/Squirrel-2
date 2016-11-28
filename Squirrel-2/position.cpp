@@ -269,7 +269,7 @@ void Position::do_move(const Move m, StateInfo * newst)
 		*/
 		Square from = move_from(m);
 		Color us = sidetomove_;
-		Piece pt = piece_type(movedpiece);
+		Piece moved_pt = piece_type(movedpiece);
 
 		//動かす駒はfromにいる駒
 		ASSERT(movedpiece == pcboard[from]);
@@ -300,7 +300,7 @@ void Position::do_move(const Move m, StateInfo * newst)
 
 
 		//occの更新処理
-		remove_piece(us, pt, from);
+		remove_piece(us, moved_pt, from);
 		remove_rotate(from);
 		//fromの機器を取り除く
 		
@@ -308,7 +308,7 @@ void Position::do_move(const Move m, StateInfo * newst)
 		if (!is_promote(m)) {
 			//成がない場合
 			pcboard[to] = movedpiece;
-			put_piece(us, pt, to);
+			put_piece(us, moved_pt, to);
 
 			//listの更新
 			list.bplist_fb[list.sq2Uniform[to]] = bonapiece(to, movedpiece);
@@ -316,18 +316,21 @@ void Position::do_move(const Move m, StateInfo * newst)
 		}
 		else {
 			//成がある場合
-			Piece propt = promotepiece(pt);
+			Piece propt = promotepiece(moved_pt);
+			/*if (propt == PRO_PAWN&&moved_pt != PAWN) {
+				ASSERT(0);
+			}*/
 			ASSERT(propt != NO_PIECE);
 			pcboard[to] = promotepiece(movedpiece);
 			ASSERT(pcboard[to] != NO_PIECE);
 			put_piece(us, propt, to);
 			//歩が成った場合はその筋にはpawnを打てるように成る
-			if (propt = PRO_PAWN) {
+			if (propt == PRO_PAWN) {
 				remove_existpawnBB(us, to);
 			}
 			//コマ割の差分
-			ASSERT(PAWN <= pt&&pt <= GOLD);
-			matterialdiff += Eval::diff_promote[pt];
+			ASSERT(PAWN <= moved_pt&&moved_pt <= GOLD);
+			matterialdiff += Eval::diff_promote[moved_pt];
 
 			//listの更新
 			list.bplist_fb[list.sq2Uniform[to]] = bonapiece(to, promotepiece(movedpiece));
@@ -372,7 +375,7 @@ void Position::do_move(const Move m, StateInfo * newst)
 			put_rotate(to);
 		}
 		//ksqの更新
-		if (pt == KING) { st->ksq_[us] = to; }
+		if (moved_pt == KING) { st->ksq_[us] = to; }
 	}
 
 	//先手の場合駒割は正の方向にdiffだけ動く

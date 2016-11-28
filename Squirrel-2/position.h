@@ -249,9 +249,11 @@ public:
 		}
 	}
 	void remove_existpawnBB(const Color c,const Square sq) {
-		ExistPawnBB[c]=ExistPawnBB[c].andnot(FileBB[sqtofile(sq)]);
+		ASSERT((ExistPawnBB[c] & FileBB[sqtofile(sq)]).isNot() == true);
+		ExistPawnBB[c]=andnot(ExistPawnBB[c],FileBB[sqtofile(sq)]);
 	}
 	void add_existpawnBB(const Color c, const Square sq) {
+		ASSERT((ExistPawnBB[c] & FileBB[sqtofile(sq)]).isNot() == false);
 		ExistPawnBB[c] |=FileBB[sqtofile(sq)];
 	}
 
