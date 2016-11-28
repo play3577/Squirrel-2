@@ -234,6 +234,7 @@ void Position::do_move(const Move m, StateInfo * newst)
 		Color c = piece_color(movedpiece);
 		int num = num_pt(hands[sidetomove()], pt);
 		ASSERT(add_color(pt, sidetomove()) == movedpiece);
+		ASSERT(sidetomove() == c);
 		ASSERT(num != 0);
 
 		//dirtybonapの更新(一番枚数の大きい駒から打っていくことにする)
@@ -345,9 +346,9 @@ void Position::do_move(const Move m, StateInfo * newst)
 				ASSERT(0);
 			}
 			//cは取られたコマの色
-			Color c = piece_color(capture);
-			ASSERT(c != sidetomove());//自分の駒を取ってしまってないか
-			remove_piece(c, cappt, to);
+			Color c_cap = piece_color(capture);
+			ASSERT(c_cap != sidetomove());//自分の駒を取ってしまってないか
+			remove_piece(c_cap, cappt, to);
 			//取られた駒の利きを取る。
 		//	sub_effect(c, cappt, to);
 
@@ -356,7 +357,7 @@ void Position::do_move(const Move m, StateInfo * newst)
 			//コマの捕獲の場合はrotetedは足さなくていい
 
 			if (cappt == PAWN) {
-				remove_existpawnBB(c, to);
+				remove_existpawnBB(c_cap, to);
 			}
 			//コマ割の差分
 			matterialdiff += Eval::capture_value[capture];
@@ -443,7 +444,7 @@ void Position::undo_move()
 
 		remove_piece(c, pt, to);
 		remove_rotate(to);
-		//cは動かしたコマの色
+		//cは動かしたコマの色 (打った駒が元に戻るのでここは駒を打てるように成る)
 		if (pt == PAWN) {
 			remove_existpawnBB(c, to);
 		}
@@ -508,6 +509,9 @@ void Position::undo_move()
 			remove_piece(from_c, piece_type(afterpiece), to);
 			ASSERT(from_c != c);
 			//コマの捕獲の場合はtoにいたrotetedを消す必要はない
+
+
+			//
 			if (cappt == PAWN) {
 				add_existpawnBB(c, to);
 			}

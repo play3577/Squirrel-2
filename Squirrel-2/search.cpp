@@ -310,6 +310,17 @@ Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
 	while ((move = mp.return_nextmove()) != MOVE_NONE) {
 
 		if (pos.is_legal(move) == false) { continue; }
+		if (pos.check_nihu(move) == true) {
+
+			cout << "nihu " << endl;
+			cout << move << endl;
+			cout << pos << endl;
+			cout << "pbb black" << endl << pos.pawnbb(BLACK) << endl;
+			cout << "pbb white" << endl << pos.pawnbb(WHITE) << endl;
+			UNREACHABLE;
+		}
+
+
 		movecount++;
 		pos.do_move(move, &si);
 		value = -qsearch<NT>(pos, ss + 1, -beta, -alpha, depth - ONE_PLY);

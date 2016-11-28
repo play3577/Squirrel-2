@@ -459,7 +459,8 @@ void USI::loop()
 		else if (token == "andnot") {
 			int sq;
 			is >> sq;
-			cout << (pos.occ_all().andnot(SquareBB[sq])) << endl;
+			//cout << (pos.occ_all().andnot(SquareBB[sq])) << endl;
+			cout << (pos.occ_all()&~(SquareBB[sq])) << endl;
 			//cout << (pos.occ_all() ^ SquareBB[hihumin_eye(Square(sq))]) << endl;
 		}
 		else if (token == "or") {

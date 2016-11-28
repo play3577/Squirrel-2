@@ -476,19 +476,34 @@ ExtMove* make_move_DROP(const Position& pos, const Bitboard& target, ExtMove* mo
 	if (have_hand(hands)) {
 
 		if (num_pt(hands, PAWN)) {
-			target2 = target&~CantGo_PAWNLANCE[US]&~pos.pawnbb(US);
+			
+			//target2 = target&~CantGo_PAWNLANCE[US]&~pos.pawnbb(US);
+			// _mm_andnot_si128は１命令？？
+			target2 = andnot(andnot(target, CantGo_PAWNLANCE[US]), pos.pawnbb(US));
 			pc = add_color(PAWN, US);
 			int pc2 = pc << 17;
 			while (target2.isNot()) {
 				to = target2.pop();
 				ASSERT(is_ok(to));
-				//打ち歩詰めはめったにないことなのでdo_moveするときに確認する。
+				//ここで２歩が入ってくることはないと思うけれども一応確認しておく
+				//ここで二歩がはいって来ているのはpawnbbがおかしいせいか
+				if (pos.check_nihu(make_drop2(to, pc2)) == true) {
+					cout << "nihu " << endl;
+					cout << "target2"<<endl << target2 << endl;
+					cout << make_drop2(to, pc2) << endl;
+					cout << pos << endl;
+					cout << "pbb black" << endl << pos.pawnbb(BLACK) << endl;
+					cout << "pbb white" << endl << pos.pawnbb(WHITE) << endl;
+					UNREACHABLE;
+				}
+
+
 				movelist++->move = make_drop2(to, pc2);
 			}
 		}
 
 		if (num_pt(hands, LANCE)) {
-			target2 = target&~CantGo_PAWNLANCE[US];
+			target2 = andnot(target,CantGo_PAWNLANCE[US]);
 			pc = add_color(LANCE, US);
 			int pc2 = pc << 17;
 			while (target2.isNot()) {
@@ -499,7 +514,7 @@ ExtMove* make_move_DROP(const Position& pos, const Bitboard& target, ExtMove* mo
 		}
 
 		if (num_pt(hands, KNIGHT)) {
-			target2 = target&~CantGo_KNIGHT[US];
+			target2 = andnot(target,CantGo_KNIGHT[US]);
 			pc = add_color(KNIGHT, US);
 			int pc2 = pc << 17;
 			while (target2.isNot()) {
@@ -558,8 +573,8 @@ ExtMove * move_generation(const Position& pos, ExtMove * movelist)
 
 		//ここでcanpromoteを用意して差し手を本生成するときにもcanpromoteを確認するのはばかばかしい。
 		const Bitboard target_PAWN =
-			(mt == Cap_Propawn) ? pos.occ(ENEMY) | (canPromoteBB[US] & ~pos.occ(US)) :
-			(mt == Quiet) ? (~pos.occ_all())&~canPromoteBB[US]:
+			(mt == Cap_Propawn) ? pos.occ(ENEMY) | andnot(canPromoteBB[US],pos.occ(US)) :
+			(mt == Quiet) ? andnot((~pos.occ_all()),canPromoteBB[US]):
 			target_nonPAWN;
 
 		//ここの並ぶ順番も考えた方がいいか？（あとでorderingするのでそこまでする必要はないか）
@@ -633,7 +648,7 @@ ExtMove * move_eversion(const Position& pos, ExtMove * movelist) {
 	ASSERT(num_checker);
 
 	//王の逃げ場
-	Bitboard cankingmove= step_effect(BLACK,KING, ksq)&~pos.occ(pos.sidetomove())&~enemy_effected;
+	Bitboard cankingmove= andnot(andnot(step_effect(BLACK,KING, ksq),pos.occ(pos.sidetomove())),enemy_effected);
 	//玉が移動した先に効きがあるかどうかはislegalで調べる
 	while (cankingmove.isNot()) {
 		Square to = cankingmove.pop();
