@@ -177,6 +177,10 @@ void Position::put_piece(const Color c, const Piece pt, const Square sq)
 
 */
 //ニフを打った！！ちゃんとどこが悪いか確認する！！！！！！
+/*
+相手の駒を取ったのに自分のpawnbbが消えている
+
+*/
 void Position::do_move(const Move m, StateInfo * newst)
 {
 	//ここでst->PPをクリアーしておかないと差分計算上手く行かない
@@ -229,6 +233,7 @@ void Position::do_move(const Move m, StateInfo * newst)
 		Piece pt = piece_type(movedpiece);
 		Color c = piece_color(movedpiece);
 		int num = num_pt(hands[sidetomove()], pt);
+		ASSERT(add_color(pt, sidetomove()) == movedpiece);
 		ASSERT(num != 0);
 
 		//dirtybonapの更新(一番枚数の大きい駒から打っていくことにする)
@@ -339,6 +344,7 @@ void Position::do_move(const Move m, StateInfo * newst)
 				cout << *this << endl;
 				ASSERT(0);
 			}
+			//cは取られたコマの色
 			Color c = piece_color(capture);
 			ASSERT(c != sidetomove());//自分の駒を取ってしまってないか
 			remove_piece(c, cappt, to);
@@ -437,6 +443,7 @@ void Position::undo_move()
 
 		remove_piece(c, pt, to);
 		remove_rotate(to);
+		//cは動かしたコマの色
 		if (pt == PAWN) {
 			remove_existpawnBB(c, to);
 		}
@@ -463,9 +470,9 @@ void Position::undo_move()
 		Piece from_pt = piece_type(movedpiece);
 		put_piece(from_c, from_pt, from);
 		put_rotate(from);
-
+		//直前の指し手が成で、動いたあとの駒がPRO_PAWNであれば
 		if (is_promote(LMove) && piece_type(afterpiece) == PRO_PAWN) {
-			add_existpawnBB(piece_color(afterpiece), to);
+			add_existpawnBB(piece_color(afterpiece),from);
 		}
 
 		//fromのいちに戻ってくるのは捕獲であろうと、成であろうと共通
@@ -501,7 +508,6 @@ void Position::undo_move()
 			remove_piece(from_c, piece_type(afterpiece), to);
 			ASSERT(from_c != c);
 			//コマの捕獲の場合はtoにいたrotetedを消す必要はない
-			
 			if (cappt == PAWN) {
 				add_existpawnBB(c, to);
 			}

@@ -249,7 +249,7 @@ public:
 		}
 	}
 	void remove_existpawnBB(const Color c,const Square sq) {
-		ExistPawnBB[c]=ExistPawnBB[c] & ~FileBB[sqtofile(sq)];
+		ExistPawnBB[c]=ExistPawnBB[c].andnot(FileBB[sqtofile(sq)]);
 	}
 	void add_existpawnBB(const Color c, const Square sq) {
 		ExistPawnBB[c] |=FileBB[sqtofile(sq)];
@@ -261,6 +261,20 @@ public:
 			cout << " color " << c << endl;
 			cout << ExistPawnBB[c] << endl;
 		}
+	}
+
+
+	bool check_nihu(const Move m) const{
+
+		if (is_drop(m)&&moved_piece(m)==PAWN) {
+
+			if ((occ_pt(sidetomove(), PAWN)&FileBB[sqtofile(move_to(m))]).isNot()) {
+				return true;
+			}
+		}
+
+		return false;
+
 	}
 /*
 	uint8_t obstacle_plus45;
