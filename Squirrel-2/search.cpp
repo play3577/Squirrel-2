@@ -35,6 +35,7 @@ Value Thread::think() {
 	}
 
 	Stack stack[MAX_PLY + 7], *ss = stack + 5;
+	std::memset(stack, 0,(MAX_PLY+7)*sizeof(Stack));
 	Value bestvalue, alpha, beta;
 	bestvalue = alpha = Value_Mated;
 	beta = Value_Mate;
@@ -69,7 +70,7 @@ Value Thread::think() {
 
 
 //	Eval::eval(rootpos);
-	while (++rootdepth <maxdepth) {
+	while (++rootdepth <maxdepth&&!signal.stop) {
 
 		//ここで探索関数を呼び出す。
 		bestvalue = search<Root>(rootpos, ss, alpha, beta, rootdepth*ONE_PLY);
@@ -83,7 +84,7 @@ Value Thread::think() {
 
 #ifndef LEARN
 		print_pv(rootdepth,bestvalue, ss);
-		cout <<" score cp "<< int(bestvalue) << endl;
+		cout <<"評価値"<< int(bestvalue)*100/int(Eval::PawnValue) << endl;
 #endif
 	}//end of 反復深化
 #ifndef LEARN
@@ -110,6 +111,8 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 	int movecount = 0;
 	bool incheck = pos.is_incheck();
 	Thread* thisthread = pos.searcher();
+	ss->ply = (ss - 1)->ply + 1;
+
 
 #ifndef LEARN
 	//timer threadを用意せずにここで時間を確認する。
@@ -127,8 +130,8 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 	}
 #endif
 	//seldepthの更新をここで行う
-	if (PVNode&&(thisthread->seldepth < pos.state()->ply_from_root+1)) {
-		thisthread->seldepth = pos.state()->ply_from_root+1;
+	if (PVNode&&(thisthread->seldepth < pos.state()->ply_from_startpos+1)) {
+		thisthread->seldepth = ss->ply;
 	}
 
 	if (NT != Root) {
@@ -158,8 +161,8 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 		//=====================================================================================================================
 		//state->plyfrom_rootでは駄目！！startposからの手数になってしまう！！！（Stackにrootからの手数を格納するしか無いか）
 		//=====================================================================================================================
-		alpha = std::max(mated_in_ply(pos.state()->ply_from_root), alpha);//alpha=max(-mate+ply,alpha)　alphaの値は現在つまされている値よりも小さくは成れない つまりalphaは最小でも-mate+ply
-		beta = std::min(mate_in_ply(pos.state()->ply_from_root + 1), beta);//beta=min(mate-ply,beta)  betaの値は次の指し手で詰む値よりも大きくはなれない　つまりbetaは最大でもmate-(ply+1)
+		alpha = std::max(mated_in_ply(ss->ply), alpha);//alpha=max(-mate+ply,alpha)　alphaの値は現在つまされている値よりも小さくは成れない つまりalphaは最小でも-mate+ply
+		beta = std::min(mate_in_ply(ss->ply + 1), beta);//beta=min(mate-ply,beta)  betaの値は次の指し手で詰む値よりも大きくはなれない　つまりbetaは最大でもmate-(ply+1)
 
 		/*===================================================
 		現在のnodeの深さをplyとする
@@ -272,7 +275,7 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 	}//指し手のwhile
 
 	if (movecount == 0) {
-		return mated_in_ply(pos.state()->ply_from_root);
+		return mated_in_ply(ss->ply);
 	}
 
 	return alpha;
@@ -349,7 +352,7 @@ Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
 	}
 	//王手をかけられていて合法手がなければそれは詰み
 	if (incheck&&movecount == 0) {
-		return mated_in_ply(pos.state()->ply_from_root);
+		return mated_in_ply(ss->ply);
 	}
 
 	return bestvalue;

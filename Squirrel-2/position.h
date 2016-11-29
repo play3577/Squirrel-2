@@ -25,7 +25,7 @@ wordboard‚Æ‚©—‰ğ‚Å‚«‚é‚æ‚¤‚É‚È‚Á‚½‚È‚ç‚Á‚Ä‚à‚¢‚¢‚©‚à‚µ‚ê‚È‚¢
 
 struct StateInfo
 {
-	int ply_from_root = 0;
+	int ply_from_startpos = 0;
 	Square ksq_[ColorALL];
 	//Effect Eboard[ColorALL][SQ_NUM];//¡‚É‚¢‚­‚Â‚ÌŒø‚«‚ª•·‚¢‚Ä‚¢‚é‚©‚ğ•Û‚·‚é‚½‚ß‚Ìboard
 	//---------------‚±‚±‚Ü‚Ådomove‚ÅƒRƒs[

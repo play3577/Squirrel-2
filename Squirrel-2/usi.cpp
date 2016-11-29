@@ -187,7 +187,7 @@ void position(Position& pos, istringstream& is) {
 	}
 
 
-	cout << pos << endl;
+//	cout << pos << endl;
 
 }
 

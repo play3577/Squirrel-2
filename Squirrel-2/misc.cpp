@@ -76,7 +76,7 @@ Move Sfen2Move(const string smove, const Position& pos)
 	}
 
 	//cout << m << endl;
-	check_move(m);
+	//check_move(m);
 	return m;
 
 }

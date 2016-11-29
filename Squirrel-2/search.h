@@ -24,6 +24,7 @@ struct Signal {
 struct Stack {
 	//Move pvmove=MOVE_NONE;
 	Move *pv;
+	int ply = 0;
 };
 
 

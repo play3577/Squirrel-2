@@ -388,7 +388,7 @@ void Position::do_move(const Move m, StateInfo * newst)
 
 
 
-	st->ply_from_root++;
+	st->ply_from_startpos++;
 	nodes++;
 	sidetomove_ = opposite(sidetomove_);//w‚·‡”Ô‚Ì“ü‚ê‘Ö‚¦
 
