@@ -51,7 +51,7 @@ void Position::set(std::string sfen)
 		else if(s=='+'){
 			promote = true;
 		}
-		else if (pc = Sfen2Piece_.sfen_to_piece(s)) {
+		else if ((pc = Sfen2Piece_.sfen_to_piece(s))!=NO_PIECE) {
 			//‚±‚±‚Å“ü‚Á‚Ä—ˆ‚épc‚Í¬‚ğŠÜ‚ñ‚Å‚¢‚È‚¢‚Í‚¸‚È‚Ì‚Å¬‚Å‚ ‚ê‚Î‚»‚Ìî•ñ‚ğ•t—^‚·‚éB
 			if (promote) {
 				pc = promotepiece(pc);
@@ -97,7 +97,7 @@ void Position::set(std::string sfen)
 			}
 			before_isdigit = true;
 		}
-		else if (pc = Sfen2Piece_.sfen_to_piece(s)) {
+		else if ((pc = Sfen2Piece_.sfen_to_piece(s))!=NO_PIECE) {
 
 			before_isdigit = false;
 			Piece pt = piece_type(pc);

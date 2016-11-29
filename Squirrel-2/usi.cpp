@@ -309,8 +309,8 @@ void USI::loop()
 		else if (token=="suicide") {
 			pos.set("sfen ln6n/s2RSR3/ppp1p1ppp/gb2k2bl/g2p1p2s/4G4/PPPP1PPPP/9/LN1GK1SNL w P 1");
 			Move m = make_move(SQ5D, SQ5E, W_KING);
-			bool suicide = pos.is_king_suiside(WHITE, move_to(m),move_from(m));
-			cout << (suicide)<< endl;
+			bool is_suicide = pos.is_king_suiside(WHITE, move_to(m),move_from(m));
+			cout << (is_suicide)<< endl;
 		}
 		else if(token=="legal1")
 		{

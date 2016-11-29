@@ -63,7 +63,7 @@ void Thread::sort_RootMove()
 }
 
 
-void Thread::print_pv(const int depth,Value v, Stack* ss)
+ void Thread::print_pv(const int depth,Value v)
 {
 	TimePoint elapsed = (now() - limit.starttime + 1);//ƒ[ƒ‚Å‚í‚ç“à—e‚É‚·‚é‚½‚ß‚É‚P‚ğ‘«‚µ‚Ä‚¨‚­
 

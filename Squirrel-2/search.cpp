@@ -83,7 +83,7 @@ Value Thread::think() {
 		}
 
 #ifndef LEARN
-		print_pv(rootdepth,bestvalue, ss);
+		print_pv(rootdepth,bestvalue);
 		cout <<"評価値"<< int(bestvalue)*100/int(Eval::PawnValue) << endl;
 #endif
 	}//end of 反復深化
@@ -100,6 +100,7 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 
 	//初期化
 	const bool PVNode = (NT == PV || NT == Root);
+	const bool RootNode = (NT == Root);
 	bool doFullDepthSearch = false;
 
 	Move pv[MAX_PLY + 1];
@@ -134,7 +135,7 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 		thisthread->seldepth = ss->ply;
 	}
 
-	if (NT != Root) {
+	if (!RootNode) {
 		//step2
 		if (signal.stop.load(std::memory_order_relaxed)) {
 			return Eval::eval(pos);
@@ -245,7 +246,7 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 			return Value_Zero;
 		}
 
-		if (NT == Root) {
+		if (RootNode) {
 			ExtMove* rm = thisthread->find_rootmove(move);
 			if (movecount == 1 || value > alpha) {
 				rm->value = value;//指し手のスコアリング
@@ -264,7 +265,7 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 		if (value > alpha) {
 			alpha = value;
 
-			if (PVNode&&NT != Root) {
+			if (PVNode&&!RootNode) {
 				update_pv(ss->pv, move, (ss + 1)->pv);
 			}
 

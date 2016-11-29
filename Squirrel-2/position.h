@@ -335,7 +335,7 @@ public:
 			break;
 
 		case DOWN:
-			uint8_t obstacle_tate;
+			
 			obstacle_tate = (occ_all().b[index_tate(sq)] >> shift_tate(sq))&effectmask;
 			return ((LongRookEffect_tate[sq][obstacle_tate])&(occ_pt(ENEMY, ROOK) |occ_pt(ENEMY,DRAGON)| occ_pt(ENEMY, LANCE))).isNot();
 			break;
