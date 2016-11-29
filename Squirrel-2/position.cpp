@@ -126,7 +126,8 @@ void Position::set(std::string sfen)
 
 	Eval::eval_PP(*this);
 
-//	cout << *this << endl;
+	init_hash();
+	//cout << *this << endl;
 	
 	//list.print_bplist();
 
@@ -202,6 +203,8 @@ void Position::do_move(const Move m, StateInfo * newst)
 
 	newst->previous = st;
 	st = newst;
+	
+	st->board_^=Zoblist::side;
 
 	//指し手の情報の用意
 	Square to = move_to(m);//移動先
@@ -261,7 +264,9 @@ void Position::do_move(const Move m, StateInfo * newst)
 		if (pt == PAWN) {
 			add_existpawnBB(c, to);
 		}
-
+		//hashの更新
+		st->board_ += Zoblist::psq[movedpiece][to];
+		st->hands_ -= Zoblist::hand[c][pt];
 	}
 	else {
 		/*
@@ -313,15 +318,20 @@ void Position::do_move(const Move m, StateInfo * newst)
 			//listの更新
 			list.bplist_fb[list.sq2Uniform[to]] = bonapiece(to, movedpiece);
 			list.bplist_fw[list.sq2Uniform[to]] = bonapiece(hihumin_eye(to), inverse(movedpiece));
+
+			//zoblistの更新
+			st->board_ -= Zoblist::psq[movedpiece][from];
+			st->board_ += Zoblist::psq[movedpiece][to];
 		}
 		else {
 			//成がある場合
 			Piece propt = promotepiece(moved_pt);
+			Piece propc= promotepiece(movedpiece);
 			/*if (propt == PRO_PAWN&&moved_pt != PAWN) {
 				ASSERT(0);
 			}*/
 			ASSERT(propt != NO_PIECE);
-			pcboard[to] = promotepiece(movedpiece);
+			pcboard[to] = propc;
 			ASSERT(pcboard[to] != NO_PIECE);
 			put_piece(us, propt, to);
 			//歩が成った場合はその筋にはpawnを打てるように成る
@@ -333,8 +343,12 @@ void Position::do_move(const Move m, StateInfo * newst)
 			matterialdiff += Eval::diff_promote[moved_pt];
 
 			//listの更新
-			list.bplist_fb[list.sq2Uniform[to]] = bonapiece(to, promotepiece(movedpiece));
-			list.bplist_fw[list.sq2Uniform[to]] = bonapiece(hihumin_eye(to), inverse(promotepiece(movedpiece)));
+			list.bplist_fb[list.sq2Uniform[to]] = bonapiece(to, propc);
+			list.bplist_fw[list.sq2Uniform[to]] = bonapiece(hihumin_eye(to), inverse(propc));
+
+			//成を含めたzoblistの更新
+			st->board_ -= Zoblist::psq[movedpiece][from];
+			st->board_ += Zoblist::psq[propc][to];
 		}
 
 		//駒の捕獲
@@ -369,6 +383,11 @@ void Position::do_move(const Move m, StateInfo * newst)
 			list.bplist_fb[st->dirtyuniform[1]] = bonapiece(us, pt2, num + 1);
 			list.bplist_fw[st->dirtyuniform[1]] = bonapiece(opposite(us), pt2, num + 1);
 			list.hand2Uniform[us][pt2][num + 1] = st->dirtyuniform[1];
+
+
+			//捕獲された駒のzoblistの更新
+			st->board_ -= Zoblist::psq[capture][to];
+			st->hands_ += Zoblist::hand[sidetomove()][pt2];
 		}
 		else {
 			st->DirtyPiece[1] = NO_PIECE;
@@ -407,6 +426,8 @@ void Position::do_move(const Move m, StateInfo * newst)
 		cout << *this << endl;
 		ASSERT(0);
 	}
+
+	ASSERT((sidetomove() == BLACK && (st->board_&Zoblist::side) == 0) || (sidetomove() == WHITE && (st->board_&Zoblist::side) == 1));
 }
 
 /*
@@ -684,6 +705,7 @@ Error:;
 
 }
 
+
 /*
 現在局面に対応するsfen文字列を生成するための関数（デバッグ用であり、定跡を管理するためにも用いる）
 
@@ -766,6 +788,39 @@ string Position::make_sfen()
 }
 
 
+
+void Position::init_hash()
+{
+	//盤上
+	for (Square sq = SQ_ZERO; sq < SQ_NUM; sq++) {
+		const Piece pc = piece_on(sq);
+		st->board_ += Zoblist::psq[pc][sq];
+	}
+	//手駒
+	for (Color c = BLACK; c < ColorALL; c++) {
+		const Hand h = hand(c);
+		for (Piece pt = PAWN; pt <= GOLD; pt++) {
+
+			int num = num_pt(h, pt);
+			if (num != 0) {
+				for (int i = 1; i <= num; i++) {
+					st->hands_ += Zoblist::hand[c][pt];
+				}
+			}
+		}
+	}
+
+	//手番　白番ならば1を足す
+	if (sidetomove() == WHITE) {
+		st->board_ += Zoblist::side;
+	}
+
+
+}
+
+
+
+
 std::ostream & operator<<(std::ostream & os, const Position & pos)
 {
 	for (Rank r = RankA; r < Rank_Num; r++) {
@@ -807,7 +862,7 @@ std::ostream & operator<<(std::ostream & os, const Position & pos)
 	if (pos.state()->previous) {
 		os << " lastlastmove "; check_move(pos.state()->previous->lastmove);
 	}
-	
+	os << "hash " << (pos.state()->board_ + pos.state()->hands_) << endl;
 	return os;
 }
 

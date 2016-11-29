@@ -7,7 +7,7 @@
 #include "evaluate.h"
 #include <string>
 #include <bitset>
-
+#include "Hash.h"
 using namespace std;
 
 
@@ -25,10 +25,14 @@ wordboardとか理解できるようになったなら持ってもいいかもしれない
 
 struct StateInfo
 {
+	//zoblist hash
+	Key board_=0;//キーボード（なんてねっ）手番情報もboardに入れておく。
+	Key hands_=0;//持ち駒のZoblist key
 	int ply_from_startpos = 0;
 	Square ksq_[ColorALL];
 	//Effect Eboard[ColorALL][SQ_NUM];//升にいくつの効きが聞いているかを保持するためのboard
-	//---------------ここまでdomoveでコピー
+
+	//---------------==============================================ここまでdomoveでコピーされる
 
 	Move lastmove = MOVE_NONE;
 	Piece DirtyPiece[2];//do_moveによって動いた駒0 取られた駒１
@@ -48,6 +52,7 @@ struct StateInfo
 		bpp = Value_error; wpp = Value_error;
 	}
 
+	
 
 	friend struct Position;
 
@@ -413,6 +418,8 @@ public:
 	*/
 	bool is_legal(const Move m)const;
 
+	//zoblisthash関連
+	void init_hash();
 
 };
 
