@@ -309,8 +309,8 @@ void bitboard_init()
 	//斜めプラス４５度
 	//この方法では上から角の効きが伸びてきてしまうということが起こりうる！！(解決済み)
 	for (Square sq = SQ1A; sq < SQ_NUM; sq++) {
-		File sqfile = sqtofile(sq);
-		Rank sqrank = sqtorank(sq);
+		/*File sqfile = sqtofile(sq);
+		Rank sqrank = sqtorank(sq);*/
 		for (int obstacle = 0; obstacle < 128; obstacle++) {
 
 			int direc_bishop_p45[2] = { -10, + 10 };
@@ -343,8 +343,8 @@ void bitboard_init()
 
 	//斜め-45度
 	for (Square sq = SQ1A; sq < SQ_NUM; sq++) {
-		File sqfile = sqtofile(sq);
-		Rank sqrank = sqtorank(sq);
+		/*File sqfile = sqtofile(sq);
+		Rank sqrank = sqtorank(sq);*/
 		for (int obstacle = 0; obstacle < 128; obstacle++) {
 
 			//int obstacle_ = change_indian(obstacle);
@@ -571,7 +571,7 @@ Bitboard effectBB(const Position &pos,const Piece pt, const Color c, const Squar
 	default:
 		cout << pos << endl;
 		ASSERT(0);
-		//return;
+		return ALLBB;
 		break;
 	}
 
@@ -625,7 +625,7 @@ Bitboard long_effect(const Position &pos, const Color c, const Piece pt, const S
 		break;
 	default:
 		ASSERT(0);
-		//return;
+		return ALLBB;
 		break;
 	}
 

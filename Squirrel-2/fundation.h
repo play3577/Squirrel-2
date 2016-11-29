@@ -304,7 +304,12 @@ enum Depth {
 
 };
 
-
+enum Bound :int8_t {
+	BOUND_NONE,
+	BOUND_UPPER,
+	BOUND_LOWER,
+	BOUND_EXACT = BOUND_UPPER | BOUND_LOWER,
+};
 
 #define ENABLE_OPERATORS_ON(T)                                                  \
   inline T operator+(const T d1, const T d2) { return T(int(d1) + int(d2)); }   \
