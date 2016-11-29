@@ -6,6 +6,7 @@
 #include "usi.h"
 #include "learner.h"
 #include "evaluate.h"
+#include "Hash.h"
 using namespace std;
 
 //#define TEST
@@ -17,6 +18,7 @@ int main() {
 	USI::init_option(Options);
 	bitboard_init();
 	Eval::init();
+	Zoblist::init();
 	//bitboard_debug();
 
 #ifdef TEST

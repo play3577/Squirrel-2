@@ -486,7 +486,33 @@ void USI::loop()
 			cout<<pos.pawnbb(BLACK)<<endl;
 			cout<<pos.pawnbb(WHITE)<<endl;
 		}
+		else if (token == "m") {
 
+			cout << pos << endl;
+
+			ExtMove moves_[600];
+			ExtMove *end = moves_;
+			
+
+			if (pos.is_incheck()) {
+				end = moves_;
+				end = move_eversion(pos, moves_);
+			}
+			else {
+				end = moves_;
+				end = move_generation<Cap_Propawn>(pos, moves_);
+				end = move_generation<Quiet>(pos, end);
+				end = move_generation<Drop>(pos, end);
+			}
+			
+			const ptrdiff_t count = end - moves_;
+			std::cout << "num of moves = " << count << std::endl;
+			for (int i = 0; i < count; ++i) {
+				std::cout << moves_[i].move << ", ";
+			}
+			std::cout << std::endl;
+
+		}
 	} while (token != "quit");
 
 
