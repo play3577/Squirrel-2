@@ -652,7 +652,7 @@ namespace Eval {
 			Square sq = occ.pop();
 			Piece pc = pos.piece_on(sq);
 			Piece pt = piece_type(pc);
-			Color c = piece_color(pc);
+			//Color c = piece_color(pc);
 
 			switch (pt)
 			{

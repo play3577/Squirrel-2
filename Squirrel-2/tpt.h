@@ -1,6 +1,7 @@
 #pragma once
 #include "fundation.h"
 #include "Hash.h"
+#include <xmmintrin.h>//for prefetch(と言うかうちの環境でxmmintrinを使えるのか？？)
 /*
 トランスポジションテーブルの一つのエントリー
 shogi686ではBitboardに保存すべき内容を格納していた。
@@ -30,7 +31,39 @@ public:
 	Bound bound() const { return (Bound)(genbound8 & 0x3); }
 	
 	//未実装
-	void save(){}
+	void save(Key k, Value v, Bound b, Depth d, Move m, Value ev, uint8_t g){
+	
+		ASSERT(d / int(ONE_PLY) * int(ONE_PLY) == d);
+		// Preserve any existing move for the same position
+		//
+
+		//mが存在する||positionのkeyの不一致があれば　　格納する指してを更新する。
+		/*
+		同じ局面に対して指してを更新する場合（m!=MOVENONE,key==key16） はいま格納されている指してよりも探索の結果良い指してが見つかっている可能性があるため指してを更新（下のifに引っかからなくても大丈夫）
+		違う局面に対して指してを更新する（m!=MOVENONE,key!=key16） 下のifには必ず引っかかる。
+		違う局面に対してMOVE_NONEを突っ込む（movenoneを突っ込んで嬉しいことがあるのか？？？）下のifには必ず引っかかる。
+		*/
+		if (m || (k >> 32) != key32) {
+			move32 = (uint32_t)m;
+		}
+		// Don't overwrite more valuable entries
+		/*
+		keyの不一致であれば上で指してを更新しているので局面全体を更新する。
+		|| 残り探索深さが大きければ（深い探索から返ってきた結果だということ）（また反復深化であるので浅い層の情報のほうが優先して格納されるべきである。）
+		||	BOUND＿EXACTはPVNodeの探索結果であるので上書き
+		*/
+		if ((k >> 32) != key32
+			|| d / ONE_PLY > depth8 - 4
+			/* || g != (genBound8 & 0xFC) // Matching non-zero keys are already refreshed by probe() *///　genbound8は　TT.probeでリフレッシュされている
+			|| b == BOUND_EXACT)
+		{
+			key32 = (uint16_t)(k >> 32);
+			value16 = (int16_t)v;
+			eval16 = (int16_t)ev;
+			genbound8 = (uint8_t)(g | b);
+			depth8 = (int8_t)(d / ONE_PLY);
+		}
+	}//end of save()
 };
 //コンパイル時エラーチェックTPEntryが16byteであることを保証する。
 static_assert(sizeof(TPTEntry) == 16, "");
@@ -92,6 +125,13 @@ public:
 	void resize(size_t mbSize);
 	//置換表のクリア
 	void clear() { std::memset(table, 0, cluster_count * sizeof(Cluster));}
+
+	//prefetch
+	void prefetch(Key key) const {
+		//http://kaworu.jpn.org/cpp/reinterpret_cast
+		//http://jp.xlsoft.com/documents/intel/seminar/2_Sofrware%20Optimize.pdf
+		_mm_prefetch(reinterpret_cast<char *>(first_entry(key)), _MM_HINT_T0);
+	}
 };
 
 extern TranspositionTable TT;

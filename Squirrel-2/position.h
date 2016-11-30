@@ -420,6 +420,9 @@ public:
 
 	//zoblisthashŠÖ˜A
 	void init_hash();
+	inline Key key() {
+		return Key(st->board_ + st->hands_);
+	}
 
 };
 

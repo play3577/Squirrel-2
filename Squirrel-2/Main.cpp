@@ -7,6 +7,7 @@
 #include "learner.h"
 #include "evaluate.h"
 #include "Hash.h"
+#include "tpt.h"
 using namespace std;
 
 //#define TEST
@@ -19,6 +20,7 @@ int main() {
 	bitboard_init();
 	Eval::init();
 	Zoblist::init();
+	TT.resize(15);//15MB‚Å‰Šú‰»‚·‚éi‚â‚Ë‚¤‚ç‰¤‚É•í‚Á‚½j
 	//bitboard_debug();
 
 #ifdef TEST

@@ -2,7 +2,7 @@
 #include "movepicker.h"
 #include "Thread.h"
 #include "evaluate.h"
-
+#include "tpt.h"
 SearchLimit limit;
 Signal signal;
 
@@ -106,14 +106,18 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 	Move pv[MAX_PLY + 1];
 	Move move;
 	Move bestMove;
+	Move excludedmove;
 	Value value;
 	StateInfo si;
 	Value staticeval;
 	int movecount = 0;
 	bool incheck = pos.is_incheck();
 	Thread* thisthread = pos.searcher();
+	Key poskey;
+	bool TThit;
+	TPTEntry* tte;
 	ss->ply = (ss - 1)->ply + 1;
-
+	Value bestvalue=-Value_Infinite;
 
 #ifndef LEARN
 	//timer threadを用意せずにここで時間を確認する。
@@ -175,6 +179,22 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 		}
 
 	}
+	// Step 4. Transposition table lookup. We don't want the score of a partial
+	// search to overwrite a previous full search TT value, so we use a different
+	// position key in case of an excluded move.
+	/*
+	除外する手がない探索の置換表を上書きするために特定の手を場外しての探索結果はほしくないので、
+	exclude moveがある場合には異なるhashkeyを用いる
+	*/
+	excludedmove = ss->excludedMove;
+	poskey = pos.key() ^ Key(excludedmove);
+	tte = TT.probe(poskey, TThit);
+	if (TThit) {
+		cout << "TThit" << endl;
+	}
+
+
+
 
 
 	//if (incheck) {
@@ -264,6 +284,10 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 		//alpha超えの処理
 		if (value > alpha) {
 			alpha = value;
+
+			if (value > bestvalue) {
+				bestvalue = value;
+			}
 
 			if (PVNode&&!RootNode) {
 				update_pv(ss->pv, move, (ss + 1)->pv);

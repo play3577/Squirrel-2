@@ -26,7 +26,7 @@ ExtMove* make_move_PAWN(const Position& pos, const Bitboard& target, ExtMove* mo
 		ASSERT(is_ok(sq));
 		Piece pc = pos.piece_on(sq);
 		Piece pt = piece_type(pc);
-		ASSERT(pc = add_color(PAWN, US));
+		ASSERT(pc == add_color(PAWN, US));
 
 		target2 = target&StepEffect[US][pt][sq];
 		
@@ -96,7 +96,7 @@ ExtMove* make_move_LANCE(const Position& pos, const Bitboard& target, ExtMove* m
 		Square sq = occ_us.pop();
 		Piece pc = pos.piece_on(sq);
 		//Piece pt = piece_type(pc);
-		ASSERT(pc = add_color(LANCE, US));
+		ASSERT(pc == add_color(LANCE, US));
 		ASSERT(is_ok(sq));
 		
 		int obstacle_tate = (pos.occ_all().b[index_tate(sq)] >> shift_tate(sq))&effectmask;//7bitしか必要ないのでintでいいか（uint8_tで十分か？？？？）
@@ -148,7 +148,7 @@ ExtMove* make_move_KNIGHT(const Position& pos, const Bitboard& target, ExtMove* 
 		Piece pt = piece_type(pc);
 		int from = sq << 7;
 		int pc2 = pc << 17;
-		ASSERT(pc = add_color(LANCE, US));
+		ASSERT(pc == add_color(KNIGHT, US));
 		ASSERT(is_ok(sq));
 
 		target2 = target&StepEffect[US][pt][sq];
