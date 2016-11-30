@@ -1,6 +1,6 @@
 #pragma once
 #include "fundation.h"
-
+#include "Hash.h"
 /*
 ƒgƒ‰ƒ“ƒXƒ|ƒWƒVƒ‡ƒ“ƒe[ƒuƒ‹‚Ìˆê‚Â‚ÌƒGƒ“ƒgƒŠ[
 shogi686‚Å‚ÍBitboard‚É•Û‘¶‚·‚×‚«“à—e‚ğŠi”[‚µ‚Ä‚¢‚½B
@@ -14,6 +14,7 @@ int8_tg‚Á‚Ä‚àÀÛ‚É‚Í4bit‚µ‚©g‚í‚È‚­‚Ä‚à‚Á‚½‚¢‚È‚­‚È‚é‚Æ‚¢‚¤‚±‚Æ‚ª‹N‚±‚ç‚È‚¢‚Ì
 struct TPTEntry {
 
 private:
+	friend class TranspositionTable;
 	uint32_t key32;//4byte
 	int16_t eval16;//2byte
 	int16_t value16;//2byte
@@ -34,8 +35,6 @@ public:
 //ƒRƒ“ƒpƒCƒ‹ƒGƒ‰[ƒ`ƒFƒbƒNTPEntry‚ª16byte‚Å‚ ‚é‚±‚Æ‚ğ•ÛØ‚·‚éB
 static_assert(sizeof(TPTEntry) == 16, "");
 
-
-
 /*
 TPT‚É‚Í2‚Ì‚×‚«æ‚ÌƒNƒ‰ƒXƒ^[‚ğŠÜ‚İA‚»‚ê‚¼‚ê‚ÌƒNƒ‰ƒXƒ^‚ÉClusterSizeŒÂ‚ÌTPTEntry‚ğ‚ÂB
 ’†g‚ª‹ó‚Å‚Í‚È‚¢‚»‚ê‚¼‚ê‚ÌƒGƒ“ƒgƒŠ[‚É‚Íˆê‚Â‚Ì‹Ç–Ê‚Ìî•ñ‚ªŠi”[‚³‚ê‚éB
@@ -55,6 +54,7 @@ TPT‚É‚Í2‚Ì‚×‚«æ‚ÌƒNƒ‰ƒXƒ^[‚ğŠÜ‚İA‚»‚ê‚¼‚ê‚ÌƒNƒ‰ƒXƒ^‚ÉClusterSizeŒÂ‚ÌTPTEntry‚
 */
 class TranspositionTable {
 
+public:
 	static constexpr int CacheLineSize = 64;
 	static constexpr int ClusterSize = 4;
 
@@ -64,4 +64,34 @@ class TranspositionTable {
 	};
 	//ƒNƒ‰ƒXƒ^[‚Í64byte‚ÅŒÅ’è
 	static_assert(sizeof(Cluster) == 64, "");
+
+private:
+	size_t cluster_count;
+	Cluster* table;//SF8‚Å‚Ímem‚©‚çcashlinesize-1•ª—]•ª‚ÉŠm•Û‚µ‚Ä‚¢‚½‚è‚µ‚½‚ªSquirrel‚Å‚Íalign64‚µ‚Ä‚¢‚é‚Ì‚Å‚µ‚È‚­‚Ä‚à‚¢‚¢‚Æ‚¨‚à‚¤BÀÛ‚Í‚Ç‚¤‚È‚Ì‚©‚í‚©‚ç‚È‚¢
+	void* mem;//ˆê‰ƒRƒŒ‚à—pˆÓ‚µ‚Ä‚¨‚­
+	uint8_t generation_u8;//uint_8t‚Å‚ ‚é‚Ì‚Å256‚É‚È‚é‚Æ0‚É–ß‚é‚Â‚Ü‚è®”˜_“I‚ÉŒ¾‚¤‚Æmod=256
+	size_t mask;//cluster_count-1 –ˆ‰ñŒvZ‚·‚é‚Ì‚Í–³‘Ê‚È‚Ì‚Å–‘O‚ÉŒvZ‚µ‚Ä‚¨‚­
+public:
+	~TranspositionTable() { free(mem); }//ƒfƒRƒ“ƒXƒgƒ‰ƒNƒ^
+	//goƒRƒ}ƒ“ƒh‚Ü‚½‚ÍponderƒRƒ}ƒ“ƒh–ˆ‚Égeneration‚Í‰ÁZ‚³‚ê‚éB
+	void new_search() { generation_u8 += 4; }//‰ºˆÊ2bit‚Íbound‚Ég‚í‚ê‚é‚½‚ß(0b100)‚¸‚Â‘‚â‚µ‚Ä‚¢‚­
+	uint8_t generation() const { return generation_u8; }
+
+	// The lowest order bits of the key are used to get the index of the cluster
+	//ƒNƒ‰ƒXƒ^‚Ìindex‚ğ‹‚ß‚é‚½‚ß‚Ékey‚Ì‰ºˆÊ”ƒrƒbƒg‚ğ—p‚¢‚éB
+	TPTEntry* first_entry(const Key key) const {
+		ASSERT(mask);
+		return &table[(size_t)key & (mask)].entry[0];
+	}
+
+	//’uŠ·•\‚ÌƒGƒ“ƒgƒŠ‚Ì’Tõ
+	TPTEntry* probe(const Key key, bool& found) const;
+
+	int hashfull() const;
+	//TPT‚ÌƒTƒCƒY‚ğMB’PˆÊ‚ÅƒŠƒTƒCƒY‚·‚éB‚»‚Ì‚Í•K‚¸’uŠ·•\‚ğƒNƒŠƒA‚·‚é‚±‚ÆB
+	void resize(size_t mbSize);
+	//’uŠ·•\‚ÌƒNƒŠƒA
+	void clear() { std::memset(table, 0, cluster_count * sizeof(Cluster));}
 };
+
+extern TranspositionTable TT;

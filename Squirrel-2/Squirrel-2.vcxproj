@@ -182,6 +182,7 @@
     <ClCompile Include="position.cpp" />
     <ClCompile Include="search.cpp" />
     <ClCompile Include="Thread.cpp" />
+    <ClCompile Include="tpt.cpp" />
     <ClCompile Include="usi.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

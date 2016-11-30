@@ -231,8 +231,8 @@ void Eval::learner()
 		//棋譜のシャッフル
 		//random_shuffleを使うと同じ並べ替えられ方になったのでshuffle()を使ってみる
 		std::random_device rd;
-		std::mt19937 g(rd());
-		std::shuffle(games.begin(), games.end(),g);
+		std::mt19937 g_mt(rd());
+		std::shuffle(games.begin(), games.end(),g_mt);
 
 		//iterationの最初に初期化する（それ以外ではしてはいけない）
 		memset(dJ, 0, sizeof(dJ));
@@ -342,13 +342,8 @@ void Eval::learner()
 						黒番の場合は最終的にupdate_dJに入るのは-dsig
 						白番の場合は最終的にupdate_dJに入るのはdsigになる。
 						
-						ppはbppとwppにわけられる。
-						ppを下げたければbppを下げてwppを上げれば良い。
-						
-						黒盤のときはbppを中心にして見ていて
-						白番のときはwppを中心にしてみている。
-						コレで説明がつくはず
-						
+						詳しい解説
+						https://twitter.com/daruma3940/status/801638488130994177
 						*/
 						double diffsig = dsigmoid(diff);
 						diffsig = (rootColor == BLACK ? diffsig : -diffsig);
