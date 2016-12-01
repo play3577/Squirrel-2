@@ -1,6 +1,8 @@
 #include "tpt.h"
 #include "bitop.h"
+#include <iostream>
 
+using namespace std;
 TranspositionTable TT; // Our global transposition table
 
 

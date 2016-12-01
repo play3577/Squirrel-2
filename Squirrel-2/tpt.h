@@ -29,7 +29,7 @@ public:
 	Value eval()  const { return (Value)eval16; }
 	Depth depth() const { return (Depth)(depth8 * int(ONE_PLY)); }
 	Bound bound() const { return (Bound)(genbound8 & 0x3); }
-	
+	Key key()const { return (Key)key32; }
 	//未実装
 	void save(Key k, Value v, Bound b, Depth d, Move m, Value ev, uint8_t g){
 	
@@ -57,7 +57,7 @@ public:
 			/* || g != (genBound8 & 0xFC) // Matching non-zero keys are already refreshed by probe() *///　genbound8は　TT.probeでリフレッシュされている
 			|| b == BOUND_EXACT)
 		{
-			key32 = (uint16_t)(k >> 32);
+			key32 = (uint32_t)(k >> 32);
 			value16 = (int16_t)v;
 			eval16 = (int16_t)ev;
 			genbound8 = (uint8_t)(g | b);

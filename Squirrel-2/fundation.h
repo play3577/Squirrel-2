@@ -303,6 +303,7 @@ enum Depth {
 	ONE_PLY = 2,
 	MAX_DEPTH = 64,
 
+	DEPTH_NONE = -12,//6*ONEPLY
 };
 
 enum Bound :int8_t {

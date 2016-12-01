@@ -6,6 +6,25 @@
 SearchLimit limit;
 Signal signal;
 
+/*
+この関数で詰み関連のスコアを「root nodeからあと何手で詰むか」から「今の局面から後何手で詰むか」に変換をする。
+なぜかというと置換表から値を取り出すときにrootnodeからの手数が違う局面から取り出されることがあるので、
+root nodeからあと何手で詰むかの情報ではおかしくなってしまうことがあるからである。
+TTから読み出すときにvalue_from_ttをかますことでそのあたりを補正する。
+*/
+Value value_to_tt(Value v,int ply) {
+	
+	return v >= Value_mate_in_maxply ? v + ply :
+		v <= Value_mated_in_maxply ? v - ply : v;
+}
+
+//これおかしいかもしれない
+Value value_from_tt(Value v, int ply) {
+
+	return v >= Value_mate_in_maxply ? v - ply :
+		v <= Value_mated_in_maxply ? v + ply : v;
+}
+
 void update_pv(Move* pv, Move move, Move* childPv) {
 
 	//pvの先頭ポインタをmoveにして
@@ -20,7 +39,7 @@ void update_pv(Move* pv, Move move, Move* childPv) {
 
 void check_time() {
 	TimePoint now_ = now();
-	if (now_ - limit.endtime > 10) {
+	if (now_  > limit.endtime -20) {
 		signal.stop = true;
 	}
 }
@@ -113,11 +132,19 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 	int movecount = 0;
 	bool incheck = pos.is_incheck();
 	Thread* thisthread = pos.searcher();
-	Key poskey;
-	bool TThit;
-	TPTEntry* tte;
 	ss->ply = (ss - 1)->ply + 1;
 	Value bestvalue=-Value_Infinite;
+	//-----TT関連
+	//読み太ではTTから読み込んでいる途中でTTが破壊された場合のことも考えていたので、それを参考にする
+	//Key poskey;
+	bool TThit;
+	TPTEntry* tte;
+	Move ttMove;
+	Value ttValue;
+	Value ttEval;
+	Bound ttBound;
+	Depth ttdepth;
+
 
 #ifndef LEARN
 	//timer threadを用意せずにここで時間を確認する。
@@ -128,7 +155,8 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 		thisthread->call_count = 0;
 
 	}
-	if (++thisthread->call_count > 4096) {
+	//なかなか時間通りに指してくれなかったので2048で行く
+	if (++thisthread->call_count > 2048) {
 		//並列化のときはすべてのスレッドでこの操作を行う。
 		thisthread->resetCalls = true;
 		check_time();
@@ -187,13 +215,48 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 	exclude moveがある場合には異なるhashkeyを用いる
 	*/
 	excludedmove = ss->excludedMove;
-	poskey = pos.key() ^ Key(excludedmove);
+	const Key poskey = pos.key() ^ Key(excludedmove);
+	ASSERT((poskey & uint64_t(1)) == pos.sidetomove());
+	//cout << (poskey>>32) << endl;
 	tte = TT.probe(poskey, TThit);
-	if (TThit) {
+	/*if (TThit) {
 		cout << "TThit" << endl;
+	}*/
+	//アクセス競合が怖いので先に全部読み出しておく。
+	if (TThit) {
+		ttValue = tte->value();
+		ttdepth = tte->depth();
+		ttEval = tte->eval();
+		ttBound = tte->bound();
+	}
+	//ここでもしkey32の値が変わってしまっていた場合はttの値が書き換えられてしまっているので値をなかったことにする（idea from 読み太）(今のところone threadなのであまり意味はない)
+	if (TThit && (poskey >> 32) != tte->key()) {
+
+		cout << "Access Conflict" << endl;
+		ttValue = Value_error;
+		ttdepth = DEPTH_NONE;
+		ttEval = Value_error;
+		ttBound = BOUND_NONE;
 	}
 
+	// At non-PV nodes we check for an early TT cutoff
+	//non pv nodeで置換表の値で枝切り出来ないか試す。
+	/*
+	PVノードではなく
+	置換表の残り探索深さのほうが大きく（depthは残り深さであるので深い探索による結果であるということ？）
+	ttvalueがValueNoneでなく
 
+	ttvalue=>betaのときはBOUND_LOWER|BOUNDEXACTであれば真の値はbeta以上であるとみなせるので枝切りできる。
+	ttvalue<betaのときはBOUND_UPPER|BOUNDEXACTであれば真の値はbeta以下であることが確定している
+	（nonPVnodeであるのでこれはnullwindowsearchでありalpha以下であることが確定したのでここで値を返しても良い）
+	*/
+	if (!PVNode
+		&&TThit
+		&&ttValue != Value_error//これ今のところいらない(ここもっと詳しく読む必要がある)
+		&& (ttValue >= beta ? (ttBound&BOUND_LOWER) : (ttBound&BOUND_UPPER))//BOUND_EXACT = BOUND_UPPER | BOUND_LOWERであるのでどちらの&も満たす
+		) {
+		return ttValue;
+	}
 
 
 
@@ -284,9 +347,10 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 		//alpha超えの処理
 		if (value > alpha) {
 			alpha = value;
-
+			
 			if (value > bestvalue) {
 				bestvalue = value;
+				bestMove = move;
 			}
 
 			if (PVNode&&!RootNode) {
@@ -303,7 +367,23 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 		return mated_in_ply(ss->ply);
 	}
 
-	return alpha;
+	//http://yaneuraou.yaneu.com/2015/02/24/stockfish-dd-search-%E6%8E%A2%E7%B4%A2%E9%83%A8/ 　から引用
+	// value_to_ttは詰みのスコアの場合、現在の局面からの手数を表す数値に変換するためのヘルパー関数。
+	// beta cutしているならBOUND_LOWER(他にもっといい値を記録する指し手があるかも知れないので)
+	// PvNodeでかつbestMoveが具体的な指し手として存在するなら、BOUND_EXACT
+	// non PV nodeとか、bestMoveがない(適当な見積もりで枝刈りした場合など)は、この状態
+
+	// non PVだと、null windowで探索するので、仮にそれが[α-1,α]の範囲であれば、
+	// αを超えるか超えないかしかわからない。αを下回る値が返ってきたなら、このnodeの真の値は、
+	// その値以下であるから、BOUND_UPPER、また、αを上回る値が返ってきたら、このnodeの真の値は、
+	// その値以上であろうから、BOUND_LOWERである。
+	// このように、non PVにおいては、BOUND_UPPER、BOUND_LOWERしか存在しない。(aki.さん)
+	tte->save(poskey, value_to_tt(bestvalue, ss->ply),
+		bestvalue > beta ? BOUND_LOWER :
+		PVNode&&bestMove ? BOUND_EXACT : BOUND_UPPER,
+		depth, bestMove, staticeval, TT.generation());
+
+	return bestvalue;
 
 }
 

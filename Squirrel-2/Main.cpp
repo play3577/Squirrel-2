@@ -20,7 +20,7 @@ int main() {
 	bitboard_init();
 	Eval::init();
 	Zoblist::init();
-	TT.resize(15);//15MBで初期化する（やねうら王に倣った）
+	TT.resize(30);//15MBで初期化する（やねうら王に倣った）
 	//bitboard_debug();
 
 #ifdef TEST

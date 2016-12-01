@@ -96,8 +96,12 @@ void randomwalker(Position & pos, int maxdepth)
 		if (pos.is_legal(m) == false) { ++continue_count;  continue;  }//‚·‚×‚Ä‚Ì·‚µè‚ªillegal‚Â‚Ü‚è‹l‚İ‚Ìó‘Ô‚É‚È‚ê‚Î‚±‚ê‚Å‚Í‚¨‚©‚µ‚­‚È‚Á‚Ä‚µ‚Ü‚¤‚Ì‚ÅC³
 		else { continue_count = 0; }
 		//ˆê‰ñ‚¿‚á‚ñ‚Ædo-undo‚Å‚«‚é‚©Šm”F‚ğ‚µ‚Ä‚©‚ç
+		Key hash1 = pos.key();
 		pos.do_move(m, &si[depth]);
 		pos.undo_move();
+		Key hash2 = pos.key();
+		ASSERT(hash1 == hash2);
+
 
 		pos.do_move(m, &si[depth]);
 		depth++;
