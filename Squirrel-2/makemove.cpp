@@ -189,27 +189,28 @@ ExtMove* make_move_SILVER(const Position& pos, const Bitboard& target, ExtMove* 
 
 	Bitboard occ_us = pos.occ_pt(US, SILVER);
 	Bitboard target2;
-	bool canpromote= false;
+	bool canpromotefrom= false;
 
 	while (occ_us.isNot())
 	{
-
+		//ïKÇ∏Ç±Ç±Ç≈canpromoteÇfalseÇ…ñﬂÇµÇƒÇ®Ç≠ÅI
+		canpromotefrom = false;
 		Square sq = occ_us.pop();
 		Piece pc = pos.piece_on(sq);
 		ASSERT(piece_type(pos.piece_on(sq)) == SILVER);
 		if ((SquareBB[sq] & canPromoteBB[US]).isNot()) {
-			canpromote = true;
+			canpromotefrom = true;
 		}
 		target2 = target&StepEffect[US][SILVER][sq];
 		int from = sq << 7;
 		int pc2 = pc << 17;
 		while (target2.isNot()) {
-
+			bool canpromoteto = false;
 			Square to = target2.pop();
-			if (canpromote == false) {
-				if ((SquareBB[to] & canPromoteBB[US]).isNot()) { canpromote = true; }
+			if (canpromotefrom == false) {
+				if ((SquareBB[to] & canPromoteBB[US]).isNot()) { canpromoteto = true; }
 			}
-			if (canpromote) { movelist++->move = make_movepromote2(from, to, pc2);}
+			if (canpromotefrom||canpromoteto) { movelist++->move = make_movepromote2(from, to, pc2);}
 			movelist++->move = make_move2(from, to, pc2);//Ç»ÇÁÇ»Ç¢éwÇµéËÇ‡ê∂ê¨ÇµÇƒÇ®Ç≠
 				
 		}

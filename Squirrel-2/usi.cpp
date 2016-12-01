@@ -42,6 +42,29 @@ const string drop = "sfen lnsgkgsnl/1r5b1/ppppppppp/9/9/9/PP1PPPPPP/1B5R1/LNSGKG
 const string debug1 = "sfen 5k2l/1r7/S2bp1gs1/1N2sp2p/2P7/4SP3/LP2PGN1P/3GN2r1/PK6L w 1";
 const string debug2 = "sfen +S3+P3l/9/p1ppn1b2/4+R4/4Pnpk1/1P1KNr1n1/P1LP1P1+s+p/1G7/L1S1+bG2L w 1";
 const string nuhu = "sfen l6nl/1r3kgs1/p1+Bspp2p/6pp1/1p7/9/PPG1PPPPP/6SK1/+r4G1NL 2PNGB2plns w 1";
+
+/*
+position startpos moves 2g2f 3c3d 2f2e 2b3c 5i6h 4a3b 5g5f 3a2b 7g7f 3c8h+ 7i8h B*6e 3g3f 6e5f 3f3e 5f4g+ 3e3d 4g4f 6h7g 4f2h 3i2h R*4g B*1f 4g4e+ 2h3g P*3f 3g2f 4e3d 6g6f 3d4e 7g7h 4e5f 8h7g 2b3c 2f3e 5f4e B*4f 3c3d 3e3d 4e4f 1f3h 3f3g+ 2i3g 4f3g 3d2c+ 3b2c 2e2d 2c2d 3h6e B*6g 7h8h 6g4i+ 6e4c+ 3g4h 6i6h 4h4c 6h7h G*2h P*2b 8b2b P*3b 2b3b P*3d 4c3d P*2b 3b2b 9g9f 3d3g S*4d 5a6b
+*/
+
+//usiで自己紹介をするための関数
+const string self_introduction() {
+
+	stringstream ss;
+
+	ss << "id name Squirrel_";
+#ifdef _DEBUG
+	ss << "debug ";
+#endif
+#ifndef _DEBUG
+	ss << "releaseTPT ";
+#endif
+	ss << endl;
+	ss << "id author Kotaro Suganuma";
+	return ss.str();
+}
+
+
 void USI::init_option(OptionMap &o)
 {
 	o["USI_Ponder"] << USIOption(false);
@@ -81,23 +104,6 @@ std::ostream& USI::operator<<(std::ostream& os, const OptionMap& om) {
 	}
 
 	return os;
-}
-
-//usiで自己紹介をするための関数
-const string self_introduction() {
-
-	stringstream ss;
-
-	ss << "id name Squirrel_";
-#ifdef _DEBUG
-	ss << "debug ";
-#endif
-#ifndef _DEBUG
-	ss << "release ";
-#endif
-	ss << endl;
-	ss << "id author Kotaro Suganuma";
-	return ss.str();
 }
 
 //isreadyでセッティングするための関数
