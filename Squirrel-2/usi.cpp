@@ -57,7 +57,7 @@ const string self_introduction() {
 	ss << "debug ";
 #endif
 #ifndef _DEBUG
-	ss << "releaseTPT ";
+	ss << "releaseTT ";
 #endif
 	ss << endl;
 	ss << "id author Kotaro Suganuma";

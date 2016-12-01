@@ -6,6 +6,8 @@
 SearchLimit limit;
 Signal signal;
 
+#define USETT
+
 /*
 この関数で詰み関連のスコアを「root nodeからあと何手で詰むか」から「今の局面から後何手で詰むか」に変換をする。
 なぜかというと置換表から値を取り出すときにrootnodeからの手数が違う局面から取り出されることがあるので、
@@ -145,7 +147,6 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 	Bound ttBound;
 	Depth ttdepth;
 
-
 #ifndef LEARN
 	//timer threadを用意せずにここで時間を確認する。
 	//stockfish方式
@@ -214,6 +215,7 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 	除外する手がない探索の置換表を上書きするために特定の手を場外しての探索結果はほしくないので、
 	exclude moveがある場合には異なるhashkeyを用いる
 	*/
+#ifdef USETT
 	excludedmove = ss->excludedMove;
 	const Key poskey = pos.key() ^ Key(excludedmove);
 	ASSERT((poskey & uint64_t(1)) == pos.sidetomove());
@@ -229,14 +231,21 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 		ttEval = tte->eval();
 		ttBound = tte->bound();
 	}
+	else {
+		ttValue = Value_error;
+		ttdepth = DEPTH_NONE;
+		ttEval = Value_error;
+		ttBound = BOUND_NONE;
+	}
 	//ここでもしkey32の値が変わってしまっていた場合はttの値が書き換えられてしまっているので値をなかったことにする（idea from 読み太）(今のところone threadなのであまり意味はない)
 	if (TThit && (poskey >> 32) != tte->key()) {
-
+		
 		cout << "Access Conflict" << endl;
 		ttValue = Value_error;
 		ttdepth = DEPTH_NONE;
 		ttEval = Value_error;
 		ttBound = BOUND_NONE;
+		TThit = false;
 	}
 
 	// At non-PV nodes we check for an early TT cutoff
@@ -252,12 +261,13 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 	*/
 	if (!PVNode
 		&&TThit
+		&&ttdepth>=depth
 		&&ttValue != Value_error//これ今のところいらない(ここもっと詳しく読む必要がある)
 		&& (ttValue >= beta ? (ttBound&BOUND_LOWER) : (ttBound&BOUND_UPPER))//BOUND_EXACT = BOUND_UPPER | BOUND_LOWERであるのでどちらの&も満たす
 		) {
 		return ttValue;
 	}
-
+#endif
 
 
 	//if (incheck) {
@@ -345,7 +355,7 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 		}
 
 		//alpha超えの処理
-		if (value > alpha) {
+		/*if (value > alpha) {
 			alpha = value;
 			
 			if (value > bestvalue) {
@@ -360,13 +370,34 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 			if (alpha >= beta) {
 				break;
 			}
+		}*/
+		if (value > bestvalue) {
+
+			bestvalue = value;
+			if (value > alpha) {
+				bestMove = move;
+				if (PVNode && !RootNode) {
+					update_pv(ss->pv, move, (ss + 1)->pv);
+				}
+				//PVnodeでなければならないのはnonPVではnullwindowsearchだから
+				if (PVNode&&value < beta) {
+					alpha = value;
+				}
+				else {
+					//これはPVでもnonPVでも成り立つ（null window）
+					ASSERT(value >= beta);
+					break;
+				}
+			}
 		}
 	}//指し手のwhile
 
+	
 	if (movecount == 0) {
-		return mated_in_ply(ss->ply);
+		bestvalue= excludedmove?alpha: mated_in_ply(ss->ply);
 	}
 
+#ifdef USETT
 	//http://yaneuraou.yaneu.com/2015/02/24/stockfish-dd-search-%E6%8E%A2%E7%B4%A2%E9%83%A8/ 　から引用
 	// value_to_ttは詰みのスコアの場合、現在の局面からの手数を表す数値に変換するためのヘルパー関数。
 	// beta cutしているならBOUND_LOWER(他にもっといい値を記録する指し手があるかも知れないので)
@@ -379,11 +410,13 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 	// その値以上であろうから、BOUND_LOWERである。
 	// このように、non PVにおいては、BOUND_UPPER、BOUND_LOWERしか存在しない。(aki.さん)
 	tte->save(poskey, value_to_tt(bestvalue, ss->ply),
-		bestvalue > beta ? BOUND_LOWER :
+		bestvalue >= beta ? BOUND_LOWER :
 		PVNode&&bestMove ? BOUND_EXACT : BOUND_UPPER,
 		depth, bestMove, staticeval, TT.generation());
+#endif
 
-	return bestvalue;
+	return bestvalue;//これはreturn alphaと同じはず
+
 
 }
 
