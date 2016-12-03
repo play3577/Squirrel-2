@@ -156,7 +156,7 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 
 	}
 	//なかなか時間通りに指してくれなかったので2048で行く
-	if (++thisthread->call_count > 2048) {
+	if (++thisthread->call_count > 4096) {
 		//並列化のときはすべてのスレッドでこの操作を行う。
 		thisthread->resetCalls = true;
 		check_time();
@@ -267,7 +267,7 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 		return ttValue;
 	}
 #endif
-
+	
 
 	//if (incheck) {
 	//	cout << "incheck" << endl;
@@ -286,7 +286,8 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 
 		if (pos.is_legal(move) == false) { continue; }
 
-		if (pos.check_nihu(move) == true) {
+		//二歩が入ってこないことは確認した
+		/*if (pos.check_nihu(move) == true) {
 
 			cout << "nihu "<< endl;
 			cout << move << endl;
@@ -294,7 +295,7 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 			cout << "pbb black"<<endl<<pos.pawnbb(BLACK) << endl;
 			cout << "pbb white"<<endl << pos.pawnbb(WHITE) << endl;
 			UNREACHABLE;
-		}
+		}*/
 
 
 		if (NT == Root&&thisthread->find_rootmove(move) == nullptr) { continue; }
@@ -415,7 +416,7 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 		depth, bestMove, staticeval, TT.generation());
 #endif
 
-	return bestvalue;//これはreturn alphaと同じはず
+	return bestvalue;
 
 
 }
@@ -440,6 +441,25 @@ Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
 	bool incheck = pos.is_incheck();
 	Thread* thisthread = pos.searcher();
 
+
+	//時間通りに指し手を指してくれなかったので精子探索でも時間を見る
+#ifndef LEARN
+	//timer threadを用意せずにここで時間を確認する。
+	//stockfish方式
+	if (thisthread->resetCalls.load(std::memory_order_relaxed)) {
+
+		thisthread->resetCalls = false;
+		thisthread->call_count = 0;
+
+	}
+	
+	if (++thisthread->call_count > 4096) {
+		//並列化のときはすべてのスレッドでこの操作を行う。
+		thisthread->resetCalls = true;
+		check_time();
+	}
+#endif
+	
 	//ここに前向き枝切りのコードを書く
 
 
@@ -457,7 +477,7 @@ Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
 	while ((move = mp.return_nextmove()) != MOVE_NONE) {
 
 		if (pos.is_legal(move) == false) { continue; }
-		if (pos.check_nihu(move) == true) {
+		/*if (pos.check_nihu(move) == true) {
 
 			cout << "nihu " << endl;
 			cout << move << endl;
@@ -465,14 +485,18 @@ Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
 			cout << "pbb black" << endl << pos.pawnbb(BLACK) << endl;
 			cout << "pbb white" << endl << pos.pawnbb(WHITE) << endl;
 			UNREACHABLE;
-		}
+		}*/
 
 
 		movecount++;
 		pos.do_move(move, &si);
 		value = -qsearch<NT>(pos, ss + 1, -beta, -alpha, depth - ONE_PLY);
 		pos.undo_move();
-
+#ifndef LEARN
+		if (signal.stop.load(std::memory_order_relaxed)) {
+			return alpha;
+		}
+#endif
 		if (value > bestvalue) {
 			//取り合いを読んだ分評価値はより正確になった
 			bestvalue = value;
