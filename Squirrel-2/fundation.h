@@ -21,6 +21,11 @@
 //#define CHECKPOS
 //#define LEARN
 
+
+#ifndef LEARN
+#define USETT
+#endif
+
 //やねうら王のアイディア
 #if defined(_MSC_VER)
 // C4800 : 'unsigned int': ブール値を 'true' または 'false' に強制的に設定します

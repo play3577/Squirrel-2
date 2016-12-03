@@ -8,6 +8,11 @@
 #include "evaluate.h"
 #include "Hash.h"
 #include "tpt.h"
+
+#include <iostream>
+#include <string>
+
+
 using namespace std;
 
 //#define TEST
@@ -15,12 +20,23 @@ using namespace std;
 
 int main() {
 
+	//この記法が許されるのはVC++だけらしいのでlinuxに移植する場合は別の方法を使わないといけない
+	//cout << __argv[0] << endl;
+	string ename = __argv[0];
+	string::size_type hoge = ename.find_last_of('\\');
+	if(hoge==string::npos){ hoge = ename.find_last_of('/'); }
+	string ename2 = ename.substr(hoge + 1);
+	//cout << ename2 << endl;
+
+
 	//Eval::initialize_PP();
-	USI::init_option(Options);
+	USI::init_option(Options,ename2);
 	bitboard_init();
 	Eval::init();
 	Zoblist::init();
-	TT.resize(30);//15MBで初期化する（やねうら王に倣った）
+#ifdef USETT
+	TT.resize(30);//30MBで初期化する（やねうら王に倣った）
+#endif
 	//bitboard_debug();
 
 #ifdef TEST

@@ -26,7 +26,6 @@ USI::OptionMap Options;
 /*
 error position
 position startpos moves 2g2f 3c3d 2f2e 2b3c 7g7f 4c4d 5g5f 5c5d 3g3f 3a2b 2i3g 7c7d 5f5e 5d5e 8h5e 8b5b
-
 */
 //2歩を指した！PawnBBの差分にバグが有る？？？
 
@@ -51,26 +50,47 @@ position startpos moves 2g2f 3c3d 2f2e 2b3c 5i6h 4a3b 5g5f 3a2b 7g7f 3c8h+ 7i8h 
 const string self_introduction() {
 
 	stringstream ss;
-
-	ss << "id name Squirrel_";
-#ifdef _DEBUG
-	ss << "debug ";
-#endif
-#ifndef _DEBUG
-	ss << "releaseTT ";
-#endif
+//
+//	ss << "id name Squirrel_";
+//#ifdef _DEBUG
+//	ss << "debug ";
+//#endif
+//#ifndef _DEBUG
+//	ss << "releaseTT ";
+//#endif
+	ss <<"id name "<< Options["EngineName"].str();
 	ss << endl;
 	ss << "id author Kotaro Suganuma";
 	return ss.str();
 }
 
 
-void USI::init_option(OptionMap &o)
+void USI::init_option(OptionMap &o,string engine_name)
 {
+
+
+	string name;
+	if (engine_name.size() == 0) { 
+		name = "Squirrel_";
+	}
+	else {
+		name = engine_name;
+	}
+	//optionが来る前に名前を設定されてしまうのでコマンドから名前を変えようとしても無駄か...
+//
+//	string name;
+//	name += "Squirrel_";
+//#ifdef _DEBUG
+//	name+= "debug ";
+//#endif
+//#ifndef _DEBUG
+//	name+="releaseTT ";
+//#endif
 	o["USI_Ponder"] << USIOption(false);
 	o["Threads"] << USIOption(1, 1, 128);
 	o["eval"] << USIOption("c:/book2/fv_PP.bin");
 	o["USI_Hash"] << USIOption(1, 1, 256);
+	o["EngineName"] << USIOption(name.c_str());
 }
 
 

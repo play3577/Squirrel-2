@@ -99,7 +99,7 @@ namespace USI {
 
 	};
 
-	void init_option(OptionMap& o);
+	void init_option(OptionMap& o,string engine_name);
 	void loop();
 
 

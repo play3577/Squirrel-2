@@ -6,7 +6,6 @@
 SearchLimit limit;
 Signal signal;
 
-#define USETT
 
 /*
 この関数で詰み関連のスコアを「root nodeからあと何手で詰むか」から「今の局面から後何手で詰むか」に変換をする。
@@ -390,6 +389,7 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 				}
 			}
 		}
+
 	}//指し手のwhile
 
 	
