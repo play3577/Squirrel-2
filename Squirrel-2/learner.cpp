@@ -17,6 +17,10 @@ using namespace std;
 
 double dJ[fe_end2][fe_end2];
 
+
+void param_sym_leftright();
+
+
 //dJ/dviをdJ配列にそれぞれ格納していく。
 void update_dJ(const Position pos, const double diff) {
 
@@ -36,7 +40,8 @@ void update_dJ(const Position pos, const double diff) {
 
 //コレだとd==0の場合の特徴量がどんどんマイナスに大きくなってしまう(修正済み)　と言うか出てこない特徴量はsparseにしていきたい。
  int sign(const double d) {
-	 return (d > 0) ? 1 : (d<0)?-1:0;
+	 //return (d > 0) ? 1 : (d<0)?-1:0;
+	 return  (d > 0) ? 1: -1;
 }
 
 //教師手の指し手をmoves配列の一番先頭に持ってくるための関数
@@ -83,6 +88,7 @@ void Eval::read_PP() {
 
 	return;
 }
+
 
 
 //PPを乱数で初期化する
@@ -420,3 +426,37 @@ void Eval::learner()
 	ofs.close();
 }
 
+
+//左右の対称性を考えてdJの値を調整する。
+//左右の対称性を考えると弱くなってしまうことも起こりうるそうだが実際どうなんだろうか？
+//http://yaneuraou.yaneu.com/2014/12/23/kpp%E3%81%A7%E3%81%AF%E5%B7%A6%E5%8F%B3%E3%81%AE%E5%AF%BE%E7%A7%B0%E6%80%A7%E3%82%92%E8%80%83%E6%85%AE%E3%81%99%E3%82%8B%E3%81%A8%E5%BC%B1%E3%81%8F%E3%81%AA%E3%82%8B%EF%BC%81%EF%BC%9F/
+void param_sym_leftright() {
+
+	//l反転前, r反転語
+	BonaPiece il, ir, jl, jr;
+	File f;
+	Rank r;
+
+	//PPの一つ目のindexについて
+	for (il = f_hand_pawn; il < fe_end2; il++) {
+
+		//持ち駒の場合はそのままでいい。（左右対称になんて出来ないから）
+		if (il < fe_hand_end) { ir = il; }
+		else {
+			//盤上の駒は左右を反転させる。
+
+
+
+		}
+
+
+
+
+	}
+
+
+
+
+
+
+}

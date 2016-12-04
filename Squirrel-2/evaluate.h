@@ -172,6 +172,11 @@ namespace Eval {
 	void read_PP();
 
 
+	//bonapiece‚Ì¶‰E‚ğ”½“]‚³‚¹‚éŠÖ”
+	 BonaPiece sym_rightleft(const BonaPiece bp);
+
+
+
 	inline void init() { read_PP(); }
 
 };

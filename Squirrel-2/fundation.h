@@ -94,6 +94,17 @@ std::ostream& operator<<(std::ostream& os, const File f);
 inline Square make_square(const Rank r, const  File f) {
 	return Square(r + (f * 9));
 }
+ 
+//square‚Ì¶‰E‚ð”½“]‚³‚¹‚é‚½‚ß‚ÌŠÖ”
+inline Square sym_rl_sq(const Square sq) {
+	File f = sqtofile(sq);
+	Rank r = sqtorank(sq);
+	File sym_file = File(9 - 1 - f);
+
+	return make_square(r, sym_file);
+}
+
+
 
 enum Piece:uint8_t {
 	//pt(Piece type) ‹à‚ðŒã‚ë‚ÉŽ‚Á‚Ä‚­‚é‚±‚Æ‚Å‹îŽí‚Í˜A‘±‚·‚éB

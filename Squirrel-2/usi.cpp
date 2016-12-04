@@ -539,6 +539,20 @@ void USI::loop()
 			std::cout << std::endl;
 
 		}
+		else if (token == "sym") {
+
+
+			for (Square sq = SQ_ZERO; sq < SQ_NUM; sq++) {
+				cout << sq << " sym " << sym_rl_sq(sq)<<endl;
+			}
+
+			auto elist = pos.evallist();
+
+			for (int i = 0; i < 40; i++) {
+				cout <<" elist"<<endl<< elist.bplist_fb[i] << endl;
+				cout << "sym " <<endl<< Eval::sym_rightleft(elist.bplist_fb[i]) << endl;
+			}
+		}
 	} while (token != "quit");
 
 
