@@ -13,7 +13,10 @@ using namespace Eval;
 using namespace std;
 
 #define LOG
-//#define USE_PENALTY
+
+
+
+
 
 double dJ[fe_end2][fe_end2];
 
@@ -116,7 +119,7 @@ void Eval::initialize_PP()
 	cout << "initialize param PP!" << endl;
 }
 
-
+#define USE_PENALTY
 //パラメーターの更新のための関数
 void renewal_PP() {
 
@@ -130,7 +133,7 @@ void renewal_PP() {
 	int h;
 
 	//こんなんでいいのか？
-	h =  std::abs(int8_t(mt())) % 3;
+	h =  std::abs(uint8_t(mt())) % 3;
 
 	//対称性はdJの中に含まれているのでここでは考えなくていい
 	for (BonaPiece i = f_hand_pawn; i < fe_end2; i++) {
@@ -141,11 +144,11 @@ void renewal_PP() {
 			ペナルティ項をつけることで値がPP[i][j]から大きく離れることはなくなる
 			しかしどれぐらいの大きさのペナルティ項を用意すればいいものか...
 
+			Aperyに倣う
 			*/
-			if (PP[i][j]>0) { dJ[i][j] - (double)0.002; }
-			else if (PP[i][j]<0) { dJ[i][j] + (double)0.002; }
+			if (PP[i][j]>0) { dJ[i][j] -= double(0.2/double(FV_SCALE)); }
+			else if (PP[i][j]<0) { dJ[i][j] += double(0.2/double(FV_SCALE)); }
 #endif
-
 			int inc = h*sign(dJ[i][j]);
 			PP[i][j] += inc;
 		}
@@ -158,6 +161,7 @@ void renewal_PP() {
 
 
 //学習用関数
+//学習の並列化もさせたいが、t2.microは1coreしかなかったので....
 void Eval::learner()
 {
 	//初期化
@@ -406,6 +410,9 @@ void Eval::learner()
 
 		//dJは全指し手と全棋譜に対して足し上げられたのでここからbonanzaで言うparse2
 		
+		//SquirrelではPPに左右対称性があるものとして学習させる。
+		param_sym_leftright();//この関数の実装ちょっと怪しい
+
 		//num_parse2回パラメーターを更新する。コレで-64から+64の範囲内でパラメーターが動くことになる。
 		//bonanzaではこの32回の間にdJが罰金項によってどんどんゼロに近づけられている。
 		for (int i = 0; i < num_parse2; i++) {
@@ -416,9 +423,9 @@ void Eval::learner()
 		read_PP();
 
 		//ここで統計情報を表示できればいいんだけれど...
-		std::cout << "iteration" << iteration<<"/maxiteration :"<<numiteration << " objfunc" << objective_function << std::endl;
+		std::cout << "iteration" << iteration<<"/maxiteration :"<<numiteration << " objfunc" << objective_function << " elasped " << (now() - limit.starttime + 1) / (1000 * 60) << " min"<< std::endl;
 #ifdef LOG
-		ofs << " iteration " << iteration << " objfunc" << objective_function << " elasped " << (now() - limit.starttime + 1) / (1000 * 60) << " minitus" << endl;
+		ofs << " iteration " << iteration << " objfunc" << objective_function << " elasped " << (now() - limit.starttime + 1) / (1000 * 60) << " min" << endl;
 #endif
 
 	}//for num iteration
@@ -468,7 +475,7 @@ void param_sym_leftright() {
 			//同じ関係なので２つ分のdJ/dviを用いることができる！！
 			/*
 			ここで(iljl,irjr)と(irjr,iljl)でdJを２重に計算してしまい、値がおかしくなってしまうことが起こりうる。
-			コレを何とかして防がなければならない。それを防ぐための(jl<=ilであるはず...これで大丈夫だよね...??)
+			コレを何とかして防がなければならない。それを防ぐための(jl<=ilであるはず...これで大丈夫だよね...??う～～ん怪しいか...(´・ω・｀))
 			*/
 			dJ[il][jl] = dJ[ir][jr]
 				= (dJ[il][jl] + dJ[ir][jr]);

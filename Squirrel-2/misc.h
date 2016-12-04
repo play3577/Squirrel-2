@@ -134,6 +134,8 @@ inline double eval2rate(double eval) {
 	const double a = 1.0 / 600.0;
 	return (1.0) / (1.0 + exp(-a*eval));
 }
+
+#if 0
 //シグモイド関数
 inline double sigmoid(const double x) {
 	return (1.0) / (1.0 + exp(-x));
@@ -146,6 +148,22 @@ FVWindowと係数をかけてやる必要がある。
 inline double dsigmoid(const double x) {
 	return sigmoid(x) * (1.0 - sigmoid(x));
 }
+#else
+//bonanza式のxの範囲を絞ったsigmoid関数
+
+inline double sigmoid(const double x) {
+	const double a = 7.0 / double(FV_WINDOW);
+	return (1.0) / (1.0 + exp(-a*x));
+}
+
+inline double dsigmoid(const double x) {
+	if (x <= -FV_WINDOW || FV_WINDOW <= x) { return 0.0; }
+	const double a = 7.0 / double(FV_WINDOW);
+	return a*sigmoid(x) * (1.0 - sigmoid(x));
+}
+
+#endif
+
 
 inline double normal_dist(double mean, double stddiv);
 

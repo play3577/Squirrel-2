@@ -126,7 +126,7 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 	Move pv[MAX_PLY + 1];
 	Move move;
 	Move bestMove;
-	Move excludedmove;
+	Move excludedmove=MOVE_NONE;
 	Value value;
 	StateInfo si;
 	Value staticeval;

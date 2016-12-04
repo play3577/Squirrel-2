@@ -19,7 +19,7 @@
 
 
 //#define CHECKPOS
-//#define LEARN
+#define LEARN
 
 
 #ifndef LEARN
@@ -33,6 +33,12 @@
 #endif
 
 //#define DIFFTEST
+
+
+
+//‹³tè‚Æ‚Ì·‚ª‚±‚Ì”ÍˆÍ“à‚Éû‚Ü‚ç‚È‚©‚Á‚½“Á’¥‚ÍXV‚µ‚È‚¢B
+static const int FV_WINDOW = 256;
+
 
 
 //==========================================================

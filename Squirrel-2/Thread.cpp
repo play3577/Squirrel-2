@@ -49,7 +49,7 @@ void Thread::set(Position pos)
 			j++;
 		}
 	}
-	cout << "movenum " << j << endl;
+//	cout << "movenum " << j << endl;
 	end = RootMoves + j;
 
 	rootpos.set_searcherthread(this);
