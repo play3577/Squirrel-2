@@ -138,7 +138,11 @@ inline double eval2rate(double eval) {
 inline double sigmoid(const double x) {
 	return (1.0) / (1.0 + exp(-x));
 }
+
 //シグモイド関数の微分
+/*
+FVWindowと係数をかけてやる必要がある。
+*/
 inline double dsigmoid(const double x) {
 	return sigmoid(x) * (1.0 - sigmoid(x));
 }

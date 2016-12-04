@@ -38,7 +38,8 @@ void update_dJ(const Position pos, const double diff) {
 	}
 }
 
-//コレだとd==0の場合の特徴量がどんどんマイナスに大きくなってしまう(修正済み)　と言うか出てこない特徴量はsparseにしていきたい。
+//コレだとd==0の場合の特徴量がどんどんマイナスに大きくなってしまう。と言うか出てこない特徴量はどんどんsparseにしていきたい。
+//私の最終目標は棋譜データの足りない分をスパースモデリング理論で補う学習方法の考案にあるのだ！
  int sign(const double d) {
 	 //return (d > 0) ? 1 : (d<0)?-1:0;
 	 return  (d > 0) ? 1: -1;
@@ -160,9 +161,9 @@ void renewal_PP() {
 void Eval::learner()
 {
 	//初期化
-	int readgames = 2000;
-	const int numgames = 200;
-	const int numiteration = 20;
+	int readgames = 28000;
+	const int numgames = 2000;//コレじゃ少ないかもしれないけど200棋譜の20iterationに２日かかったのでコレぐらいが妥当か
+	const int numiteration = 100;
 	/*bonanzaではparse2を３２回繰り返すらしいんでそれを参考にする。
 	学習の損失の現象が進むに連れてnum_parse2の値を減らしていく
 	*/
@@ -278,7 +279,7 @@ void Eval::learner()
 //					check_move(teacher_move); 
 //					//ASSERT(0);
 #ifdef LOG
-					ofs << " swap error position :" << pos.make_sfen() << " error move " << teacher_move << endl;
+					//ofs << " swap error position :" << pos.make_sfen() << " error move " << teacher_move << endl;
 #endif
 					
 					goto ERROR_OCCURED;
@@ -430,6 +431,11 @@ void Eval::learner()
 //左右の対称性を考えてdJの値を調整する。
 //左右の対称性を考えると弱くなってしまうことも起こりうるそうだが実際どうなんだろうか？
 //http://yaneuraou.yaneu.com/2014/12/23/kpp%E3%81%A7%E3%81%AF%E5%B7%A6%E5%8F%B3%E3%81%AE%E5%AF%BE%E7%A7%B0%E6%80%A7%E3%82%92%E8%80%83%E6%85%AE%E3%81%99%E3%82%8B%E3%81%A8%E5%BC%B1%E3%81%8F%E3%81%AA%E3%82%8B%EF%BC%81%EF%BC%9F/
+/*
+私は今のところ左右の対称性を考えて学習を進めたい。
+左右対称にしてしまい、正しく局面を評価できないデメリットは多少あるかもしれないが、
+学習されていない特徴の数を減らすことのほうが大事だと考えるからである。
+*/
 void param_sym_leftright() {
 
 	//l反転前, r反転語
@@ -444,19 +450,28 @@ void param_sym_leftright() {
 		if (il < fe_hand_end) { ir = il; }
 		else {
 			//盤上の駒は左右を反転させる。
-
-
-
+			ir = Eval::sym_rightleft(il);
 		}
 
+		//PPの二つ目のindexについて
+		for (jl = f_hand_pawn; jl <= il; jl++) {
+			
+			//持ち駒の場合はそのままでいい。（左右対称になんて出来ないから）
+			if (jl < fe_hand_end) { jr = jl; }
+			else {
+				//盤上の駒は左右を反転させる。
+				jr = Eval::sym_rightleft(jl);
+			}
 
+			if ((il == ir) && (jl == jr)) { continue; }//反転させてもおんなじなのでコレは対称性を考える意味はない（両方５筋の駒||両方手駒）
 
-
+			//同じ関係なので２つ分のdJ/dviを用いることができる！！
+			/*
+			ここで(iljl,irjr)と(irjr,iljl)でdJを２重に計算してしまい、値がおかしくなってしまうことが起こりうる。
+			コレを何とかして防がなければならない。それを防ぐための(jl<=ilであるはず...これで大丈夫だよね...??)
+			*/
+			dJ[il][jl] = dJ[ir][jr]
+				= (dJ[il][jl] + dJ[ir][jr]);
+		}
 	}
-
-
-
-
-
-
 }
