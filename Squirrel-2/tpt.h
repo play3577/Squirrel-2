@@ -23,6 +23,7 @@ private:
 	uint8_t genbound8;//1byte (下2bitはbound情報)
 	uint8_t depth8;//深さは256までなので8bitに収まる
 	uint8_t padding[2];//tpentryはまだ空きがあるので他の情報も格納できますよ。（と言うかもっと内容を削るべきか？）
+	//今のところかくのうする情報を思いつかないのでhashを長くしてそれを格納するか？
 public:
 	Move  move()  const { return (Move)move32; }
 	Value value() const { return (Value)value16; }

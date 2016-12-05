@@ -165,8 +165,8 @@ void renewal_PP() {
 void Eval::learner()
 {
 	//初期化
-	int readgames = 28000;
-	const int numgames = 2000;//コレじゃ少ないかもしれないけど200棋譜の20iterationに２日かかったのでコレぐらいが妥当か
+	int readgames = 10000;
+	const int numgames = 1000;//コレじゃ少ないかもしれないけど200棋譜の20iterationに２日かかったのでコレぐらいが妥当か
 	const int numiteration = 100;
 	/*bonanzaではparse2を３２回繰り返すらしいんでそれを参考にする。
 	学習の損失の現象が進むに連れてnum_parse2の値を減らしていく
@@ -443,13 +443,16 @@ void Eval::learner()
 左右対称にしてしまい、正しく局面を評価できないデメリットは多少あるかもしれないが、
 学習されていない特徴の数を減らすことのほうが大事だと考えるからである。
 */
+//PPの三角対称性を妨げてしまっていた！！！！！
 void param_sym_leftright() {
 
 	//l反転前, r反転語
 	BonaPiece il, ir, jl, jr;
-	File f;
-	Rank r;
-
+	
+	//static bool check[fe_end2*fe_end2 / 2] = {false};
+	//t2.microは耐えてくれるだろうか....
+	static bool check[fe_end2][fe_end2] = { false };
+	memset(check, false, sizeof(check));
 	//PPの一つ目のindexについて
 	for (il = f_hand_pawn; il < fe_end2; il++) {
 
@@ -461,7 +464,8 @@ void param_sym_leftright() {
 		}
 
 		//PPの二つ目のindexについて
-		for (jl = f_hand_pawn; jl <= il; jl++) {
+		//for (jl = f_hand_pawn; jl <= il; jl++) {
+		for (jl = f_hand_pawn; jl <fe_end2; jl++) {
 			
 			//持ち駒の場合はそのままでいい。（左右対称になんて出来ないから）
 			if (jl < fe_hand_end) { jr = jl; }
@@ -471,14 +475,30 @@ void param_sym_leftright() {
 			}
 
 			if ((il == ir) && (jl == jr)) { continue; }//反転させてもおんなじなのでコレは対称性を考える意味はない（両方５筋の駒||両方手駒）
-
+			if (check[il][jl] == true) { ASSERT(check[ir][jr] == true); continue; }
+			//if(check[il*(il+1)/2+jl]==true){ ASSERT(check[ir*(ir + 1) / 2 + jr] == true); continue; }
 			//同じ関係なので２つ分のdJ/dviを用いることができる！！
 			/*
 			ここで(iljl,irjr)と(irjr,iljl)でdJを２重に計算してしまい、値がおかしくなってしまうことが起こりうる。
-			コレを何とかして防がなければならない。それを防ぐための(jl<=ilであるはず...これで大丈夫だよね...??う～～ん怪しいか...(´・ω・｀))
+			コレを何とかして防がなければならない。三角テーブル対称性が壊れてしまった
 			*/
-			dJ[il][jl] = dJ[ir][jr]
-				= (dJ[il][jl] + dJ[ir][jr]);
+
+			/*
+			for (il = f_hand_pawn; il < fe_end2; il++) なので
+			このままでは
+			dJ[il][jl] = dJ[ir][jr]= (dJ[il][jl] + dJ[ir][jr]);をした後さらに
+			dJ[ir][jr] = dJ[il][jl]= (dJ[il][jl] + dJ[ir][jr]);をしてdJ[][]の値がおかしくなってしまうことが起こりうる。
+
+			これを防ぐためにはsym_rightleft()でsqが盤面の右側であればreturn -1をすれば良いかもしれないが,左右反転させるだけの関数にそのような機能をもたせるのはあんまりしたくない
+
+			bool check[fe_end2][fe_end2]で一度計算した組み合わせかどうか確認するようにさせる。
+			この方法ではcheckを確保することができなかった。（staticにして無理やり解決。）
+			*/
+
+			dJ[il][jl] = dJ[ir][jr] = (dJ[il][jl] + dJ[ir][jr]);
+			//check[il*(il + 1) / 2 + jl] = check[ir*(ir + 1) / 2 + jr] = true;
+			check[il][jl] = check[ir][jr] = true;
+
 		}
 	}
 }
