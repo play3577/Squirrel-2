@@ -19,7 +19,7 @@
 
 
 //#define CHECKPOS
-#define LEARN
+//#define LEARN
 
 
 #ifndef LEARN
@@ -160,6 +160,7 @@ enum Value :int16_t {
 	Value_mate_in_maxply = int(Value_Mate) - MAX_PLY,
 	Value_mated_in_maxply = int(Value_Mated) + MAX_PLY,
 
+	Value_known_win = 10000,//8000’ö“x‚Å‚à‚¢‚¢‚Í‚¸‚¾‚¯‚Ç
 	Value_Infinite = 32001,
 	Value_error = -32011,
 	//‹î‚Ì‰¿’l

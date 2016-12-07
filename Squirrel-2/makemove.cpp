@@ -487,8 +487,8 @@ ExtMove* make_move_DROP(const Position& pos, const Bitboard& target, ExtMove* mo
 				to = target2.pop();
 				ASSERT(is_ok(to));
 				//ここで２歩が入ってくることはないと思うけれども一応確認しておく
-				//ここで二歩がはいって来ているのはpawnbbがおかしいせいか
-				if (pos.check_nihu(make_drop2(to, pc2)) == true) {
+				//ここで二歩がはいって来ているのはpawnbbがおかしいせいか （解決）
+				/*if (pos.check_nihu(make_drop2(to, pc2)) == true) {
 					cout << "nihu " << endl;
 					cout << "target2"<<endl << target2 << endl;
 					cout << make_drop2(to, pc2) << endl;
@@ -496,7 +496,7 @@ ExtMove* make_move_DROP(const Position& pos, const Bitboard& target, ExtMove* mo
 					cout << "pbb black" << endl << pos.pawnbb(BLACK) << endl;
 					cout << "pbb white" << endl << pos.pawnbb(WHITE) << endl;
 					UNREACHABLE;
-				}
+				}*/
 
 
 				movelist++->move = make_drop2(to, pc2);
@@ -540,6 +540,10 @@ ExtMove* make_move_DROP(const Position& pos, const Bitboard& target, ExtMove* mo
 				}
 			}
 		}
+
+
+
+
 	}
 
 	return movelist;

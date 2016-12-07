@@ -7,6 +7,14 @@ SearchLimit limit;
 Signal signal;
 
 
+//d手で挽回できる評価値の予測(dは最大でも6)
+//６手先までこの関数で予測できるというのはどうなんだろうか...もう少し浅いほうがいい気がする...
+//後は進行度によってこの値をいじることができる気がする...
+//序盤１４０終盤160みたいな....
+Value futility_margin(Depth d) { ASSERT(d < 7*ONE_PLY); return Value(150 * d / ONE_PLY); }
+
+
+
 /*
 この関数で詰み関連のスコアを「root nodeからあと何手で詰むか」から「今の局面から後何手で詰むか」に変換をする。
 なぜかというと置換表から値を取り出すときにrootnodeからの手数が違う局面から取り出されることがあるので、
@@ -193,18 +201,18 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 
 		//=====================================================================================================================
 		//state->plyfrom_rootでは駄目！！startposからの手数になってしまう！！！（Stackにrootからの手数を格納するしか無いか）
-		//=====================================================================================================================
-		alpha = std::max(mated_in_ply(ss->ply), alpha);//alpha=max(-mate+ply,alpha)　alphaの値は現在つまされている値よりも小さくは成れない つまりalphaは最小でも-mate+ply
-		beta = std::min(mate_in_ply(ss->ply + 1), beta);//beta=min(mate-ply,beta)  betaの値は次の指し手で詰む値よりも大きくはなれない　つまりbetaは最大でもmate-(ply+1)
+//=====================================================================================================================
+alpha = std::max(mated_in_ply(ss->ply), alpha);//alpha=max(-mate+ply,alpha)　alphaの値は現在つまされている値よりも小さくは成れない つまりalphaは最小でも-mate+ply
+beta = std::min(mate_in_ply(ss->ply + 1), beta);//beta=min(mate-ply,beta)  betaの値は次の指し手で詰む値よりも大きくはなれない　つまりbetaは最大でもmate-(ply+1)
 
-		/*===================================================
-		現在のnodeの深さをplyとする
-		他のノードでn手詰みを見つけている場合alpha=mate-n
-		n<ply+1の場合はalpha>betaでここでreturn できる
-		====================================================*/
-		if (alpha >= beta) {
-			return alpha;
-		}
+/*===================================================
+現在のnodeの深さをplyとする
+他のノードでn手詰みを見つけている場合alpha=mate-n
+n<ply+1の場合はalpha>betaでここでreturn できる
+====================================================*/
+if (alpha >= beta) {
+	return alpha;
+}
 
 	}
 	// Step 4. Transposition table lookup. We don't want the score of a partial
@@ -238,7 +246,7 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 	}
 	//ここでもしkey32の値が変わってしまっていた場合はttの値が書き換えられてしまっているので値をなかったことにする（idea from 読み太）(今のところone threadなのであまり意味はない)
 	if (TThit && (poskey >> 32) != tte->key()) {
-		
+
 		cout << "Access Conflict" << endl;
 		ttValue = Value_error;
 		ttdepth = DEPTH_NONE;
@@ -260,24 +268,61 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 	*/
 	if (!PVNode
 		&&TThit
-		&&ttdepth>=depth
+		&&ttdepth >= depth
 		&&ttValue != Value_error//これ今のところいらない(ここもっと詳しく読む必要がある)
 		&& (ttValue >= beta ? (ttBound&BOUND_LOWER) : (ttBound&BOUND_UPPER))//BOUND_EXACT = BOUND_UPPER | BOUND_LOWERであるのでどちらの&も満たす
 		) {
 		return ttValue;
 	}
 #endif
-	
 
-	//if (incheck) {
-	//	cout << "incheck" << endl;
-	//}
+
 
 	//評価関数は毎回呼び出したほうが差分計算でお得
+	//毎回評価関数を呼び出すのでSFのようにTTのevalとどちらが信用性があるか比較する必要はないと思う。
+	//そうなるとtt->eval()は保存する必要が無いか...???う～～んもしかしたらtt.eval()を用いたほうがメリットが有るのかもしれない...（ここは後でよく考えよう）
 	staticeval = Eval::eval(pos);
 
 	//ここに前向き枝切りのコードを書く
 
+	//王手がかかっている場合は前向き枝切りはしない
+	//（もし前向き枝切りが出来てしまったらこのノードで詰んでしまう）
+	if (incheck) {
+		//	cout << "incheck" << endl;
+		goto moves_loop;
+	}
+
+	// Step 7. Futility pruning: child node (skipped when in check)
+	/*------------------------------------------------------------------------------------------------------------
+	大抵の枝はここで刈られる（by出村さん）
+	つまり他の枝切りを頑張ってチューニングするよりもここの枝切りを頑張ってチューニングしてやるほうが効果が大きい。
+
+
+	d手で挽回できる評価値の予測がfutilitymargin.(dは最大でも6)
+	もし残り探索深さで相手が挽回できる点数を現在の静的評価値から引いてもbetaを超えている場合はここで枝を切ってしまってもいい。
+	futility margin が重要になってくる。評価値は深さに線形に大きくなっていく
+
+	//６手先までこの関数で予測できるというのはどうなんだろうか...もう少し浅いほうがいい気がする...
+	//後は進行度によってこの値をいじることができる気がする...
+	//序盤１４０終盤160みたいな....
+	-------------------------------------------------------------------------------------------------------------*/
+	if (!RootNode
+		&&depth < 7 * ONE_PLY
+		&&staticeval - futility_margin(depth) >= beta
+		&& staticeval < Value_known_win
+		//nonpawnmaterialという条件は将棋には関係ないはず
+		)
+	{
+		return staticeval - futility_margin(depth);
+	}
+
+
+
+
+
+	//王手がかかっている場合は前向き枝切りはしない
+	//（もし前向き枝切りが出来てしまったらこのノードで詰んでしまう）
+moves_loop:
 	
 
 	movepicker mp(pos);
@@ -354,23 +399,7 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 			}
 		}
 
-		//alpha超えの処理
-		/*if (value > alpha) {
-			alpha = value;
-			
-			if (value > bestvalue) {
-				bestvalue = value;
-				bestMove = move;
-			}
-
-			if (PVNode&&!RootNode) {
-				update_pv(ss->pv, move, (ss + 1)->pv);
-			}
-
-			if (alpha >= beta) {
-				break;
-			}
-		}*/
+		
 		if (value > bestvalue) {
 
 			bestvalue = value;

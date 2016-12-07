@@ -166,7 +166,7 @@ void Eval::learner()
 {
 	//初期化
 	int readgames = 10000;
-	const int numgames = 1000;//コレじゃ少ないかもしれないけど200棋譜の20iterationに２日かかったのでコレぐらいが妥当か
+	const int numgames = 1;//コレじゃ少ないかもしれないけど200棋譜の20iterationに２日かかったのでコレぐらいが妥当か
 	const int numiteration = 100;
 	/*bonanzaではparse2を３２回繰り返すらしいんでそれを参考にする。
 	学習の損失の現象が進むに連れてnum_parse2の値を減らしていく
