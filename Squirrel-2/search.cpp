@@ -62,6 +62,8 @@ Value Thread::think() {
 		return Value_Mated;
 	}
 
+	TT.new_search();
+
 	Stack stack[MAX_PLY + 7], *ss = stack + 5;
 	std::memset(stack, 0,(MAX_PLY+7)*sizeof(Stack));
 	Value bestvalue, alpha, beta;
@@ -133,7 +135,7 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 
 	Move pv[MAX_PLY + 1];
 	Move move;
-	Move bestMove;
+	Move bestMove=MOVE_NONE;
 	Move excludedmove=MOVE_NONE;
 	Value value;
 	StateInfo si;
@@ -201,18 +203,18 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 
 		//=====================================================================================================================
 		//state->plyfrom_rootでは駄目！！startposからの手数になってしまう！！！（Stackにrootからの手数を格納するしか無いか）
-//=====================================================================================================================
-alpha = std::max(mated_in_ply(ss->ply), alpha);//alpha=max(-mate+ply,alpha)　alphaの値は現在つまされている値よりも小さくは成れない つまりalphaは最小でも-mate+ply
-beta = std::min(mate_in_ply(ss->ply + 1), beta);//beta=min(mate-ply,beta)  betaの値は次の指し手で詰む値よりも大きくはなれない　つまりbetaは最大でもmate-(ply+1)
+		//=====================================================================================================================
+		alpha = std::max(mated_in_ply(ss->ply), alpha);//alpha=max(-mate+ply,alpha)　alphaの値は現在つまされている値よりも小さくは成れない つまりalphaは最小でも-mate+ply
+		beta = std::min(mate_in_ply(ss->ply + 1), beta);//beta=min(mate-ply,beta)  betaの値は次の指し手で詰む値よりも大きくはなれない　つまりbetaは最大でもmate-(ply+1)
 
-/*===================================================
-現在のnodeの深さをplyとする
-他のノードでn手詰みを見つけている場合alpha=mate-n
-n<ply+1の場合はalpha>betaでここでreturn できる
-====================================================*/
-if (alpha >= beta) {
-	return alpha;
-}
+		/*===================================================
+		現在のnodeの深さをplyとする
+		他のノードでn手詰みを見つけている場合alpha=mate-n
+		n<ply+1の場合はalpha>betaでここでreturn できる
+		====================================================*/
+		if (alpha >= beta) {
+			return alpha;
+		}
 
 	}
 	// Step 4. Transposition table lookup. We don't want the score of a partial
@@ -237,15 +239,18 @@ if (alpha >= beta) {
 		ttdepth = tte->depth();
 		ttEval = tte->eval();
 		ttBound = tte->bound();
+		ttMove = tte->move();
 	}
 	else {
 		ttValue = Value_error;
 		ttdepth = DEPTH_NONE;
 		ttEval = Value_error;
 		ttBound = BOUND_NONE;
+		ttMove = MOVE_NONE;
 	}
+	//この処理を入れるとクッソ遅くなってしまう(´･_･`)　まあ途中でTTの値が書き換わってしまうということについては考えないほうがいいのかもしれない
 	//ここでもしkey32の値が変わってしまっていた場合はttの値が書き換えられてしまっているので値をなかったことにする（idea from 読み太）(今のところone threadなのであまり意味はない)
-	if (TThit && (poskey >> 32) != tte->key()) {
+	/*if (TThit && (poskey >> 32) != tte->key()) {
 
 		cout << "Access Conflict" << endl;
 		ttValue = Value_error;
@@ -253,7 +258,7 @@ if (alpha >= beta) {
 		ttEval = Value_error;
 		ttBound = BOUND_NONE;
 		TThit = false;
-	}
+	}*/
 
 	// At non-PV nodes we check for an early TT cutoff
 	//non pv nodeで置換表の値で枝切り出来ないか試す。
@@ -455,22 +460,39 @@ moves_loop:
 template <Nodetype NT>
 Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
 
-	const bool is_pv = (NT == PV);
+	const bool PvNode = (NT == PV);
 	ASSERT(depth <= DEPTH_ZERO);
 	ASSERT(alpha < beta);
 
 	Move pv[MAX_PLY + 1];
 	Move move;
-	Move bestMove;
+	Move bestMove=MOVE_NONE;
 	Value bestvalue;
 	Value value;
 	StateInfo si;
-	Value staticeval;
+	Value staticeval,oldAlpha;
 	int movecount = 0;
 	bool incheck = pos.is_incheck();
 	Thread* thisthread = pos.searcher();
+	//-----TT関連
+	//読み太ではTTから読み込んでいる途中でTTが破壊された場合のことも考えていたので、それを参考にする
+	//Key poskey;
+	bool TThit;
+	TPTEntry* tte;
+	Move ttMove;
+	Value ttValue;
+	Value ttEval;
+	Bound ttBound;
+	Depth ttdepth;
 
-
+	if (PvNode)
+	{
+		// To flag BOUND_EXACT when eval above alpha and no available moves
+		//評価値がalpha超え、かつ合法手がない場合のflagとして用いる。
+		oldAlpha = alpha; 
+		(ss + 1)->pv = pv;
+		ss->pv[0] = MOVE_NONE;
+	}
 	//時間通りに指し手を指してくれなかったので精子探索でも時間を見る
 #ifndef LEARN
 	//timer threadを用意せずにここで時間を確認する。
@@ -489,6 +511,48 @@ Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
 	}
 #endif
 	
+#ifdef USETT
+	const Key posKey = pos.key();
+	ASSERT((posKey & uint64_t(1)) == pos.sidetomove());
+	tte = TT.probe(posKey, TThit);
+	if (TThit) {
+		ttValue = tte->value();
+		ttdepth = tte->depth();
+		ttEval = tte->eval();
+		ttBound = tte->bound();
+		ttMove = tte->move();
+	}
+	else {
+		ttValue = Value_error;
+		ttdepth = DEPTH_NONE;
+		ttEval = Value_error;
+		ttBound = BOUND_NONE;
+		ttMove = MOVE_NONE;
+	}
+	
+	
+	// At non-PV nodes we check for an early TT cutoff
+	//non pv nodeで置換表の値で枝切り出来ないか試す。
+	/*
+	PVノードではなく
+	置換表の残り探索深さのほうが大きく（depthは残り深さであるので深い探索による結果であるということ？）
+	ttvalueがValueNoneでなく
+
+	ttvalue=>betaのときはBOUND_LOWER|BOUNDEXACTであれば真の値はbeta以上であるとみなせるので枝切りできる。
+	ttvalue<betaのときはBOUND_UPPER|BOUNDEXACTであれば真の値はbeta以下であることが確定している
+	（nonPVnodeであるのでこれはnullwindowsearchでありalpha以下であることが確定したのでここで値を返しても良い）
+	*/
+	if (!PvNode
+		&&TThit
+		&&ttdepth >= depth
+		&&ttValue != Value_error//これ今のところいらない(ここもっと詳しく読む必要がある)
+		&& (ttValue >= beta ? (ttBound&BOUND_LOWER) : (ttBound&BOUND_UPPER))//BOUND_EXACT = BOUND_UPPER | BOUND_LOWERであるのでどちらの&も満たす
+		) {
+		return ttValue;
+	}
+#endif
+
+
 	//ここに前向き枝切りのコードを書く
 
 
@@ -532,12 +596,26 @@ Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
 
 			//alpha値は底上げされた
 			if (value > alpha) {
-				alpha = value;
-
-				//beta cut!
-				if (alpha >= beta) {
-					return alpha;
+				
+				if (PvNode && value < beta) 
+				{
+					//ここでalpha値を超えの処理をする。
+					alpha = value;
+					bestMove = move;
+					update_pv(ss->pv, move, (ss + 1)->pv);
 				}
+				else 
+				{
+					//PVnode以外ではnull window searchなのでalpha超えとはbeta超えのことである
+#ifdef USETT
+					//valueがbetaを超えたということはこの点数以上の指し手がまだあるかもしれないということなのでBOUND_LOWER
+					tte->save(posKey, value_to_tt(value, ss->ply), BOUND_LOWER,
+						depth, move, staticeval, TT.generation());
+#endif
+					return value;
+				}
+
+
 			}
 		}
 	}
@@ -545,6 +623,15 @@ Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
 	if (incheck&&movecount == 0) {
 		return mated_in_ply(ss->ply);
 	}
+
+#ifdef USETT
+	//PVnode&&bestvalueがoldalphaを超えられなかったということはoldalphaは上限であり,bestvalueもまた上限である。
+	//PVnode&&bestvalue>oldalphaということはコレは正確な評価値である。
+	//PVnodeではないということはβ超えは起こらなかったnullwindowのアルファ値を超えられなかったつまりUPPERである
+	tte->save(posKey, value_to_tt(bestvalue, ss->ply),
+		PvNode && bestvalue > oldAlpha ? BOUND_EXACT : BOUND_UPPER,
+		depth, bestMove, staticeval, TT.generation());
+#endif
 
 	return bestvalue;
 }
