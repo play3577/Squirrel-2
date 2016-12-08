@@ -401,6 +401,20 @@ public:
 
 	}
 
+	inline bool capture_or_propawn(const Move m)const {
+
+		if (pcboard[move_to(m)] != NO_PIECE) {
+			//手番の駒を取ろうとしていないかのチェックはしておく
+			ASSERT(piece_color(pcboard[move_to(m)]) != sidetomove());
+			return true;
+		}
+		else if (piece_type(moved_piece(m)) == PAWN&&is_promote(m)) {
+			return true;
+		}
+
+		return false;
+	}
+
 
 	//この関数で打ち歩詰め、王の自殺手を省く。
 	/*

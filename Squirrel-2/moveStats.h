@@ -68,17 +68,23 @@ struct Stats {
 	void clear() { std::memset(table, 0, sizeof(table)); }
 
 	//move‚ðŠi”[‚·‚éê‡
-	void update(Piece pc, Square to, Move m) { table[pc][to] = m; }
+	void update(Piece pc, Square to, Move m) { 
+		ASSERT(is_ok(pc));
+		ASSERT(is_ok(to));
+		table[pc][to] = m;
+	}
 
 	//’l‚ðŠi”[‚·‚éê‡
 	void update(Piece pc, Square to, Value v) {
 
+		ASSERT(is_ok(pc));
+		ASSERT(is_ok(to));
 		//â‘Î’l‚ª324ˆÈã‚Å‚ ‚ê‚Îreturn ???@‚±‚±‚È‚º‚È‚Ì‚©‚æ‚­‚í‚©‚ç‚ñ
 		if (abs(int(v)) >= 324)
 			return;
 
 		table[pc][to] -= table[pc][to] * abs(int(v)) / (CM ? 936 : 324);
-		table[pc][to] += int(v) * 32;
+		table[pc][to] += (v) * 32;
 	}
 
 private:

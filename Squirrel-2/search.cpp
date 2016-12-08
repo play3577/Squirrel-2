@@ -7,6 +7,13 @@ SearchLimit limit;
 Signal signal;
 
 
+inline Value bonus(const Depth d1) { int d = d1 / ONE_PLY; return Value(d*d + 2 * d - 2); }
+void update_stats(const Position& pos, Stack* ss, Move move, Move* quiets, int quietsCnt, Value bonus);
+
+
+
+
+
 //d手で挽回できる評価値の予測(dは最大でも6)
 //６手先までこの関数で予測できるというのはどうなんだろうか...もう少し浅いほうがいい気がする...
 //後は進行度によってこの値をいじることができる気がする...
@@ -54,6 +61,12 @@ void check_time() {
 	}
 }
 
+
+
+
+
+
+
 Value Thread::think() {
 
 	if (end == RootMoves) {
@@ -63,6 +76,8 @@ Value Thread::think() {
 		return Value_Mated;
 	}
 
+
+	history.clear();
 	TT.new_search();
 
 	Stack stack[MAX_PLY + 7], *ss = stack + 5;
@@ -140,6 +155,8 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 	Move move;
 	Move bestMove=MOVE_NONE;
 	Move excludedmove=MOVE_NONE;
+	Move Quiets_Moves[64];
+	int quiets_count=0;
 	Value value;
 	StateInfo si;
 	Value staticeval;
@@ -158,6 +175,8 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 	Value ttEval;
 	Bound ttBound;
 	Depth ttdepth;
+	bool CaptureorPropawn;
+
 
 #ifndef LEARN
 	//timer threadを用意せずにここで時間を確認する。
@@ -385,8 +404,24 @@ moves_loop:
 			UNREACHABLE;
 		}*/
 
-
 		if (NT == Root&&thisthread->find_rootmove(move) == nullptr) { continue; }
+
+
+		/*
+		capture propawnの指し手になりうるのはcappropawnのステージとEVERSIONのステージだけ
+		*/
+		if (mp.ret_stage() == CAP_PRO_PAWN) {
+			ASSERT(pos.capture_or_propawn(move) == true);
+			CaptureorPropawn = true;
+		}
+		else if (mp.ret_stage() == EVERSION) {
+			CaptureorPropawn = pos.capture_or_propawn(move);
+		}
+		else {
+			ASSERT(pos.capture_or_propawn(move) == false);
+			CaptureorPropawn =false;
+		}
+
 		++movecount;
 		//check_move(move);
 		pos.do_move(move, &si);
@@ -463,11 +498,23 @@ moves_loop:
 			}
 		}
 
+		//history値をつけるためにalphaを超えられなかった悪いquietの指しては格納する
+		if (CaptureorPropawn == false && move != bestMove&&quiets_count < 64) {
+			Quiets_Moves[quiets_count++] = move;
+		}
+
+
 	}//指し手のwhile
 
 	
 	if (movecount == 0) {
 		bestvalue= excludedmove?alpha: mated_in_ply(ss->ply);
+	}
+	else if (bestMove != MOVE_NONE) {
+
+		if (!pos.capture_or_propawn(bestMove)) {
+			update_stats(pos, ss, bestMove, Quiets_Moves, quiets_count, bonus(depth));
+		}
 	}
 
 
@@ -673,4 +720,51 @@ Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
 #endif
 
 	return bestvalue;
+}
+
+
+// update_stats() updates killers, history, countermove and countermove plus
+// follow-up move history when a new quiet best move is found.
+/*
+bonus = Value(d * d + 2 * d - 2);
+bonusはdepthの２乗に比例する
+
+
+d 0 d^2+2d-2 -2  depth==0は静止探索であるのでdepth=0 -2のあたいがつくことはない！
+d 1 d^2+2d-2 1
+d 2 d^2+2d-2 6
+d 3 d^2+2d-2 13
+d 4 d^2+2d-2 22
+d 5 d^2+2d-2 33
+d 6 d^2+2d-2 46
+d 7 d^2+2d-2 61
+d 8 d^2+2d-2 78
+d 9 d^2+2d-2 97
+d 10 d^2+2d-2 118
+d 11 d^2+2d-2 141
+d 12 d^2+2d-2 166
+d 13 d^2+2d-2 193
+d 14 d^2+2d-2 222
+d 15 d^2+2d-2 253
+d 16 d^2+2d-2 286
+d 17 d^2+2d-2 321
+d 18 d^2+2d-2 358
+
+ここで細かい値の補正などは考えても仕方ない
+bonusの値はすぐにどんどん変わっていく。
+
+*/
+void update_stats(const Position& pos, Stack* ss,const Move bestmove,
+	Move* quiets,const int quietsCnt,const Value bonus) {
+
+	//bestmoveに+=正のbonus
+	Thread* thisthread = pos.searcher();
+	thisthread->history.update(moved_piece(bestmove), move_to(bestmove), bonus);
+
+	// Decrease all the other played quiet moves
+	//alphaを更新しなかった指し手に対して+=負の値
+	for (int i = 0; i < quietsCnt; ++i) {
+		thisthread->history.update(moved_piece(quiets[i]), move_to(quiets[i]), -bonus);
+	}
+
 }

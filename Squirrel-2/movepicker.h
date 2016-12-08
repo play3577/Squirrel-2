@@ -53,7 +53,7 @@ public:
 			recapsq_ = recapsq;
 		}
 	}
-
+	inline Stage ret_stage() { return st; }
 
 	Move return_nextmove();
 

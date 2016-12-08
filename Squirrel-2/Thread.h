@@ -4,7 +4,7 @@
 #include "search.h"
 #include <vector>
 #include <atomic>
-
+#include "moveStats.h"
 using namespace std;
 
 struct Thread {
@@ -18,6 +18,7 @@ public:
 	std::atomic_bool resetCalls;//atomicにすることでスレッド観競合が起こらないようにする
 	int call_count = 0;
 	int seldepth = 0;
+	HistoryStats history;
 public:
 
 	std::vector<Move> pv;//読み筋
