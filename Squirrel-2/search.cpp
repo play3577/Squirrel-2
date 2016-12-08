@@ -13,7 +13,8 @@ Signal signal;
 //序盤１４０終盤160みたいな....
 Value futility_margin(Depth d) { ASSERT(d < 7*ONE_PLY); return Value(150 * d / ONE_PLY); }
 
-
+//d手で挽回できる点数であるのでだんだんと大きくならないとおかしい.(局所最適解に陥っている？（by屋根さん）)
+const int razor_margin[4] = { 483, 570, 603, 554 };
 
 /*
 この関数で詰み関連のスコアを「root nodeからあと何手で詰むか」から「今の局面から後何手で詰むか」に変換をする。
@@ -127,6 +128,8 @@ Value Thread::think() {
 template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value beta, Depth depth) {
 
 	ASSERT(alpha < beta);
+
+	
 
 	//初期化
 	const bool PVNode = (NT == PV || NT == Root);
@@ -297,6 +300,41 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 		goto moves_loop;
 	}
 
+	// Step 6. Razoring (skipped when in check)
+	/*
+	ttMoveが存在せず
+	残り深さが４以下で
+	静止探索の値にrazormargin[]を足してもalphaを上回れない場合は枝切りできる
+
+	静止探索の値を返すので正確な戻り値を期待できる？？（このノードにおける）
+
+	ここもう少し色々考えられるけどrazoringを除いてもELO-10にしか成らなかったらしいのでそこまで力を入れてチューニングするメリットはない
+	*/
+	if (!PVNode
+		&&  depth < 4 * ONE_PLY
+		&&  ttMove == MOVE_NONE
+		&&  staticeval + razor_margin[depth / ONE_PLY] <= alpha)
+	{
+
+		//残りが一手以下で静的評価値にrazormargin[3]を足してもalphaを上回れない場合は枝切りできる
+		//ここなんでmargin[3]??? 他の値を用いたほうがいいのでは？
+		//razormargin[3]が二箇所で使われているので変な値になってしまっている？？
+
+		//stackはss+1でなくssでいいのか？？？（do_moveをしていないので構わない（ss->staticEvalなどの情報を使いまわせる！！！！））
+		if (depth <= ONE_PLY
+			&& staticeval + razor_margin[3 * ONE_PLY] <= alpha) {
+			return qsearch<NonPV>(pos, ss, alpha, beta, DEPTH_ZERO);
+		}
+
+		Value ralpha = alpha - razor_margin[depth / ONE_PLY];
+		Value v = qsearch<NonPV>(pos, ss, ralpha, ralpha + 1, DEPTH_ZERO);
+		if (v <= ralpha) {
+			return v;
+		}
+	}
+
+
+
 	// Step 7. Futility pruning: child node (skipped when in check)
 	/*------------------------------------------------------------------------------------------------------------
 	大抵の枝はここで刈られる（by出村さん）
@@ -431,6 +469,7 @@ moves_loop:
 	if (movecount == 0) {
 		bestvalue= excludedmove?alpha: mated_in_ply(ss->ply);
 	}
+
 
 #ifdef USETT
 	//http://yaneuraou.yaneu.com/2015/02/24/stockfish-dd-search-%E6%8E%A2%E7%B4%A2%E9%83%A8/ 　から引用

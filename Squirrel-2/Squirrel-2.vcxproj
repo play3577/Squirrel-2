@@ -159,6 +159,7 @@
     <ClInclude Include="makemove.h" />
     <ClInclude Include="misc.h" />
     <ClInclude Include="movepicker.h" />
+    <ClInclude Include="moveStats.h" />
     <ClInclude Include="occupied.h" />
     <ClInclude Include="position.h" />
     <ClInclude Include="search.h" />
