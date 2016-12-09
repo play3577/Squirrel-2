@@ -1,10 +1,28 @@
 #include "movepicker.h"
 #include "makemove.h"
+#include "Thread.h"
+#include <algorithm>
+
+
+//É\Å[ÉgÇÃÇΩÇﬂÇÃä÷êî
+void insertion_sort(ExtMove* begin, ExtMove* end)
+{
+	ExtMove tmp, *p, *q;
+
+	for (p = begin + 1; p < end; ++p)
+	{
+		tmp = *p;
+		for (q = p; q != begin && *(q - 1) < tmp; --q)
+			*q = *(q - 1);
+		*q = tmp;
+	}
+}
+
 
 void movepicker::generatemove()
 {
 	current_ = end_ = move_;
-
+	ExtMove* goodQuiet;
 	switch (st)
 	{
 	case START_Normal:
@@ -15,6 +33,10 @@ void movepicker::generatemove()
 	case QUIET:
 		end_ = move_generation<Quiet>(pos_, move_);
 		end_ = move_generation<Drop>(pos_, end_);
+		quietscore();
+		//Ç±Ç±SF8ÇÕÇ‡Ç¡Ç∆è⁄ÇµÇ≠sortÇµÇƒÇ¢ÇÈ
+		goodQuiet = std::partition(move_, end_, [](const ExtMove& m){ return m.value > Value_Zero; });
+		insertion_sort(move_, goodQuiet);
 		break;
 	case START_Eversion:
 		current_ = end_;
@@ -82,5 +104,23 @@ Move movepicker::return_nextmove()
 		break;
 	}
 
+
+}
+
+
+void movepicker::quietscore()
+{
+	const HistoryStats& history = pos_.searcher()->history;
+
+	ptrdiff_t num_move = end_ - move_;
+	int j = 0;
+	for (int i = 0; i < num_move; i++) {
+
+		Piece pc = moved_piece(move_[i].move);
+		Square to = move_to(move_[i].move);
+		ASSERT(is_ok(pc));
+		ASSERT(is_ok(to));
+		move_[i].value = history[pc][to];
+	}
 
 }

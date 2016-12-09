@@ -379,9 +379,6 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 	}
 
 
-
-
-
 	//王手がかかっている場合は前向き枝切りはしない
 	//（もし前向き枝切りが出来てしまったらこのノードで詰んでしまう）
 moves_loop:
