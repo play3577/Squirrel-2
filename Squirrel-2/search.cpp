@@ -584,6 +584,7 @@ Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
 		ss->pv[0] = MOVE_NONE;
 	}
 	//時間通りに指し手を指してくれなかったので精子探索でも時間を見る
+	//取り合いの途中で評価を返されると実にまずいのでできるだけしたくないのだが....
 #ifndef LEARN
 	//timer threadを用意せずにここで時間を確認する。
 	//stockfish方式

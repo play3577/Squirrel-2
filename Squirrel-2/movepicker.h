@@ -27,6 +27,7 @@ private:
 	Square recapsq_;
 	void generatemove();
 	void quietscore();
+	void capturepropawn_score();
 public:
 	//通常探索用コンストラクタ
 	movepicker(const Position& pos) :pos_(pos) {

@@ -244,6 +244,10 @@ struct ExtMove {
 	operator Move() { return move; }
 	void operator=(Move move_) { move = move_; }
 };
+//と言うかソートのための大小比較operatorを定義してなかったじゃん....
+inline bool operator < (const ExtMove& em1, const ExtMove& em2) { return em1.value < em2.value; }
+inline bool operator > (const ExtMove& em1, const ExtMove& em2) { return em1.value > em2.value; }
+
 
 //あんまり間を詰めすぎるのもいい気持ちはしないな...不安だ
 //並び方はPtの順

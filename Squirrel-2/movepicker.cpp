@@ -2,7 +2,25 @@
 #include "makemove.h"
 #include "Thread.h"
 #include <algorithm>
+#include "evaluate.h"
 
+/*
+captureの指し手のソートに使われる。
+取れる駒の価値が大きく、動く駒の価値が小さい方がいい(MVV-LVA)
+*/
+/*
+NO_PIECE, PAWN, LANCE, KNIGHT, SILVER, BISHOP, ROOK, GOLD, KING,
+PRO_PAWN, PRO_LANCE, PRO_NIGHT, PRO_SILVER, UNICORN, DRAGON,
+*/
+const int LVA_[PT_ALL] = {
+	0,1,2,3,4,6,7,5,100,
+	5,5,5,5,10,13
+};
+
+inline Value LVA(const Piece pt) {
+	
+	return Value(LVA_[pt]);
+}
 
 //ソートのための関数
 void insertion_sort(ExtMove* begin, ExtMove* end)
@@ -29,12 +47,15 @@ void movepicker::generatemove()
 		break;
 	case CAP_PRO_PAWN:
 		end_=move_generation<Cap_Propawn>(pos_, move_);
+		capturepropawn_score();
+		insertion_sort(move_, end_);
 		break;
 	case QUIET:
 		end_ = move_generation<Quiet>(pos_, move_);
 		end_ = move_generation<Drop>(pos_, end_);
 		quietscore();
 		//ここSF8はもっと詳しくsortしている
+		//将棋だと駒打ちなどがあるときにここの要素数が多くなってしまうのでまずはgoodquietmoveだけソートするようにしてみる（ここ調整が必要）
 		goodQuiet = std::partition(move_, end_, [](const ExtMove& m){ return m.value > Value_Zero; });
 		insertion_sort(move_, goodQuiet);
 		break;
@@ -121,6 +142,31 @@ void movepicker::quietscore()
 		ASSERT(is_ok(pc));
 		ASSERT(is_ok(to));
 		move_[i].value = history[pc][to];
+	}
+
+}
+
+void movepicker::capturepropawn_score()
+{
+	/*
+	SF8では相対ランクを用いて計算しているが将棋の場合それはあまり良くないように思われる....
+	普通にMVV-LVAでいく
+	*/
+	for (ExtMove* i = move_; i < end_; i++) {
+
+		const Move m = i->move;
+		const Piece movept = piece_type(moved_piece(m));
+		const Piece capturedpt = piece_type(pos_.piece_on(move_to(m)));
+
+		ASSERT(NO_PIECE < movept&&movept < PT_ALL);
+		ASSERT(NO_PIECE <= capturedpt&&capturedpt < PT_ALL);//propawnの場合はNO_pieceを許容
+
+		i->value = Value(Eval::piece_value[capturedpt])-LVA(movept);
+		
+		if (is_promote(m)) {
+			ASSERT(movept <= GOLD);
+			i->value += Value(Eval::diff_promote[movept]);
+		}
 	}
 
 }
