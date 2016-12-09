@@ -299,10 +299,17 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 		&&ttValue != Value_error//これ今のところいらない(ここもっと詳しく読む必要がある)
 		&& (ttValue >= beta ? (ttBound&BOUND_LOWER) : (ttBound&BOUND_UPPER))//BOUND_EXACT = BOUND_UPPER | BOUND_LOWERであるのでどちらの&も満たす
 		) {
+
+		//ttMoveがquietでttvalue>=betaであればhistoryを更新することができる。
+		if (ttValue >= beta&&ttMove != MOVE_NONE) {
+			if (pos.capture_or_propawn(ttMove)==false) {
+				update_stats(pos, ss, ttMove, nullptr, 0, bonus(depth));
+			}
+		}
+
 		return ttValue;
 	}
 #endif
-
 
 
 	//評価関数は毎回呼び出したほうが差分計算でお得
@@ -408,14 +415,14 @@ moves_loop:
 		capture propawnの指し手になりうるのはcappropawnのステージとEVERSIONのステージだけ
 		*/
 		if (mp.ret_stage() == CAP_PRO_PAWN) {
-			ASSERT(pos.capture_or_propawn(move) == true);
+			//ASSERT(pos.capture_or_propawn(move) == true); 今のところassertなくても大丈夫そう
 			CaptureorPropawn = true;
 		}
 		else if (mp.ret_stage() == EVERSION) {
 			CaptureorPropawn = pos.capture_or_propawn(move);
 		}
 		else {
-			ASSERT(pos.capture_or_propawn(move) == false);
+			//ASSERT(pos.capture_or_propawn(move) == false);
 			CaptureorPropawn =false;
 		}
 
