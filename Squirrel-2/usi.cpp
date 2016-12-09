@@ -91,6 +91,9 @@ void USI::init_option(OptionMap &o,string engine_name)
 	o["eval"] << USIOption("c:/book2/fv_PP.bin");
 	o["USI_Hash"] << USIOption(1, 1, 256);
 	o["EngineName"] << USIOption(name.c_str());
+	o["is_0.1s"] << USIOption(false);
+	o["bookpath"] << USIOption("c:/book2/book2016928fg2800_40.db");
+	o["usebook"] << USIOption(false);
 }
 
 

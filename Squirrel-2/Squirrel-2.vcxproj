@@ -151,6 +151,7 @@
     <ClInclude Include="benchmark.h" />
     <ClInclude Include="Bitboard.h" />
     <ClInclude Include="bitop.h" />
+    <ClInclude Include="book.h" />
     <ClInclude Include="evaluate.h" />
     <ClInclude Include="fundation.h" />
     <ClInclude Include="game_database.h" />
@@ -183,6 +184,7 @@
     <ClCompile Include="occupied.cpp" />
     <ClCompile Include="position.cpp" />
     <ClCompile Include="search.cpp" />
+    <ClCompile Include="book.cpp" />
     <ClCompile Include="Thread.cpp" />
     <ClCompile Include="tpt.cpp" />
     <ClCompile Include="usi.cpp" />
