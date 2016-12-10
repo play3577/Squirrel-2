@@ -3,6 +3,8 @@
 #include "Thread.h"
 #include "evaluate.h"
 #include "tpt.h"
+#include "book.h"
+#include <random>
 SearchLimit limit;
 Signal signal;
 
@@ -69,6 +71,8 @@ void check_time() {
 
 Value Thread::think() {
 
+
+
 	if (end == RootMoves) {
 #ifndef LEARN
 		cout << "bestmove resign" << endl;
@@ -76,6 +80,35 @@ Value Thread::think() {
 		return Value_Mated;
 	}
 
+	Move pondermove;
+
+	//Ç±Ç±Ç…bookÇíTÇ∑ÉRÅ[ÉhÇì¸ÇÍÇÈ
+	if (Options["usebook"]) {
+
+		auto bookentry = book.find(rootpos.make_sfen());
+
+		if (bookentry != book.end()) {
+			std::vector<BookEntry> entrys = bookentry->second;
+
+			if (Options["randombook"]) {
+				std::random_device rd;
+				std::mt19937 mt(rd());
+				RootMoves[0].move = entrys[mt() % entrys.size()].move;
+				pondermove = entrys[mt() % entrys.size()].counter;
+			}
+			else {
+				RootMoves[0].move = entrys[0].move;
+				pondermove = entrys[0].counter;
+			}
+
+			if (limit.is_ponder == false) {
+				signal.stop = true;
+			}
+			goto ID_END;
+		}//bookÇå©Ç¬ÇØÇΩèÍçá
+
+		
+	}//end book
 
 	history.clear();
 	TT.new_search();
@@ -133,6 +166,9 @@ Value Thread::think() {
 		cout <<"ï]âøíl"<< int(bestvalue)*100/int(Eval::PawnValue) << endl;
 #endif
 	}//end of îΩïúê[âª
+
+ID_END:
+
 #ifndef LEARN
 	cout << "bestmove " << RootMoves[0] << endl;
 #endif // !LEARN

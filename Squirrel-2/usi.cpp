@@ -8,6 +8,7 @@
 #include "Thread.h"
 #include "makemove.h"
 #include "learner.h"
+#include "book.h"
 //#include "makemove.h"
 
 #include <iostream>
@@ -23,6 +24,8 @@ static StateInfo g_st[257];
 
 USI::OptionMap Options;
 
+//最初のisreadyか（何度も読みコマせるのは時間のむだなので）
+bool first_ready = true;
 /*
 error position
 position startpos moves 2g2f 3c3d 2f2e 2b3c 7g7f 4c4d 5g5f 5c5d 3g3f 3a2b 2i3g 7c7d 5f5e 5d5e 8h5e 8b5b
@@ -95,8 +98,10 @@ void USI::init_option(OptionMap &o,string engine_name)
 	o["USI_Hash"] << USIOption(1, 1, 256);
 	o["EngineName"] << USIOption(name.c_str());
 	o["is_0.1s"] << USIOption(false);
-	o["bookpath"] << USIOption("c:/book2/book2016928fg2800_40.db");
-	o["usebook"] << USIOption(false);
+	//o["bookpath"] << USIOption("c:/book2/book2016928fg2800_40.db");
+	o["bookpath"] << USIOption("c:/book/standard_book.db");
+	o["usebook"] << USIOption(true);
+	o["randombook"] << USIOption(true);
 }
 
 
@@ -136,7 +141,14 @@ std::ostream& USI::operator<<(std::ostream& os, const OptionMap& om) {
 void is_ready() {
 	//evalのパスが変更されているかもしれないためもう一回読み直す。
 	//と言うか先にusiに返事してからreadさせたほうがいいか？
-	Eval::read_PP();
+	if (first_ready == true) {
+		Eval::read_PP();
+
+		if (Options["usebook"] == true) {
+			BOOK::init();
+		}
+	}
+	first_ready = false;
 }
 
 void go(Position& pos, istringstream& is, Thread& th) {

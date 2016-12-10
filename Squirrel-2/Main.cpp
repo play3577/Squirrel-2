@@ -35,7 +35,9 @@ int main() {
 	bitboard_init();
 	Eval::init();
 	Zoblist::init();
-	BOOK::init();
+	/*if (Options["usebook"] == true) {
+		BOOK::init();
+	}*/
 #ifdef USETT
 	TT.resize(30);//30MB‚Å‰Šú‰»‚·‚éi‚â‚Ë‚¤‚ç‰¤‚É•í‚Á‚½j
 #endif
