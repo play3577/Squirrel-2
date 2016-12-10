@@ -46,6 +46,9 @@ const string nuhu = "sfen l6nl/1r3kgs1/p1+Bspp2p/6pp1/1p7/9/PPG1PPPPP/6SK1/+r4G1
 position startpos moves 2g2f 3c3d 2f2e 2b3c 5i6h 4a3b 5g5f 3a2b 7g7f 3c8h+ 7i8h B*6e 3g3f 6e5f 3f3e 5f4g+ 3e3d 4g4f 6h7g 4f2h 3i2h R*4g B*1f 4g4e+ 2h3g P*3f 3g2f 4e3d 6g6f 3d4e 7g7h 4e5f 8h7g 2b3c 2f3e 5f4e B*4f 3c3d 3e3d 4e4f 1f3h 3f3g+ 2i3g 4f3g 3d2c+ 3b2c 2e2d 2c2d 3h6e B*6g 7h8h 6g4i+ 6e4c+ 3g4h 6i6h 4h4c 6h7h G*2h P*2b 8b2b P*3b 2b3b P*3d 4c3d P*2b 3b2b 9g9f 3d3g S*4d 5a6b
 */
 
+//sfen ln2kg1nl/3rg1s2/p3p1bpp/1pp6/3S1pSP1/2P6/PP1P1P2P/1BG4R1/LN1K1G1NL w PS3p 1
+//P*6h
+
 //usiÇ≈é©å»è–âÓÇÇ∑ÇÈÇΩÇﬂÇÃä÷êî
 const string self_introduction() {
 

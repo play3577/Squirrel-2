@@ -1,14 +1,12 @@
 #include "book.h"
 
-
-
-
-
-void BOOK::init()
-{
-}
+#include <sstream>
+#include <fstream>
 
 //datastreamからbookの作成を行う。
+
+//一つの局面に対してbookentryは多数ありうるのでvectorにしておく。
+std::map<std::string, std::vector<BookEntry>> book;
 
 bool BookDataStream::preparebook() {
 
@@ -23,7 +21,7 @@ bool BookDataStream::preparebook() {
 		//1行読み込み
 		if (!getline(input_stream_, line)) {
 			if (sfen.size() != 0 && bookentrys.size() != 0) {
-				book[sfen] = bookentrys;
+				book[pos.make_sfen()] = bookentrys;
 			}
 			break;
 		}
@@ -37,6 +35,9 @@ bool BookDataStream::preparebook() {
 			sfen = line;
 			bookentrys.clear();
 		}
+		else if (line.size() == 0||line.find('#')!=string::npos) {
+
+		}
 		else {
 			ASSERT(sfen.size() != 0);
 			pos.set(sfen);
@@ -49,6 +50,18 @@ bool BookDataStream::preparebook() {
 			bookinfo >> sfrequency;
 
 			Move move = Sfen2Move(smove, pos);
+			if (move == MOVE_NONE || !pos.is_legal(move) && pos.is_uchihu(pos.sidetomove(), move_to(move))) {
+				cout << pos << endl;
+				cout << "LEGAL " << pos.is_legal(move) << endl;
+				cout << "uchihu " << pos.is_uchihu(pos.sidetomove(), move_to(move)) << endl;
+				pos.print_existpawnBB();
+				cout << "ksq " << pos.state()->ksq_[opposite(pos.sidetomove())] << endl;
+				cout << "move " << move << endl;
+				cout << pos.make_sfen() << endl;
+				ASSERT(0);
+			}
+			StateInfo si;
+			pos.do_move(move, &si);
 			Move counter;
 			if (scounter != "none") {
 				counter = Sfen2Move(scounter, pos);
@@ -56,12 +69,12 @@ bool BookDataStream::preparebook() {
 			else {
 				counter = MOVE_NONE;
 			}
-
-			if (move == MOVE_NONE || !pos.is_legal(move) && pos.is_uchihu(pos.sidetomove(), move_to(move))) {
-				ASSERT(0);
-			}
 			if (counter != MOVE_NONE) {
 				if (!pos.is_legal(counter) && pos.is_uchihu(pos.sidetomove(), move_to(counter))) {
+					cout << pos << endl;
+					cout << "LEGAL " << pos.is_legal(counter) << endl;
+					cout << "uchihu " << pos.is_uchihu(pos.sidetomove(), move_to(counter)) << endl;
+					cout << "move " << counter << endl;
 					ASSERT(0);
 				}
 			}

@@ -369,23 +369,30 @@ public:
 	もっとスマートな処理が欲しい
 	*/
 	//ちゃんと動いてるかチェックする！！(ちゃんと動いた)
+	//いややっぱりこの関数おかしい
+	//相手の目の前に歩を打つだけで打ち歩詰めに成ってしまっている！！！
+	/*
+	pawnを打っても、味方の駒でそのpawnを取れるのなら打ち歩詰めではない！！！
+	コレを修正してやる必要がある！
+	*/
 	bool is_uchihu(const Color us, const Square pawnsq)const {
 
 		Square frompawn;
 		Color ENEMY = opposite(us);
 		us == BLACK ? frompawn = Square(-1) : frompawn = Square(1);
 		Piece ENEMYKING = (us == BLACK) ? W_KING : B_KING;
-
+		
 		//歩の前がKINGでなければそれは打ち歩詰めではない。
 		if (piece_on(pawnsq + frompawn) != ENEMYKING) { return false; }
-
+		ASSERT((pawnsq + frompawn) == state()->ksq_[ENEMY]);
 		//王の機器は先手でも後手でも同じでも同じ
 		//逃げられる場所は王が動ける範囲で自分の駒がいない場所
+		//enemyが打ち歩詰めされそうに成っている駒にとって見方
 		Bitboard escape = StepEffect[BLACK][KING][pawnsq + frompawn] &~ occ(ENEMY);
 		while (escape.isNot()) {
 
 			Square to = escape.pop();
-			if (!is_effect_to(ENEMY, to)) { return false; }
+			if (!is_effect_to(us, to)) { return false; }
 		}
 
 		return true;
