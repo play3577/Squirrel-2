@@ -184,6 +184,28 @@ public:
 			
 	}
 
+	Bitboard effect_toBB_withouteffectking(const Color US, const Square to)const {
+
+		Color ENEMY = opposite(US);
+
+		/*
+		盤上にUNICORN,DRAGONがいるかどうかも確認したほうが素早く処理できるか？？？
+		*/
+		//コレ飛び機器について毎回switch文で条件分岐しているから時間が無駄！飛び効きは駒種別に利きを求める関数を作成する！！！
+		//なんでこんなことにも気づかなかったのか(´；ω；｀)
+		return
+			(step_effect(ENEMY, PAWN, to)&occ_pt(US, PAWN))
+			| (lance_effect(occ_all(), ENEMY, to)&occ_pt(US, LANCE))
+			| (step_effect(ENEMY, KNIGHT, to)&occ_pt(US, KNIGHT))
+			| (step_effect(ENEMY, SILVER, to)&occ_pt(US, SILVER))
+			| (step_effect(ENEMY, GOLD, to)&(occ_pt(US, GOLD) | occ_pt(US, PRO_PAWN) | occ_pt(US, PRO_LANCE) | occ_pt(US, PRO_NIGHT) | occ_pt(US, PRO_SILVER)))
+			//| (step_effect(ENEMY, KING, to)&occ_pt(US, KING))
+			| (rook_effect(occ_all(), occ_90(), to)&occ_pt(US, ROOK))
+			| (bishop_effect(occ_plus45(), occ_minus45(), to)&occ_pt(US, BISHOP))
+			| (occ_pt(US, DRAGON)&dragon_effect(occ_all(), occ_90(), to))
+			| (occ_pt(US, UNICORN)&unicorn_effect(occ_plus45(), occ_minus45(), to));
+
+	}
 	//c側の効きがtoに効いているかどうか調べる為の関数。
 	//利きを求めるにはoccupied が複数いるのでposを渡したほうが安全か？（あとでposを渡すときとoccをそれぞれ渡すときとで速さを調べる。）
 	bool is_effect_to(const Color US, const Square to)const {
@@ -373,6 +395,7 @@ public:
 	//相手の目の前に歩を打つだけで打ち歩詰めに成ってしまっている！！！
 	/*
 	pawnを打っても、味方の駒でそのpawnを取れるのなら打ち歩詰めではない！！！
+	しかしその駒がpinされている駒であればそれは打ち歩詰め....
 	コレを修正してやる必要がある！
 	*/
 	bool is_uchihu(const Color us, const Square pawnsq)const {
@@ -385,6 +408,7 @@ public:
 		//歩の前がKINGでなければそれは打ち歩詰めではない。
 		if (piece_on(pawnsq + frompawn) != ENEMYKING) { return false; }
 		ASSERT((pawnsq + frompawn) == state()->ksq_[ENEMY]);
+
 		//王の機器は先手でも後手でも同じでも同じ
 		//逃げられる場所は王が動ける範囲で自分の駒がいない場所
 		//enemyが打ち歩詰めされそうに成っている駒にとって見方
@@ -393,6 +417,20 @@ public:
 
 			Square to = escape.pop();
 			if (!is_effect_to(us, to)) { return false; }
+		}
+
+		//味方の駒でpawnを取れるか？取れるのならそれを動かしたとき玉に利きはかぶらないか
+
+		//pawnを取れる駒のBB
+		Bitboard garder = effect_toBB_withouteffectking(ENEMY, pawnsq);
+
+		while (garder.isNot()) {
+			Square sq = garder.pop();
+			//sqの駒がいなくなったとしてもkingに利きはかぶらないか
+			//bool is_effect_to_Removeking(const Color US, const Square to,const Square  ksq)
+			if (is_effect_to_Removeking(us, (pawnsq + frompawn), sq) == false) {
+				return false;
+			}
 		}
 
 		return true;

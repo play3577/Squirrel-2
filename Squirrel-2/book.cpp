@@ -50,7 +50,7 @@ bool BookDataStream::preparebook() {
 			bookinfo >> sfrequency;
 
 			Move move = Sfen2Move(smove, pos);
-			if (move == MOVE_NONE || !pos.is_legal(move) && pos.is_uchihu(pos.sidetomove(), move_to(move))) {
+			if (move == MOVE_NONE || !pos.is_legal(move) || pos.check_nihu(move)==true) {
 				cout << pos << endl;
 				cout << "LEGAL " << pos.is_legal(move) << endl;
 				cout << "uchihu " << pos.is_uchihu(pos.sidetomove(), move_to(move)) << endl;
@@ -70,7 +70,7 @@ bool BookDataStream::preparebook() {
 				counter = MOVE_NONE;
 			}
 			if (counter != MOVE_NONE) {
-				if (!pos.is_legal(counter) && pos.is_uchihu(pos.sidetomove(), move_to(counter))) {
+				if (!pos.is_legal(counter) || pos.check_nihu(counter) == true) {
 					cout << pos << endl;
 					cout << "LEGAL " << pos.is_legal(counter) << endl;
 					cout << "uchihu " << pos.is_uchihu(pos.sidetomove(), move_to(counter)) << endl;

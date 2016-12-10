@@ -334,9 +334,18 @@ void USI::loop()
 		}
 		else if (token == "uchihu") {
 			//‘Å‚¿•à‹l‚ß‚Ì‹Ç–Ê
-			pos.set("sfen ln6n/s2RSR3/ppp1p1ppp/gb2k2bl/g2p1p2s/4G4/PPPP1PPPP/9/LN1GK1SNL b P 1");
+			/*pos.set("sfen ln6n/s2RSR3/ppp1p1ppp/gb2k2bl/g2p1p2s/4G4/PPPP1PPPP/9/LN1GK1SNL b P 1");
 			bool uchihu= pos.is_uchihu(BLACK, SQ5E);
-			cout << uchihu << endl;
+			cout << uchihu << endl;*/
+
+			pos.set("sfen lnG1kgRnl/7b1/pppp+Bpppp/9/9/9/PPPP1PPPP/7R1/LNSGKGSNL b 2S2P 1");
+			bool buchihu = pos.is_uchihu(BLACK, SQ5B);
+			cout << buchihu << endl;
+
+			pos.set("sfen lnGskgRnl/7b1/pppp+Bpppp/9/9/9/PPPP1PPPP/7R1/LNSGKGSNL b S2P 1");
+			 buchihu = pos.is_uchihu(BLACK, SQ5B);
+			cout << buchihu << endl;
+
 		}
 		else if (token=="suicide") {
 			pos.set("sfen ln6n/s2RSR3/ppp1p1ppp/gb2k2bl/g2p1p2s/4G4/PPPP1PPPP/9/LN1GK1SNL w P 1");
