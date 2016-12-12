@@ -484,6 +484,90 @@ public:
 		return Key(st->board_ + st->hands_);
 	}
 
+	/*
+	相手玉に動かしたコマ酒の相手コマを置いたときの効きが動かす先にかぶっていればおうてをかけている
+
+	ここは空き王手なども入ってくるのでそれほど簡単ではない！
+
+	*/
+	bool is_check(const Move m)const {
+
+		const Square to = move_to(m);
+		const Square from = move_from(m);
+		const Piece pt = piece_type(moved_piece(m));
+		const Color US = sidetomove();
+		const Color ENEMY = opposite(US);
+		const Bitboard tosqBB = SquareBB[to];
+		const Square ksq = state()->ksq_[ENEMY];
+
+		//fromにいるコマは移動したのでそれは消しておく
+		const Bitboard occR = occ_all()&~SquareBB[from];
+		const Bitboard occ90R = occ_90() &~SquareBB[sq_to_sq90(from)];
+		const Bitboard occp45R = occ_plus45() &~SquareBB[sq_to_sqplus45(from)];
+		const Bitboard occm45R = occ_minus45() &~SquareBB[sq_to_sqminus45(from)];
+
+		switch (pt)
+		{
+		case NO_PIECE:
+			UNREACHABLE;
+			break;
+		case PAWN:
+			break;
+		case LANCE:
+			break;
+		case KNIGHT:
+			break;
+		case SILVER:
+			break;
+		case BISHOP:
+			if ((bishop_effect(occp45R, occm45R, ksq)&occ_pt(US, BISHOP)).isNot()) { return true; }
+			break;
+		case ROOK:
+			if ((rook_effect(occR, occ90R, to)&tosqBB).isNot()) { return true; }
+			break;
+		case KING:
+			//玉で王手をかけることは不可能
+			UNREACHABLE;
+			break;
+		case PRO_PAWN:
+		case PRO_LANCE:
+		case PRO_NIGHT:
+		case PRO_SILVER:
+		case GOLD:
+			break;
+		case UNICORN:
+			break;
+		case DRAGON:
+			break;
+		default:
+			UNREACHABLE;
+			break;
+		}
+/*
+
+
+Bitboard occR = occ_all()&~SquareBB[ksq];
+Bitboard occ90R = occ_90() &~ SquareBB[sq_to_sq90(ksq)];
+Bitboard occp45R = occ_plus45() &~ SquareBB[sq_to_sqplus45(ksq)];
+Bitboard occm45R = occ_minus45() &~  SquareBB[sq_to_sqminus45(ksq)];
+
+if ((rook_effect(occR, occ90R, to)&occ_pt(US, ROOK)).isNot()) { return true; }
+if ((bishop_effect(occp45R, occm45R, to)&occ_pt(US, BISHOP)).isNot()) { return true; }
+if ((occ_pt(US, DRAGON)&dragon_effect(occR, occ90R, to)).isNot()) { return true; }
+if ((occ_pt(US, UNICORN)&unicorn_effect(occp45R, occm45R, to)).isNot()) { return true; }
+if ((lance_effect(occR, ENEMY, to)&occ_pt(US, LANCE)).isNot()) { return true; }
+if ((step_effect(ENEMY, PAWN, to)&occ_pt(US, PAWN)).isNot()) { return true; }
+if ((step_effect(ENEMY, KNIGHT, to)&occ_pt(US, KNIGHT)).isNot()) { return true; }
+if ((step_effect(ENEMY, SILVER, to)&occ_pt(US, SILVER)).isNot()) { return true; }
+if ((step_effect(ENEMY, GOLD, to)&(occ_pt(US, GOLD) | occ_pt(US, PRO_PAWN) | occ_pt(US, PRO_LANCE) | occ_pt(US, PRO_NIGHT) | occ_pt(US, PRO_SILVER))).isNot()) { return true; }
+if ((step_effect(ENEMY, KING, to)&occ_pt(US, KING)).isNot()) { return true; }
+
+
+
+*/
+		return false;
+
+	}
 };
 
 std::ostream& operator<<(std::ostream& os, const Position& pos);
