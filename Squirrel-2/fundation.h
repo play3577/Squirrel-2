@@ -197,6 +197,7 @@ enum Move :uint32_t {
 	PIECE_MASK = (0b11111111) << 17,
 
 	MOVE_NONE = 1 + (1 << 7),//from‚Æto‚ªˆê’v‚µ‚Ä‚¢‚é
+	MOVE_NULL=2+(2<<7),
 };
 inline Square move_from(const Move m) { return Square((m >> 7)&MOVE_TO); }
 inline Square move_to(const Move m) { return Square(m&MOVE_TO); }

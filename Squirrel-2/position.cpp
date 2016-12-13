@@ -555,6 +555,30 @@ void Position::undo_move()
 
 	st = st->previous;
 
+	
+
+}
+
+void Position::do_nullmove(StateInfo * newst) {
+	//王手かけられていると王を取られてしまう
+	ASSERT(state()->checker.isNot() == false);
+	ASSERT(newst != st);
+
+	//パスなので全部コピーしてOK 
+	std::memcpy(newst, st, sizeof(StateInfo));
+	newst->previous = st;
+	st = newst;
+	//手番を反転
+	st->board_ ^= Zoblist::side;
+	sidetomove_ = opposite(sidetomove_);
+	st->lastmove = MOVE_NULL;
+	ASSERT((sidetomove() == BLACK && (st->board_&Zoblist::side) == 0) || (sidetomove() == WHITE && (st->board_&Zoblist::side) == 1));
+}
+
+void Position::undo_nullmove()
+{
+	st = st->previous;
+	sidetomove_ = opposite(sidetomove_);
 
 }
 

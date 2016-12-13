@@ -580,6 +580,17 @@ void USI::loop()
 				cout << "sym " <<endl<< Eval::sym_rightleft(elist.bplist_fb[i]) << endl;
 			}
 		}
+		else if (token == "null") {
+			cout << pos << endl;
+			StateInfo si;
+			pos.do_nullmove(&si);
+			cout << pos << endl;
+			pos.undo_nullmove();
+			cout << pos << endl;
+		}
+
+
+
 	} while (token != "quit");
 
 

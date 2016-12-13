@@ -589,6 +589,7 @@ Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
 	const bool PvNode = (NT == PV);
 	ASSERT(depth <= DEPTH_ZERO);
 	ASSERT(alpha < beta);
+	ASSERT(pos.state()->lastmove != MOVE_NULL);
 
 	Move pv[MAX_PLY + 1];
 	Move move;
@@ -742,6 +743,8 @@ Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
 	if (depth < -3 * ONE_PLY) { return bestvalue; }
 #endif
 	//コレで上手く前の指し手の移動先を与えられていると思う
+	//ここでnullmoveが入ってきた場合のことも考えないといけない。
+	//というかnullmoveが入ってきたら取リ返すなんてありえないのでここで評価値返すしか無いでしょ(王手も生成するなら話は別）
 	movepicker mp(pos, move_to(pos.state()->lastmove));
 
 	while ((move = mp.return_nextmove()) != MOVE_NONE) {

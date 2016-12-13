@@ -129,6 +129,9 @@ public:
 	void do_move(const Move m, StateInfo* st);
 	void undo_move();
 
+	void do_nullmove(StateInfo* newst);
+	void undo_nullmove();
+
 	inline Piece piece_on(Square sq)const { return pcboard[sq]; }
 	Bitboard occ_pt(Color c, Piece pt)const { return occupiedPt[c][pt]; }
 	Bitboard occ(Color c)const { return occupied[c]; }
