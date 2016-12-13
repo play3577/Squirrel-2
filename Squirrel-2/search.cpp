@@ -466,7 +466,7 @@ moves_loop:
 		//check_move(move);
 		pos.do_move(move, &si);
 
-		doFullDepthSearch = (PV&&movecount == 1);
+		doFullDepthSearch = (PVNode&&movecount == 1);
 
 
 		if (!doFullDepthSearch) {
@@ -611,6 +611,7 @@ Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
 	Bound ttBound;
 	Depth ttdepth;
 	Value futilitybase = -Value_Infinite;
+	Value futilityvalue;
 	if (PvNode)
 	{
 		// To flag BOUND_EXACT when eval above alpha and no available moves
@@ -719,9 +720,11 @@ Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
 		このような性質を Fail-Soft と言い、 Null Window Search などの狭い探索窓による探索や置換表を使った探索をする場合にその効果がよく現れる。
 		*/
 		if (bestvalue >= beta) {
+#ifdef USETT
 			if (!TThit) {
 				tte->save(posKey, value_to_tt(bestvalue, ss->ply), BOUND_LOWER, DEPTH_NONE, MOVE_NONE, staticeval, TT.generation());
 			}
+#endif
 				return bestvalue;
 			
 		}
@@ -753,6 +756,20 @@ Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
 			cout << "pbb white" << endl << pos.pawnbb(WHITE) << endl;
 			UNREACHABLE;
 		}*/
+		
+		
+		//futility 
+		if (!incheck
+			//&&!givescheck  これ条件として入れるべきだと思うけれど今のdomoveの仕様ではなかなか難しい。
+			&&futilitybase > -Value_known_win
+			) {
+			futilityvalue = futilitybase + Value(Eval::piece_value[pos.piece_on(move_to(move))]);
+			//取り合いなので一手目をとった時にalpha-128を超えられないようであればその指し手を考えない
+			if (futilityvalue <= alpha) {
+				bestvalue = std::max(bestvalue, futilityvalue);
+				continue;
+			}
+		}
 
 
 		movecount++;

@@ -486,8 +486,14 @@ public:
 
 	/*
 	相手玉に動かしたコマ酒の相手コマを置いたときの効きが動かす先にかぶっていればおうてをかけている
-
 	ここは空き王手なども入ってくるのでそれほど簡単ではない！
+
+
+	というかdo_moveの処理とかぶってしまうのでこれは必要ないか？？
+	do_moveをした時に局面に王手がかかっていれば差し手を延長するみたいな感じでいいのでは？？
+	しかしgivescheckで枝切りなどを考えるときdo_moveをしてから枝切りを考えると、do_moveには時間がかかるし局面を戻す操作もしてから枝切りをしなければならないので
+	先にgivescheckを見て、そしてその値をdo_moveに用いた方がいいのかもしれない....
+
 
 	*/
 	bool is_check(const Move m)const {
@@ -501,48 +507,56 @@ public:
 		const Square ksq = state()->ksq_[ENEMY];
 
 		//fromにいるコマは移動したのでそれは消しておく
-		const Bitboard occR = occ_all()&~SquareBB[from];
+		/*const Bitboard occR = occ_all()&~SquareBB[from];
 		const Bitboard occ90R = occ_90() &~SquareBB[sq_to_sq90(from)];
 		const Bitboard occp45R = occ_plus45() &~SquareBB[sq_to_sqplus45(from)];
-		const Bitboard occm45R = occ_minus45() &~SquareBB[sq_to_sqminus45(from)];
+		const Bitboard occm45R = occ_minus45() &~SquareBB[sq_to_sqminus45(from)];*/
+		//直接王手を見る場合にはfromの位置にいる駒を消す必要はないと考えられる。
 
-		switch (pt)
-		{
-		case NO_PIECE:
-			UNREACHABLE;
-			break;
-		case PAWN:
-			break;
-		case LANCE:
-			break;
-		case KNIGHT:
-			break;
-		case SILVER:
-			break;
-		case BISHOP:
-			if ((bishop_effect(occp45R, occm45R, ksq)&occ_pt(US, BISHOP)).isNot()) { return true; }
-			break;
-		case ROOK:
-			if ((rook_effect(occR, occ90R, to)&tosqBB).isNot()) { return true; }
-			break;
-		case KING:
-			//玉で王手をかけることは不可能
-			UNREACHABLE;
-			break;
-		case PRO_PAWN:
-		case PRO_LANCE:
-		case PRO_NIGHT:
-		case PRO_SILVER:
-		case GOLD:
-			break;
-		case UNICORN:
-			break;
-		case DRAGON:
-			break;
-		default:
-			UNREACHABLE;
-			break;
-		}
+		//直接王手があるか
+		//switch (pt)
+		//{
+		//case NO_PIECE:
+		//	UNREACHABLE;
+		//	break;
+		//case PAWN:
+		//	break;
+		//case LANCE:
+		//	break;
+		//case KNIGHT:
+		//	break;
+		//case SILVER:
+		//	break;
+		//case BISHOP:
+		//	if ((bishop_effect(occp45R, occm45R, ksq)&occ_pt(US, BISHOP)).isNot()) { return true; }
+		//	break;
+		//case ROOK:
+		//	if ((rook_effect(occR, occ90R, to)&tosqBB).isNot()) { return true; }
+		//	break;
+		//case KING:
+		//	//玉で王手をかけることは不可能
+		//	UNREACHABLE;
+		//	break;
+		//case PRO_PAWN:
+		//case PRO_LANCE:
+		//case PRO_NIGHT:
+		//case PRO_SILVER:
+		//case GOLD:
+		//	break;
+		//case UNICORN:
+		//	break;
+		//case DRAGON:
+		//	break;
+		//default:
+		//	UNREACHABLE;
+		//	break;
+		//}
+
+		//間接王手があるか
+		/*
+		ここはdomoveの処理とかぶるよね....
+		*/
+
 /*
 
 
