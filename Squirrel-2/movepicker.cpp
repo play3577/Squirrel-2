@@ -43,9 +43,13 @@ void movepicker::generatemove()
 	ExtMove* goodQuiet;
 	switch (st)
 	{
-	case START_Normal:
+	case Start_Multicut:
+		st = STOP;
 		break;
-	case CAP_PRO_PAWN:
+	case START_Normal:
+		st = STOP;
+		break;
+	case CAP_PRO_PAWN:case Gen_Malticut:
 		end_=move_generation<Cap_Propawn>(pos_, move_);
 		capturepropawn_score();
 		insertion_sort(move_, end_);
@@ -95,6 +99,12 @@ Move movepicker::return_nextmove()
 
 	switch (st)
 	{
+	case Start_Multicut:
+		break;
+	case Gen_Malticut:
+		m = current_++->move;
+		return m;
+		break;
 	case START_Normal:
 		break;
 	case CAP_PRO_PAWN:

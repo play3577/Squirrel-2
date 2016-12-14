@@ -489,24 +489,27 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 	{
 		//Value rbeta = std::min(beta + 200, Value_Infinite);
 		Depth rdepth = depth - 4 * ONE_PLY;
-		ASSERT(rdepth >= ONEPLY);
+		ASSERT(rdepth >= ONE_PLY);
 		ASSERT(pos.state()->lastmove != MOVE_NULL);
 
 		//ここでどんな指してを生成すべきなのか....
-		//capturepropawn??
-		movepicker mp_prob(pos);
+		//capturepropawn??killerも含めてみるのもありかもしれない
+		movepicker mp_prob(pos,beta);
 
 		int c = 0;
 		const int overbeta= 3;
-		//生成された指しての数が少なかった場合はmulticutは出来ない。
-		//if (mp_prob.num_move() < overbeta) { goto end_multicut; }
+		
 		
 		Value bestvalue2 = -Value_Infinite;
 
 		while ((move = mp_prob.return_nextmove()) != MOVE_NONE) {
+			//生成された指しての数が少なかった場合はmulticutは出来ない。
+			//domoveする前にgotoする
+			if (mp_prob.num_move() < overbeta) { goto end_multicut; }
 			if (!pos.is_legal(move)) { continue; }
+			
 			pos.do_move(move, &si);
-			value = -<NonPV>search(pos, (ss + 1), -beta, -beta + 1, rdepth);
+			value = -search<NonPV>(pos, (ss + 1), -beta, -beta + 1, rdepth);
 			pos.undo_move();
 
 			if (value > bestvalue2) {
@@ -520,7 +523,7 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 		}
 	}
 
-//end_multicut:
+end_multicut:
 
 
 
@@ -532,8 +535,9 @@ moves_loop:
 	
 
 	movepicker mp(pos);
-
+	
 	while ((move = mp.return_nextmove()) != MOVE_NONE) {
+
 
 		if (pos.is_legal(move) == false) { continue; }
 
