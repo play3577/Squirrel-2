@@ -193,7 +193,7 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 	Move excludedmove=MOVE_NONE;
 	Move Quiets_Moves[64];
 	int quiets_count=0;
-	Value value;
+	Value value,null_value;
 	StateInfo si;
 	Value staticeval;
 	int movecount = 0;
@@ -361,7 +361,9 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 		//	cout << "incheck" << endl;
 		goto moves_loop;
 	}
-
+	if (ss->skip_early_prunning == true) {
+		goto moves_loop;
+	}
 	// Step 6. Razoring (skipped when in check)
 	/*
 	ttMoveが存在せず
@@ -420,6 +422,59 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 	{
 		return staticeval - futility_margin(depth);
 	}
+
+	// Step 8. Null move search with verification search
+	/*
+	（私の中での理解）
+	静的評価値がbetaを超えている局面（相手がヘマをしてきたと思われる局面（長期的に見れば計算された手かもしれない））でこちらが割りと良い手を返したとして浅い探索をしてみる。
+	探索から帰ってきた結果がそれでもbetaを超えていた場合（つまりホントに相手がヘマをしたとわかった）はそれは枝切りをできる。
+	パスでbetaを超えたということは、パスよりも良い指してを指してみてもbetaを超えるということである。（局面はZugzwangではないと仮定する）
+	割りと良い手というのにはパスをする手を用いる。殆どの指してはパスに劣る。
+	*/
+	if (!PVNode
+		&&staticeval >= beta
+		&& (staticeval >= beta - 35 * (int(depth / ONE_PLY) - 6) || depth >= 13 * ONE_PLY)
+		) {
+		ASSERT(staticeval >= beta);
+
+		//Rの値は場合分けをして後で詳しく見る
+		Depth R= Depth(((823 + 67 * int(depth / ONE_PLY)) / 256 + std::min(int(staticeval - beta) / Eval::PawnValue, 3)) * ONE_PLY);
+
+		pos.do_nullmove(&si);
+		(ss + 1)->skip_early_prunning = true;//前向き枝切りはしない。（２回連続パスはよろしくない）
+
+		//nullmoveは取り合いが起こらないので静止探索を呼ばない。（静止探索で王手も探索するように成れば実装を変更する）
+		null_value = (depth - R) < ONE_PLY ? staticeval : -search<NonPV>(pos, ss + 1, -(beta), -beta + 1, depth - R);
+		(ss + 1)->skip_early_prunning = false;
+		pos.undo_nullmove();
+
+		//null_valueがbetaを超えた場合
+		if (null_value >= beta) {
+
+			//NULLMOVEなので詰みを見つけてもそのまま帰すとおかしくなる
+			if (null_value >= Value_mate_in_maxply) {
+				null_value = beta;
+			}
+
+			//(staticeval >= beta - 35 * int(depth / ONE_PLY - 6)の条件を持たしているときなのでホントにbetaを超えるかのチェックはしなくてもいい
+			if (depth < 12 * ONE_PLY&&std::abs(beta) < Value_known_win) {
+				return null_value;
+			}
+
+			//残りdepthが大きいときであるのでちゃんと確認しておく。
+			//またここに入ってこないように前向き枝切りには入らないようにする。
+			ss->skip_early_prunning = true;
+			//do_moveをしていないのでss,betaでよい。
+			Value v= (depth - R) < ONE_PLY ? staticeval : search<NonPV>(pos, ss ,beta-1, beta, depth - R);
+			ss->skip_early_prunning = false;
+
+			if (v >= beta) {
+				return null_value;
+			}
+		}
+
+	}
+
 
 
 	//王手がかかっている場合は前向き枝切りはしない
@@ -712,6 +767,12 @@ Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
 		しかし静止探索にstandpatを入れると前のバージョンにかなり勝ち越すようになった（よくわからん）
 		 ]
 
+		 [
+		 静止探索ではコレぐらい適当にバッサリ枝を切ってしまってもいいのか...???
+		 
+		 ]
+
+
 		fali soft
 		http://d.hatena.ne.jp/hiyokoshogi/20111128/1322409710
 		https://ja.wikipedia.org/wiki/Negascout
@@ -761,18 +822,20 @@ Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
 		}*/
 		
 		
+
+		//弱くなった
 		//futility 
-		if (!incheck
-			//&&!givescheck  これ条件として入れるべきだと思うけれど今のdomoveの仕様ではなかなか難しい。
-			&&futilitybase > -Value_known_win
-			) {
-			futilityvalue = futilitybase + Value(Eval::piece_value[pos.piece_on(move_to(move))]);
-			//取り合いなので一手目をとった時にalpha-128を超えられないようであればその指し手を考えない
-			if (futilityvalue <= alpha) {
-				bestvalue = std::max(bestvalue, futilityvalue);
-				continue;
-			}
-		}
+		//if (!incheck
+		//	//&&!givescheck  これ条件として入れるべきだと思うけれど今のdomoveの仕様ではなかなか難しい。
+		//	&&futilitybase > -Value_known_win
+		//	) {
+		//	futilityvalue = futilitybase + Value(Eval::piece_value[pos.piece_on(move_to(move))]);
+		//	//取り合いなので一手目をとった時にalpha-128を超えられないようであればその指し手を考えない
+		//	if (futilityvalue <= alpha) {
+		//		bestvalue = std::max(bestvalue, futilityvalue);
+		//		continue;
+		//	}
+		//}
 
 
 		movecount++;
