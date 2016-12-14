@@ -475,6 +475,55 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 
 	}
 
+	//step9 multicut 
+	/*
+	SDT4でツツカナとSeleneが行っていたという手法
+	よくわからんけどprobcutと似た考えに基づく枝切り法だと思うのでここで行ってみる。
+	StockFishではmulticutがProbcut(Stockfish方式)より良い結果を残したことはないみたい
+	https://groups.google.com/forum/?fromgroups=#!searchin/fishcooking/Probcut%7Csort:relevance/fishcooking/mpssXCKNuFo/T34cijXSfF8J
+	https://chessprogramming.wikispaces.com/Multi-Cut
+	*/
+	if (!PVNode
+		&&depth >= 5 * ONE_PLY
+		&&std::abs(beta) < Value_mate_in_maxply)
+	{
+		//Value rbeta = std::min(beta + 200, Value_Infinite);
+		Depth rdepth = depth - 4 * ONE_PLY;
+		ASSERT(rdepth >= ONEPLY);
+		ASSERT(pos.state()->lastmove != MOVE_NULL);
+
+		//ここでどんな指してを生成すべきなのか....
+		//capturepropawn??
+		movepicker mp_prob(pos);
+
+		int c = 0;
+		const int overbeta= 3;
+		//生成された指しての数が少なかった場合はmulticutは出来ない。
+		//if (mp_prob.num_move() < overbeta) { goto end_multicut; }
+		
+		Value bestvalue2 = -Value_Infinite;
+
+		while ((move = mp_prob.return_nextmove()) != MOVE_NONE) {
+			if (!pos.is_legal(move)) { continue; }
+			pos.do_move(move, &si);
+			value = -<NonPV>search(pos, (ss + 1), -beta, -beta + 1, rdepth);
+			pos.undo_move();
+
+			if (value > bestvalue2) {
+				bestvalue2 = value;
+				if (value > beta) {
+					c = c + 1;
+					//fail soft
+					if (c >= overbeta) return bestvalue2;
+				}
+			}//end of value>bestvalue2
+		}
+	}
+
+//end_multicut:
+
+
+
 
 
 	//王手がかかっている場合は前向き枝切りはしない
