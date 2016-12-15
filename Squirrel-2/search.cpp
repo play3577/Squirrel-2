@@ -20,6 +20,10 @@ void update_stats(const Position& pos, Stack* ss, Move move, Move* quiets, int q
 //６手先までこの関数で予測できるというのはどうなんだろうか...もう少し浅いほうがいい気がする...
 //後は進行度によってこの値をいじることができる気がする...
 //序盤１４０終盤160みたいな....
+/*
+進行度によってmargin値を変えるためには激指のように学習時のmarginを10+258*progressみたいに進行度が大きくなるに連れて大きくすることが必要か？？
+進行度が大きくなるに連れてsigmoidの傾斜が存在する範囲を広くするのも後半の棋譜以外の指し手のPP値が教師手のそれと大きく離れるようにするためにありかもしれない...
+*/
 Value futility_margin(Depth d) { ASSERT(d < 7*ONE_PLY); return Value(150 * d / ONE_PLY); }
 
 //d手で挽回できる点数であるのでだんだんと大きくならないとおかしい.(局所最適解に陥っている？（by屋根さん）)
@@ -476,6 +480,8 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 	}
 
 	//step9 multicut 
+	//nullmoveよりも弱くなってしまった！
+	//もっと条件を考える
 	/*
 	SDT4でツツカナとSeleneが行っていたという手法
 	よくわからんけどprobcutと似た考えに基づく枝切り法だと思うのでここで行ってみる。
@@ -483,49 +489,49 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 	https://groups.google.com/forum/?fromgroups=#!searchin/fishcooking/Probcut%7Csort:relevance/fishcooking/mpssXCKNuFo/T34cijXSfF8J
 	https://chessprogramming.wikispaces.com/Multi-Cut
 	*/
-	if (!PVNode
-		&&depth >= 5 * ONE_PLY
-		&&std::abs(beta) < Value_mate_in_maxply)
-	{
-		//Value rbeta = std::min(beta + 200, Value_Infinite);
-		Depth rdepth = depth - 4 * ONE_PLY;
-		ASSERT(rdepth >= ONE_PLY);
-		ASSERT(pos.state()->lastmove != MOVE_NULL);
-
-		//ここでどんな指してを生成すべきなのか....
-		//capturepropawn??killerも含めてみるのもありかもしれない
-		movepicker mp_prob(pos,beta);
-
-		int c = 0;
-		const int overbeta= 3;
-		
-		
-		Value bestvalue2 = -Value_Infinite;
-
-		while ((move = mp_prob.return_nextmove()) != MOVE_NONE) {
-			//生成された指しての数が少なかった場合はmulticutは出来ない。
-			//domoveする前にgotoする
-			if (mp_prob.num_move() < overbeta) { goto end_multicut; }
-			if (!pos.is_legal(move)) { continue; }
-			
-			pos.do_move(move, &si);
-			value = -search<NonPV>(pos, (ss + 1), -beta, -beta + 1, rdepth);
-			pos.undo_move();
-
-			if (value > bestvalue2) {
-				bestvalue2 = value;
-				if (value > beta) {
-					c = c + 1;
-					//fail soft
-					if (c >= overbeta) return bestvalue2;
-				}
-			}//end of value>bestvalue2
-		}
-	}
-
-end_multicut:
-
-
+//	if (!PVNode
+//		&&depth >= 5 * ONE_PLY
+//		&&std::abs(beta) < Value_mate_in_maxply)
+//	{
+//		//Value rbeta = std::min(beta + 200, Value_Infinite);
+//		Depth rdepth = depth - 4 * ONE_PLY;
+//		ASSERT(rdepth >= ONE_PLY);
+//		ASSERT(pos.state()->lastmove != MOVE_NULL);
+//
+//		//ここでどんな指してを生成すべきなのか....
+//		//capturepropawn??killerも含めてみるのもありかもしれない
+//		movepicker mp_prob(pos,beta);
+//
+//		int c = 0;
+//		const int overbeta= 3;
+//		
+//		
+//		Value bestvalue2 = -Value_Infinite;
+//
+//		while ((move = mp_prob.return_nextmove()) != MOVE_NONE) {
+//			//生成された指しての数が少なかった場合はmulticutは出来ない。
+//			//domoveする前にgotoする
+//			if (mp_prob.num_move() < overbeta) { goto end_multicut; }
+//			if (!pos.is_legal(move)) { continue; }
+//			
+//			pos.do_move(move, &si);
+//			value = -search<NonPV>(pos, (ss + 1), -beta, -beta + 1, rdepth);
+//			pos.undo_move();
+//
+//			if (value > bestvalue2) {
+//				bestvalue2 = value;
+//				if (value > beta) {
+//					c = c + 1;
+//					//fail soft
+//					if (c >= overbeta) return bestvalue2;
+//				}
+//			}//end of value>bestvalue2
+//		}
+//	}
+//
+//end_multicut:
+//
+//
 
 
 
