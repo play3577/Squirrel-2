@@ -54,6 +54,12 @@ void movepicker::generatemove()
 		capturepropawn_score();
 		insertion_sort(move_, end_);
 		break;
+	case Killers:
+		killers_[0] = ss_->killers[0];
+		killers_[1] = ss_->killers[1];
+		current_ = killers_;
+		end_ = current_ + 2;
+		break;
 	case QUIET:
 		end_ = move_generation<Quiet>(pos_, move_);
 		end_ = move_generation<Drop>(pos_, end_);
@@ -94,48 +100,63 @@ Move movepicker::return_nextmove()
 {
 
 	Move m;
-	while (end_ == current_&&st != STOP) { st++; generatemove(); }
+	while (true) {
+		while (end_ == current_&&st != STOP) { st++; generatemove(); }
 
 
-	switch (st)
-	{
-	case Start_Multicut:
-		break;
-	case Gen_Malticut:
-		m = current_++->move;
-		return m;
-		break;
-	case START_Normal:
-		break;
-	case CAP_PRO_PAWN:
-		m = current_++->move;
-		return m;
-		break;
-	case QUIET:
-		return current_++->move;
-		break;
-	case START_Eversion:
-		break;
-	case EVERSION:
-		m = current_++->move;
-		return m;
-		break;
-	case START_Qsearch:
-		break;
-	case RECAPTURE:
-		m = current_++->move;
-		return m;
-		break;
-	case STOP:
-		return MOVE_NONE;
-		break;
-	default:
-		UNREACHABLE;
-		return MOVE_NONE;
-		break;
+		switch (st)
+		{
+		case Start_Multicut:
+			break;
+		case Gen_Malticut:
+			m = current_++->move;
+			return m;
+			break;
+		case START_Normal:
+			break;
+		case CAP_PRO_PAWN:
+			m = current_++->move;
+			return m;
+			break;
+		case Killers:
+			m = current_++->move;
+			if (m != Move(0)
+				&& m != MOVE_NONE
+				&& pos_.is_psuedolegal(m)
+				&& !pos_.is_propawn(m)
+				) {
+				return m;
+			}
+			break;
+		case QUIET:
+			m = current_++->move;
+			if (m != killers_[0]
+				&& m != killers_[1]) {
+				return m;
+			}
+			break;
+		case START_Eversion:
+			break;
+		case EVERSION:
+			m = current_++->move;
+			return m;
+			break;
+		case START_Qsearch:
+			break;
+		case RECAPTURE:
+			m = current_++->move;
+			return m;
+			break;
+		case STOP:
+			return MOVE_NONE;
+			break;
+		default:
+			UNREACHABLE;
+			return MOVE_NONE;
+			break;
+		}
+
 	}
-
-
 }
 
 
@@ -144,7 +165,7 @@ void movepicker::quietscore()
 	const HistoryStats& history = pos_.searcher()->history;
 
 	ptrdiff_t num_move = end_ - move_;
-	int j = 0;
+//	int j = 0;
 	for (int i = 0; i < num_move; i++) {
 
 		Piece pc = moved_piece(move_[i].move);

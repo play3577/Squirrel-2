@@ -540,7 +540,7 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 moves_loop:
 	
 
-	movepicker mp(pos);
+	movepicker mp(pos,ss);
 	
 	while ((move = mp.return_nextmove()) != MOVE_NONE) {
 
@@ -548,7 +548,7 @@ moves_loop:
 		if (pos.is_legal(move) == false) { continue; }
 
 		//二歩が入ってこないことは確認した
-		/*if (pos.check_nihu(move) == true) {
+		if (pos.check_nihu(move) == true) {
 
 			cout << "nihu "<< endl;
 			cout << move << endl;
@@ -556,7 +556,7 @@ moves_loop:
 			cout << "pbb black"<<endl<<pos.pawnbb(BLACK) << endl;
 			cout << "pbb white"<<endl << pos.pawnbb(WHITE) << endl;
 			UNREACHABLE;
-		}*/
+		}
 
 		if (NT == Root&&thisthread->find_rootmove(move) == nullptr) { continue; }
 
@@ -987,6 +987,13 @@ bonusの値はすぐにどんどん変わっていく。
 */
 void update_stats(const Position& pos, Stack* ss,const Move bestmove,
 	Move* quiets,const int quietsCnt,const Value bonus) {
+	//killermoveの更新
+	//http://daruma3940.hatenablog.com/entry/2016/07/08/011324
+	if (ss->killers[0] != bestmove) {
+		ss->killers[1] = ss->killers[0];
+		ss->killers[0] = bestmove;
+	}
+
 
 	//bestmoveに+=正のbonus
 	Thread* thisthread = pos.searcher();

@@ -282,10 +282,7 @@ public:
 		ASSERT((ExistPawnBB[c] & FileBB[sqtofile(sq)]).isNot() == true);
 		ExistPawnBB[c]=andnot(ExistPawnBB[c],FileBB[sqtofile(sq)]);
 	}
-	void add_existpawnBB(const Color c, const Square sq) {
-		ASSERT((ExistPawnBB[c] & FileBB[sqtofile(sq)]).isNot() == false);
-		ExistPawnBB[c] |=FileBB[sqtofile(sq)];
-	}
+	void add_existpawnBB(const Color c, const Square sq);
 
 	void print_existpawnBB() const{
 		cout << " print existpawn BB " << endl;
@@ -300,9 +297,12 @@ public:
 
 		if (is_drop(m)&&moved_piece(m)==PAWN) {
 
-			if ((occ_pt(sidetomove(), PAWN)&FileBB[sqtofile(move_to(m))]).isNot()) {
+			if ((occ_pt(sidetomove(), PAWN)&FileBB[sqtofile(move_to(m))]).isNot()==true) {
 				return true;
 			}
+			/*if ((ExistPawnBB[sidetomove()] & FileBB[sqtofile(move_to(m))]).isNot() == true) {
+				return false;
+			}*/
 		}
 
 		return false;
@@ -463,7 +463,14 @@ public:
 		return false;
 	}
 
+	inline bool is_propawn(const Move m)const {
 
+		if (piece_type(moved_piece(m)) == PAWN&&is_promote(m)) {
+			return true;
+		}
+
+		return false;
+	}
 
 	//この関数で打ち歩詰め、王の自殺手を省く。
 	/*
@@ -486,6 +493,14 @@ public:
 	inline Key key() {
 		return Key(st->board_ + st->hands_);
 	}
+
+	/*
+	is_legalで確認していること
+	王の自殺打ち歩、ピンごまの移動　　以外の項目をここで確認する。
+
+	流石に成れないはずなのになろうとすると言った指しては入ってこないはずである。
+	*/
+	bool is_psuedolegal(const Move m) const;
 
 	/*
 	相手玉に動かしたコマ酒の相手コマを置いたときの効きが動かす先にかぶっていればおうてをかけている
@@ -585,6 +600,9 @@ if ((step_effect(ENEMY, KING, to)&occ_pt(US, KING)).isNot()) { return true; }
 		return false;
 
 	}
+
+
+
 };
 
 std::ostream& operator<<(std::ostream& os, const Position& pos);

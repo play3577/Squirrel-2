@@ -1149,7 +1149,7 @@ namespace Eval {
 		//è‹îˆÈŠO
 
 		//cŒ^bitboard‚È‚Ì‚Årank=sq%9,file=sq/9
-		BonaPiece bprank, bpfile;
+	//	BonaPiece bprank, bpfile;
 		//”Õã‚Ì‹î
 		if (f_pawn <= bp&&bp < e_pawn) {
 			sq = bp - f_pawn;

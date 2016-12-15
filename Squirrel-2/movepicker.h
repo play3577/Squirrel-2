@@ -1,6 +1,6 @@
 #pragma once
 #include "position.h"
-
+#include "search.h"
 
 enum Stage {
 
@@ -8,6 +8,7 @@ enum Stage {
 	Gen_Malticut,
 	START_Normal,
 	CAP_PRO_PAWN,
+	Killers,
 	QUIET,
 	START_Eversion,
 	EVERSION,
@@ -31,9 +32,11 @@ private:
 	void quietscore();
 	void capturepropawn_score();
 	Value Threshold;
+	const Stack* ss_;
+	ExtMove killers_[2];
 public:
 	//通常探索用コンストラクタ
-	movepicker(const Position& pos) :pos_(pos) {
+	movepicker(const Position& pos,const Stack* ss) :pos_(pos),ss_(ss){
 
 		current_ = end_ = move_;
 
@@ -46,7 +49,7 @@ public:
 	}
 
 	//精子探索用コンストラクタ
-	movepicker(const Position& pos, Square recapsq) :pos_(pos) {
+	movepicker(const Position& pos, Square recapsq) :pos_(pos),ss_(nullptr) {
 		current_ = end_ = move_;
 
 		if (pos.is_incheck()) {
@@ -58,7 +61,7 @@ public:
 		}
 	}
 	//multicut用コンストラクタ
-	movepicker(const Position& pos, Value v) :pos_(pos) {
+	movepicker(const Position& pos, Value v) :pos_(pos), ss_(nullptr) {
 
 		ASSERT(pos.is_incheck() == false);
 		current_ = end_ = move_;

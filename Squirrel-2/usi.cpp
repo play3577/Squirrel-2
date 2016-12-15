@@ -241,7 +241,7 @@ void USI::loop()
 	Position pos;
 	Thread th;
 	string token, cmd;
-
+	Stack ss;
 	//pos.set_hirate();
 	//pos.set(check_drop);
 	do {
@@ -382,7 +382,8 @@ void USI::loop()
 			cout << legal << endl;
 		}
 		else if (token == "mpick") {
-			movepicker mp(pos);
+			
+			movepicker mp(pos,&ss);
 			Move m;
 			StateInfo si;
 			while ((m = mp.return_nextmove()) != MOVE_NONE) {
@@ -393,7 +394,7 @@ void USI::loop()
 		}
 		else if (token == "2jyuu") {
 			pos.set(nijyuuoute);
-			movepicker mp(pos);
+			movepicker mp(pos,&ss);
 			Move m;
 			while ((m = mp.return_nextmove()) != MOVE_NONE) {
 				cout << m << " " << pos.is_legal(m) << endl;
@@ -401,7 +402,7 @@ void USI::loop()
 		}
 		else if (token == "oute") {
 			pos.set(oute);
-			movepicker mp(pos);
+			movepicker mp(pos,&ss);
 			Move m;
 			while ((m = mp.return_nextmove()) != MOVE_NONE) {
 				cout << m << " " << pos.is_legal(m) << endl;
@@ -409,7 +410,7 @@ void USI::loop()
 		}
 		else if (token == "ks") {
 			pos.set(suicide);
-			movepicker mp(pos);
+			movepicker mp(pos, &ss);
 			Move m=make_move(SQ4H,SQ3G,B_KING);
 			cout << m << " " << pos.is_legal(m) << endl;
 			check_move(m);

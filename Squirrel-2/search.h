@@ -27,6 +27,9 @@ struct Stack {
 	int ply = 0;
 	Move excludedMove = MOVE_NONE;
 	bool skip_early_prunning = false;
+	//兄弟ノードで枝切りを引き起こしたQuietな指し手をQuietより先に探索することで探索効率を上げる。
+	//兄弟ノードなのでssに格納する
+	Move killers[2];
 };
 
 

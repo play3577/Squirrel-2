@@ -639,6 +639,21 @@ void Position::check_occbitboard()const {
 	return;
 }
 
+void Position::add_existpawnBB(const Color c, const Square sq) {
+	//ASSERT((ExistPawnBB[c] & FileBB[sqtofile(sq)]).isNot() == false);
+	if ((ExistPawnBB[c] & FileBB[sqtofile(sq)]).isNot() == true) {
+		std::cout << *this << c << sq << std::endl;
+		print_existpawnBB();
+		std::cout << Move(2244619) << std::endl;
+		std::cout << check_nihu(Move(2244619)) <<std::endl;
+		cout << occ_pt(sidetomove(), PAWN) << endl;
+		cout << FileBB[sqtofile(move_to(Move(2244619)))];
+		ASSERT(0);
+	}
+	ExistPawnBB[c] |= FileBB[sqtofile(sq)];
+
+}
+
 //この関数で打ち歩詰め、王の自殺手を省く。
 /*
 指し手が省かれる確率は非常に低いため
@@ -840,6 +855,48 @@ void Position::init_hash()
 	}
 
 
+}
+
+/*
+is_legalで確認していること
+王の自殺打ち歩、ピンごまの移動　　以外の項目をここで確認する。
+
+流石に成れないはずなのになろうとすると言った指しては入ってこないはずである。
+*/
+
+bool Position::is_psuedolegal(const Move m) const {
+
+	Piece movedpiece = moved_piece(m);
+	Square to = move_to(m);
+
+	if (piece_color(movedpiece) != sidetomove()) {
+
+		cout << *this << endl;
+		check_move(m);
+		ASSERT(0);
+
+	};
+
+	if (is_drop(m)) {
+
+		//二歩ではないか
+		//打つコマは持っているか
+		//移動先にコマはないか
+		if (check_nihu(m)) { return false; }
+		if (!have_pt(hand(sidetomove_), piece_type(movedpiece))) { return false; }
+		if (piece_on(to) != NO_PIECE) { return false; }
+	}
+	else {
+
+		Square from = move_from(m);
+
+		//fromに移動させる駒がいるか
+		//自分のコマの上に移動させようとしてないか
+		if (piece_on(from) != movedpiece) { return false; }
+		if (piece_on(to) != NO_PIECE) { return false; }
+	}
+
+	return true;
 }
 
 
