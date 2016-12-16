@@ -113,10 +113,14 @@ Move movepicker::return_nextmove()
 			return m;
 			break;
 		case START_Normal:
+			++current_;
+			return ttMove_;
 			break;
 		case CAP_PRO_PAWN:
 			m = current_++->move;
-			return m;
+			if (m != ttMove_) {
+				return m;
+			}
 			break;
 		case Killers:
 			m = current_++->move;
@@ -131,17 +135,22 @@ Move movepicker::return_nextmove()
 		case QUIET:
 			m = current_++->move;
 			if (m != killers_[0]
-				&& m != killers_[1]) {
+				&& m != killers_[1]
+				&&m!=ttMove_) {
 				return m;
 			}
 			break;
 		case START_Eversion:
+			++current_;
+			return ttMove_;
 			break;
 		case EVERSION:
 			m = current_++->move;
 			return m;
 			break;
 		case START_Qsearch:
+			++current_;
+			return ttMove_;
 			break;
 		case RECAPTURE:
 			m = current_++->move;
