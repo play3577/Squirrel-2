@@ -327,8 +327,88 @@ public:
 	//UPは手番に関係なく上方向
 	/*
 	Direction方向からの飛び効きが来ているかどうか
+	sqに効きが聞いているかどうか確かめる
+
+
+	sqが動かすコマのfromの位置toは移動先
+
+	fromに敵のコマの効きが聞いているということはその向こう側の玉にも効く。
 	*/
-	bool is_longeffectdirection(const Color c,const Square sq,const Direction d) const{
+	//bool is_longeffectdirection_fromto(const Color c,const Square sq,const Square to,const Direction d) const{
+
+	//	/*
+	//	toの位置にコマを足しておく
+	//	fromの位置からコマを引く必要は無いはず。
+	//	*/
+	//	Bitboard occR = occ_all()|SquareBB[to];
+	//	Bitboard occ90R = occ_90() |SquareBB[sq_to_sq90(to)];
+	//	Bitboard occp45R = occ_plus45() |SquareBB[sq_to_sqplus45(to)];
+	//	Bitboard occm45R = occ_minus45() |SquareBB[sq_to_sqminus45(to)];
+
+	//	Color ENEMY = opposite(c);
+	//	uint8_t obstacle_tate;
+	//	uint8_t obstacle_plus45;
+	//	uint8_t obstacle_Minus45;
+	//	uint8_t obstacle_yoko;
+	//	switch (d)
+	//	{
+
+	//	case UP:
+	//		obstacle_tate = (occR.b[index_tate(sq)] >> shift_tate(sq))&effectmask;
+	//		//UPの場合でもDOWNに跳駒がいるわけがないので（down方向には玉が入るため存在されては困る）＆INfrontofBBとかしなくてもいい
+	//		return ((LongRookEffect_tate[sq][obstacle_tate])&(occ_pt(ENEMY, ROOK) | occ_pt(ENEMY, DRAGON) | occ_pt(ENEMY, LANCE))).isNot();
+	//		break;
+
+	//	case RightUP:
+	//		obstacle_plus45 = (occp45R.b[index_plus45(sq)] >> shift_plus45(sq))&effectmask;
+	//		return (LongBishopEffect_plus45[sq][obstacle_plus45] & (occ_pt(ENEMY, BISHOP) | occ_pt(ENEMY, UNICORN))).isNot();
+	//		break;
+
+	//	case Right:
+	//		obstacle_yoko = (occ90R.b[index_yoko(sq)] >> shift_yoko(sq))&effectmask;
+	//		return (LongRookEffect_yoko[sq][obstacle_yoko] & (occ_pt(ENEMY, ROOK) | occ_pt(ENEMY, DRAGON))).isNot();
+	//		break;
+
+	//	case RightDOWN:
+	//		obstacle_Minus45 = (occm45R.b[index_Minus45(sq)] >> shift_Minus45(sq))&effectmask;
+	//		return  (LongBishopEffect_minus45[sq][(obstacle_Minus45)] & (occ_pt(ENEMY, BISHOP) | occ_pt(ENEMY, UNICORN))).isNot();
+	//		break;
+
+	//	case DOWN:
+	//		
+	//		obstacle_tate = (occR.b[index_tate(sq)] >> shift_tate(sq))&effectmask;
+	//		return ((LongRookEffect_tate[sq][obstacle_tate])&(occ_pt(ENEMY, ROOK) |occ_pt(ENEMY,DRAGON)| occ_pt(ENEMY, LANCE))).isNot();
+	//		break;
+
+	//	case LeftDOWN:
+	//		obstacle_plus45 = (occp45R.b[index_plus45(sq)] >> shift_plus45(sq))&effectmask;
+	//		return (LongBishopEffect_plus45[sq][obstacle_plus45] & (occ_pt(ENEMY, BISHOP) | occ_pt(ENEMY, UNICORN))).isNot();
+	//		break;
+
+	//	case Left:
+	//		obstacle_yoko = (occ90R.b[index_yoko(sq)] >> shift_yoko(sq))&effectmask;
+	//		return (LongRookEffect_yoko[sq][obstacle_yoko] & (occ_pt(ENEMY, ROOK) | occ_pt(ENEMY, DRAGON))).isNot();
+	//		break;
+
+	//	case LeftUP:
+	//		obstacle_Minus45 = (occm45R.b[index_Minus45(sq)] >> shift_Minus45(sq))&effectmask;
+	//		return  (LongBishopEffect_minus45[sq][(obstacle_Minus45)] & (occ_pt(ENEMY, BISHOP) | occ_pt(ENEMY, UNICORN))).isNot();
+	//		break;
+
+	//	default:
+	//		UNREACHABLE;
+	//		return false;
+	//		break;
+	//	}
+
+	//}
+	//
+
+	//UPは手番に関係なく上方向
+	/*
+	Direction方向からの飛び効きが来ているかどうか
+	*/
+	bool is_longeffectdirection(const Color c, const Square sq, const Direction d) const {
 
 		Color ENEMY = opposite(c);
 		uint8_t obstacle_tate;
@@ -360,9 +440,9 @@ public:
 			break;
 
 		case DOWN:
-			
+
 			obstacle_tate = (occ_all().b[index_tate(sq)] >> shift_tate(sq))&effectmask;
-			return ((LongRookEffect_tate[sq][obstacle_tate])&(occ_pt(ENEMY, ROOK) |occ_pt(ENEMY,DRAGON)| occ_pt(ENEMY, LANCE))).isNot();
+			return ((LongRookEffect_tate[sq][obstacle_tate])&(occ_pt(ENEMY, ROOK) | occ_pt(ENEMY, DRAGON) | occ_pt(ENEMY, LANCE))).isNot();
 			break;
 
 		case LeftDOWN:
@@ -387,7 +467,7 @@ public:
 		}
 
 	}
-	
+
 
 	/*
 	これでは遅いよね.....

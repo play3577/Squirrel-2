@@ -709,8 +709,15 @@ bool Position::is_legal(const Move m) const {
 			/*fromとksqの間に他の駒があるかどうかの確認も必要！*///betweenBBの作成が必要
 											//他の駒がある場合はそこで飛び効きが遮られるのでダイジョーブ
 			if (!(BetweenBB[from][our_ksq] & occ_all()).isNot()) {
+
+				//if (is_longeffectdirection_fromto(sidetomove(), from,to, d)) { return false; }
+				/*
+				killermoveを導入したのでtoが同じdirectionであっても飛び効きが玉に聞く場合が出てきてしまった！！
+				（香車が相手の香車を飛び超えて動いてしまい、相手の利きを通してしまったkillermoveが出てきた。）
+				is_longeffectdirectionでoccに&~from |toをするような関数を用意してやる必要がある。
+				*/
 				Direction ksq2to = direct_table[to][our_ksq];
-				//toが同じdirectionではない
+				////toが同じdirectionではない
 				if (ksq2to != d) {
 					//fromにd方向から飛び効きが効いていた場合は飛び効きを許してしまっている。
 					if (is_longeffectdirection(sidetomove(), from, d)) { return false; }
@@ -887,6 +894,7 @@ bool Position::is_psuedolegal(const Move m) const {
 		if (piece_on(to) != NO_PIECE) { return false; }
 	}
 	else {
+		//移動
 
 		Square from = move_from(m);
 
@@ -894,6 +902,9 @@ bool Position::is_psuedolegal(const Move m) const {
 		//自分のコマの上に移動させようとしてないか
 		if (piece_on(from) != movedpiece) { return false; }
 		if (piece_on(to) != NO_PIECE) { return false; }
+		//跳駒の場合相手のコマを飛び越えてしまう指してを考えてしまう場合があるのでそれをここで防ぐ
+		//(from,to)開区間の間に他の駒があればfalse
+		if ((BetweenBB[from][to] & occ_all()).isNot()) { return false; }
 	}
 
 	return true;
