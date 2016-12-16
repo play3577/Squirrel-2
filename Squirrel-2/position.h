@@ -292,10 +292,10 @@ public:
 		}
 	}
 
-
+	//nihu‚Å‚ ‚ê‚Îtrue‚ğ•Ô‚·B
 	bool check_nihu(const Move m) const{
-
-		if (is_drop(m)&&moved_piece(m)==PAWN) {
+		//piece_type‚É‚·‚é‚Ì‚ğ–Y‚ê‚Ä‚¢‚½II
+		if (is_drop(m)&&piece_type(moved_piece(m))==PAWN) {
 
 			if ((occ_pt(sidetomove(), PAWN)&FileBB[sqtofile(move_to(m))]).isNot()==true) {
 				return true;

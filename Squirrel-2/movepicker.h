@@ -34,9 +34,10 @@ private:
 	Value Threshold;
 	const Stack* ss_;
 	ExtMove killers_[2];
+	Move ttMove_;
 public:
 	//通常探索用コンストラクタ
-	movepicker(const Position& pos,const Stack* ss) :pos_(pos),ss_(ss){
+	movepicker(const Position& pos,const Stack* ss,const Move ttmove) :pos_(pos),ss_(ss){
 
 		current_ = end_ = move_;
 
@@ -46,10 +47,12 @@ public:
 		else {
 			st = START_Normal;
 		}
+		/*ttMove_ = ttmove&&pos_.is_psuedolegal(ttmove) ? ttmove : MOVE_NONE;
+		end_ += (ttMove_ != MOVE_NONE);*/
 	}
 
 	//精子探索用コンストラクタ
-	movepicker(const Position& pos, Square recapsq) :pos_(pos),ss_(nullptr) {
+	movepicker(const Position& pos, Square recapsq, const Move ttmove) :pos_(pos),ss_(nullptr) {
 		current_ = end_ = move_;
 
 		if (pos.is_incheck()) {
@@ -59,6 +62,8 @@ public:
 			st = START_Qsearch;
 			recapsq_ = recapsq;
 		}
+		/*ttMove_ = ttmove&&pos_.is_psuedolegal(ttmove) ? ttmove : MOVE_NONE;
+		end_ += (ttMove_ != MOVE_NONE);*/
 	}
 	//multicut用コンストラクタ
 	movepicker(const Position& pos, Value v) :pos_(pos), ss_(nullptr) {
