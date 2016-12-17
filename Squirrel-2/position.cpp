@@ -873,7 +873,10 @@ is_legalで確認していること
 
 bool Position::is_psuedolegal(const Move m) const {
 
+	
+
 	Piece movedpiece = moved_piece(m);
+	if (movedpiece == NO_PIECE) { return false; }
 	Square to = move_to(m);
 
 	//相手の駒を動かそうとしてはならない
@@ -915,6 +918,9 @@ bool Position::is_psuedolegal(const Move m) const {
 
 		Square from = move_from(m);
 
+		//fromとtoの一致はエラー
+		if (from == to) { return false; }
+
 		//fromに移動させる駒がいるか
 		//自分のコマの上に移動させようとしてないか
 		if (piece_on(from) != movedpiece) { return false; }
@@ -922,6 +928,14 @@ bool Position::is_psuedolegal(const Move m) const {
 		//跳駒の場合相手のコマを飛び越えてしまう指してを考えてしまう場合があるのでそれをここで防ぐ
 		//(from,to)開区間の間に他の駒があればfalse
 		if ((BetweenBB[from][to] & occ_all()).isNot()) { return false; }
+
+		if (is_promote(m)) {
+			if (!can_promote(movedpiece)) { return false; }
+			if (!(canPromoteBB[sidetomove()] & (SquareBB[from] | SquareBB[to])).isNot()) { return false; }
+			if (piece_type(movedpiece) == PAWN) { return false; }
+		}
+
+
 
 		//王の自殺　pinごまの移動はis_LEGALのしごとなのでそれ以外を見る
 		if (is_incheck()) {

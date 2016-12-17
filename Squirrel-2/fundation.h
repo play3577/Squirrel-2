@@ -6,13 +6,15 @@
 
 //やねうら王のアイデア
 #ifdef _DEBUG
-#define ASSERT(x) _ASSERT(x)
+//#define ASSERT(x) _ASSERT(x)
+#define ASSERT(X) { if (!(X)){ std::cout << "\nError!!\n" << "info string file:" << __FILE__ << " line:" << __LINE__ <<" "<< #X<< std::endl;   *(int*)1 =0;} }
 #endif
 #ifndef _DEBUG
-#define ASSERT(X) { if (!(X)) *(int*)1 =0; }
+#define ASSERT(X) { if (!(X)){ std::cout << "\nError!!\n" << "info string file:" << __FILE__ << " line:" << __LINE__ <<" "<< #X<< std::endl;   *(int*)1 =0;} }
+//#define ASSERT(X,msg) { printf(msg);  if (!(X)) *(int*)1 =0; }
 #endif
 //#define ASSERT(x) ((void)0)//すべてをかなぐり捨てて速度を出したいとき用
-#define UNREACHABLE ASSERT(0)
+#define UNREACHABLE { printf("\nUNREACHABLE!");ASSERT(0);}
 
 #define HAVE_SSE2
 #define HAVE_SSE4 //しかしうちのCPUはSSE4.1までしか持っていない..orz

@@ -589,7 +589,9 @@ void USI::loop()
 			pos.undo_nullmove();
 			cout << pos << endl;
 		}
-
+		else if (token == "assert") {
+			ASSERT(PAWN > GOLD);
+		}
 
 
 	} while (token != "quit");

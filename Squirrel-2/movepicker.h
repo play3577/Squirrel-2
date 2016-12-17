@@ -47,7 +47,7 @@ public:
 		else {
 			st = START_Normal;
 		}
-		ttMove_ = ttmove != MOVE_NONE&&pos_.is_psuedolegal(ttmove) ? ttmove : MOVE_NONE;
+		ttMove_ = (ttmove != MOVE_NONE&&pos_.is_psuedolegal(ttmove)) ? ttmove : MOVE_NONE;
 		end_ += (ttMove_ != MOVE_NONE);
 	}
 
@@ -62,7 +62,7 @@ public:
 			st = START_Qsearch;
 			recapsq_ = recapsq;
 		}
-		ttMove_ = ttmove!=MOVE_NONE&&pos_.is_psuedolegal(ttmove) ? ttmove : MOVE_NONE;
+		ttMove_ = (ttmove!=MOVE_NONE&&pos_.is_psuedolegal(ttmove)) ? ttmove : MOVE_NONE;
 		end_ += (ttMove_ != MOVE_NONE);
 	}
 	//multicut用コンストラクタ

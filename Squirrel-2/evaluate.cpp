@@ -723,7 +723,7 @@ namespace Eval {
 				for (Piece pt = PAWN; pt < KING; pt++) {
 
 					//ƒRƒŒ‚ÍˆÓ}‚µ‚½‹Lq
-					if (num = num_pt(h, pt)) {
+					if ((num = num_pt(h, pt))!=0) {
 
 						for (int i = 1; i < num + 1; i++) {
 							bplist_fb[uniform[pt]] = bonapiece(hc, pt, i);

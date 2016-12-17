@@ -128,7 +128,7 @@ Move movepicker::return_nextmove()
 				&& m != MOVE_NONE
 				&&m!=ttMove_
 				&& pos_.is_psuedolegal(m)
-				&& !pos_.is_propawn(m)
+				//&& !pos_.is_propawn(m)
 				) {
 				return m;
 			}
