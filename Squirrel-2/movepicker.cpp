@@ -126,6 +126,7 @@ Move movepicker::return_nextmove()
 			m = current_++->move;
 			if (m != Move(0)
 				&& m != MOVE_NONE
+				&&m!=ttMove_
 				&& pos_.is_psuedolegal(m)
 				&& !pos_.is_propawn(m)
 				) {
@@ -146,7 +147,9 @@ Move movepicker::return_nextmove()
 			break;
 		case EVERSION:
 			m = current_++->move;
-			return m;
+			if (m != ttMove_) {
+				return m;
+			}
 			break;
 		case START_Qsearch:
 			++current_;
@@ -154,7 +157,9 @@ Move movepicker::return_nextmove()
 			break;
 		case RECAPTURE:
 			m = current_++->move;
-			return m;
+			if (m != ttMove_) {
+				return m;
+			}
 			break;
 		case STOP:
 			return MOVE_NONE;

@@ -876,12 +876,12 @@ bool Position::is_psuedolegal(const Move m) const {
 	Piece movedpiece = moved_piece(m);
 	Square to = move_to(m);
 
+	//相手の駒を動かそうとしてはならない
 	if (piece_color(movedpiece) != sidetomove()) {
-
-		cout << *this << endl;
+		return false;
+		/*cout << *this << endl;
 		check_move(m);
-		ASSERT(0);
-
+		ASSERT(0);*/
 	};
 
 	if (is_drop(m)) {
@@ -892,6 +892,23 @@ bool Position::is_psuedolegal(const Move m) const {
 		if (check_nihu(m)) { return false; }
 		if (!have_pt(hand(sidetomove_), piece_type(movedpiece))) { return false; }
 		if (piece_on(to) != NO_PIECE) { return false; }
+
+		if (is_incheck()) {
+
+			Bitboard target = st->checker;
+			Square chckerSQ=target.pop();
+			//popしてもtargetが存在するということは二重王手なので駒打ちでは駄目
+			if (target.isNot()) {
+				return false;
+			}
+			//コマを打って相手の機器を遮らなければならない
+			if (!(BetweenBB[chckerSQ][ksq(sidetomove())] & SquareBB[to]).isNot()) {
+				return false;
+			}
+
+		}
+
+
 	}
 	else {
 		//移動
@@ -905,6 +922,28 @@ bool Position::is_psuedolegal(const Move m) const {
 		//跳駒の場合相手のコマを飛び越えてしまう指してを考えてしまう場合があるのでそれをここで防ぐ
 		//(from,to)開区間の間に他の駒があればfalse
 		if ((BetweenBB[from][to] & occ_all()).isNot()) { return false; }
+
+		//王の自殺　pinごまの移動はis_LEGALのしごとなのでそれ以外を見る
+		if (is_incheck()) {
+
+			if (piece_type(movedpiece) != KING) {
+
+				Bitboard target = st->checker;
+				Square chckerSQ = target.pop();
+				//2十王手であれば王の移動が必要
+				if (target.isNot()) {
+					return false;
+				}
+
+				//移動先が王手をかけているコマを取るか効きの間に入ってくる必要がある。
+				Bitboard target2 = BetweenBB[chckerSQ][ksq(sidetomove())] | SquareBB[chckerSQ];
+				if (!(target2&SquareBB[to]).isNot()) { return false; }
+			}
+
+
+		}
+
+
 	}
 
 	return true;
