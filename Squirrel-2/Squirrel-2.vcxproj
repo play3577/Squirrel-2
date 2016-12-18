@@ -162,6 +162,7 @@
     <ClInclude Include="movepicker.h" />
     <ClInclude Include="moveStats.h" />
     <ClInclude Include="occupied.h" />
+    <ClInclude Include="occupied_m256.h" />
     <ClInclude Include="position.h" />
     <ClInclude Include="search.h" />
     <ClInclude Include="Thread.h" />
@@ -182,6 +183,7 @@
     <ClCompile Include="misc.cpp" />
     <ClCompile Include="movepicker.cpp" />
     <ClCompile Include="occupied.cpp" />
+    <ClCompile Include="occupied_m256.cpp" />
     <ClCompile Include="position.cpp" />
     <ClCompile Include="search.cpp" />
     <ClCompile Include="book.cpp" />

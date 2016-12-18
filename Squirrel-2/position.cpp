@@ -844,7 +844,7 @@ bool Position::is_psuedolegal(const Move m) const {
 			if (piece_type(movedpiece) != KING) {
 
 				Bitboard target = st->checker;
-				ASSERT(target.isNot());
+				//ASSERT(target.isNot());
 				Square chckerSQ = target.pop();
 				
 				//2十王手であれば王の移動が必要
@@ -853,8 +853,8 @@ bool Position::is_psuedolegal(const Move m) const {
 				}
 
 				//移動先が王手をかけているコマを取るか効きの間に入ってくる必要がある。
-				ASSERT(is_ok(chckerSQ));
-				ASSERT(is_ok(ksq(sidetomove())));
+				//ASSERT(is_ok(chckerSQ));
+				//ASSERT(is_ok(ksq(sidetomove())));
 				Bitboard target2 = BetweenBB[chckerSQ][ksq(sidetomove())] | SquareBB[chckerSQ];
 				if (!(target2&SquareBB[to]).isNot()) { return false; }
 			}

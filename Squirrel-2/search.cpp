@@ -565,11 +565,11 @@ moves_loop:
 		capture propawnの指し手になりうるのはcappropawnのステージとEVERSIONのステージだけ
 		*/
 		if (mp.ret_stage() == CAP_PRO_PAWN) {
-			ASSERT(pos.capture_or_propawn(move) == true); //今のところassertなくても大丈夫そう
+			//ASSERT(pos.capture_or_propawn(move) == true); //今のところassertなくても大丈夫そう
 			CaptureorPropawn = true;
 		}
 		else if (mp.ret_stage() == QUIET|| mp.ret_stage() == Killers) {
-			ASSERT(pos.capture_or_propawn(move) == false);
+			//ASSERT(pos.capture_or_propawn(move) == false);
 			CaptureorPropawn = false;
 		}
 		else {
