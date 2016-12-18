@@ -9,6 +9,7 @@
 #include "makemove.h"
 #include "learner.h"
 #include "book.h"
+#include "tpt.h"
 //#include "makemove.h"
 
 #include <iostream>
@@ -147,6 +148,9 @@ void is_ready() {
 		if (Options["usebook"] == true) {
 			BOOK::init();
 		}
+#ifdef USETT
+		TT.clear();
+#endif
 	}
 	first_ready = false;
 }
@@ -261,7 +265,7 @@ void USI::loop()
 		}
 		else if (token == "isready") { is_ready(); cout << "readyok" << endl; }
 		else if (token == "position") { position(pos, is); }
-		else if (token == "go") { go(pos, is, th); }
+		else if (token == "go") {  go(pos, is, th); }
 		else if (token == "setoption") {
 /*
 >C:setoption name Threads value 2

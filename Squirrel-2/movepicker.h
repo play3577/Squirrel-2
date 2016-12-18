@@ -43,12 +43,14 @@ public:
 
 		if (pos.is_incheck()) {
 			st = START_Eversion;
+			ttMove_ = MOVE_NONE;
 		}
 		else {
 			st = START_Normal;
+			ttMove_ = (ttmove != MOVE_NONE&&pos_.is_psuedolegal(ttmove)) ? ttmove : MOVE_NONE;
+			end_ += (ttMove_ != MOVE_NONE);
 		}
-		ttMove_ = (ttmove != MOVE_NONE&&pos_.is_psuedolegal(ttmove)) ? ttmove : MOVE_NONE;
-		end_ += (ttMove_ != MOVE_NONE);
+		
 	}
 
 	//精子探索用コンストラクタ
@@ -57,13 +59,16 @@ public:
 
 		if (pos.is_incheck()) {
 			st = START_Eversion;
+			ttMove_ = MOVE_NONE;
 		}
 		else {
 			st = START_Qsearch;
 			recapsq_ = recapsq;
+			//recaptureのみを生成するのでコレでいいが王手も生成するならコレじゃいけない
+			ttMove_ = (ttmove != MOVE_NONE&&pos_.is_psuedolegal(ttmove) && move_to(ttmove) == recapsq_) ? ttmove : MOVE_NONE;
+			end_ += (ttMove_ != MOVE_NONE);
 		}
-		ttMove_ = (ttmove!=MOVE_NONE&&pos_.is_psuedolegal(ttmove)) ? ttmove : MOVE_NONE;
-		end_ += (ttMove_ != MOVE_NONE);
+		
 	}
 	//multicut用コンストラクタ
 	movepicker(const Position& pos, Value v) :pos_(pos), ss_(nullptr) {

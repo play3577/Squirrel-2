@@ -544,9 +544,10 @@ moves_loop:
 	
 	while ((move = mp.return_nextmove()) != MOVE_NONE) {
 
-
-		if (pos.is_legal(move) == false) { continue; }
-
+		//rootの指しては生成時にすべて合法かどうか確認されている
+		if (NT != Root) {
+			if (pos.is_legal(move) == false) { continue; }
+		}
 		//二歩が入ってこないことは確認した
 		if (pos.check_nihu(move) == true) {
 
@@ -565,15 +566,15 @@ moves_loop:
 		capture propawnの指し手になりうるのはcappropawnのステージとEVERSIONのステージだけ
 		*/
 		if (mp.ret_stage() == CAP_PRO_PAWN) {
-			//ASSERT(pos.capture_or_propawn(move) == true); 今のところassertなくても大丈夫そう
+			ASSERT(pos.capture_or_propawn(move) == true); //今のところassertなくても大丈夫そう
 			CaptureorPropawn = true;
 		}
-		else if (mp.ret_stage() == EVERSION) {
-			CaptureorPropawn = pos.capture_or_propawn(move);
+		else if (mp.ret_stage() == QUIET|| mp.ret_stage() == Killers) {
+			ASSERT(pos.capture_or_propawn(move) == false);
+			CaptureorPropawn = false;
 		}
 		else {
-			//ASSERT(pos.capture_or_propawn(move) == false);
-			CaptureorPropawn =false;
+			CaptureorPropawn = pos.capture_or_propawn(move);
 		}
 
 		++movecount;
@@ -1002,6 +1003,7 @@ void update_stats(const Position& pos, Stack* ss,const Move bestmove,
 	// Decrease all the other played quiet moves
 	//alphaを更新しなかった指し手に対して+=負の値
 	for (int i = 0; i < quietsCnt; ++i) {
+		ASSERT(pos.capture_or_propawn(quiets[i]) == false);
 		thisthread->history.update(moved_piece(quiets[i]), move_to(quiets[i]), -bonus);
 	}
 

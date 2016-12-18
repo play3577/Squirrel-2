@@ -86,6 +86,7 @@ void movepicker::generatemove()
 		end_ = move_recapture(pos_, move_, recapsq_);
 		break;
 	case STOP:
+		//end_ = move_+1;
 		break;
 	default:
 		UNREACHABLE;
@@ -101,7 +102,7 @@ Move movepicker::return_nextmove()
 
 	Move m;
 	while (true) {
-		while (end_ == current_&&st != STOP) { st++; generatemove(); }
+		while (end_ <= current_&&st != STOP) { st++; generatemove(); }
 
 
 		switch (st)
@@ -128,7 +129,7 @@ Move movepicker::return_nextmove()
 				&& m != MOVE_NONE
 				&&m!=ttMove_
 				&& pos_.is_psuedolegal(m)
-				//&& !pos_.is_propawn(m)
+				&& !pos_.capture_or_propawn(m)
 				) {
 				return m;
 			}
