@@ -47,14 +47,14 @@ public:
 		}
 		else {
 			st = START_Normal;
-			ttMove_ = (ttmove != MOVE_NONE&&pos_.is_psuedolegal(ttmove)) ? ttmove : MOVE_NONE;
-			end_ += (ttMove_ != MOVE_NONE);
+			
 		}
-		
+		ttMove_ = ((ttmove != MOVE_NONE)&&(pos_.is_psuedolegal(ttmove))) ? ttmove : MOVE_NONE;
+		end_ += (ttMove_ != MOVE_NONE);
 	}
 
 	//精子探索用コンストラクタ
-	movepicker(const Position& pos, Square recapsq, const Move ttmove) :pos_(pos),ss_(nullptr) {
+	movepicker(const Position& pos, Square recapsq, const Move ttmove) :pos_(pos), ss_(nullptr) {
 		current_ = end_ = move_;
 
 		if (pos.is_incheck()) {
@@ -64,11 +64,10 @@ public:
 		else {
 			st = START_Qsearch;
 			recapsq_ = recapsq;
-			//recaptureのみを生成するのでコレでいいが王手も生成するならコレじゃいけない
-			ttMove_ = (ttmove != MOVE_NONE&&pos_.is_psuedolegal(ttmove) && move_to(ttmove) == recapsq_) ? ttmove : MOVE_NONE;
-			end_ += (ttMove_ != MOVE_NONE);
 		}
-		
+		//recaptureのみを生成するのでコレでいいが王手も生成するならコレじゃいけない
+		ttMove_ = ((ttmove != MOVE_NONE)&&(pos_.is_psuedolegal(ttmove)) && (move_to(ttmove) == recapsq_)) ? ttmove : MOVE_NONE;
+		end_ += (ttMove_ != MOVE_NONE);
 	}
 	//multicut用コンストラクタ
 	movepicker(const Position& pos, Value v) :pos_(pos), ss_(nullptr) {

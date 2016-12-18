@@ -545,9 +545,8 @@ moves_loop:
 	while ((move = mp.return_nextmove()) != MOVE_NONE) {
 
 		//rootの指しては生成時にすべて合法かどうか確認されている
-		if (NT != Root) {
-			if (pos.is_legal(move) == false) { continue; }
-		}
+		//ttmoveがおかしいかもしれないのでROOTでもちゃんと確認しておく
+		if (pos.is_legal(move) == false) { continue; }
 		//二歩が入ってこないことは確認した
 		if (pos.check_nihu(move) == true) {
 

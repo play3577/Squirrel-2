@@ -793,7 +793,7 @@ bool Position::is_psuedolegal(const Move m) const {
 
 			
 			Bitboard target = st->checker;
-			ASSERT(target.isNot());
+			//ASSERT(target.isNot());
 			Square chckerSQ = target.pop();
 			
 			//popしてもtargetが存在するということは二重王手なので駒打ちでは駄目
@@ -801,8 +801,8 @@ bool Position::is_psuedolegal(const Move m) const {
 				return false;
 			}
 			//コマを打って相手の機器を遮らなければならない
-			ASSERT(is_ok(chckerSQ));
-			ASSERT(is_ok(ksq(sidetomove())));
+			/*ASSERT(is_ok(chckerSQ));
+			ASSERT(is_ok(ksq(sidetomove())));*/
 			if (!(BetweenBB[chckerSQ][ksq(sidetomove())] & SquareBB[to]).isNot()) {
 				return false;
 			}
@@ -858,9 +858,10 @@ bool Position::is_psuedolegal(const Move m) const {
 				Bitboard target2 = BetweenBB[chckerSQ][ksq(sidetomove())] | SquareBB[chckerSQ];
 				if (!(target2&SquareBB[to]).isNot()) { return false; }
 			}
-			else {
-
-			}
+			//else {
+			//	//王が移動した場合(これはlegalで考えてあるのでこんなことはしなくていいはずなのだが..)
+			//	if (is_king_suiside(sidetomove_, to, from)) { return false; }
+			//}
 
 
 		}
