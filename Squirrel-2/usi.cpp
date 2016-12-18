@@ -125,11 +125,11 @@ std::ostream& USI::operator<<(std::ostream& os, const OptionMap& om) {
 				if (o.type == "spin") {
 					os << " min " << o.min << " max " << o.max;
 				}
-				if (o.type == "button") {
-					os << " defalt ";
+				/*if (o.type == "check") {
+					os << " default ";
 					if (o.value == "true") { os << "true"; }
 					else { os << "false"; }
-				}
+				}*/
 				break;
 			}
 		}

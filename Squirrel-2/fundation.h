@@ -25,7 +25,7 @@
 
 
 #ifndef LEARN
-//#define USETT
+#define USETT
 #endif
 
 //やねうら王のアイディア
