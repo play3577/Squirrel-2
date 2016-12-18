@@ -3,8 +3,9 @@
 #include <iostream>
 
 using namespace std;
+#ifdef USETT
 TranspositionTable TT; // Our global transposition table
-
+#endif
 
 // TranspositionTable::resize() sets the size of the transposition table,
 // measured in megabytes. Transposition table consists of a power of 2 number

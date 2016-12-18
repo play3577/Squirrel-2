@@ -115,7 +115,11 @@ Value Thread::think() {
 	}//end book
 
 	history.clear();
+#ifdef USETT
 	TT.new_search();
+#endif // USETT
+
+	
 
 	Stack stack[MAX_PLY + 7], *ss = stack + 5;
 	std::memset(stack, 0,(MAX_PLY+7)*sizeof(Stack));
@@ -167,7 +171,7 @@ Value Thread::think() {
 
 #ifndef LEARN
 		print_pv(rootdepth,bestvalue);
-		cout <<"評価値"<< int(bestvalue)*100/int(Eval::PawnValue) << endl;
+		//cout <<"評価値"<< int(bestvalue)*100/int(Eval::PawnValue) << endl;
 #endif
 	}//end of 反復深化
 
@@ -177,6 +181,7 @@ ID_END:
 	cout << "bestmove " << RootMoves[0] << endl;
 #endif // !LEARN
 
+	//時間切れの場合はゼロが帰ってきてしまう
 	return bestvalue;
 }
 
@@ -378,6 +383,7 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 
 	ここもう少し色々考えられるけどrazoringを除いてもELO-10にしか成らなかったらしいのでそこまで力を入れてチューニングするメリットはない
 	*/
+#ifdef USETT
 	if (!PVNode
 		&&  depth < 4 * ONE_PLY
 		&&  ttMove == MOVE_NONE
@@ -401,7 +407,7 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 		}
 	}
 
-
+#endif
 
 	// Step 7. Futility pruning: child node (skipped when in check)
 	/*------------------------------------------------------------------------------------------------------------
@@ -539,9 +545,12 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 	//（もし前向き枝切りが出来てしまったらこのノードで詰んでしまう）
 moves_loop:
 	
-
+#ifdef USETT
 	movepicker mp(pos,ss, ttMove);
-	
+#endif
+#ifndef USETT
+	movepicker mp(pos, ss, MOVE_NONE);
+#endif
 	while ((move = mp.return_nextmove()) != MOVE_NONE) {
 
 		//rootの指しては生成時にすべて合法かどうか確認されている
@@ -865,8 +874,12 @@ Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
 	//コレで上手く前の指し手の移動先を与えられていると思う
 	//ここでnullmoveが入ってきた場合のことも考えないといけない。
 	//というかnullmoveが入ってきたら取リ返すなんてありえないのでここで評価値返すしか無いでしょ(王手も生成するなら話は別）
+#ifdef USETT
 	movepicker mp(pos, move_to(pos.state()->lastmove), ttMove);
-
+#endif
+#ifndef USETT
+	movepicker mp(pos, move_to(pos.state()->lastmove), MOVE_NONE);
+#endif
 	while ((move = mp.return_nextmove()) != MOVE_NONE) {
 
 		if (pos.is_legal(move) == false) { continue; }

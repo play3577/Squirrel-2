@@ -34,6 +34,6 @@ public:
 		return nullptr;
 	}
 	void sort_RootMove();
-	void print_pv(const int depth, Value v);
+	void print_pv(const int depth,const Value v);
 
 };
