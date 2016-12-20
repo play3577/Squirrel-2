@@ -153,14 +153,14 @@ Move movepicker::return_nextmove()
 			}
 			break;
 		case START_Qsearch:
-			++current_;
-			return ttMove_;
+			/*++current_;
+			return ttMove_;*/
 			break;
 		case RECAPTURE:
 			m = current_++->move;
-			if (m != ttMove_) {
+			//if (m != ttMove_) {
 				return m;
-			}
+			//}
 			break;
 		case STOP:
 			return MOVE_NONE;

@@ -806,7 +806,6 @@ bool Position::is_psuedolegal(const Move m) const {
 			if (!(BetweenBB[chckerSQ][ksq(sidetomove())] & SquareBB[to]).isNot()) {
 				return false;
 			}
-
 		}
 
 
@@ -858,12 +857,6 @@ bool Position::is_psuedolegal(const Move m) const {
 				Bitboard target2 = BetweenBB[chckerSQ][ksq(sidetomove())] | SquareBB[chckerSQ];
 				if (!(target2&SquareBB[to]).isNot()) { return false; }
 			}
-			//else {
-			//	//‰¤‚ªˆÚ“®‚µ‚½ê‡(‚±‚ê‚Ílegal‚Ål‚¦‚Ä‚ ‚é‚Ì‚Å‚±‚ñ‚È‚±‚Æ‚Í‚µ‚È‚­‚Ä‚¢‚¢‚Í‚¸‚È‚Ì‚¾‚ª..)
-			//	if (is_king_suiside(sidetomove_, to, from)) { return false; }
-			//}
-
-
 		}
 
 

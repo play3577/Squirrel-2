@@ -49,7 +49,7 @@ public:
 			st = START_Normal;
 			
 		}
-		ttMove_ = ((ttmove != MOVE_NONE)&&(pos_.is_psuedolegal(ttmove))) ? ttmove : MOVE_NONE;
+		ttMove_ = ((ttmove != MOVE_NONE) && (pos_.is_psuedolegal(ttmove))) ? ttmove : MOVE_NONE;
 		end_ += (ttMove_ != MOVE_NONE);
 	}
 
@@ -66,9 +66,10 @@ public:
 		else {
 			st = START_Qsearch;
 			recapsq_ = recapsq;
+			ttMove_ = MOVE_NONE;
 			//recaptureÇÃÇ›Çê∂ê¨Ç∑ÇÈÇÃÇ≈ÉRÉåÇ≈Ç¢Ç¢Ç™â§éËÇ‡ê∂ê¨Ç∑ÇÈÇ»ÇÁÉRÉåÇ∂Ç·Ç¢ÇØÇ»Ç¢
-			ttMove_ = ((ttmove != MOVE_NONE) && (pos_.is_psuedolegal(ttmove)) && (move_to(ttmove) == recapsq_)) ? ttmove : MOVE_NONE;
-			end_ += (ttMove_ != MOVE_NONE);
+			/*ttMove_ = ((ttmove != MOVE_NONE) && (pos_.is_psuedolegal(ttmove)) && (move_to(ttmove) == recapsq_)) ? ttmove : MOVE_NONE;
+			end_ += (ttMove_ != MOVE_NONE);*/
 		}
 		
 	}

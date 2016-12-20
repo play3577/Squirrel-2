@@ -292,7 +292,7 @@ void USI::loop()
 			}*/
 
 			type = option.return_type();
-			if (type == "button") {
+			if (type == "check") {
 				value == "true" ? option.change(true) : option.change(false);
 			}
 			else if (type == "spin") {

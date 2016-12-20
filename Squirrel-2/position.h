@@ -681,8 +681,10 @@ if ((step_effect(ENEMY, KING, to)&occ_pt(US, KING)).isNot()) { return true; }
 
 	}
 
-
-
+	//static exchange evaluation
+	Value see_sign(const Move m);
+	Value see(const Move m);
+	Value see_ge(const Move m);
 };
 
 std::ostream& operator<<(std::ostream& os, const Position& pos);
