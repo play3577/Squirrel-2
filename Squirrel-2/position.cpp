@@ -415,7 +415,6 @@ void Position::do_move(const Move m, StateInfo * newst)
 	if (is_effect_to(opposite(sidetomove_), ksq(sidetomove_))) {
 		st->inCheck = true;
 		st->checker = effect_toBB(opposite(sidetomove_), ksq(sidetomove_));
-		//ASSERT(st->checker.isNot());
 	}
 	else {
 		st->inCheck = false;
@@ -640,21 +639,6 @@ void Position::check_occbitboard()const {
 	return;
 }
 
-void Position::add_existpawnBB(const Color c, const Square sq) {
-	//ASSERT((ExistPawnBB[c] & FileBB[sqtofile(sq)]).isNot() == false);
-	if ((ExistPawnBB[c] & FileBB[sqtofile(sq)]).isNot() == true) {
-		std::cout << *this << c << sq << std::endl;
-		print_existpawnBB();
-		std::cout << Move(2244619) << std::endl;
-		std::cout << check_nihu(Move(2244619)) <<std::endl;
-		cout << occ_pt(sidetomove(), PAWN) << endl;
-		cout << FileBB[sqtofile(move_to(Move(2244619)))];
-		ASSERT(0);
-	}
-	ExistPawnBB[c] |= FileBB[sqtofile(sq)];
-
-}
-
 //この関数で打ち歩詰め、王の自殺手を省く。
 /*
 指し手が省かれる確率は非常に低いため
@@ -710,15 +694,8 @@ bool Position::is_legal(const Move m) const {
 			/*fromとksqの間に他の駒があるかどうかの確認も必要！*///betweenBBの作成が必要
 											//他の駒がある場合はそこで飛び効きが遮られるのでダイジョーブ
 			if (!(BetweenBB[from][our_ksq] & occ_all()).isNot()) {
-
-				//if (is_longeffectdirection_fromto(sidetomove(), from,to, d)) { return false; }
-				/*
-				killermoveを導入したのでtoが同じdirectionであっても飛び効きが玉に聞く場合が出てきてしまった！！
-				（香車が相手の香車を飛び超えて動いてしまい、相手の利きを通してしまったkillermoveが出てきた。）
-				is_longeffectdirectionでoccに&~from |toをするような関数を用意してやる必要がある。
-				*/
 				Direction ksq2to = direct_table[to][our_ksq];
-				////toが同じdirectionではない
+				//toが同じdirectionではない
 				if (ksq2to != d) {
 					//fromにd方向から飛び効きが効いていた場合は飛び効きを許してしまっている。
 					if (is_longeffectdirection(sidetomove(), from, d)) { return false; }
@@ -750,119 +727,6 @@ Error:;
 	ASSERT(0);
 	return false;
 
-}
-
-
-/*
-is_legalで確認していること
-王の自殺打ち歩、ピンごまの移動　　以外の項目をここで確認する。
-
-流石に成れないはずなのになろうとすると言った指しては入ってこないはずである。
-
-
-TTMoveはcappropawnが許される
-*/
-
-bool Position::is_psuedolegal(const Move m) const {
-
-
-
-	Piece movedpiece = moved_piece(m);
-	if (movedpiece == NO_PIECE) { return false; }
-	Square to = move_to(m);
-
-	//相手の駒を動かそうとしてはならない
-	if (piece_color(movedpiece) != sidetomove()) {
-		return false;
-		/*cout << *this << endl;
-		check_move(m);
-		ASSERT(0);*/
-	};
-
-	if (is_drop(m)) {
-
-		//二歩ではないか
-		//打つコマは持っているか
-		//移動先にコマはないか
-		//ASSERT(piece_type(movedpiece) < KING);
-		if (check_nihu(m)) { return false; }
-		if (!have_pt(hand(sidetomove_), piece_type(movedpiece))) { return false; }
-		if (piece_on(to) != NO_PIECE) { return false; }
-
-		if (is_incheck()) {
-
-			
-			Bitboard target = st->checker;
-			//ASSERT(target.isNot());
-			Square chckerSQ = target.pop();
-			
-			//popしてもtargetが存在するということは二重王手なので駒打ちでは駄目
-			if (target.isNot()) {
-				return false;
-			}
-			//コマを打って相手の機器を遮らなければならない
-			/*ASSERT(is_ok(chckerSQ));
-			ASSERT(is_ok(ksq(sidetomove())));*/
-			if (!(BetweenBB[chckerSQ][ksq(sidetomove())] & SquareBB[to]).isNot()) {
-				return false;
-			}
-		}
-
-
-	}
-	else {
-		//移動
-
-		Square from = move_from(m);
-
-		//fromとtoの一致はエラー
-		//if (from == to) { return false; }
-
-		//fromに移動させる駒がいるか
-		//王を取ろうとしてしまっていないか
-		//自分のコマの上に移動させようとしてないか
-		if (piece_on(from) != movedpiece) { return false; }
-		if (piece_type(piece_on(to)) == KING) { return false; }
-		if (piece_color(piece_on(to)) ==sidetomove()) { return false; }
-
-		//跳駒の場合相手のコマを飛び越えてしまう指してを考えてしまう場合があるのでそれをここで防ぐ
-		//(from,to)開区間の間に他の駒があればfalse
-		if ((BetweenBB[from][to] & occ_all()).isNot()) { return false; }
-
-		//if (is_promote(m)) {
-		//	if (!can_promote(movedpiece)) { return false; }
-		//	if (!(canPromoteBB[sidetomove()] & (SquareBB[from] | SquareBB[to])).isNot()) { return false; }
-		//	//if (piece_type(movedpiece) == PAWN) { return false; }
-		//}
-
-
-
-		//王の自殺　pinごまの移動はis_LEGALのしごとなのでそれ以外を見る
-		if (is_incheck()) {
-
-			if (piece_type(movedpiece) != KING) {
-
-				Bitboard target = st->checker;
-				//ASSERT(target.isNot());
-				Square chckerSQ = target.pop();
-				
-				//2十王手であれば王の移動が必要
-				if (target.isNot()) {
-					return false;
-				}
-
-				//移動先が王手をかけているコマを取るか効きの間に入ってくる必要がある。
-				//ASSERT(is_ok(chckerSQ));
-				//ASSERT(is_ok(ksq(sidetomove())));
-				Bitboard target2 = BetweenBB[chckerSQ][ksq(sidetomove())] | SquareBB[chckerSQ];
-				if (!(target2&SquareBB[to]).isNot()) { return false; }
-			}
-		}
-
-
-	}
-
-	return true;
 }
 
 

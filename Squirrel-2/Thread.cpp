@@ -9,7 +9,7 @@ using namespace std;
 
 
 
-const string print_value(const Value v) {
+const string print_value(Value v) {
 
 	stringstream ss;
 
@@ -63,7 +63,7 @@ void Thread::sort_RootMove()
 }
 
 
- void Thread::print_pv(const int depth,const Value v)
+ void Thread::print_pv(const int depth,Value v)
 {
 	TimePoint elapsed = (now() - limit.starttime + 1);//ƒ[ƒ‚Å‚í‚ç“à—e‚É‚·‚é‚½‚ß‚É‚P‚ğ‘«‚µ‚Ä‚¨‚­
 

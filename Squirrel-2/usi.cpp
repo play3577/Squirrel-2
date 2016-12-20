@@ -9,7 +9,6 @@
 #include "makemove.h"
 #include "learner.h"
 #include "book.h"
-#include "tpt.h"
 //#include "makemove.h"
 
 #include <iostream>
@@ -125,11 +124,11 @@ std::ostream& USI::operator<<(std::ostream& os, const OptionMap& om) {
 				if (o.type == "spin") {
 					os << " min " << o.min << " max " << o.max;
 				}
-				/*if (o.type == "check") {
-					os << " default ";
+				if (o.type == "button") {
+					os << " defalt ";
 					if (o.value == "true") { os << "true"; }
 					else { os << "false"; }
-				}*/
+				}
 				break;
 			}
 		}
@@ -148,9 +147,6 @@ void is_ready() {
 		if (Options["usebook"] == true) {
 			BOOK::init();
 		}
-#ifdef USETT
-		TT.clear();
-#endif
 	}
 	first_ready = false;
 }
@@ -245,7 +241,7 @@ void USI::loop()
 	Position pos;
 	Thread th;
 	string token, cmd;
-	//Stack ss;
+
 	//pos.set_hirate();
 	//pos.set(check_drop);
 	do {
@@ -265,7 +261,7 @@ void USI::loop()
 		}
 		else if (token == "isready") { is_ready(); cout << "readyok" << endl; }
 		else if (token == "position") { position(pos, is); }
-		else if (token == "go") {  go(pos, is, th); }
+		else if (token == "go") { go(pos, is, th); }
 		else if (token == "setoption") {
 /*
 >C:setoption name Threads value 2
@@ -292,7 +288,7 @@ void USI::loop()
 			}*/
 
 			type = option.return_type();
-			if (type == "check") {
+			if (type == "button") {
 				value == "true" ? option.change(true) : option.change(false);
 			}
 			else if (type == "spin") {
@@ -385,43 +381,42 @@ void USI::loop()
 			bool legal = pos.is_legal(m);
 			cout << legal << endl;
 		}
-		//else if (token == "mpick") {
-		//	
-		//	movepicker mp(pos,&ss);
-		//	Move m;
-		//	StateInfo si;
-		//	while ((m = mp.return_nextmove()) != MOVE_NONE) {
-		//		cout << m << endl;
-		//		pos.do_move(m, &si);
-		//		pos.undo_move();
-		//	}
-		//}
-		//else if (token == "2jyuu") {
-		//	pos.set(nijyuuoute);
-		//	movepicker mp(pos,&ss);
-		//	Move m;
-		//	while ((m = mp.return_nextmove()) != MOVE_NONE) {
-		//		cout << m << " " << pos.is_legal(m) << endl;
-		//	}
-		//}
-		//else if (token == "oute") {
-		//	pos.set(oute);
-		//	movepicker mp(pos,&ss);
-		//	Move m;
-		//	while ((m = mp.return_nextmove()) != MOVE_NONE) {
-		//		cout << m << " " << pos.is_legal(m) << endl;
-		//	}
-		//}
-		//else if (token == "ks") {
-		//	pos.set(suicide);
-		//	movepicker mp(pos, &ss);
-		//	Move m=make_move(SQ4H,SQ3G,B_KING);
-		//	cout << m << " " << pos.is_legal(m) << endl;
-		//	check_move(m);
-		//	/*while ((m = mp.return_nextmove()) != MOVE_NONE) {
-		//		cout << m << " " << pos.is_legal(m) << endl;
-		//	}*/
-		//}
+		else if (token == "mpick") {
+			movepicker mp(pos);
+			Move m;
+			StateInfo si;
+			while ((m = mp.return_nextmove()) != MOVE_NONE) {
+				cout << m << endl;
+				pos.do_move(m, &si);
+				pos.undo_move();
+			}
+		}
+		else if (token == "2jyuu") {
+			pos.set(nijyuuoute);
+			movepicker mp(pos);
+			Move m;
+			while ((m = mp.return_nextmove()) != MOVE_NONE) {
+				cout << m << " " << pos.is_legal(m) << endl;
+			}
+		}
+		else if (token == "oute") {
+			pos.set(oute);
+			movepicker mp(pos);
+			Move m;
+			while ((m = mp.return_nextmove()) != MOVE_NONE) {
+				cout << m << " " << pos.is_legal(m) << endl;
+			}
+		}
+		else if (token == "ks") {
+			pos.set(suicide);
+			movepicker mp(pos);
+			Move m=make_move(SQ4H,SQ3G,B_KING);
+			cout << m << " " << pos.is_legal(m) << endl;
+			check_move(m);
+			/*while ((m = mp.return_nextmove()) != MOVE_NONE) {
+				cout << m << " " << pos.is_legal(m) << endl;
+			}*/
+		}
 		else if (token == "random") {
 			wrap_randomwalker();
 		}
@@ -593,9 +588,7 @@ void USI::loop()
 			pos.undo_nullmove();
 			cout << pos << endl;
 		}
-		else if (token == "assert") {
-			ASSERT(PAWN > GOLD);
-		}
+
 
 
 	} while (token != "quit");

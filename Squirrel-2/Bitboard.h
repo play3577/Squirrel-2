@@ -81,7 +81,6 @@ extern Bitboard ZeroBB, ALLBB;
 inline Bitboard operator^(const Bitboard& b1, const Bitboard& b2) { Bitboard b3; b3.m= _mm_xor_si128(b1.m, b2.m);  return b3; }
 inline Bitboard operator|(const Bitboard& b1, const Bitboard& b2) { Bitboard b3; b3.m = _mm_or_si128(b1.m, b2.m); return b3; }
 inline Bitboard operator&(const Bitboard& b1, const Bitboard& b2) { Bitboard b3; b3.m = _mm_and_si128(b1.m, b2.m); return b3; }
-//inline Bitboard operator&(const Bitboard& b1, const Bitboard& b2) { Bitboard b3; b3.b[0] = (b1.b[0] & b2.b[0]); b3.b[1] = (b1.b[1] & b2.b[1]); return b3; }
 inline Bitboard operator~(const Bitboard& b1) { Bitboard b3; b3.m = _mm_xor_si128(b1.m, ALLBB.m); return b3; }//ALLBBでxorマスクするのは番外にも１が立ってしまっている場所出来てしまうから
 //b1が消される側
 inline Bitboard andnot(const Bitboard& b1, const Bitboard& b2) { Bitboard b3; b3.m = _mm_andnot_si128(b2.m, b1.m); return b3; }

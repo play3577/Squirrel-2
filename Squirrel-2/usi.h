@@ -29,7 +29,7 @@ namespace USI {
 		======================*/
 		//bool値のUSI
 		//ponder_onとかそんなん
-		USIOption(bool config) :type("check"), min(0), max(0) {
+		USIOption(bool config) :type("button"), min(0), max(0) {
 			if (config == true) { value = "true"; }
 			else { value = "false"; }
 		}
@@ -63,7 +63,7 @@ namespace USI {
 		値を変更するために用いる。
 		=======================*/
 		void change(bool change) {
-			ASSERT(type == "check");
+			ASSERT(type == "button");
 			if (change == true) { value = "true"; }
 			else { value = "false"; }
 		}
@@ -84,7 +84,7 @@ namespace USI {
 		値を返すために用いる。
 		＝＝＝＝＝＝＝＝＝＝＝*/
 		operator int() const {
-			ASSERT(type == "spin" || type == "check");
+			ASSERT(type == "spin" || type == "button");
 			if (type == "spin") {
 				return stoi(value);
 			}

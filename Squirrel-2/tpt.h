@@ -135,6 +135,4 @@ public:
 	}
 };
 
-#ifdef USETT
 extern TranspositionTable TT;
-#endif

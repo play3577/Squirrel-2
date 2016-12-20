@@ -115,11 +115,7 @@ Value Thread::think() {
 	}//end book
 
 	history.clear();
-#ifdef USETT
 	TT.new_search();
-#endif // USETT
-
-	
 
 	Stack stack[MAX_PLY + 7], *ss = stack + 5;
 	std::memset(stack, 0,(MAX_PLY+7)*sizeof(Stack));
@@ -171,7 +167,7 @@ Value Thread::think() {
 
 #ifndef LEARN
 		print_pv(rootdepth,bestvalue);
-		//cout <<"評価値"<< int(bestvalue)*100/int(Eval::PawnValue) << endl;
+		cout <<"評価値"<< int(bestvalue)*100/int(Eval::PawnValue) << endl;
 #endif
 	}//end of 反復深化
 
@@ -181,7 +177,6 @@ ID_END:
 	cout << "bestmove " << RootMoves[0] << endl;
 #endif // !LEARN
 
-	//時間切れの場合はゼロが帰ってきてしまう
 	return bestvalue;
 }
 
@@ -315,6 +310,11 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 		ttBound = BOUND_NONE;
 		ttMove = MOVE_NONE;
 	}
+	//Rootのときは違う処理を入れなければならない
+
+
+
+
 	//この処理を入れるとクッソ遅くなってしまう(´･_･`)　まあ途中でTTの値が書き換わってしまうということについては考えないほうがいいのかもしれない
 	//ここでもしkey32の値が変わってしまっていた場合はttの値が書き換えられてしまっているので値をなかったことにする（idea from 読み太）(今のところone threadなのであまり意味はない)
 	/*if (TThit && (poskey >> 32) != tte->key()) {
@@ -383,7 +383,6 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 
 	ここもう少し色々考えられるけどrazoringを除いてもELO-10にしか成らなかったらしいのでそこまで力を入れてチューニングするメリットはない
 	*/
-#ifdef USETT
 	if (!PVNode
 		&&  depth < 4 * ONE_PLY
 		&&  ttMove == MOVE_NONE
@@ -407,7 +406,7 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 		}
 	}
 
-#endif
+
 
 	// Step 7. Futility pruning: child node (skipped when in check)
 	/*------------------------------------------------------------------------------------------------------------
@@ -545,19 +544,16 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 	//（もし前向き枝切りが出来てしまったらこのノードで詰んでしまう）
 moves_loop:
 	
-#ifdef USETT
-	movepicker mp(pos,ss, ttMove);
-#endif
-#ifndef USETT
-	movepicker mp(pos, ss, MOVE_NONE);
-#endif
+
+	movepicker mp(pos);
+	
 	while ((move = mp.return_nextmove()) != MOVE_NONE) {
 
-		//rootの指しては生成時にすべて合法かどうか確認されている
-		//ttmoveがおかしいかもしれないのでROOTでもちゃんと確認しておく
+
 		if (pos.is_legal(move) == false) { continue; }
+
 		//二歩が入ってこないことは確認した
-		if (pos.check_nihu(move) == true) {
+		/*if (pos.check_nihu(move) == true) {
 
 			cout << "nihu "<< endl;
 			cout << move << endl;
@@ -565,7 +561,7 @@ moves_loop:
 			cout << "pbb black"<<endl<<pos.pawnbb(BLACK) << endl;
 			cout << "pbb white"<<endl << pos.pawnbb(WHITE) << endl;
 			UNREACHABLE;
-		}
+		}*/
 
 		if (NT == Root&&thisthread->find_rootmove(move) == nullptr) { continue; }
 
@@ -574,15 +570,15 @@ moves_loop:
 		capture propawnの指し手になりうるのはcappropawnのステージとEVERSIONのステージだけ
 		*/
 		if (mp.ret_stage() == CAP_PRO_PAWN) {
-			//ASSERT(pos.capture_or_propawn(move) == true); //今のところassertなくても大丈夫そう
+			//ASSERT(pos.capture_or_propawn(move) == true); 今のところassertなくても大丈夫そう
 			CaptureorPropawn = true;
 		}
-		else if (mp.ret_stage() == QUIET|| mp.ret_stage() == Killers) {
-			//ASSERT(pos.capture_or_propawn(move) == false);
-			CaptureorPropawn = false;
+		else if (mp.ret_stage() == EVERSION) {
+			CaptureorPropawn = pos.capture_or_propawn(move);
 		}
 		else {
-			CaptureorPropawn = pos.capture_or_propawn(move);
+			//ASSERT(pos.capture_or_propawn(move) == false);
+			CaptureorPropawn =false;
 		}
 
 		++movecount;
@@ -874,12 +870,8 @@ Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
 	//コレで上手く前の指し手の移動先を与えられていると思う
 	//ここでnullmoveが入ってきた場合のことも考えないといけない。
 	//というかnullmoveが入ってきたら取リ返すなんてありえないのでここで評価値返すしか無いでしょ(王手も生成するなら話は別）
-#ifdef USETT
-	movepicker mp(pos, move_to(pos.state()->lastmove), ttMove);
-#endif
-#ifndef USETT
-	movepicker mp(pos, move_to(pos.state()->lastmove), MOVE_NONE);
-#endif
+	movepicker mp(pos, move_to(pos.state()->lastmove));
+
 	while ((move = mp.return_nextmove()) != MOVE_NONE) {
 
 		if (pos.is_legal(move) == false) { continue; }
@@ -1000,13 +992,6 @@ bonusの値はすぐにどんどん変わっていく。
 */
 void update_stats(const Position& pos, Stack* ss,const Move bestmove,
 	Move* quiets,const int quietsCnt,const Value bonus) {
-	//killermoveの更新
-	//http://daruma3940.hatenablog.com/entry/2016/07/08/011324
-	if (ss->killers[0] != bestmove) {
-		ss->killers[1] = ss->killers[0];
-		ss->killers[0] = bestmove;
-	}
-
 
 	//bestmoveに+=正のbonus
 	Thread* thisthread = pos.searcher();
@@ -1015,7 +1000,6 @@ void update_stats(const Position& pos, Stack* ss,const Move bestmove,
 	// Decrease all the other played quiet moves
 	//alphaを更新しなかった指し手に対して+=負の値
 	for (int i = 0; i < quietsCnt; ++i) {
-		ASSERT(pos.capture_or_propawn(quiets[i]) == false);
 		thisthread->history.update(moved_piece(quiets[i]), move_to(quiets[i]), -bonus);
 	}
 

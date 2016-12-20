@@ -431,7 +431,7 @@ ExtMove* make_move_ASGOLD(const Position& pos, const Bitboard& target, ExtMove* 
 ExtMove* make_move_KING(const Position& pos, const Bitboard& target, ExtMove* movelist) {
 
 	Color US = pos.sidetomove();
-//	Color ENEMY = opposite(US);
+	Color ENEMY = opposite(US);
 	//Ç±Ç¢Ç¬ÇÁÇÕê¨ÇÍÇ»Ç¢
 
 
