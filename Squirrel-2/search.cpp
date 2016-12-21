@@ -545,13 +545,13 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 moves_loop:
 	
 
-	movepicker mp(pos);
+	movepicker mp(pos,ss);
 	
 	while ((move = mp.return_nextmove()) != MOVE_NONE) {
 
-
-		if (pos.is_legal(move) == false) { continue; }
-
+		if (!RootNode) {
+			if (pos.is_legal(move) == false) { continue; }
+		}
 		//二歩が入ってこないことは確認した
 		/*if (pos.check_nihu(move) == true) {
 
@@ -569,16 +569,17 @@ moves_loop:
 		/*
 		capture propawnの指し手になりうるのはcappropawnのステージとEVERSIONのステージだけ
 		*/
-		if (mp.ret_stage() == CAP_PRO_PAWN) {
+		Stage st = mp.ret_stage();
+		if (st == CAP_PRO_PAWN) {
 			//ASSERT(pos.capture_or_propawn(move) == true); 今のところassertなくても大丈夫そう
 			CaptureorPropawn = true;
 		}
-		else if (mp.ret_stage() == EVERSION) {
-			CaptureorPropawn = pos.capture_or_propawn(move);
+		else if (st == QUIET) {
+			//ASSERT(pos.capture_or_propawn(move) == false);
+			CaptureorPropawn = false;
 		}
 		else {
-			//ASSERT(pos.capture_or_propawn(move) == false);
-			CaptureorPropawn =false;
+			CaptureorPropawn = pos.capture_or_propawn(move);
 		}
 
 		++movecount;
@@ -992,6 +993,14 @@ bonusの値はすぐにどんどん変わっていく。
 */
 void update_stats(const Position& pos, Stack* ss,const Move bestmove,
 	Move* quiets,const int quietsCnt,const Value bonus) {
+
+	if (ss->killers[0] != bestmove)
+	{
+		ss->killers[1] = ss->killers[0];
+		ss->killers[0] = bestmove;
+	}
+
+
 
 	//bestmoveに+=正のbonus
 	Thread* thisthread = pos.searcher();

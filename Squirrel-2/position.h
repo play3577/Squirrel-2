@@ -298,7 +298,7 @@ public:
 
 	bool check_nihu(const Move m) const{
 
-		if (is_drop(m)&&moved_piece(m)==PAWN) {
+		if (is_drop(m)&&piece_type(moved_piece(m))==PAWN) {
 
 			if ((occ_pt(sidetomove(), PAWN)&FileBB[sqtofile(move_to(m))]).isNot()) {
 				return true;
@@ -480,7 +480,7 @@ public:
 	しかしすべての状況に対してちゃんと動くかどうかは分からないのでランダムプレイヤーで局面をすすめてテストする関数を用意する
 	*/
 	bool is_legal(const Move m)const;
-
+	bool pseudo_legal(const Move m) const;
 	//zoblisthash関連
 	void init_hash();
 	inline Key key() {

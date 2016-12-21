@@ -381,42 +381,42 @@ void USI::loop()
 			bool legal = pos.is_legal(m);
 			cout << legal << endl;
 		}
-		else if (token == "mpick") {
-			movepicker mp(pos);
-			Move m;
-			StateInfo si;
-			while ((m = mp.return_nextmove()) != MOVE_NONE) {
-				cout << m << endl;
-				pos.do_move(m, &si);
-				pos.undo_move();
-			}
-		}
-		else if (token == "2jyuu") {
-			pos.set(nijyuuoute);
-			movepicker mp(pos);
-			Move m;
-			while ((m = mp.return_nextmove()) != MOVE_NONE) {
-				cout << m << " " << pos.is_legal(m) << endl;
-			}
-		}
-		else if (token == "oute") {
-			pos.set(oute);
-			movepicker mp(pos);
-			Move m;
-			while ((m = mp.return_nextmove()) != MOVE_NONE) {
-				cout << m << " " << pos.is_legal(m) << endl;
-			}
-		}
-		else if (token == "ks") {
-			pos.set(suicide);
-			movepicker mp(pos);
-			Move m=make_move(SQ4H,SQ3G,B_KING);
-			cout << m << " " << pos.is_legal(m) << endl;
-			check_move(m);
-			/*while ((m = mp.return_nextmove()) != MOVE_NONE) {
-				cout << m << " " << pos.is_legal(m) << endl;
-			}*/
-		}
+		//else if (token == "mpick") {
+		//	movepicker mp(pos);
+		//	Move m;
+		//	StateInfo si;
+		//	while ((m = mp.return_nextmove()) != MOVE_NONE) {
+		//		cout << m << endl;
+		//		pos.do_move(m, &si);
+		//		pos.undo_move();
+		//	}
+		//}
+		//else if (token == "2jyuu") {
+		//	pos.set(nijyuuoute);
+		//	movepicker mp(pos);
+		//	Move m;
+		//	while ((m = mp.return_nextmove()) != MOVE_NONE) {
+		//		cout << m << " " << pos.is_legal(m) << endl;
+		//	}
+		//}
+		//else if (token == "oute") {
+		//	pos.set(oute);
+		//	movepicker mp(pos);
+		//	Move m;
+		//	while ((m = mp.return_nextmove()) != MOVE_NONE) {
+		//		cout << m << " " << pos.is_legal(m) << endl;
+		//	}
+		//}
+		//else if (token == "ks") {
+		//	pos.set(suicide);
+		//	movepicker mp(pos);
+		//	Move m=make_move(SQ4H,SQ3G,B_KING);
+		//	cout << m << " " << pos.is_legal(m) << endl;
+		//	check_move(m);
+		//	/*while ((m = mp.return_nextmove()) != MOVE_NONE) {
+		//		cout << m << " " << pos.is_legal(m) << endl;
+		//	}*/
+		//}
 		else if (token == "random") {
 			wrap_randomwalker();
 		}

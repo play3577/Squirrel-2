@@ -27,6 +27,7 @@ struct Stack {
 	int ply = 0;
 	Move excludedMove = MOVE_NONE;
 	bool skip_early_prunning = false;
+	Move killers[2];
 };
 
 

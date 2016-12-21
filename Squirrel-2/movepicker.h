@@ -1,6 +1,6 @@
 #pragma once
 #include "position.h"
-
+#include "search.h"
 
 enum Stage {
 
@@ -8,6 +8,7 @@ enum Stage {
 	Gen_Malticut,
 	START_Normal,
 	CAP_PRO_PAWN,
+	Killers,
 	QUIET,
 	START_Eversion,
 	EVERSION,
@@ -31,9 +32,12 @@ private:
 	void quietscore();
 	void capturepropawn_score();
 	Value Threshold;
+	ExtMove killers[2];
+	Move ttMove;
+	const Stack* ss;
 public:
 	//通常探索用コンストラクタ
-	movepicker(const Position& pos) :pos_(pos) {
+	movepicker(const Position& pos,Stack* ss_) :pos_(pos),ss(ss_) {
 
 		current_ = end_ = move_;
 

@@ -729,6 +729,71 @@ Error:;
 
 }
 
+bool Position::pseudo_legal(const Move m) const
+{
+	const Color us = sidetomove();
+	const Square to = move_to(m);
+	const Piece movedpiece = moved_piece(m);
+
+	//blackが0であるのでNO_PIECEも考えないといけない
+	if (movedpiece==NO_PIECE||piece_color(movedpiece) != us) { return false; }
+
+	if (is_drop(m)) {
+		//移動先に他の駒がある,コマを持っていない　二歩（打ち歩詰めはlegalでチェック）
+		if (piece_on(to) != NO_PIECE || num_pt(hand(us), piece_type(movedpiece)) == 0||check_nihu(m)) {
+			return false;
+		}
+		//王手時
+		if (is_incheck()) {
+
+			Bitboard target = state()->checker;
+			Square esq = target.pop();
+			//二重王手
+			if (target.isNot()) {
+				return false;
+			}
+			//(ksq,esq)の範囲にtoが無いと王手を防げていない
+			if ((BetweenBB[ksq(us)][esq] & SquareBB[to]).isNot()==false) {
+				return false;
+			}
+
+		}
+
+	}
+	else {
+		//コマの移動
+
+		const Square from = move_from(m);
+		const Piece pc_from = piece_on(from);
+		if (pc_from != movedpiece) {
+			return false;
+		}
+		if ((occ(us)&SquareBB[to]).isNot()) { return false; }
+		//コマを飛び越えて進むことは出来ない
+		if ((BetweenBB[from][to] & occ_all()).isNot()) { return false; }
+
+
+		//王手時(KING以外の指しての場合だけ考える)
+		if (is_incheck()&&piece_type(movedpiece)!=KING) {
+
+			Bitboard target = state()->checker;
+			Square esq = target.pop();
+			//二重王手
+			if (target.isNot()) {
+				return false;
+			}
+			//(ksq,esq]の範囲にtoが無いと王手を防げていない
+			if (((BetweenBB[ksq(us)][esq]|SquareBB[esq]) & SquareBB[to]).isNot()==false) {
+				return false;
+			}
+
+		}
+
+	}
+
+	return true;
+}
+
 
 /*
 現在局面に対応するsfen文字列を生成するための関数（デバッグ用であり、定跡を管理するためにも用いる）

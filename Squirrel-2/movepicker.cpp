@@ -54,6 +54,13 @@ void movepicker::generatemove()
 		capturepropawn_score();
 		insertion_sort(move_, end_);
 		break;
+	case Killers:
+		killers[0].move = ss->killers[0];
+		killers[1].move = ss->killers[1];
+		//killers[2] = countermove;
+		current_ = killers;
+		end_ = current_ + 2;
+		break;
 	case QUIET:
 		end_ = move_generation<Quiet>(pos_, move_);
 		end_ = move_generation<Drop>(pos_, end_);
@@ -94,47 +101,66 @@ Move movepicker::return_nextmove()
 {
 
 	Move m;
-	while (end_ == current_&&st != STOP) { st++; generatemove(); }
 
-
-	switch (st)
+	while (true)
 	{
-	case Start_Multicut:
-		break;
-	case Gen_Malticut:
-		m = current_++->move;
-		return m;
-		break;
-	case START_Normal:
-		break;
-	case CAP_PRO_PAWN:
-		m = current_++->move;
-		return m;
-		break;
-	case QUIET:
-		return current_++->move;
-		break;
-	case START_Eversion:
-		break;
-	case EVERSION:
-		m = current_++->move;
-		return m;
-		break;
-	case START_Qsearch:
-		break;
-	case RECAPTURE:
-		m = current_++->move;
-		return m;
-		break;
-	case STOP:
-		return MOVE_NONE;
-		break;
-	default:
-		UNREACHABLE;
-		return MOVE_NONE;
-		break;
-	}
 
+		while (end_ == current_&&st != STOP) { st++; generatemove(); }
+
+
+		switch (st)
+		{
+		case Start_Multicut:
+			break;
+		case Gen_Malticut:
+			m = current_++->move;
+			return m;
+			break;
+		case START_Normal:
+			break;
+		case CAP_PRO_PAWN:
+			m = current_++->move;
+			return m;
+			break;
+		case Killers:
+			m = current_++->move;
+			if (m != MOVE_NONE
+				//&&  m != ttMove
+				&&  pos_.pseudo_legal(m)
+				&& !pos_.capture_or_propawn(m)) {
+				return m;
+			}
+			break;
+		case QUIET:
+			m = current_++->move;
+
+			if (m != killers[0].move
+				&& m != killers[1].move
+				) {
+				return m;
+			}
+			break;
+		case START_Eversion:
+			break;
+		case EVERSION:
+			m = current_++->move;
+			return m;
+			break;
+		case START_Qsearch:
+			break;
+		case RECAPTURE:
+			m = current_++->move;
+			return m;
+			break;
+		case STOP:
+			return MOVE_NONE;
+			break;
+		default:
+			UNREACHABLE;
+			return MOVE_NONE;
+			break;
+		}
+	}
 
 }
 

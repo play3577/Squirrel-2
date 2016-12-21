@@ -9,7 +9,7 @@
 #define ASSERT(x) _ASSERT(x)
 #endif
 #ifndef _DEBUG
-#define ASSERT(X) { if (!(X)) *(int*)1 =0; }
+#define ASSERT(X) { if (!(X)){std::cout << "\nError!!\n" << "info string file:" << __FILE__ << " line:" << __LINE__ <<" "<< #X<< std::endl; *(int*)1 =0;} }
 #endif
 //#define ASSERT(x) ((void)0)//‚·‚×‚Ä‚ð‚©‚È‚®‚èŽÌ‚Ä‚Ä‘¬“x‚ðo‚µ‚½‚¢‚Æ‚«—p
 #define UNREACHABLE ASSERT(0)
@@ -196,7 +196,7 @@ enum Move :uint32_t {
 	FLAG_CAPPROPAWN = (0b11) << 15,
 	PIECE_MASK = (0b11111111) << 17,
 
-	MOVE_NONE = 1 + (1 << 7),//from‚Æto‚ªˆê’v‚µ‚Ä‚¢‚é
+	MOVE_NONE =0 /*1 + (1 << 7)*/,//from‚Æto‚ªˆê’v‚µ‚Ä‚¢‚é
 	MOVE_NULL=2+(2<<7),
 };
 inline Square move_from(const Move m) { return Square((m >> 7)&MOVE_TO); }
