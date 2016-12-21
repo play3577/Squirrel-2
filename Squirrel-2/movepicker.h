@@ -37,7 +37,7 @@ private:
 	const Stack* ss;
 public:
 	//通常探索用コンストラクタ
-	movepicker(const Position& pos,Stack* ss_) :pos_(pos),ss(ss_) {
+	movepicker(const Position& pos,Stack* ss_,Move ttm) :pos_(pos),ss(ss_) {
 
 		current_ = end_ = move_;
 
@@ -47,18 +47,23 @@ public:
 		else {
 			st = START_Normal;
 		}
+		ttMove = (ttm && pos.pseudo_legal(ttm)) ? ttm : MOVE_NONE;
+		end_ += (ttMove != MOVE_NONE);
 	}
 
 	//精子探索用コンストラクタ
-	movepicker(const Position& pos, Square recapsq) :pos_(pos) {
+	movepicker(const Position& pos, Square recapsq,Move ttm) :pos_(pos) {
 		current_ = end_ = move_;
 
 		if (pos.is_incheck()) {
 			st = START_Eversion;
+			ttMove = (ttm && pos.pseudo_legal(ttm)) ? ttm : MOVE_NONE;
+			end_ += (ttMove != MOVE_NONE);
 		}
 		else {
 			st = START_Qsearch;
 			recapsq_ = recapsq;
+			ttMove = MOVE_NONE;
 		}
 	}
 	//multicut用コンストラクタ

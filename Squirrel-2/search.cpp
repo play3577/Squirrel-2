@@ -301,17 +301,17 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 		ttdepth = tte->depth();
 		ttEval = tte->eval();
 		ttBound = tte->bound();
-		ttMove = tte->move();
+		//ttMove = tte->move();
 	}
 	else {
 		ttValue = Value_error;
 		ttdepth = DEPTH_NONE;
 		ttEval = Value_error;
 		ttBound = BOUND_NONE;
-		ttMove = MOVE_NONE;
+		//ttMove = MOVE_NONE;
 	}
 	//Rootのときは違う処理を入れなければならない
-
+	ttMove = RootNode ? thisthread->RootMoves[0].move : TThit ? tte->move() : MOVE_NONE;
 
 
 
@@ -545,7 +545,7 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 moves_loop:
 	
 
-	movepicker mp(pos,ss);
+	movepicker mp(pos,ss,ttMove);
 	
 	while ((move = mp.return_nextmove()) != MOVE_NONE) {
 
@@ -871,7 +871,7 @@ Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
 	//コレで上手く前の指し手の移動先を与えられていると思う
 	//ここでnullmoveが入ってきた場合のことも考えないといけない。
 	//というかnullmoveが入ってきたら取リ返すなんてありえないのでここで評価値返すしか無いでしょ(王手も生成するなら話は別）
-	movepicker mp(pos, move_to(pos.state()->lastmove));
+	movepicker mp(pos, move_to(pos.state()->lastmove),ttMove);
 
 	while ((move = mp.return_nextmove()) != MOVE_NONE) {
 

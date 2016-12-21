@@ -117,15 +117,19 @@ Move movepicker::return_nextmove()
 			return m;
 			break;
 		case START_Normal:
+			current_++;
+			return ttMove;
 			break;
 		case CAP_PRO_PAWN:
 			m = current_++->move;
-			return m;
+			if (m != ttMove) {
+				return m;
+			}
 			break;
 		case Killers:
 			m = current_++->move;
 			if (m != MOVE_NONE
-				//&&  m != ttMove
+				&&  m != ttMove
 				&&  pos_.pseudo_legal(m)
 				&& !pos_.capture_or_propawn(m)) {
 				return m;
@@ -136,15 +140,20 @@ Move movepicker::return_nextmove()
 
 			if (m != killers[0].move
 				&& m != killers[1].move
+				&&m!=ttMove
 				) {
 				return m;
 			}
 			break;
 		case START_Eversion:
+			current_++;
+			return ttMove;
 			break;
 		case EVERSION:
 			m = current_++->move;
-			return m;
+			if (m != ttMove) {
+				return m;
+			}
 			break;
 		case START_Qsearch:
 			break;
