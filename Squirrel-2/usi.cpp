@@ -588,7 +588,13 @@ void USI::loop()
 			pos.undo_nullmove();
 			cout << pos << endl;
 		}
-
+		else if (token == "ce") {
+			pos.check_effectocc256();
+		}
+		else if (token == "ce2") {
+			cout << pos << endl;
+			pos.check_longeffect256();
+		}
 
 
 	} while (token != "quit");

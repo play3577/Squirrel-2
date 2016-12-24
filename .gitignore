@@ -5,3 +5,11 @@
 *.idb
 *.diagsession
 *.vspx
+*.obj
+*.pdb
+*.exe
+*.log
+*.ilk
+*.suo
+*.user
+*.enc

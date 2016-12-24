@@ -8,6 +8,7 @@
 #include <string>
 #include <bitset>
 #include "Hash.h"
+#include "occupied_m256.h"
 using namespace std;
 
 
@@ -64,6 +65,8 @@ struct Position
 {
 private:
 
+	Occ_256 occ256;
+
 	Bitboard occupied[ColorALL];//colorALL=2Ç»ÇÃÇ≈éËî‘ä÷åWÇ»Ç¢BitboardÇÕópà”ÇµÇƒÇ¢Ç»Ç¢ÅB
 	Bitboard occupied90;
 	Bitboard occupied_plus45, occupied_minus45;
@@ -85,6 +88,9 @@ private:
 	uint64_t nodes;
 
 public:
+
+	inline void set_occ256(const Square sq) { occ256 ^= SquareBB256[sq]; }
+	inline void remove_occ256(const Square sq) { occ256^=SquareBB256[sq]; }
 
 	Position() { set_hirate(); }
 	void set(std::string sfen);
@@ -120,8 +126,9 @@ public:
 	}
 
 	void check_effect();
+	void check_effectocc256();
 	void check_longeffect();
-
+	void check_longeffect256();
 	Eval::BonaPList evallist() const { return list; }
 
 

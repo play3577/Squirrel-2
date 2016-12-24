@@ -9,6 +9,8 @@
 #include "Hash.h"
 #include "tpt.h"
 #include "book.h"
+#include "occupied_m256.h"
+
 
 #include <iostream>
 #include <string>
@@ -30,9 +32,11 @@ int main() {
 	//cout << ename2 << endl;
 
 
+
 	//Eval::initialize_PP();
 	USI::init_option(Options,ename2);
 	bitboard_init();
+	init_occ256();
 	Eval::init();
 	Zoblist::init();
 	/*if (Options["usebook"] == true) {

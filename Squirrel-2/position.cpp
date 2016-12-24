@@ -66,6 +66,9 @@ void Position::set(std::string sfen)
 			occupied[c] |= SquareBB[sq];
 			occupiedPt[c][pt] |= SquareBB[sq];
 			put_rotate(sq);
+
+			set_occ256(sq);
+
 			promote = false;
 			f--;
 		}
@@ -130,7 +133,7 @@ void Position::set(std::string sfen)
 	//cout << *this << endl;
 	
 	//list.print_bplist();
-
+	cout << occ256 << endl;
 
 #ifdef CHECKPOS
 	
@@ -624,6 +627,37 @@ void Position::check_effect() {
 	//}
 }
 
+void Position::check_effectocc256()
+{
+
+
+
+	//for (Square sq = SQ1A; sq < SQ_NUM; sq++) {
+	//	//‰Šú‹Ç–ÊOK
+	//	int8_t obstacle_tate = (occ256.b256.m256i_u64[0] >> occ256_shift_table_tate[sq])&effectmask;
+	//	cout << "obstacle" << static_cast<std::bitset<7>>(obstacle_tate) << endl;
+	//	cout << LongRookEffect_tate[sq][obstacle_tate] << endl;
+	//}
+	//for (Square sq = SQ1A; sq < SQ_NUM; sq++) {
+	//	//‰Šú‹Ç–ÊOK
+	//	int8_t obstacle_tate = (occ256.b256.m256i_u64[1] >> occ256_shift_table_yoko[sq])&effectmask;
+	//	cout << "obstacle" << static_cast<std::bitset<7>>(obstacle_tate) << endl;
+	//	cout << LongRookEffect_yoko[sq][obstacle_tate] << endl;
+	//}
+	//for (Square sq = SQ1A; sq < SQ_NUM; sq++) {
+	//	//‰Šú‹Ç–ÊOK
+	//	int8_t obstacle_tate = (occ256.b256.m256i_u64[2] >> occ256_shift_table_p45[sq])&effectmask;
+	//	cout << "obstacle" << static_cast<std::bitset<7>>(obstacle_tate) << endl;
+	//	cout << LongBishopEffect_plus45[sq][obstacle_tate] << endl;
+	//}
+	for (Square sq = SQ1A; sq < SQ_NUM; sq++) {
+		//‰Šú‹Ç–ÊOK
+		int8_t obstacle_tate = (occ256.b256.m256i_u64[3] >> occ256_shift_table_m45[sq])&effectmask;
+		cout << "obstacle" << static_cast<std::bitset<7>>(obstacle_tate) << endl;
+		cout << LongBishopEffect_minus45[sq][obstacle_tate] << endl;
+	}
+}
+
 
 void Position::check_occbitboard()const {
 
@@ -982,5 +1016,36 @@ void Position::check_longeffect() {
 
 		cout << "BISHOP sq " << sq << endl << effect << endl;
 	}
+}
+
+void Position::check_longeffect256()
+{
+	Bitboard rook = occ_pt(WHITE, ROOK) | occ_pt(BLACK, ROOK) | occ_pt(WHITE, DRAGON) | occ_pt(BLACK, DRAGON);
+	Bitboard effect;
+
+
+	while (rook.isNot()) {
+
+		Square sq = rook.pop();
+		int8_t obstacle_tate = (occ256.b64(0) >> occ256_shift_table_tate[sq])&effectmask;
+		int8_t obstacle_yoko = (occ256.b64(1)>> occ256_shift_table_yoko[sq])&effectmask;
+		effect = LongRookEffect_tate[sq][obstacle_tate] | LongRookEffect_yoko[sq][obstacle_yoko];
+
+		cout << "ROOK sq " << sq << endl << effect << endl;
+
+	}
+	Bitboard bishop = occ_pt(WHITE, BISHOP) | occ_pt(BLACK, BISHOP) | occ_pt(WHITE, UNICORN) | occ_pt(BLACK, UNICORN);
+
+	while (bishop.isNot()) {
+		Square sq = bishop.pop();
+		int obstacle_plus45 = (occ256.b64(2) >> occ256_shift_table_p45[sq])&effectmask;
+		int obstacle_Minus45 = (occ256.b64(3) >> occ256_shift_table_m45[sq])&effectmask;
+		effect = LongBishopEffect_plus45[sq][obstacle_plus45] | LongBishopEffect_minus45[sq][(obstacle_Minus45)];
+
+		cout << "BISHOP sq " << sq << endl << effect << endl;
+	}
+
+
+
 }
 
