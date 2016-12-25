@@ -99,8 +99,9 @@ ExtMove* make_move_LANCE(const Position& pos, const Bitboard& target, ExtMove* m
 		ASSERT(pc == add_color(LANCE, US));
 		ASSERT(is_ok(sq));
 		
-		int obstacle_tate = (pos.occ_all().b[index_tate(sq)] >> shift_tate(sq))&effectmask;//7bitしか必要ないのでintでいいか（uint8_tで十分か？？？？）
+		//int obstacle_tate = (pos.occ_all().b[index_tate(sq)] >> shift_tate(sq))&effectmask;//7bitしか必要ないのでintでいいか（uint8_tで十分か？？？？）
 		//target2 = target&LongRookEffect_tate[sq][obstacle_tate] & InFront_BB[US][sqtorank(sq)];
+		int8_t obstacle_tate = (pos.ret_occ_256().b64(0) >> occ256_shift_table_tate[sq])&effectmask;
 		target2 = target&LanceEffect[US][sq][obstacle_tate];
 		int from = sq << 7;
 		int pc2 = pc << 17;
@@ -241,8 +242,10 @@ ExtMove* make_move_BISHOP(const Position& pos, const Bitboard& target, ExtMove* 
 			canpromotefrom = true;
 		}
 
-		int obstacle_plus45 = (pos.occ_plus45().b[index_plus45(sq)] >> shift_plus45(sq))&effectmask;
-		int obstacle_Minus45 = (pos.occ_minus45().b[index_Minus45(sq)] >> shift_Minus45(sq))&effectmask;
+		/*int obstacle_plus45 = (pos.occ_plus45().b[index_plus45(sq)] >> shift_plus45(sq))&effectmask;
+		int obstacle_Minus45 = (pos.occ_minus45().b[index_Minus45(sq)] >> shift_Minus45(sq))&effectmask;*/
+		int obstacle_plus45 = (pos.ret_occ_256().b64(2) >> occ256_shift_table_p45[sq])&effectmask;
+		int obstacle_Minus45 = (pos.ret_occ_256().b64(3) >> occ256_shift_table_m45[sq])&effectmask;
 		effect = LongBishopEffect_plus45[sq][obstacle_plus45] | LongBishopEffect_minus45[sq][(obstacle_Minus45)];
 	//	cout << effect << endl;
 		target2 = target&effect;
@@ -289,8 +292,10 @@ ExtMove* make_move_UNICORN(const Position& pos, const Bitboard& target, ExtMove*
 		ASSERT(pc == add_color(UNICORN, US));
 
 
-		int obstacle_plus45 = (pos.occ_plus45().b[index_plus45(sq)] >> shift_plus45(sq))&effectmask;
-		int obstacle_Minus45 = (pos.occ_minus45().b[index_Minus45(sq)] >> shift_Minus45(sq))&effectmask;
+		//int obstacle_plus45 = (pos.occ_plus45().b[index_plus45(sq)] >> shift_plus45(sq))&effectmask;
+		//int obstacle_Minus45 = (pos.occ_minus45().b[index_Minus45(sq)] >> shift_Minus45(sq))&effectmask;
+		int obstacle_plus45 = (pos.ret_occ_256().b64(2) >> occ256_shift_table_p45[sq])&effectmask;
+		int obstacle_Minus45 = (pos.ret_occ_256().b64(3) >> occ256_shift_table_m45[sq])&effectmask;
 		effect = LongBishopEffect_plus45[sq][obstacle_plus45] | LongBishopEffect_minus45[sq][(obstacle_Minus45)]|StepEffect[US][KING][sq];
 		//cout << effect << endl;
 		target2 = target&effect;
@@ -332,8 +337,16 @@ ExtMove* make_move_ROOK(const Position& pos, const Bitboard& target, ExtMove* mo
 		int from = sq << 7;
 		int pc2 = pc << 17;
 
-		int8_t obstacle_tate = (pos.occ_all().b[index_tate(sq)] >> shift_tate(sq))&effectmask;
-		int8_t obstacle_yoko = (pos.occ_90().b[index_yoko(sq)] >> shift_yoko(sq))&effectmask;
+		/*
+		int8_t obstacle_tate = (pos.ret_occ_256().b64(0) >> occ256_shift_table_tate[sq])&effectmask;
+		int8_t obstacle_yoko = (pos.ret_occ_256().b64(1) >> occ256_shift_table_yoko[sq])&effectmask;
+		
+		*/
+
+		/*int8_t obstacle_tate = (pos.occ_all().b[index_tate(sq)] >> shift_tate(sq))&effectmask;
+		int8_t obstacle_yoko = (pos.occ_90().b[index_yoko(sq)] >> shift_yoko(sq))&effectmask;*/
+		int8_t obstacle_tate = (pos.ret_occ_256().b64(0) >> occ256_shift_table_tate[sq])&effectmask;
+		int8_t obstacle_yoko = (pos.ret_occ_256().b64(1) >> occ256_shift_table_yoko[sq])&effectmask;
 		effect = LongRookEffect_tate[sq][obstacle_tate] | LongRookEffect_yoko[sq][obstacle_yoko];
 		//cout << effect << endl;
 		target2 = target&effect;
@@ -379,8 +392,13 @@ ExtMove* make_move_DRAGON(const Position& pos, const Bitboard& target, ExtMove* 
 		int from = sq << 7;
 		int pc2 = pc << 17;
 
-		int8_t obstacle_tate = (pos.occ_all().b[index_tate(sq)] >> shift_tate(sq))&effectmask;
-		int8_t obstacle_yoko = (pos.occ_90().b[index_yoko(sq)] >> shift_yoko(sq))&effectmask;
+		int8_t obstacle_tate = (pos.ret_occ_256().b64(0) >> occ256_shift_table_tate[sq])&effectmask;
+		int8_t obstacle_yoko = (pos.ret_occ_256().b64(1) >> occ256_shift_table_yoko[sq])&effectmask;
+		/*int obstacle_plus45 = (occ256.b64(2) >> occ256_shift_table_p45[sq])&effectmask;
+		int obstacle_Minus45 = (occ256.b64(3) >> occ256_shift_table_m45[sq])&effectmask;*/
+
+	/*	int8_t obstacle_tate = (pos.occ_all().b[index_tate(sq)] >> shift_tate(sq))&effectmask;
+		int8_t obstacle_yoko = (pos.occ_90().b[index_yoko(sq)] >> shift_yoko(sq))&effectmask;*/
 		effect = LongRookEffect_tate[sq][obstacle_tate] | LongRookEffect_yoko[sq][obstacle_yoko] | StepEffect[US][KING][sq];
 		target2 = target&effect;
 		while (target2.isNot()) {
@@ -549,7 +567,14 @@ ExtMove* make_move_DROP(const Position& pos, const Bitboard& target, ExtMove* mo
 	return movelist;
 }
 
+/*
 
+int8_t obstacle_tate = (occ256.b64(0) >> occ256_shift_table_tate[sq])&effectmask;
+int8_t obstacle_yoko = (occ256.b64(1) >> occ256_shift_table_yoko[sq])&effectmask;
+int obstacle_plus45 = (occ256.b64(2) >> occ256_shift_table_p45[sq])&effectmask;
+int obstacle_Minus45 = (occ256.b64(3) >> occ256_shift_table_m45[sq])&effectmask;
+
+*/
 
 
 //movelist配列の先頭ポインタを受け取って、最終ポインタを返すようにする。

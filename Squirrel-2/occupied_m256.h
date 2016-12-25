@@ -15,11 +15,11 @@
 	
 #include <intrin.h>
 #include "fundation.h"
-	
+
 //[0]èc [1]â° [2] plus45 [3] minus45
 struct Occ_256 {
 __m256i b256;
-uint64_t b64(const int i) {
+uint64_t b64(const int i) const {
 	return b256.m256i_u64[i];
 	
 }
@@ -82,6 +82,16 @@ Occ_256& operator&=(const Occ_256& b1) {
 #endif
 };
 
+inline Occ_256& operator^(const Occ_256& b1,const Occ_256& b2) {
+	Occ_256 occ;
+
+	occ.b256.m256i_i64[0] = b2.b256.m256i_i64[0] ^ b1.b256.m256i_i64[0];
+	occ.b256.m256i_i64[1] = b2.b256.m256i_i64[1] ^ b1.b256.m256i_i64[1];
+	occ.b256.m256i_i64[2] = b2.b256.m256i_i64[2] ^ b1.b256.m256i_i64[2];
+	occ.b256.m256i_i64[3] = b2.b256.m256i_i64[3] ^ b1.b256.m256i_i64[3];
+	return occ;
+}
+
 std::ostream& operator<<(std::ostream& os, const Occ_256& board);
 
 
@@ -99,3 +109,5 @@ extern int occ256_shift_table_m45[SQ_NUM];
 
 
 void init_occ256();
+
+

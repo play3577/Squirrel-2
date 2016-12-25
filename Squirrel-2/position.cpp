@@ -65,8 +65,7 @@ void Position::set(std::string sfen)
 			pcboard[sq] = pc;//OK
 			occupied[c] |= SquareBB[sq];
 			occupiedPt[c][pt] |= SquareBB[sq];
-			put_rotate(sq);
-
+			//put_rotate(sq);
 			set_occ256(sq);
 
 			promote = false;
@@ -133,7 +132,7 @@ void Position::set(std::string sfen)
 	//cout << *this << endl;
 	
 	//list.print_bplist();
-	cout << occ256 << endl;
+	//cout << occ256 << endl;
 
 #ifdef CHECKPOS
 	
@@ -261,7 +260,8 @@ void Position::do_move(const Move m, StateInfo * newst)
 		//bitboardの更新処理
 		put_piece(c, pt, to);
 		//rotatedにも駒を足す。
-		put_rotate(to);
+		//put_rotate(to);
+		set_occ256(to);
 		
 		//歩を打てない場所Bitboardを更新
 		if (pt == PAWN) {
@@ -309,9 +309,9 @@ void Position::do_move(const Move m, StateInfo * newst)
 
 		//occの更新処理
 		remove_piece(us, moved_pt, from);
-		remove_rotate(from);
+		//remove_rotate(from);
 		//fromの機器を取り除く
-		
+		remove_occ256(from);
 
 		if (!is_promote(m)) {
 			//成がない場合
@@ -394,7 +394,8 @@ void Position::do_move(const Move m, StateInfo * newst)
 		}
 		else {
 			st->DirtyPiece[1] = NO_PIECE;
-			put_rotate(to);
+			//put_rotate(to);
+			set_occ256(to);
 		}
 		//ksqの更新
 		if (moved_pt == KING) { st->ksq_[us] = to; }
@@ -470,7 +471,8 @@ void Position::undo_move()
 		makehand(hands[c], pt, num + 1);
 
 		remove_piece(c, pt, to);
-		remove_rotate(to);
+		//remove_rotate(to);
+		remove_occ256(to);
 		//cは動かしたコマの色 (打った駒が元に戻るのでここは駒を打てるように成る)
 		if (pt == PAWN) {
 			remove_existpawnBB(c, to);
@@ -497,7 +499,8 @@ void Position::undo_move()
 		Color from_c = piece_color(movedpiece);
 		Piece from_pt = piece_type(movedpiece);
 		put_piece(from_c, from_pt, from);
-		put_rotate(from);
+		//put_rotate(from);
+		set_occ256(from);
 		//直前の指し手が成で、動いたあとの駒がPRO_PAWNであれば
 		if (is_promote(LMove) && piece_type(afterpiece) == PRO_PAWN) {
 			add_existpawnBB(piece_color(afterpiece),from);
@@ -550,7 +553,8 @@ void Position::undo_move()
 			Color c = piece_color(afterpiece);
 			//toにいた駒を消すだけでいい
 			remove_piece(c, pt, to);
-			remove_rotate(to);
+			//remove_rotate(to);
+			remove_occ256(to);
 		}
 		ASSERT(pcboard[from] != NO_PIECE);
 	}//コマの移動
@@ -663,13 +667,13 @@ void Position::check_occbitboard()const {
 
 	cout << "occupied " << endl;
 	cout << occ_all() << endl;
-	cout << "occ 90" << endl;
+	/*cout << "occ 90" << endl;
 	cout << occupied90 << endl;
 	cout << "occupied_plus45" << endl;
 	cout << occupied_plus45 << endl;
 	cout << "occupied minus45" << endl;
-	cout << occupied_minus45 << endl;
-
+	cout << occupied_minus45 << endl;*/
+	cout << occ256 << endl;
 	return;
 }
 
@@ -687,6 +691,24 @@ void Position::check_occbitboard()const {
 ２つの状況でだけ確認したがちゃんと動いてた
 しかしすべての状況に対してちゃんと動くかどうかは分からないのでランダムプレイヤーで局面をすすめてテストする関数を用意する
 */
+
+bool Position::capture_or_propawn(const Move m) const {
+
+	if (pcboard[move_to(m)] != NO_PIECE) {
+		//手番の駒を取ろうとしていないかのチェックはしておく
+		if (piece_color(pcboard[move_to(m)]) == sidetomove()) {
+			cout << *this << endl;
+			cout << m << endl;
+			ASSERT(0);
+		}
+		return true;
+	}
+	else if (piece_type(moved_piece(m)) == PAWN&&is_promote(m)) {
+		return true;
+	}
+
+	return false;
+}
 
 bool Position::is_legal(const Move m) const {
 
@@ -836,7 +858,7 @@ bool Position::pseudo_legal(const Move m) const
 先手の歩から駒の価値毎に並べ次に後手の歩から駒の価値毎に並べていくスタイルでSquirrelでは一意に定める。
 
 */
-string Position::make_sfen()
+string Position::make_sfen()const 
 {
 	string sfen;
 
@@ -986,6 +1008,7 @@ std::ostream & operator<<(std::ostream & os, const Position & pos)
 		os << " lastlastmove "; check_move(pos.state()->previous->lastmove);
 	}
 	os << "hash " << (pos.state()->board_ + pos.state()->hands_) << endl;
+	os <<"sfen "<< pos.make_sfen() << endl;
 	return os;
 }
 
@@ -999,8 +1022,10 @@ void Position::check_longeffect() {
 	while (rook.isNot()) {
 
 		Square sq = rook.pop();
-		int8_t obstacle_tate = (occ_all().b[index_tate(sq)] >> shift_tate(sq))&effectmask;
-		int8_t obstacle_yoko = (occ_90().b[index_yoko(sq)] >> shift_yoko(sq))&effectmask;
+		/*int8_t obstacle_tate = (occ_all().b[index_tate(sq)] >> shift_tate(sq))&effectmask;
+		int8_t obstacle_yoko = (occ_90().b[index_yoko(sq)] >> shift_yoko(sq))&effectmask;*/
+		int8_t obstacle_tate = (occ256.b64(0) >> occ256_shift_table_tate[sq])&effectmask;
+		int8_t obstacle_yoko = (occ256.b64(1) >> occ256_shift_table_yoko[sq])&effectmask;
 		effect = LongRookEffect_tate[sq][obstacle_tate] | LongRookEffect_yoko[sq][obstacle_yoko];
 
 		cout << "ROOK sq " << sq << endl << effect << endl;
@@ -1010,8 +1035,10 @@ void Position::check_longeffect() {
 
 	while (bishop.isNot()) {
 		Square sq = bishop.pop();
-		int obstacle_plus45 = (occ_plus45().b[index_plus45(sq)] >> shift_plus45(sq))&effectmask;
-		int obstacle_Minus45 = (occ_minus45().b[index_Minus45(sq)] >> shift_Minus45(sq))&effectmask;
+		/*int obstacle_plus45 = (occ_plus45().b[index_plus45(sq)] >> shift_plus45(sq))&effectmask;
+		int obstacle_Minus45 = (occ_minus45().b[index_Minus45(sq)] >> shift_Minus45(sq))&effectmask;*/
+		int obstacle_plus45 = (occ256.b64(2) >> occ256_shift_table_p45[sq])&effectmask;
+		int obstacle_Minus45 = (occ256.b64(3) >> occ256_shift_table_m45[sq])&effectmask;
 		effect = LongBishopEffect_plus45[sq][obstacle_plus45] | LongBishopEffect_minus45[sq][(obstacle_Minus45)];
 
 		cout << "BISHOP sq " << sq << endl << effect << endl;
@@ -1049,3 +1076,107 @@ void Position::check_longeffect256()
 
 }
 
+
+//SFはconstついてないけどつけておいたほうがいいよね...
+Value Position::see_sign(const Move m) const
+{
+	ASSERT(is_ok(m));
+
+	// Early return if SEE cannot be negative because captured piece value
+	// is not less then capturing one. Note that king moves always return
+	// here because king midgame value is set to 0.
+	/*
+	もしSEEが負になりうる可能性がない（なぜなら一手目で捕獲した駒の価値が移動した駒の価値以上であるから）場合はここでreturnしてしまう
+
+	例えば歩で角を取ったとする。もしも相手が歩を取り返してきても、ここで取り合いをやめてしまえば自分は（角の価値-歩の価値）分得をしている。
+	しかしなんだかんだ言って正確ではない気がするなぁ...
+
+	成が合った場合でもこの部分はコレでなんとかなるはず
+	*/
+	if (Eval::piece_value[moved_piece(m)] <= Eval::piece_value[piece_on(move_to(m))]) {
+		return Value_known_win;
+	}
+
+
+	return see(m);
+}
+
+
+
+#define REMOVE_OCC/*(occupied,occ90,occp45,occm45,from)*/ { occupied^= SquareBB[from]; occ90^= SquareBB[sq_to_sq90(from)];occp45^= SquareBB[sq_to_sqplus45(from)];occm45^=SquareBB[sq_to_sqminus45(from)]; }
+//
+//Bitboard Position::attackers_to(Color stm, Square to, Bitboard& occupied, Bitboard& oc90, Bitboard& ocm45, Bitboard& ocp45) const {
+//
+//	//手番側の攻撃ごま
+//	//HDK(SquirrelはUDK）一つにまとめたほうがいいか？あとPROMOTE小駒も
+//	//う～むこれだとだいぶ重いだろうな....
+//	Color enemy = opposite(stm);
+//	
+//	//return (step_effect(enemy, PAWN, to)&occ_pt(stm, PAWN))
+//	//	| (lance_effect(occupied, enemy, to)&occ_pt(stm, LANCE))
+//	//	| (step_effect(enemy, KNIGHT, to)&occ_pt(stm, KNIGHT))
+//	//	| (step_effect(enemy, SILVER, to)&occ_pt(stm, SILVER))
+//	//	| (step_effect(enemy, GOLD, to)&(occ_pt(stm, GOLD) | occ_pt(stm, PRO_PAWN) | occ_pt(stm, PRO_LANCE) | occ_pt(stm, PRO_NIGHT) | occ_pt(stm, PRO_SILVER)))
+//	//	| (step_effect(enemy, KING, to)&(occ_pt(stm, KING) | occ_pt(stm, DRAGON) | occ_pt(stm, UNICORN)))//王が最後に残る場合もあるので王も含めておく
+//	//	| (rook_effect(occupied, oc90, to)&(occ_pt(stm, ROOK) | occ_pt(stm, DRAGON)))
+//	//	| (bishop_effect(ocp45, ocm45, to)&(occ_pt(stm, BISHOP) | occ_pt(stm, UNICORN)))
+//	//	;
+//	re
+//}
+
+Bitboard Position::attackers_to(Color stm, Square to, Occ_256& occ) const
+{
+	//手番側の攻撃ごま
+	//HDK(SquirrelはUDK）一つにまとめたほうがいいか？あとPROMOTE小駒も
+	//う～むこれだとだいぶ重いだろうな....
+	Color enemy = opposite(stm);
+
+	return (step_effect(enemy, PAWN, to)&occ_pt(stm, PAWN))
+		| (lance_effect(occ, enemy, to)&occ_pt(stm, LANCE))
+		| (step_effect(enemy, KNIGHT, to)&occ_pt(stm, KNIGHT))
+		| (step_effect(enemy, SILVER, to)&occ_pt(stm, SILVER))
+		| (step_effect(enemy, GOLD, to)&(occ_pt(stm, GOLD) | occ_pt(stm, PRO_PAWN) | occ_pt(stm, PRO_LANCE) | occ_pt(stm, PRO_NIGHT) | occ_pt(stm, PRO_SILVER)))
+		| (step_effect(enemy, KING, to)&(occ_pt(stm, KING) | occ_pt(stm, DRAGON) | occ_pt(stm, UNICORN)))//王が最後に残る場合もあるので王も含めておく
+		| (rook_effect(occ,to)&(occ_pt(stm, ROOK) | occ_pt(stm, DRAGON)))
+		| (bishop_effect(occ, to)&(occ_pt(stm, BISHOP) | occ_pt(stm, UNICORN)))
+		;
+}
+
+
+Value Position::see(const Move m) const
+{
+	Square from, to;
+	Bitboard /*occupied, oc90, ocp45, ocm45,*/ allattackers, stm_attackers;//stmはsidetomoveの略
+	int swaplist[40];//ここ将棋だったら３２じゃないほうがいいか？？ありえないとは思うが一応すべてのコマの数にしておく。
+	int index = 1;//indexは１からはじめる。swaplist[0]には一手め(Move m)で捕獲したコマの価値が格納される。
+	Piece captured_pt;
+	Color stm;
+	Occ_256 occ;
+	stm = sidetomove();
+	from = move_from(m);
+	to = move_to(m);
+
+	//list[0]は一手目で捕獲した駒の価値が格納される
+	swaplist[0] = Eval::piece_value[piece_on(move_to(m))];
+	//動いたコマをoccupiedから除く。
+	//occ_Rとocc_P45等にも同じ作業をしなければいけないじゃないですかーーー！
+	//これマジではやくAVX対応のpc買ってocc_256実装させなければならんな...
+	/*occupied = occ_all() ^ SquareBB[from];
+	oc90 = occ_90() ^ SquareBB[sq_to_sq90(from)];
+	ocp45 = occ_plus45() ^ SquareBB[sq_to_sqplus45(from)];
+	ocm45 = occ_minus45() ^ SquareBB[sq_to_sqminus45(from)];*/
+
+
+	occ = ret_occ_256() ^ SquareBB256[from];
+
+	stm_attackers = attackers_to(stm,to,occ);
+
+
+
+
+
+
+
+
+	return Value();
+}

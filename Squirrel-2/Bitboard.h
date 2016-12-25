@@ -1,5 +1,6 @@
 #pragma once
 #include "fundation.h"
+#include "occupied_m256.h"
 
 #if defined(HAVE_SSE2) || defined(HAVE_SSE4)
 #if defined(HAVE_SSE4)
@@ -131,11 +132,20 @@ void check_between();
 //å¯Ç´ä÷òAä÷êî
 //================================
 Bitboard step_effect(const Color c, const Piece pt, const Square sq);
-Bitboard long_effect(const Position &pos, const Color c, const Piece pt,  const Square sq);
+
+//
+//Bitboard long_effect(const Position &pos, const Color c, const Piece pt,  const Square sq);
+//Bitboard lance_effect(const Bitboard & occ, const Color c, const Square sq);
+//Bitboard rook_effect(const Bitboard & occ_tate, const Bitboard & occ_yoko, const Square sq);
+//Bitboard bishop_effect(const Bitboard & occ_p45, const Bitboard & occ_m45, const Square sq);
+//Bitboard dragon_effect(const Bitboard & occ_tate, const Bitboard & occ_yoko, const Square sq);
+//Bitboard unicorn_effect(const Bitboard & occ_p45, const Bitboard & occ_m45, const Square sq);
 
 
-Bitboard lance_effect(const Bitboard & occ, const Color c, const Square sq);
-Bitboard rook_effect(const Bitboard & occ_tate, const Bitboard & occ_yoko, const Square sq);
-Bitboard bishop_effect(const Bitboard & occ_p45, const Bitboard & occ_m45, const Square sq);
-Bitboard dragon_effect(const Bitboard & occ_tate, const Bitboard & occ_yoko, const Square sq);
-Bitboard unicorn_effect(const Bitboard & occ_p45, const Bitboard & occ_m45, const Square sq);
+
+Bitboard long_effect(const Occ_256& occ, const Color c, const Piece pt, const Square sq);
+Bitboard lance_effect(const Occ_256 & occ, const Color c, const Square sq);
+Bitboard rook_effect(const Occ_256 & occ, const Square sq);
+Bitboard bishop_effect(const Occ_256 & occ, const Square sq);
+Bitboard dragon_effect(const Occ_256 & occ, const Square sq);
+Bitboard unicorn_effect(const Occ_256 & occ, const Square sq);

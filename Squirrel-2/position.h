@@ -68,8 +68,8 @@ private:
 	Occ_256 occ256;
 
 	Bitboard occupied[ColorALL];//colorALL=2なので手番関係ないBitboardは用意していない。
-	Bitboard occupied90;
-	Bitboard occupied_plus45, occupied_minus45;
+	/*Bitboard occupied90;
+	Bitboard occupied_plus45, occupied_minus45;*/
 
 	Bitboard occupiedPt[ColorALL][PT_ALL];
 
@@ -96,34 +96,34 @@ public:
 	void set(std::string sfen);
 	void set_hirate() { set(sfen_hirate); }//平手にセットはOK
 
-	string make_sfen();
+	string make_sfen()const ;
 	void clear();
 
 	void remove_piece(const Color c, const Piece pt, const Square sq);
 	void put_piece(const Color c, const Piece pt, const Square sq);
 
-	void put_rotate(const Square sq) {
+	//void put_rotate(const Square sq) {
 
-		ASSERT(is_ok(Square(sq_to_sq90(sq))));
-		occupied90 ^= SquareBB[sq_to_sq90(sq)];
-		ASSERT(is_ok(Square(sq_to_sqplus45(sq))));
-		occupied_plus45 ^= SquareBB[sq_to_sqplus45(sq)];
-		ASSERT(is_ok(Square(sq_to_sqminus45(sq))));
-		occupied_minus45^= SquareBB[sq_to_sqminus45(sq)];
+	//	ASSERT(is_ok(Square(sq_to_sq90(sq))));
+	//	occupied90 ^= SquareBB[sq_to_sq90(sq)];
+	//	ASSERT(is_ok(Square(sq_to_sqplus45(sq))));
+	//	occupied_plus45 ^= SquareBB[sq_to_sqplus45(sq)];
+	//	ASSERT(is_ok(Square(sq_to_sqminus45(sq))));
+	//	occupied_minus45^= SquareBB[sq_to_sqminus45(sq)];
 
-	}
+	//}
 
-	//putもremoveもxorなのでやっていることは同じだが名前ぐらい変えておいたほうがいいだろ
-	void remove_rotate(const Square sq) {
+	////putもremoveもxorなのでやっていることは同じだが名前ぐらい変えておいたほうがいいだろ
+	//void remove_rotate(const Square sq) {
 
-		ASSERT(is_ok(Square(sq_to_sq90(sq))));
-		occupied90 ^= SquareBB[sq_to_sq90(sq)];
-		ASSERT(is_ok(Square(sq_to_sqplus45(sq))));
-		occupied_plus45 ^= SquareBB[sq_to_sqplus45(sq)];
-		ASSERT(is_ok(Square(sq_to_sqminus45(sq))));
-		occupied_minus45 ^= SquareBB[sq_to_sqminus45(sq)];
+	//	ASSERT(is_ok(Square(sq_to_sq90(sq))));
+	//	occupied90 ^= SquareBB[sq_to_sq90(sq)];
+	//	ASSERT(is_ok(Square(sq_to_sqplus45(sq))));
+	//	occupied_plus45 ^= SquareBB[sq_to_sqplus45(sq)];
+	//	ASSERT(is_ok(Square(sq_to_sqminus45(sq))));
+	//	occupied_minus45 ^= SquareBB[sq_to_sqminus45(sq)];
 
-	}
+	//}
 
 	void check_effect();
 	void check_effectocc256();
@@ -144,9 +144,11 @@ public:
 	Bitboard occ(Color c)const { return occupied[c]; }
 
 	Bitboard occ_all() const { return (occupied[BLACK]|occupied[WHITE]); }
-	Bitboard occ_90()const { return occupied90; }
+	/*Bitboard occ_90()const { return occupied90; }
 	Bitboard occ_plus45()const { return occupied_plus45; }
-	Bitboard occ_minus45()const { return occupied_minus45; }
+	Bitboard occ_minus45()const { return occupied_minus45; }*/
+
+	Occ_256 ret_occ_256()const { return occ256; }
 
 	Bitboard pawnbb(const Color c)const { return ExistPawnBB[c]; }
 
@@ -180,7 +182,7 @@ public:
 		*/
 		//コレ飛び機器について毎回switch文で条件分岐しているから時間が無駄！飛び効きは駒種別に利きを求める関数を作成する！！！
 		//なんでこんなことにも気づかなかったのか(´；ω；｀)
-		return
+		/*return
 			(step_effect(ENEMY, PAWN, to)&occ_pt(US, PAWN))
 			| (lance_effect(occ_all(), ENEMY, to)&occ_pt(US, LANCE))
 			| (step_effect(ENEMY, KNIGHT, to)&occ_pt(US, KNIGHT))
@@ -190,8 +192,19 @@ public:
 			| (rook_effect(occ_all(), occ_90(), to)&occ_pt(US, ROOK))
 			| (bishop_effect(occ_plus45(), occ_minus45(), to)&occ_pt(US, BISHOP))
 			| (occ_pt(US, DRAGON)&dragon_effect(occ_all(), occ_90(), to))
-			| (occ_pt(US, UNICORN)&unicorn_effect(occ_plus45(), occ_minus45(), to));
+			| (occ_pt(US, UNICORN)&unicorn_effect(occ_plus45(), occ_minus45(), to));*/
 			
+		return
+			(step_effect(ENEMY, PAWN, to)&occ_pt(US, PAWN))
+			| (lance_effect(occ256, ENEMY, to)&occ_pt(US, LANCE))
+			| (step_effect(ENEMY, KNIGHT, to)&occ_pt(US, KNIGHT))
+			| (step_effect(ENEMY, SILVER, to)&occ_pt(US, SILVER))
+			| (step_effect(ENEMY, GOLD, to)&(occ_pt(US, GOLD) | occ_pt(US, PRO_PAWN) | occ_pt(US, PRO_LANCE) | occ_pt(US, PRO_NIGHT) | occ_pt(US, PRO_SILVER)))
+			| (step_effect(ENEMY, KING, to)&occ_pt(US, KING))
+			| (rook_effect(occ256, to)&occ_pt(US, ROOK))
+			| (bishop_effect(occ256, to)&occ_pt(US, BISHOP))
+			| (occ_pt(US, DRAGON)&dragon_effect(occ256, to))
+			| (occ_pt(US, UNICORN)&unicorn_effect(occ256, to));
 	}
 
 	Bitboard effect_toBB_withouteffectking(const Color US, const Square to)const {
@@ -203,17 +216,32 @@ public:
 		*/
 		//コレ飛び機器について毎回switch文で条件分岐しているから時間が無駄！飛び効きは駒種別に利きを求める関数を作成する！！！
 		//なんでこんなことにも気づかなかったのか(´；ω；｀)
+		//return
+		//	(step_effect(ENEMY, PAWN, to)&occ_pt(US, PAWN))
+		//	| (lance_effect(occ_all(), ENEMY, to)&occ_pt(US, LANCE))
+		//	| (step_effect(ENEMY, KNIGHT, to)&occ_pt(US, KNIGHT))
+		//	| (step_effect(ENEMY, SILVER, to)&occ_pt(US, SILVER))
+		//	| (step_effect(ENEMY, GOLD, to)&(occ_pt(US, GOLD) | occ_pt(US, PRO_PAWN) | occ_pt(US, PRO_LANCE) | occ_pt(US, PRO_NIGHT) | occ_pt(US, PRO_SILVER)))
+		//	//| (step_effect(ENEMY, KING, to)&occ_pt(US, KING))
+		//	| (rook_effect(occ_all(), occ_90(), to)&occ_pt(US, ROOK))
+		//	| (bishop_effect(occ_plus45(), occ_minus45(), to)&occ_pt(US, BISHOP))
+		//	| (occ_pt(US, DRAGON)&dragon_effect(occ_all(), occ_90(), to))
+		//	| (occ_pt(US, UNICORN)&unicorn_effect(occ_plus45(), occ_minus45(), to));
+
+
 		return
 			(step_effect(ENEMY, PAWN, to)&occ_pt(US, PAWN))
-			| (lance_effect(occ_all(), ENEMY, to)&occ_pt(US, LANCE))
+			| (lance_effect(occ256, ENEMY, to)&occ_pt(US, LANCE))
 			| (step_effect(ENEMY, KNIGHT, to)&occ_pt(US, KNIGHT))
 			| (step_effect(ENEMY, SILVER, to)&occ_pt(US, SILVER))
 			| (step_effect(ENEMY, GOLD, to)&(occ_pt(US, GOLD) | occ_pt(US, PRO_PAWN) | occ_pt(US, PRO_LANCE) | occ_pt(US, PRO_NIGHT) | occ_pt(US, PRO_SILVER)))
 			//| (step_effect(ENEMY, KING, to)&occ_pt(US, KING))
-			| (rook_effect(occ_all(), occ_90(), to)&occ_pt(US, ROOK))
-			| (bishop_effect(occ_plus45(), occ_minus45(), to)&occ_pt(US, BISHOP))
-			| (occ_pt(US, DRAGON)&dragon_effect(occ_all(), occ_90(), to))
-			| (occ_pt(US, UNICORN)&unicorn_effect(occ_plus45(), occ_minus45(), to));
+			| (rook_effect(occ256, to)&occ_pt(US, ROOK))
+			| (bishop_effect(occ256, to)&occ_pt(US, BISHOP))
+			| (occ_pt(US, DRAGON)&dragon_effect(occ256, to))
+			| (occ_pt(US, UNICORN)&unicorn_effect(occ256, to));
+
+
 
 	}
 	//c側の効きがtoに効いているかどうか調べる為の関数。
@@ -223,7 +251,7 @@ public:
 		Color ENEMY = opposite(US);
 
 		
-		if ((rook_effect(occ_all(), occ_90(), to)&occ_pt(US, ROOK)).isNot()) { return true; }
+		/*if ((rook_effect(occ_all(), occ_90(), to)&occ_pt(US, ROOK)).isNot()) { return true; }
 		if ((bishop_effect(occ_plus45(), occ_minus45(), to)&occ_pt(US, BISHOP)).isNot()) { return true; }
 		if ((occ_pt(US, DRAGON)&dragon_effect(occ_all(), occ_90(), to)).isNot()) { return true; }
 		if ((occ_pt(US, UNICORN)&unicorn_effect(occ_plus45(), occ_minus45(), to)).isNot()) { return true; }
@@ -233,8 +261,22 @@ public:
 		if ((step_effect(ENEMY, SILVER, to)&occ_pt(US, SILVER)).isNot()) { return true; }
 		if ((step_effect(ENEMY, GOLD, to)&(occ_pt(US, GOLD) | occ_pt(US, PRO_PAWN) | occ_pt(US, PRO_LANCE) | occ_pt(US, PRO_NIGHT) | occ_pt(US, PRO_SILVER))).isNot()) { return true; }
 		if ((step_effect(ENEMY, KING, to)&occ_pt(US, KING)).isNot()) { return true; }
-	
+	*/
 		
+
+		if ((rook_effect(occ256, to)&occ_pt(US, ROOK)).isNot()) { return true; }
+		if ((bishop_effect(occ256, to)&occ_pt(US, BISHOP)).isNot()) { return true; }
+		if ((occ_pt(US, DRAGON)&dragon_effect(occ256, to)).isNot()) { return true; }
+		if ((occ_pt(US, UNICORN)&unicorn_effect(occ256, to)).isNot()) { return true; }
+		if ((lance_effect(occ256, ENEMY, to)&occ_pt(US, LANCE)).isNot()) { return true; }
+		if ((step_effect(ENEMY, PAWN, to)&occ_pt(US, PAWN)).isNot()) { return true; }
+		if ((step_effect(ENEMY, KNIGHT, to)&occ_pt(US, KNIGHT)).isNot()) { return true; }
+		if ((step_effect(ENEMY, SILVER, to)&occ_pt(US, SILVER)).isNot()) { return true; }
+		if ((step_effect(ENEMY, GOLD, to)&(occ_pt(US, GOLD) | occ_pt(US, PRO_PAWN) | occ_pt(US, PRO_LANCE) | occ_pt(US, PRO_NIGHT) | occ_pt(US, PRO_SILVER))).isNot()) { return true; }
+		if ((step_effect(ENEMY, KING, to)&occ_pt(US, KING)).isNot()) { return true; }
+
+
+
 		return false;
 	}
 
@@ -243,14 +285,16 @@ public:
 	bool is_effect_to_Removeking(const Color US, const Square to,const Square  ksq)const {
 
 		Color ENEMY = opposite(US);
-		//Bitboard ourksq= SquareBB[ksq];
+		Bitboard ourksq= SquareBB[ksq];
 
-		Bitboard occR = occ_all()&~SquareBB[ksq];
+		/*Bitboard occR = occ_all()&~SquareBB[ksq];
 		Bitboard occ90R = occ_90() &~ SquareBB[sq_to_sq90(ksq)];
 		Bitboard occp45R = occ_plus45() &~ SquareBB[sq_to_sqplus45(ksq)];
-		Bitboard occm45R = occ_minus45() &~  SquareBB[sq_to_sqminus45(ksq)];
+		Bitboard occm45R = occ_minus45() &~  SquareBB[sq_to_sqminus45(ksq)];*/
 
-		if ((rook_effect(occR, occ90R, to)&occ_pt(US, ROOK)).isNot()) { return true; }
+		Occ_256 occ256_ = occ256^SquareBB256[ksq];
+
+		/*if ((rook_effect(occR, occ90R, to)&occ_pt(US, ROOK)).isNot()) { return true; }
 		if ((bishop_effect(occp45R, occm45R, to)&occ_pt(US, BISHOP)).isNot()) { return true; }
 		if ((occ_pt(US, DRAGON)&dragon_effect(occR, occ90R, to)).isNot()) { return true; }
 		if ((occ_pt(US, UNICORN)&unicorn_effect(occp45R, occm45R, to)).isNot()) { return true; }
@@ -259,8 +303,18 @@ public:
 		if ((step_effect(ENEMY, KNIGHT, to)&occ_pt(US, KNIGHT)).isNot()) { return true; }
 		if ((step_effect(ENEMY, SILVER, to)&occ_pt(US, SILVER)).isNot()) { return true; }
 		if ((step_effect(ENEMY, GOLD, to)&(occ_pt(US, GOLD) | occ_pt(US, PRO_PAWN) | occ_pt(US, PRO_LANCE) | occ_pt(US, PRO_NIGHT) | occ_pt(US, PRO_SILVER))).isNot()) { return true; }
-		if ((step_effect(ENEMY, KING, to)&occ_pt(US, KING)).isNot()) { return true; }
+		if ((step_effect(ENEMY, KING, to)&occ_pt(US, KING)).isNot()) { return true; }*/
 
+		if ((rook_effect(occ256_, to)&occ_pt(US, ROOK)).isNot()) { return true; }
+		if ((bishop_effect(occ256_, to)&occ_pt(US, BISHOP)).isNot()) { return true; }
+		if ((occ_pt(US, DRAGON)&dragon_effect(occ256_, to)).isNot()) { return true; }
+		if ((occ_pt(US, UNICORN)&unicorn_effect(occ256_, to)).isNot()) { return true; }
+		if ((lance_effect(occ256_, ENEMY, to)&occ_pt(US, LANCE)).isNot()) { return true; }
+		if ((step_effect(ENEMY, PAWN, to)&occ_pt(US, PAWN)).isNot()) { return true; }
+		if ((step_effect(ENEMY, KNIGHT, to)&occ_pt(US, KNIGHT)).isNot()) { return true; }
+		if ((step_effect(ENEMY, SILVER, to)&occ_pt(US, SILVER)).isNot()) { return true; }
+		if ((step_effect(ENEMY, GOLD, to)&(occ_pt(US, GOLD) | occ_pt(US, PRO_PAWN) | occ_pt(US, PRO_LANCE) | occ_pt(US, PRO_NIGHT) | occ_pt(US, PRO_SILVER))).isNot()) { return true; }
+		if ((step_effect(ENEMY, KING, to)&occ_pt(US, KING)).isNot()) { return true; }
 
 		return false;
 	}
@@ -346,44 +400,51 @@ public:
 		{
 
 		case UP:
-			obstacle_tate = (occ_all().b[index_tate(sq)] >> shift_tate(sq))&effectmask;
+			//obstacle_tate = (occ_all().b[index_tate(sq)] >> shift_tate(sq))&effectmask;
+			obstacle_tate = (occ256.b64(0) >> occ256_shift_table_tate[sq])&effectmask;
 			//UPの場合でもDOWNに跳駒がいるわけがないので（down方向には玉が入るため存在されては困る）＆INfrontofBBとかしなくてもいい
 			return ((LongRookEffect_tate[sq][obstacle_tate])&(occ_pt(ENEMY, ROOK) | occ_pt(ENEMY, DRAGON) | occ_pt(ENEMY, LANCE))).isNot();
 			break;
 
 		case RightUP:
-			obstacle_plus45 = (occ_plus45().b[index_plus45(sq)] >> shift_plus45(sq))&effectmask;
+			//obstacle_plus45 = (occ_plus45().b[index_plus45(sq)] >> shift_plus45(sq))&effectmask;
+			obstacle_plus45 = (occ256.b64(2) >> occ256_shift_table_p45[sq])&effectmask;
 			return (LongBishopEffect_plus45[sq][obstacle_plus45] & (occ_pt(ENEMY, BISHOP) | occ_pt(ENEMY, UNICORN))).isNot();
 			break;
 
 		case Right:
-			obstacle_yoko = (occ_90().b[index_yoko(sq)] >> shift_yoko(sq))&effectmask;
+			//obstacle_yoko = (occ_90().b[index_yoko(sq)] >> shift_yoko(sq))&effectmask;
+			obstacle_yoko = (occ256.b64(1) >> occ256_shift_table_yoko[sq])&effectmask;
 			return (LongRookEffect_yoko[sq][obstacle_yoko] & (occ_pt(ENEMY, ROOK) | occ_pt(ENEMY, DRAGON))).isNot();
 			break;
 
 		case RightDOWN:
-			obstacle_Minus45 = (occ_minus45().b[index_Minus45(sq)] >> shift_Minus45(sq))&effectmask;
+			//obstacle_Minus45 = (occ_minus45().b[index_Minus45(sq)] >> shift_Minus45(sq))&effectmask;
+			obstacle_Minus45 = (occ256.b64(3) >> occ256_shift_table_m45[sq])&effectmask;
 			return  (LongBishopEffect_minus45[sq][(obstacle_Minus45)] & (occ_pt(ENEMY, BISHOP) | occ_pt(ENEMY, UNICORN))).isNot();
 			break;
 
 		case DOWN:
-			
-			obstacle_tate = (occ_all().b[index_tate(sq)] >> shift_tate(sq))&effectmask;
+			//obstacle_tate = (occ_all().b[index_tate(sq)] >> shift_tate(sq))&effectmask;
+			obstacle_tate = (occ256.b64(0) >> occ256_shift_table_tate[sq])&effectmask;
 			return ((LongRookEffect_tate[sq][obstacle_tate])&(occ_pt(ENEMY, ROOK) |occ_pt(ENEMY,DRAGON)| occ_pt(ENEMY, LANCE))).isNot();
 			break;
 
 		case LeftDOWN:
-			obstacle_plus45 = (occ_plus45().b[index_plus45(sq)] >> shift_plus45(sq))&effectmask;
+			//obstacle_plus45 = (occ_plus45().b[index_plus45(sq)] >> shift_plus45(sq))&effectmask;
+			obstacle_plus45 = (occ256.b64(2) >> occ256_shift_table_p45[sq])&effectmask;
 			return (LongBishopEffect_plus45[sq][obstacle_plus45] & (occ_pt(ENEMY, BISHOP) | occ_pt(ENEMY, UNICORN))).isNot();
 			break;
 
 		case Left:
-			obstacle_yoko = (occ_90().b[index_yoko(sq)] >> shift_yoko(sq))&effectmask;
+			//obstacle_yoko = (occ_90().b[index_yoko(sq)] >> shift_yoko(sq))&effectmask;
+			obstacle_yoko = (occ256.b64(1) >> occ256_shift_table_yoko[sq])&effectmask;
 			return (LongRookEffect_yoko[sq][obstacle_yoko] & (occ_pt(ENEMY, ROOK) | occ_pt(ENEMY, DRAGON))).isNot();
 			break;
 
 		case LeftUP:
-			obstacle_Minus45 = (occ_minus45().b[index_Minus45(sq)] >> shift_Minus45(sq))&effectmask;
+			//obstacle_Minus45 = (occ_minus45().b[index_Minus45(sq)] >> shift_Minus45(sq))&effectmask;
+			obstacle_Minus45 = (occ256.b64(3) >> occ256_shift_table_m45[sq])&effectmask;
 			return  (LongBishopEffect_minus45[sq][(obstacle_Minus45)] & (occ_pt(ENEMY, BISHOP) | occ_pt(ENEMY, UNICORN))).isNot();
 			break;
 
@@ -395,6 +456,13 @@ public:
 
 	}
 	
+
+	//see
+	Value see(const Move m) const;
+	Value see_sign(const Move m) const;
+
+	Bitboard attackers_to(Color stm, Square to, Bitboard& occupied, Bitboard& oc90, Bitboard& ocm45, Bitboard& ocp45)const;
+	Bitboard attackers_to(Color stm, Square to, Occ_256& occ)const;
 
 	/*
 	これでは遅いよね.....
@@ -456,19 +524,7 @@ public:
 
 	}
 
-	inline bool capture_or_propawn(const Move m)const {
-
-		if (pcboard[move_to(m)] != NO_PIECE) {
-			//手番の駒を取ろうとしていないかのチェックはしておく
-			ASSERT(piece_color(pcboard[move_to(m)]) != sidetomove());
-			return true;
-		}
-		else if (piece_type(moved_piece(m)) == PAWN&&is_promote(m)) {
-			return true;
-		}
-
-		return false;
-	}
+	bool capture_or_propawn(const Move m)const;
 
 
 

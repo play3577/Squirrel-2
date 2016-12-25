@@ -531,26 +531,11 @@ Bitboard effectBB(const Position &pos,const Piece pt, const Color c, const Squar
 	case PAWN:
 		return StepEffect[c][pt][sq];
 		break;
-	case LANCE:
-		obstacle_tate = (pos.occ_all().b[index_tate(sq)] >> shift_tate(sq))&effectmask;//7bitしか必要ないのでintでいいか（で十分か？？？？）
-		return LongRookEffect_tate[sq][obstacle_tate] & InFront_BB[c][sqtorank(sq)];
-		break;
 	case KNIGHT:
 		return StepEffect[c][pt][sq];
 		break;
 	case SILVER:
 		return StepEffect[c][pt][sq];
-		break;
-	case BISHOP:
-		// の方が早く処理できるか？？
-		 obstacle_plus45 = (pos.occ_plus45().b[index_plus45(sq)] >> shift_plus45(sq))&effectmask;
-		 obstacle_Minus45 = (pos.occ_minus45().b[index_Minus45(sq)] >> shift_Minus45(sq))&effectmask;
-		return  LongBishopEffect_plus45[sq][obstacle_plus45] | LongBishopEffect_minus45[sq][(obstacle_Minus45)];
-		break;
-	case ROOK:
-		 obstacle_tate = (pos.occ_all().b[index_tate(sq)] >> shift_tate(sq))&effectmask;
-		 obstacle_yoko = (pos.occ_90().b[index_yoko(sq)] >> shift_yoko(sq))&effectmask;
-		return LongRookEffect_tate[sq][obstacle_tate] | LongRookEffect_yoko[sq][obstacle_yoko];
 		break;
 	case GOLD:case PRO_PAWN:case PRO_LANCE:case PRO_NIGHT:case PRO_SILVER:
 		return StepEffect[c][GOLD][sq];
@@ -558,15 +543,29 @@ Bitboard effectBB(const Position &pos,const Piece pt, const Color c, const Squar
 	case KING:
 		return StepEffect[c][KING][sq];
 		break;
+	case LANCE:
+		obstacle_tate = (pos.ret_occ_256().b64(0) >> occ256_shift_table_tate[sq])&effectmask;
+		return LanceEffect[c][sq][obstacle_tate];
+		break;
+	case BISHOP:
+		obstacle_plus45 = (pos.ret_occ_256().b64(2) >> occ256_shift_table_p45[sq])&effectmask;
+		obstacle_Minus45 = (pos.ret_occ_256().b64(3) >> occ256_shift_table_m45[sq])&effectmask;
+		return LongBishopEffect_plus45[sq][obstacle_plus45] | LongBishopEffect_minus45[sq][obstacle_Minus45];
+		break;
+	case ROOK:
+		obstacle_tate = (pos.ret_occ_256().b64(0) >> occ256_shift_table_tate[sq])&effectmask;
+		obstacle_yoko = (pos.ret_occ_256().b64(1) >> occ256_shift_table_yoko[sq])&effectmask;
+		return LongRookEffect_tate[sq][obstacle_tate] | LongRookEffect_yoko[sq][obstacle_yoko];
+		break;
 	case UNICORN:
-		 obstacle_plus45 = (pos.occ_plus45().b[index_plus45(sq)] >> shift_plus45(sq))&effectmask;
-		 obstacle_Minus45 = (pos.occ_minus45().b[index_Minus45(sq)] >> shift_Minus45(sq))&effectmask;
-		return  LongBishopEffect_plus45[sq][obstacle_plus45] | LongBishopEffect_minus45[sq][(obstacle_Minus45)] | StepEffect[c][KING][sq];
+		obstacle_plus45 = (pos.ret_occ_256().b64(2) >> occ256_shift_table_p45[sq])&effectmask;
+		obstacle_Minus45 = (pos.ret_occ_256().b64(3) >> occ256_shift_table_m45[sq])&effectmask;
+		return LongBishopEffect_plus45[sq][obstacle_plus45] | LongBishopEffect_minus45[sq][obstacle_Minus45] | StepEffect[BLACK][KING][sq];
 		break;
 	case DRAGON:
-		 obstacle_tate = (pos.occ_all().b[index_tate(sq)] >> shift_tate(sq))&effectmask;
-		 obstacle_yoko = (pos.occ_90().b[index_yoko(sq)] >> shift_yoko(sq))&effectmask;
-		return LongRookEffect_tate[sq][obstacle_tate] | LongRookEffect_yoko[sq][obstacle_yoko] | StepEffect[c][KING][sq];
+		obstacle_tate = (pos.ret_occ_256().b64(0) >> occ256_shift_table_tate[sq])&effectmask;
+		obstacle_yoko = (pos.ret_occ_256().b64(1) >> occ256_shift_table_yoko[sq])&effectmask;
+		return LongRookEffect_tate[sq][obstacle_tate] | LongRookEffect_yoko[sq][obstacle_yoko] | StepEffect[BLACK][KING][sq];
 		break;
 	default:
 		cout << pos << endl;
@@ -584,52 +583,141 @@ Bitboard step_effect(const Color c, const Piece pt, const Square sq) {
 	
 }
 
+//
+//
+////飛び利きでない場合はposを渡すのは無駄になってしまうので飛び利き用と飛び利きでない用で関数を分けた方がいいか？
+//Bitboard long_effect(const Position &pos, const Color c, const Piece pt, const Square sq) {
+//
+//	//Bitboard effect;
+//
+//	uint8_t obstacle_tate;
+//	uint8_t obstacle_yoko;
+//	uint8_t obstacle_plus45;
+//	uint8_t obstacle_Minus45;
+//
+//	switch (pt)
+//	{
+//	case LANCE:
+//		obstacle_tate = (pos.occ_all().b[index_tate(sq)] >> shift_tate(sq))&effectmask;//7bitしか必要ないのでintでいいか（で十分か？？？？）
+//		return  LanceEffect[c][sq][obstacle_tate];  //LongRookEffect_tate[sq][obstacle_tate] & InFront_BB[c][sqtorank(sq)];
+//		break;
+//	case BISHOP:
+//		// の方が早く処理できるか？？
+//		 obstacle_plus45 = (pos.occ_plus45().b[index_plus45(sq)] >> shift_plus45(sq))&effectmask;
+//		 obstacle_Minus45 = (pos.occ_minus45().b[index_Minus45(sq)] >> shift_Minus45(sq))&effectmask;
+//		return  LongBishopEffect_plus45[sq][obstacle_plus45] | LongBishopEffect_minus45[sq][(obstacle_Minus45)];
+//		break;
+//	case ROOK:
+//		 obstacle_tate = (pos.occ_all().b[index_tate(sq)] >> shift_tate(sq))&effectmask;
+//		 obstacle_yoko = (pos.occ_90().b[index_yoko(sq)] >> shift_yoko(sq))&effectmask;
+//		return LongRookEffect_tate[sq][obstacle_tate] | LongRookEffect_yoko[sq][obstacle_yoko];
+//		break;
+//	case UNICORN:
+//		 obstacle_plus45 = (pos.occ_plus45().b[index_plus45(sq)] >> shift_plus45(sq))&effectmask;
+//		 obstacle_Minus45 = (pos.occ_minus45().b[index_Minus45(sq)] >> shift_Minus45(sq))&effectmask;
+//		return  LongBishopEffect_plus45[sq][obstacle_plus45] | LongBishopEffect_minus45[sq][(obstacle_Minus45)] | StepEffect[c][KING][sq];
+//		break;
+//	case DRAGON:
+//		 obstacle_tate = (pos.occ_all().b[index_tate(sq)] >> shift_tate(sq))&effectmask;
+//		 obstacle_yoko = (pos.occ_90().b[index_yoko(sq)] >> shift_yoko(sq))&effectmask;
+//		return LongRookEffect_tate[sq][obstacle_tate] | LongRookEffect_yoko[sq][obstacle_yoko] | StepEffect[c][KING][sq];
+//		break;
+//	default:
+//		ASSERT(0);
+//		return ALLBB;
+//		break;
+//	}
+//
+//}
 
 
-//飛び利きでない場合はposを渡すのは無駄になってしまうので飛び利き用と飛び利きでない用で関数を分けた方がいいか？
-Bitboard long_effect(const Position &pos, const Color c, const Piece pt, const Square sq) {
+/*
 
-	//Bitboard effect;
+
+occ256 を用いた長い効き
+
+*/
+
+
+Bitboard long_effect(const Occ_256 & occ, const Color c, const Piece pt, const Square sq)
+{
 
 	uint8_t obstacle_tate;
 	uint8_t obstacle_yoko;
 	uint8_t obstacle_plus45;
 	uint8_t obstacle_Minus45;
-
 	switch (pt)
 	{
+	
 	case LANCE:
-		obstacle_tate = (pos.occ_all().b[index_tate(sq)] >> shift_tate(sq))&effectmask;//7bitしか必要ないのでintでいいか（で十分か？？？？）
-		return LongRookEffect_tate[sq][obstacle_tate] & InFront_BB[c][sqtorank(sq)];
+		obstacle_tate = (occ.b64(0) >> occ256_shift_table_tate[sq])&effectmask;
+		return LanceEffect[c][sq][obstacle_tate];
 		break;
 	case BISHOP:
-		// の方が早く処理できるか？？
-		 obstacle_plus45 = (pos.occ_plus45().b[index_plus45(sq)] >> shift_plus45(sq))&effectmask;
-		 obstacle_Minus45 = (pos.occ_minus45().b[index_Minus45(sq)] >> shift_Minus45(sq))&effectmask;
-		return  LongBishopEffect_plus45[sq][obstacle_plus45] | LongBishopEffect_minus45[sq][(obstacle_Minus45)];
+		obstacle_plus45 = (occ.b64(2) >> occ256_shift_table_p45[sq])&effectmask;
+		obstacle_Minus45 = (occ.b64(3) >> occ256_shift_table_m45[sq])&effectmask;
+		return LongBishopEffect_plus45[sq][obstacle_plus45] | LongBishopEffect_minus45[sq][obstacle_Minus45];
 		break;
 	case ROOK:
-		 obstacle_tate = (pos.occ_all().b[index_tate(sq)] >> shift_tate(sq))&effectmask;
-		 obstacle_yoko = (pos.occ_90().b[index_yoko(sq)] >> shift_yoko(sq))&effectmask;
+		obstacle_tate = (occ.b64(0) >> occ256_shift_table_tate[sq])&effectmask;
+		obstacle_yoko = (occ.b64(1) >> occ256_shift_table_yoko[sq])&effectmask;
 		return LongRookEffect_tate[sq][obstacle_tate] | LongRookEffect_yoko[sq][obstacle_yoko];
 		break;
 	case UNICORN:
-		 obstacle_plus45 = (pos.occ_plus45().b[index_plus45(sq)] >> shift_plus45(sq))&effectmask;
-		 obstacle_Minus45 = (pos.occ_minus45().b[index_Minus45(sq)] >> shift_Minus45(sq))&effectmask;
-		return  LongBishopEffect_plus45[sq][obstacle_plus45] | LongBishopEffect_minus45[sq][(obstacle_Minus45)] | StepEffect[c][KING][sq];
+		obstacle_plus45 = (occ.b64(2) >> occ256_shift_table_p45[sq])&effectmask;
+		obstacle_Minus45 = (occ.b64(3) >> occ256_shift_table_m45[sq])&effectmask;
+		return LongBishopEffect_plus45[sq][obstacle_plus45] | LongBishopEffect_minus45[sq][obstacle_Minus45]| StepEffect[BLACK][KING][sq];
 		break;
 	case DRAGON:
-		 obstacle_tate = (pos.occ_all().b[index_tate(sq)] >> shift_tate(sq))&effectmask;
-		 obstacle_yoko = (pos.occ_90().b[index_yoko(sq)] >> shift_yoko(sq))&effectmask;
-		return LongRookEffect_tate[sq][obstacle_tate] | LongRookEffect_yoko[sq][obstacle_yoko] | StepEffect[c][KING][sq];
+		obstacle_tate = (occ.b64(0) >> occ256_shift_table_tate[sq])&effectmask;
+		obstacle_yoko = (occ.b64(1) >> occ256_shift_table_yoko[sq])&effectmask;
+		return LongRookEffect_tate[sq][obstacle_tate] | LongRookEffect_yoko[sq][obstacle_yoko]|StepEffect[BLACK][KING][sq];
 		break;
 	default:
-		ASSERT(0);
+		UNREACHABLE;
 		return ALLBB;
 		break;
 	}
-
 }
+
+Bitboard lance_effect(const Occ_256 & occ, const Color c, const Square sq)
+{
+	const uint8_t obstacle_tate=(occ.b64(0)>>occ256_shift_table_tate[sq])&effectmask;
+	return LanceEffect[c][sq][obstacle_tate];
+}
+
+Bitboard rook_effect(const Occ_256 & occ, const Square sq)
+{
+	const uint8_t obstacle_tate = (occ.b64(0) >> occ256_shift_table_tate[sq])&effectmask;
+	const uint8_t obstacle_yoko = (occ.b64(1) >> occ256_shift_table_yoko[sq])&effectmask;
+	return LongRookEffect_tate[sq][obstacle_tate] | LongRookEffect_yoko[sq][obstacle_yoko];
+}
+
+Bitboard bishop_effect(const Occ_256 & occ, const Square sq)
+{
+	const uint8_t obstacle_plus45 = (occ.b64(2) >> occ256_shift_table_p45[sq])&effectmask;
+	const uint8_t obstacle_Minus45 = (occ.b64(3) >> occ256_shift_table_m45[sq])&effectmask;
+	return LongBishopEffect_plus45[sq][obstacle_plus45] | LongBishopEffect_minus45[sq][obstacle_Minus45];
+}
+
+Bitboard dragon_effect(const Occ_256 & occ, const Square sq)
+{
+	const uint8_t obstacle_tate = (occ.b64(0) >> occ256_shift_table_tate[sq])&effectmask;
+	const uint8_t obstacle_yoko = (occ.b64(1) >> occ256_shift_table_yoko[sq])&effectmask;
+	return LongRookEffect_tate[sq][obstacle_tate] | LongRookEffect_yoko[sq][obstacle_yoko] | StepEffect[BLACK][KING][sq];
+}
+
+Bitboard unicorn_effect(const Occ_256 & occ, const Square sq)
+{
+	const uint8_t obstacle_plus45 = (occ.b64(2) >> occ256_shift_table_p45[sq])&effectmask;
+	const uint8_t obstacle_Minus45 = (occ.b64(3) >> occ256_shift_table_m45[sq])&effectmask;
+	return LongBishopEffect_plus45[sq][obstacle_plus45] | LongBishopEffect_minus45[sq][obstacle_Minus45] | StepEffect[BLACK][KING][sq];
+}
+
+
+/*
+Bitboard を用いた長い効き
+*/
 
 Bitboard lance_effect(const Bitboard& occ, const Color c, const Square sq) {
 
