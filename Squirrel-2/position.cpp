@@ -1152,7 +1152,7 @@ found:
 
 	Piece pt = piece_type(piece_on(sq));
 	//ê¨ÇÍÇÈèÍçáÇÕê¨Ç¡ÇΩílÇï‘Ç∑
-	if (can_promote(pt) && (SquareBB[to] & canPromoteBB[stm]).isNot()|| (SquareBB[sq] & canPromoteBB[stm]).isNot()){
+	if (can_promote(pt) && ((SquareBB[to] & canPromoteBB[stm]).isNot()|| (SquareBB[sq] & canPromoteBB[stm]).isNot())){
 		pt = promotepiece(pt);
 	}
 
@@ -1222,7 +1222,7 @@ cout <<  << endl;
 */
 
 
-#define CHECKSEE
+//#define CHECKSEE
 
 //SFÇÕconstÇ¬Ç¢ÇƒÇ»Ç¢ÇØÇ«Ç¬ÇØÇƒÇ®Ç¢ÇΩÇŸÇ§Ç™Ç¢Ç¢ÇÊÇÀ...
 Value Position::see_sign(const Move m) const

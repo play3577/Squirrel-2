@@ -6,7 +6,7 @@
 
 //やねうら王のアイデア
 #ifdef _DEBUG
-#define ASSERT(x) _ASSERT(x)
+#define ASSERT(x) {if (!(x)){std::cout << "\nError!!\n" << "info string file:" << __FILE__ << " line:" << __LINE__ <<" "<< #x<< std::endl;_ASSERT(x);}}
 #endif
 #ifndef _DEBUG
 #define ASSERT(X) { if (!(X)){std::cout << "\nError!!\n" << "info string file:" << __FILE__ << " line:" << __LINE__ <<" "<< #X<< std::endl; *(int*)1 =0;} }
@@ -133,8 +133,8 @@ constexpr Piece inverse(const Piece pc) { return Piece(pc^WHITE_piece); }//xorで
 constexpr bool is_ok(const Piece pc) { return ((B_PAWN <= pc&&pc <= B_DRAGON) || (W_PAWN <= pc&&pc <= W_DRAGON)); }
 constexpr Color piece_color(const Piece pc) { return (pc& WHITE_piece) ? WHITE : BLACK; }
 constexpr Piece piece_type(const Piece pc) { return Piece(pc & 0b1111); }//手番の情報を除く
-constexpr bool can_promote(const Piece pc){ return ((B_PAWN <= pc&&pc <= B_ROOK) || (W_PAWN <= pc&&pc <= W_ROOK)); }
-inline Piece promotepiece(const Piece pc) { ASSERT(can_promote(pc));  return Piece(pc | PROMOTE); }
+constexpr bool can_promote(const Piece pt){ return ((B_PAWN <= pt&&pt <= B_ROOK) /*|| (W_PAWN <= pt&&pt <= W_ROOK)*/); }
+inline Piece promotepiece(const Piece pc) { ASSERT(can_promote(piece_type(pc)));  return Piece(pc | PROMOTE); }
 constexpr Piece rowpiece(const Piece pc) { /*ASSERT(!can_promote(pc));*/ return Piece(pc&~PROMOTE); }//do_moveでなっていない駒も一律でこの関数に突っ込みたいのでASSERTは外す
 constexpr Piece add_color(const Piece pt, const Color c) { return (c == BLACK) ? pt : Piece(pt | WHITE_piece); }
 
