@@ -461,8 +461,10 @@ public:
 	Value see(const Move m) const;
 	Value see_sign(const Move m) const;
 
-	Bitboard attackers_to(Color stm, Square to, Bitboard& occupied, Bitboard& oc90, Bitboard& ocm45, Bitboard& ocp45)const;
+	//Bitboard attackers_to(Color stm, Square to, Bitboard& occupied, Bitboard& oc90, Bitboard& ocm45, Bitboard& ocp45)const;
 	Bitboard attackers_to(Color stm, Square to, Occ_256& occ)const;
+
+	Piece min_attacker_pt(const Color stm,const Square to, const Bitboard& stmattacker, Bitboard& allattackers, Occ_256& occ,Bitboard& occupied)const ;
 
 	/*
 	‚±‚ê‚Å‚Í’x‚¢‚æ‚Ë.....

@@ -595,7 +595,14 @@ void USI::loop()
 			cout << pos << endl;
 			pos.check_longeffect256();
 		}
-
+		else if(token=="see"){
+			//pos.set("sfen lnsgkg1nl/1r4sb1/ppppppppp/7P1/9/2P6/PP1PPPP1P/1B5R1/LNSGKGSNL b - 1");
+			//const Move m = make_move(SQ2D, SQ2C, PAWN);
+			pos.set("sfen lnsgkg1nl/1r4sb1/ppppppppp/6P2/7N1/2P4P1/PP1PPP2P/1B4R2/LNSGKGS1L b - 1");
+			const Move m = make_move(SQ3D, SQ3C, PAWN);
+			cout << "see sign" << pos.see_sign(m) << endl;
+			cout << "see "<<pos.see(m) << endl;
+		}
 
 	} while (token != "quit");
 

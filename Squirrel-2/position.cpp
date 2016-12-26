@@ -1077,29 +1077,6 @@ void Position::check_longeffect256()
 }
 
 
-//SFはconstついてないけどつけておいたほうがいいよね...
-Value Position::see_sign(const Move m) const
-{
-	ASSERT(is_ok(m));
-
-	// Early return if SEE cannot be negative because captured piece value
-	// is not less then capturing one. Note that king moves always return
-	// here because king midgame value is set to 0.
-	/*
-	もしSEEが負になりうる可能性がない（なぜなら一手目で捕獲した駒の価値が移動した駒の価値以上であるから）場合はここでreturnしてしまう
-
-	例えば歩で角を取ったとする。もしも相手が歩を取り返してきても、ここで取り合いをやめてしまえば自分は（角の価値-歩の価値）分得をしている。
-	しかしなんだかんだ言って正確ではない気がするなぁ...
-
-	成が合った場合でもこの部分はコレでなんとかなるはず
-	*/
-	if (Eval::piece_value[moved_piece(m)] <= Eval::piece_value[piece_on(move_to(m))]) {
-		return Value_known_win;
-	}
-
-
-	return see(m);
-}
 
 
 
@@ -1142,41 +1119,227 @@ Bitboard Position::attackers_to(Color stm, Square to, Occ_256& occ) const
 		;
 }
 
+/*
+stockfishの実装はenumでkingより大きい駒があるSquirrelでは使えないので屋根裏王参考
+*/
+Piece Position::min_attacker_pt(const Color stm,const Square to, const Bitboard & stmattacker,Bitboard & allattackers, Occ_256 & occ,Bitboard& occupied_)const
+{
+	
+	//駒の価値順に攻撃ゴマが存在するか見ていく
+	Bitboard b;
+	b = stmattacker&occ_pt(stm, PAWN); if (b.isNot()) { goto found; }
+	b = stmattacker&occ_pt(stm, LANCE); if (b.isNot()) { goto found; }
+	b = stmattacker&occ_pt(stm, KNIGHT); if (b.isNot()) { goto found; }
+	b = stmattacker&occ_pt(stm, SILVER); if (b.isNot()) { goto found; }
+	b = stmattacker&(occ_pt(stm, PRO_PAWN) | occ_pt(stm, PRO_LANCE) | occ_pt(stm, PRO_NIGHT) | occ_pt(stm, PRO_SILVER)); if (b.isNot()) { goto found; }
+	b = stmattacker&occ_pt(stm, GOLD); if (b.isNot()) { goto found; }
+	b = stmattacker&occ_pt(stm, BISHOP); if (b.isNot()) { goto found; }
+	b = stmattacker&occ_pt(stm, ROOK); if (b.isNot()) { goto found; }
+	b = stmattacker&occ_pt(stm, UNICORN); if (b.isNot()) { goto found; }
+	b = stmattacker&occ_pt(stm, DRAGON); if (b.isNot()) { goto found; }
+	
+	//stmattackerはゼロではないはずなので見つからなかったということはkingが帰る。
+	return KING;
+
+found:
+
+	//bにあった駒は移動するはずなので取り除く
+
+	Square sq = b.pop();
+	occ ^= SquareBB256[sq];
+	occupied_ ^= SquareBB[sq];
+
+
+	Piece pt = piece_type(piece_on(sq));
+	//成れる場合は成った値を返す
+	if (can_promote(pt) && (SquareBB[to] & canPromoteBB[stm]).isNot()|| (SquareBB[sq] & canPromoteBB[stm]).isNot()){
+		pt = promotepiece(pt);
+	}
+
+	//[from][to]
+	//fromから見たtoの位置関係。
+	Direction d = direct_table[sq][to];
+
+	uint8_t obstacle_tate;
+	uint8_t obstacle_yoko;
+	uint8_t obstacle_plus45;
+	uint8_t obstacle_Minus45;
+
+
+	//駒が移動したことで新たにtoに駒の危機が追加されるかもしれない。
+	if (d) {
+		switch (d)
+		{
+		case UP:
+			//fromから見てtoが上方向にあれば飛車の効きと先手の香車がtoに効いてくる可能性がある。
+			obstacle_tate = (occ.b64(0) >> occ256_shift_table_tate[sq])&effectmask;
+			//toに香車を置いた時のwhite側の効きに駒があるか
+			allattackers |= LanceEffect[WHITE][to][obstacle_tate] & (occ_pt(BLACK, ROOK) | occ_pt(BLACK, DRAGON) | occ_pt(WHITE, ROOK) | occ_pt(WHITE, DRAGON) | occ_pt(BLACK, LANCE));
+			break;
+		case RightUP:
+		case LeftDOWN:
+			obstacle_plus45 = (occ256.b64(2) >> occ256_shift_table_p45[sq])&effectmask;
+			allattackers|= LongBishopEffect_plus45[sq][obstacle_plus45] & (occ_pt(BLACK, BISHOP) | occ_pt(BLACK, UNICORN)| occ_pt(WHITE, BISHOP) | occ_pt(WHITE, UNICORN));
+			break;
+		case RightDOWN:
+		case LeftUP:
+			//斜め方向であれば角の効き
+			obstacle_Minus45 = (occ256.b64(3) >> occ256_shift_table_m45[sq])&effectmask;
+			allattackers|= LongBishopEffect_minus45[sq][(obstacle_Minus45)] & (occ_pt(BLACK, BISHOP) | occ_pt(BLACK, UNICORN) | occ_pt(WHITE, BISHOP) | occ_pt(WHITE, UNICORN));
+			break;
+		case DOWN:
+			//飛車　後手の効き
+			obstacle_tate = (occ.b64(0) >> occ256_shift_table_tate[sq])&effectmask;
+			allattackers |= LanceEffect[BLACK][sq][obstacle_tate] & (occ_pt(BLACK, ROOK) | occ_pt(BLACK, DRAGON) | occ_pt(WHITE, ROOK) | occ_pt(WHITE, DRAGON) | occ_pt(WHITE, LANCE));
+			break;
+		case Left:
+		case Right:
+			//飛車の効き
+			obstacle_yoko = (occ.b64(1) >> occ256_shift_table_yoko[sq])&effectmask;
+			allattackers |= LongRookEffect_yoko[sq][obstacle_yoko] & (occ_pt(BLACK, ROOK) | occ_pt(BLACK, DRAGON) | occ_pt(WHITE, ROOK) | occ_pt(WHITE, DRAGON));
+			break;
+		default:
+			UNREACHABLE;
+			break;
+		}
+	}
+	else {
+		//桂馬
+
+	}
+
+	//ここでallttackersからsqは消される。
+	allattackers =allattackers & occupied_;
+
+
+	return pt;
+}
+
+/*
+#ifdef CHECKSEE
+cout <<  << endl;
+#endif
+*/
+
+
+#define CHECKSEE
+
+//SFはconstついてないけどつけておいたほうがいいよね...
+Value Position::see_sign(const Move m) const
+{
+	ASSERT(is_ok(m));
+
+	// Early return if SEE cannot be negative because captured piece value
+	// is not less then capturing one. Note that king moves always return
+	// here because king midgame value is set to 0.
+	/*
+	もしSEEが負になりうる可能性がない（なぜなら一手目で捕獲した駒の価値が移動した駒の価値以上であるから）場合はここでreturnしてしまう
+
+	例えば歩で角を取ったとする。もしも相手が歩を取り返してきても、ここで取り合いをやめてしまえば自分は（角の価値-歩の価値）分得をしている。
+	しかしなんだかんだ言って正確ではない気がするなぁ...
+
+	成が合った場合でもこの部分はコレでなんとかなるはず
+	*/
+#ifdef CHECKSEE
+	cout <<Eval::capture_value[moved_piece(m)] << " " << Eval::capture_value[piece_on(move_to(m))] << endl;
+	cout << (Eval::capture_value[moved_piece(m)] <= Eval::capture_value[piece_on(move_to(m))]) << endl;
+#endif
+
+	if (Eval::capture_value[moved_piece(m)] <= Eval::capture_value[piece_on(move_to(m))]) {
+		return Value_known_win;
+	}
+
+
+	return see(m);
+}
 
 Value Position::see(const Move m) const
 {
+#ifdef CHECKSEE
+	cout << *this << endl;
+#endif
+
 	Square from, to;
-	Bitboard /*occupied, oc90, ocp45, ocm45,*/ allattackers, stm_attackers;//stmはsidetomoveの略
+	Bitboard  allattackers, stm_attackers,oc;//stmはsidetomoveの略
 	int swaplist[40];//ここ将棋だったら３２じゃないほうがいいか？？ありえないとは思うが一応すべてのコマの数にしておく。
 	int index = 1;//indexは１からはじめる。swaplist[0]には一手め(Move m)で捕獲したコマの価値が格納される。
 	Piece captured_pt;
 	Color stm;
-	Occ_256 occ;
-	stm = sidetomove();
+	Occ_256 occ_256;
+	
 	from = move_from(m);
 	to = move_to(m);
 
 	//list[0]は一手目で捕獲した駒の価値が格納される
-	swaplist[0] = Eval::piece_value[piece_on(move_to(m))];
+	swaplist[0] = Eval::capture_value[piece_on(to)];
+	
 	//動いたコマをoccupiedから除く。
-	//occ_Rとocc_P45等にも同じ作業をしなければいけないじゃないですかーーー！
-	//これマジではやくAVX対応のpc買ってocc_256実装させなければならんな...
-	/*occupied = occ_all() ^ SquareBB[from];
-	oc90 = occ_90() ^ SquareBB[sq_to_sq90(from)];
-	ocp45 = occ_plus45() ^ SquareBB[sq_to_sqplus45(from)];
-	ocm45 = occ_minus45() ^ SquareBB[sq_to_sqminus45(from)];*/
-
-
-	occ = ret_occ_256() ^ SquareBB256[from];
-
-	stm_attackers = attackers_to(stm,to,occ);
+	occ_256 = ret_occ_256() ^ SquareBB256[from];
+	oc = occ_all()^SquareBB[from];
 
 
 
+	//mを動かした手番の相手の色
+	stm = opposite(sidetomove());
+
+	//0手目を動かした側から見た相手の攻撃ゴマ
+	stm_attackers = attackers_to(stm,to,occ_256);
+
+#ifdef CHECKSEE
+	cout <<"oc" << endl << oc << endl<<  "occ256" << endl << occ_256 << endl ;
+	cout <<"stmattackers "<<endl<<stm_attackers  << endl;
+#endif
+
+	//相手の攻撃ゴマが存在しなければswaplist0を返してしまってもいい
+	if (!stm_attackers.isNot()) {
+		return (Value)swaplist[0];
+	}
+
+	//すべての攻撃ゴマの位置
+	allattackers = (stm_attackers | attackers_to(opposite(stm), to, occ_256));
+#ifdef CHECKSEE
+	cout << "allatacckers "<<endl<<allattackers<< endl;
+#endif
+	/*==============================================================================
+	もし目的のマスが相手に守られていた場合は、計算は複雑になる！
+	我々はswwaplistを作ることでこの計算を処理する。
+	swaplistは（取り合いのシーケンスの各段階における）駒得の利益と損失を格納する。
+
+	そして駒の価値の小さい駒から順番に移動させて取り合いをするとする
+	駒が動くたびに新しく発生したききを調べる。
+	================================================================================*/
+	//capturedは最初の差し手で移動させた駒。移動させたこまは必ず取られてしまう
+	captured_pt = piece_type(piece_on(from));
+
+	do {
+		ASSERT(index < 40);
+		//list[0]は一手目で捕獲した駒の価値が格納される
+
+		//swaplist++に相手番から見た捕獲した駒による駒得を格納する。ieceValue[MG][piece_on(to)];
+		swaplist[index] = -swaplist[index - 1] + Eval::capture_value[captured_pt];
+		//ここでminattacker()関数を使って今回動かした（次に取られる）駒の種類を返す。
+
+		//最初に動いた駒のallattackerもここで消される。
+		captured_pt = min_attacker_pt(stm, to, stm_attackers, allattackers, occ_256, oc);
+
+		stm = opposite(stm);
+		stm_attackers = allattackers&occ(stm);
+
+		++index;
+#ifdef CHECKSEE
+		cout << "index " << index << "captured_pt " << captured_pt << "allattackers " <<endl<< allattackers << endl;
+#endif
+		//王を取ろうとしてしまったら--indexをしてdo{}から抜ける
+	} while (stm_attackers.isNot() && (captured_pt != KING || (--index, false)));
+
+	//ゲーム木的に後ろから一番いいノードを選択していく。
+	//木の枝はパスか取り合いを続けるかの２択である。
+	//しかしなんでminなんだ？？（相手は自分の得を最小にしようとするから。）
+	while (--index)
+	{
+		swaplist[index - 1] = std::min(-swaplist[index], swaplist[index - 1]);
+	}
 
 
-
-
-
-	return Value();
+	return (Value)swaplist[0];
 }

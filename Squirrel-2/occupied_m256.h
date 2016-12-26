@@ -83,13 +83,13 @@ Occ_256& operator&=(const Occ_256& b1) {
 };
 
 inline Occ_256& operator^(const Occ_256& b1,const Occ_256& b2) {
-	Occ_256 occ;
+	Occ_256 occ_;
 
-	occ.b256.m256i_i64[0] = b2.b256.m256i_i64[0] ^ b1.b256.m256i_i64[0];
-	occ.b256.m256i_i64[1] = b2.b256.m256i_i64[1] ^ b1.b256.m256i_i64[1];
-	occ.b256.m256i_i64[2] = b2.b256.m256i_i64[2] ^ b1.b256.m256i_i64[2];
-	occ.b256.m256i_i64[3] = b2.b256.m256i_i64[3] ^ b1.b256.m256i_i64[3];
-	return occ;
+	occ_.b256.m256i_i64[0] = b2.b256.m256i_i64[0] ^ b1.b256.m256i_i64[0];
+	occ_.b256.m256i_i64[1] = b2.b256.m256i_i64[1] ^ b1.b256.m256i_i64[1];
+	occ_.b256.m256i_i64[2] = b2.b256.m256i_i64[2] ^ b1.b256.m256i_i64[2];
+	occ_.b256.m256i_i64[3] = b2.b256.m256i_i64[3] ^ b1.b256.m256i_i64[3];
+	return occ_;
 }
 
 std::ostream& operator<<(std::ostream& os, const Occ_256& board);
