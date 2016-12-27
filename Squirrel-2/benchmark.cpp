@@ -90,7 +90,7 @@ void randomwalker(Position & pos, int maxdepth)
 		int rand = mt() % num;
 		ASSERT(rand <= num);
 		Move m = moves_[mt() % num];
-		pos.see(m);
+		//cout<<"see"<<pos.see(m)<<endl;
 		//if (pos.piece_on(move_to(m)) != NO_PIECE) { cout << "capture" << endl; }
 		
 

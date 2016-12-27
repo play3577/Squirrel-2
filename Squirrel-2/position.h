@@ -211,24 +211,6 @@ public:
 
 		Color ENEMY = opposite(US);
 
-		/*
-		盤上にUNICORN,DRAGONがいるかどうかも確認したほうが素早く処理できるか？？？
-		*/
-		//コレ飛び機器について毎回switch文で条件分岐しているから時間が無駄！飛び効きは駒種別に利きを求める関数を作成する！！！
-		//なんでこんなことにも気づかなかったのか(´；ω；｀)
-		//return
-		//	(step_effect(ENEMY, PAWN, to)&occ_pt(US, PAWN))
-		//	| (lance_effect(occ_all(), ENEMY, to)&occ_pt(US, LANCE))
-		//	| (step_effect(ENEMY, KNIGHT, to)&occ_pt(US, KNIGHT))
-		//	| (step_effect(ENEMY, SILVER, to)&occ_pt(US, SILVER))
-		//	| (step_effect(ENEMY, GOLD, to)&(occ_pt(US, GOLD) | occ_pt(US, PRO_PAWN) | occ_pt(US, PRO_LANCE) | occ_pt(US, PRO_NIGHT) | occ_pt(US, PRO_SILVER)))
-		//	//| (step_effect(ENEMY, KING, to)&occ_pt(US, KING))
-		//	| (rook_effect(occ_all(), occ_90(), to)&occ_pt(US, ROOK))
-		//	| (bishop_effect(occ_plus45(), occ_minus45(), to)&occ_pt(US, BISHOP))
-		//	| (occ_pt(US, DRAGON)&dragon_effect(occ_all(), occ_90(), to))
-		//	| (occ_pt(US, UNICORN)&unicorn_effect(occ_plus45(), occ_minus45(), to));
-
-
 		return
 			(step_effect(ENEMY, PAWN, to)&occ_pt(US, PAWN))
 			| (lance_effect(occ256, ENEMY, to)&occ_pt(US, LANCE))
@@ -240,29 +222,12 @@ public:
 			| (bishop_effect(occ256, to)&occ_pt(US, BISHOP))
 			| (occ_pt(US, DRAGON)&dragon_effect(occ256, to))
 			| (occ_pt(US, UNICORN)&unicorn_effect(occ256, to));
-
-
-
 	}
 	//c側の効きがtoに効いているかどうか調べる為の関数。
 	//利きを求めるにはoccupied が複数いるのでposを渡したほうが安全か？（あとでposを渡すときとoccをそれぞれ渡すときとで速さを調べる。）
 	bool is_effect_to(const Color US, const Square to)const {
 
 		Color ENEMY = opposite(US);
-
-		
-		/*if ((rook_effect(occ_all(), occ_90(), to)&occ_pt(US, ROOK)).isNot()) { return true; }
-		if ((bishop_effect(occ_plus45(), occ_minus45(), to)&occ_pt(US, BISHOP)).isNot()) { return true; }
-		if ((occ_pt(US, DRAGON)&dragon_effect(occ_all(), occ_90(), to)).isNot()) { return true; }
-		if ((occ_pt(US, UNICORN)&unicorn_effect(occ_plus45(), occ_minus45(), to)).isNot()) { return true; }
-		if ((lance_effect(occ_all(), ENEMY, to)&occ_pt(US, LANCE)).isNot()) { return true; }
-		if ((step_effect(ENEMY, PAWN, to)&occ_pt(US, PAWN)).isNot()) { return true; }
-		if ((step_effect(ENEMY, KNIGHT, to)&occ_pt(US, KNIGHT)).isNot()) { return true; }
-		if ((step_effect(ENEMY, SILVER, to)&occ_pt(US, SILVER)).isNot()) { return true; }
-		if ((step_effect(ENEMY, GOLD, to)&(occ_pt(US, GOLD) | occ_pt(US, PRO_PAWN) | occ_pt(US, PRO_LANCE) | occ_pt(US, PRO_NIGHT) | occ_pt(US, PRO_SILVER))).isNot()) { return true; }
-		if ((step_effect(ENEMY, KING, to)&occ_pt(US, KING)).isNot()) { return true; }
-	*/
-		
 
 		if ((rook_effect(occ256, to)&occ_pt(US, ROOK)).isNot()) { return true; }
 		if ((bishop_effect(occ256, to)&occ_pt(US, BISHOP)).isNot()) { return true; }
@@ -275,35 +240,18 @@ public:
 		if ((step_effect(ENEMY, GOLD, to)&(occ_pt(US, GOLD) | occ_pt(US, PRO_PAWN) | occ_pt(US, PRO_LANCE) | occ_pt(US, PRO_NIGHT) | occ_pt(US, PRO_SILVER))).isNot()) { return true; }
 		if ((step_effect(ENEMY, KING, to)&occ_pt(US, KING)).isNot()) { return true; }
 
-
-
 		return false;
 	}
 
 	//王の自殺手を調べるために自王のいる場所を&~したoccを用いて自殺かどうか調べる関数
 	//US側の効きがtoに効いているかどうか調べる為の関数。
-	bool is_effect_to_Removeking(const Color US, const Square to,const Square  ksq)const {
+	bool is_effect_to_removepiece(const Color US, const Square to,const Square  ksq)const {
 
 		Color ENEMY = opposite(US);
 		Bitboard ourksq= SquareBB[ksq];
 
-		/*Bitboard occR = occ_all()&~SquareBB[ksq];
-		Bitboard occ90R = occ_90() &~ SquareBB[sq_to_sq90(ksq)];
-		Bitboard occp45R = occ_plus45() &~ SquareBB[sq_to_sqplus45(ksq)];
-		Bitboard occm45R = occ_minus45() &~  SquareBB[sq_to_sqminus45(ksq)];*/
-
 		Occ_256 occ256_ = occ256^SquareBB256[ksq];
 
-		/*if ((rook_effect(occR, occ90R, to)&occ_pt(US, ROOK)).isNot()) { return true; }
-		if ((bishop_effect(occp45R, occm45R, to)&occ_pt(US, BISHOP)).isNot()) { return true; }
-		if ((occ_pt(US, DRAGON)&dragon_effect(occR, occ90R, to)).isNot()) { return true; }
-		if ((occ_pt(US, UNICORN)&unicorn_effect(occp45R, occm45R, to)).isNot()) { return true; }
-		if ((lance_effect(occR, ENEMY, to)&occ_pt(US, LANCE)).isNot()) { return true; }
-		if ((step_effect(ENEMY, PAWN, to)&occ_pt(US, PAWN)).isNot()) { return true; }
-		if ((step_effect(ENEMY, KNIGHT, to)&occ_pt(US, KNIGHT)).isNot()) { return true; }
-		if ((step_effect(ENEMY, SILVER, to)&occ_pt(US, SILVER)).isNot()) { return true; }
-		if ((step_effect(ENEMY, GOLD, to)&(occ_pt(US, GOLD) | occ_pt(US, PRO_PAWN) | occ_pt(US, PRO_LANCE) | occ_pt(US, PRO_NIGHT) | occ_pt(US, PRO_SILVER))).isNot()) { return true; }
-		if ((step_effect(ENEMY, KING, to)&occ_pt(US, KING)).isNot()) { return true; }*/
 
 		if ((rook_effect(occ256_, to)&occ_pt(US, ROOK)).isNot()) { return true; }
 		if ((bishop_effect(occ256_, to)&occ_pt(US, BISHOP)).isNot()) { return true; }
@@ -319,6 +267,87 @@ public:
 		return false;
 	}
 
+	//差し手で手を進めた後相手の王に王手をかけることができるか
+	/*
+	この実装だとdo_moveと同じことを繰り返しているので無駄なような気がする....
+	*/
+	bool is_effect_to_move(const Color US, const Square to, const Move m)const {
+
+
+
+		const Color ENEMY = opposite(US);
+		Occ_256 occ256_ = ret_occ_256();
+		const Square moveto = move_to(m);
+		const Piece movedpiece = piece_type(moved_piece(m));//ここはptじゃないといけない
+
+		//必要なのは手番側のocc_ptなので手番側だけcopyできないか？？occupied_pt+15などで対応できるか？
+#if 0
+		Bitboard occupiedPt_[ColorALL][PT_ALL];
+		memcpy(occupiedPt_, occupiedPt, sizeof(occupiedPt));
+#else
+		Bitboard occupiedPt_[PT_ALL];
+		if (US == BLACK) {	memcpy(occupiedPt_, occupiedPt[BLACK], sizeof(occupiedPt_));}
+		else {	memcpy(occupiedPt_, occupiedPt[WHITE], sizeof(occupiedPt_));}
+#endif
+
+		if (is_drop(m)) {
+			ASSERT(piece_on(moveto) == NO_PIECE);
+			occ256_ ^= SquareBB256[moveto];
+#if 0
+			occupiedPt_[US][movedpiece] ^= SquareBB[moveto];
+#else
+			occupiedPt_[movedpiece] ^= SquareBB[moveto];
+#endif
+		}
+		else {
+			Square movefrom = move_from(m);
+			ASSERT(piece_on(movefrom) != NO_PIECE);
+			occ256_ |= SquareBB256[moveto];
+			occ256_ ^= SquareBB256[movefrom];
+#if 0
+			occupiedPt_[US][movedpiece] ^= SquareBB[movefrom];
+			if (is_promote(m)) {
+				occupiedPt_[US][promotepiece(movedpiece)] ^= SquareBB[moveto];
+			}
+			else {
+				occupiedPt_[US][movedpiece] ^= SquareBB[moveto];
+			}
+#else
+			occupiedPt_[movedpiece] ^= SquareBB[movefrom];
+			if (is_promote(m)) {
+				occupiedPt_[promotepiece(movedpiece)] ^= SquareBB[moveto];
+			}
+			else {
+				occupiedPt_[movedpiece] ^= SquareBB[moveto];
+			}
+#endif
+			//captureの場合でも相手の駒のoccupiedptを消す必要はないと考えられる（自分のocc_ptだけが問題だから）
+		}
+#if 0
+		if ((rook_effect(occ256_, to)&occupiedPt_[US][ROOK]).isNot()) { return true; }
+		if ((bishop_effect(occ256_, to)&occupiedPt_[US][ BISHOP]).isNot()) { return true; }
+		if ((occupiedPt_[US][ DRAGON]&dragon_effect(occ256_, to)).isNot()) { return true; }
+		if ((occupiedPt_[US][ UNICORN]&unicorn_effect(occ256_, to)).isNot()) { return true; }
+		if ((lance_effect(occ256_, ENEMY, to)&occupiedPt_[US][LANCE]).isNot()) { return true; }
+		if ((step_effect(ENEMY, PAWN, to)&occupiedPt_[US][ PAWN]).isNot()) { return true; }
+		if ((step_effect(ENEMY, KNIGHT, to)&occupiedPt_[US][KNIGHT]).isNot()) { return true; }
+		if ((step_effect(ENEMY, SILVER, to)&occupiedPt_[US][SILVER]).isNot()) { return true; }
+		if ((step_effect(ENEMY, GOLD, to)&(occupiedPt_[US][ GOLD] | occupiedPt_[US][ PRO_PAWN] | occupiedPt_[US][ PRO_LANCE] | occupiedPt_[US][ PRO_NIGHT] | occupiedPt_[US][ PRO_SILVER])).isNot()) { return true; }
+		//if ((step_effect(ENEMY, KING, to)&occupiedPt_[US][ KING]).isNot()) { return true; }//王で王手をかけることはできない
+#else
+		if ((rook_effect(occ256_, to)&occupiedPt_[ROOK]).isNot()) { return true; }
+		if ((bishop_effect(occ256_, to)&occupiedPt_[BISHOP]).isNot()) { return true; }
+		if ((occupiedPt_[DRAGON] & dragon_effect(occ256_, to)).isNot()) { return true; }
+		if ((occupiedPt_[UNICORN] & unicorn_effect(occ256_, to)).isNot()) { return true; }
+		if ((lance_effect(occ256_, ENEMY, to)&occupiedPt_[LANCE]).isNot()) { return true; }
+		if ((step_effect(ENEMY, PAWN, to)&occupiedPt_[PAWN]).isNot()) { return true; }
+		if ((step_effect(ENEMY, KNIGHT, to)&occupiedPt_[KNIGHT]).isNot()) { return true; }
+		if ((step_effect(ENEMY, SILVER, to)&occupiedPt_[SILVER]).isNot()) { return true; }
+		if ((step_effect(ENEMY, GOLD, to)&(occupiedPt_[GOLD] | occupiedPt_[PRO_PAWN] | occupiedPt_[PRO_LANCE] | occupiedPt_[PRO_NIGHT] | occupiedPt_[PRO_SILVER])).isNot()) { return true; }
+		//if ((step_effect(ENEMY, KING, to)&occupiedPt_[ KING]).isNot()) { return true; }//王で王手をかけることはできない
+#endif
+		return false;
+	}
 
 	void check_effecttoBB()const {
 		for (Color c = BLACK; c <= ColorALL; c++) {
@@ -508,7 +537,7 @@ public:
 			Square sq = garder.pop();
 			//sqの駒がいなくなったとしてもkingに利きはかぶらないか
 			//bool is_effect_to_Removeking(const Color US, const Square to,const Square  ksq)
-			if (is_effect_to_Removeking(us, (pawnsq + frompawn), sq) == false) {
+			if (is_effect_to_removepiece(us, (pawnsq + frompawn), sq) == false) {
 				return false;
 			}
 		}
@@ -521,7 +550,7 @@ public:
 	bool is_king_suiside(const Color us, const Square kingto,const Square from) const{
 
 		Color ENEMY = opposite(us);
-		if (is_effect_to_Removeking(ENEMY, kingto,from)) { return true; }
+		if (is_effect_to_removepiece(ENEMY, kingto,from)) { return true; }
 		return false;
 
 	}
@@ -563,93 +592,15 @@ public:
 	先にgivescheckを見て、そしてその値をdo_moveに用いた方がいいのかもしれない....
 
 
+	do_moveをする前にgivescheckを確認しておいてそこで差し手を延長するかどうか判断する。
+	do_move時にはgivescheckで確認した情報からこの指し手がgivescheckかどうかの情報を持ってくる。
+
 	*/
-	bool is_check(const Move m)const {
+	bool is_gives_check(const Move m)const {
 
-		const Square to = move_to(m);
-		const Square from = move_from(m);
-		const Piece pt = piece_type(moved_piece(m));
-		const Color US = sidetomove();
-		const Color ENEMY = opposite(US);
-		const Bitboard tosqBB = SquareBB[to];
-		const Square ksq = state()->ksq_[ENEMY];
+		return is_effect_to_move(sidetomove(),ksq(opposite(sidetomove_)),m);
 
-		//fromにいるコマは移動したのでそれは消しておく
-		/*const Bitboard occR = occ_all()&~SquareBB[from];
-		const Bitboard occ90R = occ_90() &~SquareBB[sq_to_sq90(from)];
-		const Bitboard occp45R = occ_plus45() &~SquareBB[sq_to_sqplus45(from)];
-		const Bitboard occm45R = occ_minus45() &~SquareBB[sq_to_sqminus45(from)];*/
-		//直接王手を見る場合にはfromの位置にいる駒を消す必要はないと考えられる。
-
-		//直接王手があるか
-		//switch (pt)
-		//{
-		//case NO_PIECE:
-		//	UNREACHABLE;
-		//	break;
-		//case PAWN:
-		//	break;
-		//case LANCE:
-		//	break;
-		//case KNIGHT:
-		//	break;
-		//case SILVER:
-		//	break;
-		//case BISHOP:
-		//	if ((bishop_effect(occp45R, occm45R, ksq)&occ_pt(US, BISHOP)).isNot()) { return true; }
-		//	break;
-		//case ROOK:
-		//	if ((rook_effect(occR, occ90R, to)&tosqBB).isNot()) { return true; }
-		//	break;
-		//case KING:
-		//	//玉で王手をかけることは不可能
-		//	UNREACHABLE;
-		//	break;
-		//case PRO_PAWN:
-		//case PRO_LANCE:
-		//case PRO_NIGHT:
-		//case PRO_SILVER:
-		//case GOLD:
-		//	break;
-		//case UNICORN:
-		//	break;
-		//case DRAGON:
-		//	break;
-		//default:
-		//	UNREACHABLE;
-		//	break;
-		//}
-
-		//間接王手があるか
-		/*
-		ここはdomoveの処理とかぶるよね....
-		*/
-
-/*
-
-
-Bitboard occR = occ_all()&~SquareBB[ksq];
-Bitboard occ90R = occ_90() &~ SquareBB[sq_to_sq90(ksq)];
-Bitboard occp45R = occ_plus45() &~ SquareBB[sq_to_sqplus45(ksq)];
-Bitboard occm45R = occ_minus45() &~  SquareBB[sq_to_sqminus45(ksq)];
-
-if ((rook_effect(occR, occ90R, to)&occ_pt(US, ROOK)).isNot()) { return true; }
-if ((bishop_effect(occp45R, occm45R, to)&occ_pt(US, BISHOP)).isNot()) { return true; }
-if ((occ_pt(US, DRAGON)&dragon_effect(occR, occ90R, to)).isNot()) { return true; }
-if ((occ_pt(US, UNICORN)&unicorn_effect(occp45R, occm45R, to)).isNot()) { return true; }
-if ((lance_effect(occR, ENEMY, to)&occ_pt(US, LANCE)).isNot()) { return true; }
-if ((step_effect(ENEMY, PAWN, to)&occ_pt(US, PAWN)).isNot()) { return true; }
-if ((step_effect(ENEMY, KNIGHT, to)&occ_pt(US, KNIGHT)).isNot()) { return true; }
-if ((step_effect(ENEMY, SILVER, to)&occ_pt(US, SILVER)).isNot()) { return true; }
-if ((step_effect(ENEMY, GOLD, to)&(occ_pt(US, GOLD) | occ_pt(US, PRO_PAWN) | occ_pt(US, PRO_LANCE) | occ_pt(US, PRO_NIGHT) | occ_pt(US, PRO_SILVER))).isNot()) { return true; }
-if ((step_effect(ENEMY, KING, to)&occ_pt(US, KING)).isNot()) { return true; }
-
-
-
-*/
-		return false;
-
-	}
+	}//end of is_givescheck
 };
 
 std::ostream& operator<<(std::ostream& os, const Position& pos);

@@ -184,6 +184,10 @@ void Position::put_piece(const Color c, const Piece pt, const Square sq)
 相手の駒を取ったのに自分のpawnbbが消えている
 
 */
+#define GIVESCHECK
+
+
+
 void Position::do_move(const Move m, StateInfo * newst)
 {
 	//ここでst->PPをクリアーしておかないと差分計算上手く行かない
@@ -199,6 +203,10 @@ void Position::do_move(const Move m, StateInfo * newst)
 	自分が駒が成った分評価値がプラスされる。
 
 	*/
+#ifdef GIVESCHECK
+	bool give_check = is_gives_check(m);
+#endif 
+
 
 	//stateinfoの更新
 	memcpy(newst, st, offsetof(StateInfo, lastmove));
@@ -425,6 +433,12 @@ void Position::do_move(const Move m, StateInfo * newst)
 		st->checker = ZeroBB;
 	}
 	if (st->inCheck&&st->checker.isNot() == false) { ASSERT(0); }
+
+	if (give_check != st->inCheck) {
+		cout << *this << endl;
+		check_move(m);
+		ASSERT(0);
+	}
 
 	if (pcboard[to] == NO_PIECE) {
 		cout << *this << endl;
@@ -1143,11 +1157,14 @@ Piece Position::min_attacker_pt(const Color stm,const Square to, const Bitboard 
 
 found:
 
-	//bにあった駒は移動するはずなので取り除く
+	//ここから下にはkingは入ってこないはずである
 
+
+	//bにあった駒は移動するはずなので取り除く
 	Square sq = b.pop();
 	occ ^= SquareBB256[sq];
 	occupied_ ^= SquareBB[sq];
+
 
 
 	Piece pt = piece_type(piece_on(sq));
@@ -1155,7 +1172,7 @@ found:
 	if (can_promote(pt) && ((SquareBB[to] & canPromoteBB[stm]).isNot()|| (SquareBB[sq] & canPromoteBB[stm]).isNot())){
 		pt = promotepiece(pt);
 	}
-
+	ASSERT(pt != KING);
 	//[from][to]
 	//fromから見たtoの位置関係。
 	Direction d = direct_table[sq][to];
