@@ -440,6 +440,7 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 	パスでbetaを超えたということは、パスよりも良い指してを指してみてもbetaを超えるということである。（局面はZugzwangではないと仮定する）
 	割りと良い手というのにはパスをする手を用いる。殆どの指してはパスに劣る。
 	*/
+
 	if (!PVNode
 		&&staticeval >= beta
 		&& (staticeval >= beta - 35 * (int(depth / ONE_PLY) - 6) || depth >= 13 * ONE_PLY)
@@ -584,8 +585,10 @@ moves_loop:
 
 		++movecount;
 		//check_move(move);
-		pos.do_move(move, &si);
+		/*bool givescheck=pos.is_gives_check(move);
+		pos.do_move(move, &si,givescheck);*/
 
+		pos.do_move(move, &si);
 		doFullDepthSearch = (PVNode&&movecount == 1);
 
 
@@ -905,6 +908,8 @@ Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
 
 		movecount++;
 		pos.do_move(move, &si);
+		/*bool givescheck = pos.is_gives_check(move);
+		pos.do_move(move, &si, givescheck);*/
 		value = -qsearch<NT>(pos, ss + 1, -beta, -alpha, depth - ONE_PLY);
 		pos.undo_move();
 #ifndef LEARN

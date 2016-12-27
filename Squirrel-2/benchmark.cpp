@@ -98,7 +98,9 @@ void randomwalker(Position & pos, int maxdepth)
 		else { continue_count = 0; }
 		//ˆê‰ñ‚¿‚á‚ñ‚Ædo-undo‚Å‚«‚é‚©Šm”F‚ð‚µ‚Ä‚©‚ç
 		Key hash1 = pos.key();
-		pos.do_move(m, &si[depth]);
+		//pos.do_move(m, &si[depth]);
+		bool givescheck = pos.is_gives_check(m);
+		pos.do_move(m, &si[depth], givescheck);
 		pos.undo_move();
 		Key hash2 = pos.key();
 		ASSERT(hash1 == hash2);

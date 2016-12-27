@@ -433,19 +433,277 @@ void Position::do_move(const Move m, StateInfo * newst)
 		st->checker = ZeroBB;
 	}
 	if (st->inCheck&&st->checker.isNot() == false) { ASSERT(0); }
-
+#ifdef GIVESCHECK
 	if (give_check != st->inCheck) {
 		cout << *this << endl;
 		check_move(m);
 		ASSERT(0);
 	}
-
+#endif
 	if (pcboard[to] == NO_PIECE) {
 		cout << *this << endl;
 		ASSERT(0);
 	}
 
 	ASSERT((sidetomove() == BLACK && (st->board_&Zoblist::side) == 0) || (sidetomove() == WHITE && (st->board_&Zoblist::side) == 1));
+}
+
+void Position::do_move(const Move m, StateInfo * newst, const bool givescheck)
+{
+
+	//ここでst->PPをクリアーしておかないと差分計算上手く行かない
+	//兄弟ノードを探索したときの値が入っているから
+	newst->clear_stPP();
+	/*
+	評価値の差分計算
+
+	駒得
+	相手が駒を失ってマイナス、自分は駒を得てプラスで評価値は自分の側にこの２つ分正の方向に動く。
+
+	駒成り
+	自分が駒が成った分評価値がプラスされる。
+
+	*/
+
+	//stateinfoの更新
+	memcpy(newst, st, offsetof(StateInfo, lastmove));
+
+	newst->previous = st;
+	st = newst;
+
+	st->board_ ^= Zoblist::side;
+
+	//指し手の情報の用意
+	Square to = move_to(m);//移動先
+	Piece movedpiece = moved_piece(m);//移動させる駒
+	Piece capture;
+	//取ろうとしている駒が王であることはありえない
+	if (piece_type(pcboard[to]) == KING) {
+		cout << *this << endl;
+		ASSERT(0);
+	}
+	//undomoveの為の情報を用意
+	st->DirtyPiece[0] = movedpiece;//dirtypieceに動いた駒を入れる
+	st->lastmove = m;//今回指した指して
+	int16_t matterialdiff = 0;
+	ASSERT(is_ok(movedpiece));
+
+
+
+	if (is_drop(m)) {
+
+		//駒打ちなので移動先には駒はいないはず（コレがundo_moveでのエラーの原因か!!!!こんちくしょう）
+		//なんで駒打ちなのに移動先に駒がいる？（eversionで王手をかけている駒を取ろうとするときに駒を打って取ろうとしている！！！）
+		if (pcboard[to] != NO_PIECE) {
+			cout << *this << endl;
+			check_move(m);
+			ASSERT(0);
+		}
+		//打つ駒の準備
+		Piece pt = piece_type(movedpiece);
+		Color c = piece_color(movedpiece);
+		int num = num_pt(hands[sidetomove()], pt);
+		ASSERT(add_color(pt, sidetomove()) == movedpiece);
+		ASSERT(sidetomove() == c);
+		ASSERT(num != 0);
+
+		//dirtybonapの更新(一番枚数の大きい駒から打っていくことにする)
+		st->dirtyuniform[0] = list.hand2Uniform[c][pt][num];
+		ASSERT(st->dirtyuniform[0] != Eval::Num_Uniform);
+		st->dirtybonap_fb[0] = list.bplist_fb[st->dirtyuniform[0]];
+		st->dirtybonap_fw[0] = list.bplist_fw[st->dirtyuniform[0]];
+		//listの更新
+		list.hand2Uniform[c][pt][num] = Eval::Num_Uniform;
+		list.sq2Uniform[to] = st->dirtyuniform[0];
+		list.bplist_fb[st->dirtyuniform[0]] = Eval::bonapiece(to, movedpiece);
+		list.bplist_fw[st->dirtyuniform[0]] = Eval::bonapiece(hihumin_eye(to), inverse(movedpiece));
+
+
+		makehand(hands[sidetomove()], pt, num - 1);//持ち駒から駒を一枚減らす
+												   //boardの更新
+		pcboard[to] = movedpiece;
+		//bitboardの更新処理
+		put_piece(c, pt, to);
+		//rotatedにも駒を足す。
+		//put_rotate(to);
+		set_occ256(to);
+
+		//歩を打てない場所Bitboardを更新
+		if (pt == PAWN) {
+			add_existpawnBB(c, to);
+		}
+		//hashの更新
+		st->board_ += Zoblist::psq[movedpiece][to];
+		st->hands_ -= Zoblist::hand[c][pt];
+	}
+	else {
+		/*
+		コマの移動
+		*/
+		Square from = move_from(m);
+		Color us = sidetomove_;
+		Piece moved_pt = piece_type(movedpiece);
+
+		//動かす駒はfromにいる駒
+		ASSERT(movedpiece == pcboard[from]);
+		ASSERT(piece_color(movedpiece) == us);//動かす駒の色は手番と同じ
+
+											  //コマの移動
+											  //コマの捕獲
+		pcboard[from] = NO_PIECE;
+		capture = pcboard[to];
+
+		//dirtybonapieceに格納
+		st->dirtyuniform[0] = list.sq2Uniform[from];
+		ASSERT(st->dirtyuniform[0] != Eval::Num_Uniform);
+		st->dirtybonap_fb[0] = list.bplist_fb[st->dirtyuniform[0]];
+		st->dirtybonap_fw[0] = list.bplist_fw[st->dirtyuniform[0]];
+
+		//listの更新
+		if (capture != NO_PIECE) {
+			st->dirtyuniform[1] = list.sq2Uniform[to];
+			ASSERT(st->dirtyuniform[1] != Eval::Num_Uniform);
+			st->dirtybonap_fb[1] = list.bplist_fb[st->dirtyuniform[1]];
+			st->dirtybonap_fw[1] = list.bplist_fw[st->dirtyuniform[1]];
+		}
+		list.sq2Uniform[from] = Eval::Num_Uniform;
+		list.sq2Uniform[to] = st->dirtyuniform[0];
+
+
+
+
+		//occの更新処理
+		remove_piece(us, moved_pt, from);
+		//remove_rotate(from);
+		//fromの機器を取り除く
+		remove_occ256(from);
+
+		if (!is_promote(m)) {
+			//成がない場合
+			pcboard[to] = movedpiece;
+			put_piece(us, moved_pt, to);
+
+			//listの更新
+			list.bplist_fb[list.sq2Uniform[to]] = bonapiece(to, movedpiece);
+			list.bplist_fw[list.sq2Uniform[to]] = bonapiece(hihumin_eye(to), inverse(movedpiece));
+
+			//zoblistの更新
+			st->board_ -= Zoblist::psq[movedpiece][from];
+			st->board_ += Zoblist::psq[movedpiece][to];
+		}
+		else {
+			//成がある場合
+			Piece propt = promotepiece(moved_pt);
+			Piece propc = promotepiece(movedpiece);
+			/*if (propt == PRO_PAWN&&moved_pt != PAWN) {
+			ASSERT(0);
+			}*/
+			ASSERT(propt != NO_PIECE);
+			pcboard[to] = propc;
+			ASSERT(pcboard[to] != NO_PIECE);
+			put_piece(us, propt, to);
+			//歩が成った場合はその筋にはpawnを打てるように成る
+			if (propt == PRO_PAWN) {
+				remove_existpawnBB(us, to);
+			}
+			//コマ割の差分
+			ASSERT(PAWN <= moved_pt&&moved_pt <= GOLD);
+			matterialdiff += Eval::diff_promote[moved_pt];
+
+			//listの更新
+			list.bplist_fb[list.sq2Uniform[to]] = bonapiece(to, propc);
+			list.bplist_fw[list.sq2Uniform[to]] = bonapiece(hihumin_eye(to), inverse(propc));
+
+			//成を含めたzoblistの更新
+			st->board_ -= Zoblist::psq[movedpiece][from];
+			st->board_ += Zoblist::psq[propc][to];
+		}
+
+		//駒の捕獲
+		if (capture != NO_PIECE) {
+			st->DirtyPiece[1] = capture;
+
+			Piece pt2 = rowpiece(piece_type(capture));//成り駒を取った場合はなってない駒に戻す（手駒に追加するため）
+			Piece cappt = piece_type(capture);
+			//王を捕獲はできない
+			if (cappt == KING) {
+				cout << *this << endl;
+				ASSERT(0);
+			}
+			//cは取られたコマの色
+			Color c_cap = piece_color(capture);
+			ASSERT(c_cap != sidetomove());//自分の駒を取ってしまってないか
+			remove_piece(c_cap, cappt, to);
+			//取られた駒の利きを取る。
+			//	sub_effect(c, cappt, to);
+
+			int num = num_pt(hands[sidetomove()], pt2);
+			makehand(hands[sidetomove()], pt2, num + 1);
+			//コマの捕獲の場合はrotetedは足さなくていい
+
+			if (cappt == PAWN) {
+				remove_existpawnBB(c_cap, to);
+			}
+			//コマ割の差分
+			matterialdiff += Eval::capture_value[capture];
+
+			//listの更新(ここコレでいいか怪しい。)
+			list.bplist_fb[st->dirtyuniform[1]] = bonapiece(us, pt2, num + 1);
+			list.bplist_fw[st->dirtyuniform[1]] = bonapiece(opposite(us), pt2, num + 1);
+			list.hand2Uniform[us][pt2][num + 1] = st->dirtyuniform[1];
+
+
+			//捕獲された駒のzoblistの更新
+			st->board_ -= Zoblist::psq[capture][to];
+			st->hands_ += Zoblist::hand[sidetomove()][pt2];
+		}
+		else {
+			st->DirtyPiece[1] = NO_PIECE;
+			//put_rotate(to);
+			set_occ256(to);
+		}
+		//ksqの更新
+		if (moved_pt == KING) { st->ksq_[us] = to; }
+	}
+
+	//先手の場合駒割は正の方向にdiffだけ動く
+	if (sidetomove() == BLACK) {
+		st->material = st->previous->material + Value(matterialdiff);
+	}
+	else {
+		st->material = st->previous->material - Value(matterialdiff);
+	}
+
+
+
+	st->ply_from_startpos++;
+	nodes++;
+	sidetomove_ = opposite(sidetomove_);//指す順番の入れ替え
+
+										//先程の指し手が相手側に王手をかけたか（王手をかけた場合はそのcheckerBBを更新する）
+	if (givescheck) {
+		st->inCheck = true;
+		st->checker = effect_toBB(opposite(sidetomove_), ksq(sidetomove_));
+	}
+	else {
+		st->inCheck = false;
+		st->checker = ZeroBB;
+	}
+	if (st->inCheck&&st->checker.isNot() == false) { ASSERT(0); }
+#ifdef GIVESCHECK
+	if (givescheck != is_effect_to(opposite(sidetomove_), ksq(sidetomove_))) {
+		cout << *this << endl;
+		check_move(m);
+		ASSERT(0);
+	}
+#endif
+	if (pcboard[to] == NO_PIECE) {
+		cout << *this << endl;
+		ASSERT(0);
+	}
+
+	ASSERT((sidetomove() == BLACK && (st->board_&Zoblist::side) == 0) || (sidetomove() == WHITE && (st->board_&Zoblist::side) == 1));
+
 }
 
 /*
@@ -593,6 +851,19 @@ void Position::do_nullmove(StateInfo * newst) {
 	st->board_ ^= Zoblist::side;
 	sidetomove_ = opposite(sidetomove_);
 	st->lastmove = MOVE_NULL;
+
+	//ここでvalue_errorにしてはダメ。
+	/*st->bpp = Value_error;
+	st->wpp = Value_error;*/
+
+	//この局面ではeval()されてから何も動いていないのでdirtyはゼロでいいはず
+	state()->dirtybonap_fb[0]= BONA_PIECE_ZERO;
+	state()->dirtybonap_fb[1] = BONA_PIECE_ZERO;
+	state()->dirtybonap_fw[0] = BONA_PIECE_ZERO;
+	state()->dirtybonap_fw[1] = BONA_PIECE_ZERO;
+	state()->dirtyuniform[0] =Eval::Num_Uniform;
+	state()->dirtyuniform[1] = Eval::Num_Uniform;
+
 	ASSERT((sidetomove() == BLACK && (st->board_&Zoblist::side) == 0) || (sidetomove() == WHITE && (st->board_&Zoblist::side) == 1));
 }
 

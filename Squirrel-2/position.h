@@ -134,6 +134,7 @@ public:
 
 
 	void do_move(const Move m, StateInfo* st);
+	void do_move(const Move m, StateInfo* st,const bool givescheck);
 	void undo_move();
 
 	void do_nullmove(StateInfo* newst);

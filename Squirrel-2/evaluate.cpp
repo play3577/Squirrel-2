@@ -235,7 +235,7 @@ namespace Eval {
 	}
 
 
-
+//#define DIFFTEST
 	Value eval_material(const Position & pos)
 	{
 		int16_t v = 0;
@@ -271,6 +271,7 @@ namespace Eval {
 			pp=Value((pos.state()->bpp + pos.state()->wpp) / FV_SCALE);
 
 #ifdef DIFFTEST
+			//計算済みの値が正しいか確認
 			int bPP = pos.state()->bpp, wPP = pos.state()->wpp;
 
 			if (pp != eval_PP(pos)) {
@@ -289,7 +290,7 @@ namespace Eval {
 			}
 #endif
 		}
-		if (pos.state()->previous!=nullptr&&pos.state()->previous->bpp != Value_error&&pos.state()->previous->wpp != Value_error) {
+		else if (pos.state()->previous!=nullptr&&pos.state()->previous->bpp != Value_error&&pos.state()->previous->wpp != Value_error) {
 			//差分計算可能
 			ASSERT(pos.state()->previous->wpp != Value_error);
 
@@ -346,6 +347,7 @@ namespace Eval {
 	//差分計算
 	Value eval_diff_PP(const Position & pos)
 	{
+		//cout << "evaldiff" << endl;
 		const StateInfo *now = pos.state();
 		const StateInfo *prev = pos.state()->previous;
 		const auto list = pos.evallist();
@@ -605,6 +607,8 @@ namespace Eval {
 		pos.state()->bpp = bPP;
 		pos.state()->wpp = wPP;
 #ifdef DIFFTEST
+
+		//nullmove時に差分計算がおかしくなる！！！
 		eval_PP(pos);
 		//if (Value((bPP + wPP) / FV_SCALE) != eval_PP(pos)) {
 		if (bPP!=pos.state()->bpp||wPP!=pos.state()->wpp) {
@@ -747,254 +751,6 @@ namespace Eval {
 			cout << "fb:" << bplist_fb[i];
 			cout << "fw:" << bplist_fw[i] << endl;
 		}
-
-
-
-		//cout << "from black" << endl << endl;
-
-		//for (int i = 0; i < Num_Uniform; i++) {
-
-		//	auto bp = bplist_fb[i];
-
-		//	//bp<fe_handendであればそれは手駒
-		//	if (bp < fe_hand_end) {
-
-		//		//ここもうちょっとなんとかなるようなきがするんだけど,,,
-		//		if (f_hand_pawn <= bp&&bp < e_hand_pawn) {
-		//			cout << "f_handpawn + " << int(bp - f_hand_pawn) << endl;
-		//		}
-		//		else if (e_hand_pawn <= bp&&bp < f_hand_lance) {
-		//			cout << "e_handpawn + " << int(bp - e_hand_pawn) << endl;
-		//		}
-		//		else if (f_hand_lance <= bp&&bp < e_hand_lance) {
-		//			cout << "f_hand lance + " << int(bp - f_hand_lance) << endl;
-		//		}
-		//		else if (e_hand_lance <= bp&&bp < f_hand_knight) {
-		//			cout << "e_handlance + " << int(bp - e_hand_lance) << endl;
-		//		}
-		//		else if (f_hand_knight <= bp&&bp < e_hand_knight) {
-		//			cout << "f_handknight + " << int(bp - f_hand_knight) << endl;
-		//		}
-		//		else if (e_hand_knight <= bp&&bp < f_hand_silver) {
-		//			cout << "e_hand_knight + " << int(bp - e_hand_knight) << endl;
-		//		}
-		//		else if (bp < e_hand_silver) {//条件はコレだけで十分か？？
-		//			cout << "f_hand_silver + " << int(bp - f_hand_silver) << endl;
-		//		}
-		//		else if (bp < f_hand_gold) {
-		//			cout << "e_hand_silver + " << int(bp - e_hand_silver) << endl;
-		//		}
-		//		else if (bp < e_hand_gold) {
-		//			cout << "f_hand_gold + " << int(bp - f_hand_gold) << endl;
-		//		}
-		//		else if(bp < f_hand_bishop) {
-		//			cout << "e_hand_gold + " << int(bp - e_hand_gold) << endl;
-		//		}
-		//		else if (bp < e_hand_bishop) {
-		//			cout << "f_hand_bishop + " << int(bp - f_hand_bishop) << endl;
-		//		}
-		//		else if (bp < f_hand_rook) {
-		//			cout << "e_hand_bishop + " << int(bp - e_hand_bishop) << endl;
-		//		}
-		//		else if (bp < e_hand_rook) {
-		//			cout << "f_hand_rook + " << int(bp - f_hand_rook) << endl;
-		//		}
-		//		else if (bp < fe_hand_end) {
-		//			cout << "e_hand_rook + " << int(bp - e_hand_rook) << endl;
-		//		}
-
-		//	}
-		//	else {
-		//		//盤上の駒
-		//		if (f_pawn <= bp&&bp < e_pawn) {
-		//			cout << "f_pawn + " << int(bp - f_pawn) << endl;
-		//		}
-		//		else if (e_pawn <= bp&&bp < f_lance) {
-		//			cout << "e_pawn + " << int(bp - e_pawn) << endl;
-		//		}
-		//		else if (f_lance <= bp&&bp < e_lance) {
-		//			cout << "f_lance + " << int(bp - f_lance) << endl;
-		//		}
-		//		else if (e_lance <= bp&&bp < f_knight) {
-		//			cout << "e_lance + " << int(bp - e_lance) << endl;
-		//		}
-		//		else if (f_knight <= bp&&bp < e_knight) {
-		//			cout << "f_knight + " << int(bp - f_knight) << endl;
-		//		}
-		//		else if (e_knight <= bp &&bp< f_silver) {
-		//			cout << "e_knight + " << int(bp - e_knight) << endl;
-		//		}
-		//		else if (f_silver <= bp&&bp < e_silver) {
-		//			cout << "f_silver + " << int(bp - f_silver) << endl;
-		//		}
-		//		else if (e_silver <= bp&&bp < f_gold) {
-		//			cout << "e_silver + " << int(bp - e_silver) << endl;
-		//		}
-		//		else if (f_gold <= bp&&bp < e_gold) {
-		//			cout << "f_gold + " << int(bp - f_gold) << endl;
-		//		}
-		//		else if (e_gold <= bp&&bp < f_bishop) {
-		//			cout << "e_gold + " << int(bp - e_gold) << endl;
-		//		}
-		//		else if (bp<e_bishop) {
-		//			cout << "f_bishop + " << int(bp - f_bishop) << endl;
-		//		}
-		//		else if (bp<f_unicorn) {
-		//			cout << "e_bishop + " << int(bp - e_bishop) << endl;
-		//		}
-		//		else if (bp < e_unicorn) {
-		//			cout << "f_unicorn + " << int(bp - f_unicorn) << endl;
-		//		}
-		//		else if (bp < f_rook) {
-		//			cout << "e_unicorn + " << int(bp - e_unicorn) << endl;
-		//		}
-		//		else if (bp < e_rook) {
-		//			cout << "f_rook + " << int(bp - f_rook) << endl;
-		//		}
-		//		else if (bp < f_dragon) {
-		//			cout << "e_rook + " << int(bp - e_rook) << endl;
-		//		}
-		//		else if (bp < e_dragon) {
-		//			cout << "f_dragon + " << int(bp - f_dragon) << endl;
-		//		}
-		//		else if (bp < f_king) {
-		//			cout << "e_dragon + " << int(bp - e_dragon) << endl;
-		//		}
-		//		else if (bp < e_king) {
-		//			cout << "f_king + " << int(bp - f_king) << endl;
-		//		}
-		//		else if (bp < fe_end2) {
-		//			cout << "e_king + " << int(bp - e_king) << endl;
-		//		}
-		//		else {
-		//			UNREACHABLE;
-		//		}
-		//	}
-		//}//from black
-
-		//cout << endl << "from white" << endl << endl;
-
-		//for (int i = 0; i < Num_Uniform; i++) {
-
-		//	auto bp = bplist_fw[i];
-
-		//	//bp<fe_handendであればそれは手駒
-		//	if (bp < fe_hand_end) {
-
-		//		//ここもうちょっとなんとかなるようなきがするんだけど,,,
-		//		if (f_hand_pawn <= bp&&bp < e_hand_pawn) {
-		//			cout << "f_handpawn + " << int(bp - f_hand_pawn) << endl;
-		//		}
-		//		else if (e_hand_pawn <= bp&&bp < f_hand_lance) {
-		//			cout << "e_handpawn + " << int(bp - e_hand_pawn) << endl;
-		//		}
-		//		else if (f_hand_lance <= bp&&bp < e_hand_lance) {
-		//			cout << "f_hand lance + " << int(bp - f_hand_lance) << endl;
-		//		}
-		//		else if (e_hand_lance <= bp&&bp < f_hand_knight) {
-		//			cout << "e_handlance + " << int(bp - e_hand_lance) << endl;
-		//		}
-		//		else if (f_hand_knight <= bp&&bp < e_hand_knight) {
-		//			cout << "f_handknight + " << int(bp - f_hand_knight) << endl;
-		//		}
-		//		else if (e_hand_knight <= bp&&bp < f_hand_silver) {
-		//			cout << "e_hand_knight + " << int(bp - e_hand_knight) << endl;
-		//		}
-		//		else if (bp < e_hand_silver) {//条件はコレだけで十分か？？
-		//			cout << "f_hand_silver + " << int(bp - f_hand_silver) << endl;
-		//		}
-		//		else if (bp < f_hand_gold) {
-		//			cout << "e_hand_silver + " << int(bp - e_hand_silver) << endl;
-		//		}
-		//		else if (bp < e_hand_gold) {
-		//			cout << "f_hand_gold + " << int(bp - f_hand_gold) << endl;
-		//		}
-		//		else if (bp < f_hand_bishop) {
-		//			cout << "e_hand_gold + " << int(bp - e_hand_gold) << endl;
-		//		}
-		//		else if (bp < e_hand_bishop) {
-		//			cout << "f_hand_bishop + " << int(bp - f_hand_bishop) << endl;
-		//		}
-		//		else if (bp < f_hand_rook) {
-		//			cout << "e_hand_bishop + " << int(bp - e_hand_bishop) << endl;
-		//		}
-		//		else if (bp < e_hand_rook) {
-		//			cout << "f_hand_rook + " << int(bp - f_hand_rook) << endl;
-		//		}
-		//		else if (bp < fe_hand_end) {
-		//			cout << "e_hand_rook + " << int(bp - e_hand_rook) << endl;
-		//		}
-
-		//	}
-		//	else {
-		//		//盤上の駒
-		//		if (f_pawn <= bp&&bp < e_pawn) {
-		//			cout << "f_pawn + " << int(bp - f_pawn) << endl;
-		//		}
-		//		else if (e_pawn <= bp&&bp < f_lance) {
-		//			cout << "e_pawn + " << int(bp - e_pawn) << endl;
-		//		}
-		//		else if (f_lance <= bp&&bp < e_lance) {
-		//			cout << "f_lance + " << int(bp - f_lance) << endl;
-		//		}
-		//		else if (e_lance <= bp&&bp < f_knight) {
-		//			cout << "e_lance + " << int(bp - e_lance) << endl;
-		//		}
-		//		else if (f_knight <= bp&&bp < e_knight) {
-		//			cout << "f_knight + " << int(bp - f_knight) << endl;
-		//		}
-		//		else if (e_knight <= bp &&bp< f_silver) {
-		//			cout << "e_knight + " << int(bp - e_knight) << endl;
-		//		}
-		//		else if (f_silver <= bp&&bp < e_silver) {
-		//			cout << "f_silver + " << int(bp - f_silver) << endl;
-		//		}
-		//		else if (e_silver <= bp&&bp < f_gold) {
-		//			cout << "e_silver + " << int(bp - e_silver) << endl;
-		//		}
-		//		else if (f_gold <= bp&&bp < e_gold) {
-		//			cout << "f_gold + " << int(bp - f_gold) << endl;
-		//		}
-		//		else if (e_gold <= bp&&bp < f_bishop) {
-		//			cout << "e_gold + " << int(bp - e_gold) << endl;
-		//		}
-		//		else if (bp<e_bishop) {
-		//			cout << "f_bishop + " << int(bp - f_bishop) << endl;
-		//		}
-		//		else if (bp<f_unicorn) {
-		//			cout << "e_bishop + " << int(bp - e_bishop) << endl;
-		//		}
-		//		else if (bp < e_unicorn) {
-		//			cout << "f_unicorn + " << int(bp - f_unicorn) << endl;
-		//		}
-		//		else if (bp < f_rook) {
-		//			cout << "e_unicorn + " << int(bp - e_unicorn) << endl;
-		//		}
-		//		else if (bp < e_rook) {
-		//			cout << "f_rook + " << int(bp - f_rook) << endl;
-		//		}
-		//		else if (bp < f_dragon) {
-		//			cout << "e_rook + " << int(bp - e_rook) << endl;
-		//		}
-		//		else if (bp < e_dragon) {
-		//			cout << "f_dragon + " << int(bp - f_dragon) << endl;
-		//		}
-		//		else if (bp < f_king) {
-		//			cout << "e_dragon + " << int(bp - e_dragon) << endl;
-		//		}
-		//		else if (bp < e_king) {
-		//			cout << "f_king + " << int(bp - f_king) << endl;
-		//		}
-		//		else if (bp < fe_end2) {
-		//			cout << "e_king + " << int(bp - e_king) << endl;
-		//		}
-		//		else {
-		//			UNREACHABLE;
-		//		}
-		//	}
-		//}//from white
-
-
 
 
 	}//endof print bp
