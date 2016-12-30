@@ -115,8 +115,9 @@ Value Thread::think() {
 	}//end book
 
 	history.clear();
+#ifdef USETT
 	TT.new_search();
-
+#endif
 	Stack stack[MAX_PLY + 7], *ss = stack + 5;
 	std::memset(stack, 0,(MAX_PLY+7)*sizeof(Stack));
 	Value bestvalue, alpha, beta;
@@ -373,6 +374,7 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 	if (ss->skip_early_prunning == true) {
 		goto moves_loop;
 	}
+#ifdef USETT
 	// Step 6. Razoring (skipped when in check)
 	/*
 	ttMoveが存在せず
@@ -406,7 +408,7 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 		}
 	}
 
-
+#endif
 
 	// Step 7. Futility pruning: child node (skipped when in check)
 	/*------------------------------------------------------------------------------------------------------------
@@ -545,9 +547,11 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 	//（もし前向き枝切りが出来てしまったらこのノードで詰んでしまう）
 moves_loop:
 	
-
+#ifdef USE_TT
 	movepicker mp(pos,ss,ttMove);
-	
+#else 
+	movepicker mp(pos, ss, MOVE_NONE);
+#endif
 	while ((move = mp.return_nextmove()) != MOVE_NONE) {
 
 		if (!RootNode) {
@@ -874,7 +878,11 @@ Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
 	//コレで上手く前の指し手の移動先を与えられていると思う
 	//ここでnullmoveが入ってきた場合のことも考えないといけない。
 	//というかnullmoveが入ってきたら取リ返すなんてありえないのでここで評価値返すしか無いでしょ(王手も生成するなら話は別）
+#ifdef USETT
 	movepicker mp(pos, move_to(pos.state()->lastmove),ttMove);
+#else
+	movepicker mp(pos, move_to(pos.state()->lastmove), MOVE_NONE);
+#endif
 
 	while ((move = mp.return_nextmove()) != MOVE_NONE) {
 
