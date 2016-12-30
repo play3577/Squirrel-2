@@ -93,6 +93,10 @@ void randomwalker(Position & pos, int maxdepth)
 		//cout<<"see"<<pos.see(m)<<endl;
 		//if (pos.piece_on(move_to(m)) != NO_PIECE) { cout << "capture" << endl; }
 		
+		Key k = pos.key_after_move(m);
+
+
+
 
 		if (pos.is_legal(m) == false) { ++continue_count;  continue;  }//‚·‚×‚Ä‚Ì·‚µŽè‚ªillegal‚Â‚Ü‚è‹l‚Ý‚Ìó‘Ô‚É‚È‚ê‚Î‚±‚ê‚Å‚Í‚¨‚©‚µ‚­‚È‚Á‚Ä‚µ‚Ü‚¤‚Ì‚ÅC³
 		else { continue_count = 0; }
@@ -101,10 +105,19 @@ void randomwalker(Position & pos, int maxdepth)
 		//pos.do_move(m, &si[depth]);
 		bool givescheck = pos.is_gives_check(m);
 		pos.do_move(m, &si[depth], givescheck);
+		Key hash3 = pos.key();
 		pos.undo_move();
 		Key hash2 = pos.key();
-		ASSERT(hash1 == hash2);
 
+		//ASSERT(k == hash3);
+		if (k != hash3) {
+
+			cout << pos << endl;
+			check_move(m);
+
+			ASSERT(0);
+
+		}
 
 		pos.do_move(m, &si[depth]);
 		depth++;

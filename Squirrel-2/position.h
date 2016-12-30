@@ -602,6 +602,16 @@ public:
 		return is_effect_to_move(sidetomove(),ksq(opposite(sidetomove_)),m);
 
 	}//end of is_givescheck
+
+	 /*
+	 与えられた差し手で局面を動かした後のhashkeyを計算する、
+	 これはprefetchに必要になる
+
+	 prefetchはできるだけ早くしておく必要があるのか,,,先に局面を動かしたhashkeyを用意してまで!!!
+	 */
+	Key key_after_move(const Move m);
+
+
 };
 
 std::ostream& operator<<(std::ostream& os, const Position& pos);

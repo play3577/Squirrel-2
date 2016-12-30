@@ -1248,6 +1248,57 @@ void Position::init_hash()
 
 }
 
+/*
+与えられた差し手で局面を動かした後のhashkeyを計算する、
+これはprefetchに必要になる
+
+prefetchはできるだけ早くしておく必要があるのか,,,先に局面を動かしたhashkeyを用意してまで!!!
+
+ここまでして早くなるとは思えないんだがどうなのだ???
+
+*/
+Key Position::key_after_move(const Move m) {
+
+	const Square from = move_from(m);
+	const Square to = move_to(m);
+	const Piece pc = moved_piece(m);
+	const bool promote = is_promote(m);
+	const bool drop = is_drop(m);
+	const Piece captured = piece_on(to);
+	Key k = key();
+
+	//駒うち
+	if (drop) {
+		k += Zoblist::psq[pc][to];
+		k -= Zoblist::hand[sidetomove()][piece_type(pc)];
+
+	}
+	else {
+		//駒の移動
+
+		//fromにいた駒の分を消す
+		k -= Zoblist::psq[pc][from];
+
+		//toにいる駒を足す
+		if (promote) {
+			k += Zoblist::psq[promotepiece(pc)][to];
+		}
+		else {
+			k += Zoblist::psq[pc][to];
+		}
+
+		//駒をとった。
+		if (captured != NO_PIECE) {
+			k -= Zoblist::psq[captured][to];
+			k += Zoblist::hand[sidetomove()][rowpiece(piece_type(captured))];
+		}
+	}
+
+	k ^= Zoblist::side;
+
+	return k;
+}
+
 
 
 
