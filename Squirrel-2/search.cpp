@@ -5,6 +5,9 @@
 #include "tpt.h"
 #include "book.h"
 #include <random>
+
+#define PREFETCH
+//#define PREF2
 SearchLimit limit;
 Signal signal;
 
@@ -541,13 +544,67 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 //
 //
 
+	//内部反復深化
+	/*
+	https://chessprogramming.wikispaces.com/Internal+Iterative+Deepening
+
+	内部反復深化は（過去のPVまたはTT）からプログラムがbestmoveを見つけられなかったゲームツリーのノードで行われる.
+	IIDは現在の局面で深さを減らして探索をすることでよい差し手を見つけるために使われる。
+	IIDは保険のようなものだ。ほとんどの場合それは必要ではない、しかしそのコストは非常に小さい。　そして大きな時間の無駄を避けることができる。
+	*/
+	/*
+	深さは6以上
+	ttMoveが存在しない
+	PVNodeが存在しない||静的評価値はbeta+256　のとき
+
+	前向き枝切りをオフにして、先に少し探索をしてttmoveを用意する
+
+
+	これするとえげつないぐらい探索深さが増えますねぇ！！！
+	もっと根底から理解すべきか
+	*/
+#ifdef USETT
+	if (depth >= 6 * ONE_PLY
+		&&ttMove == MOVE_NONE
+		&& (PVNode || staticeval + 256 >= beta)
+		) {
+
+		Depth d = (3 * (int)depth / (4 * ONE_PLY) - 2)*ONE_PLY;
+		ss->skip_early_prunning = true;
+		//ここで帰ってきた値を何かに利用できないか？？？
+		search<NT>(pos, ss, alpha, beta, d);
+		ss->skip_early_prunning = false;
+		tte = TT.probe(poskey, TThit);
+		//TTが汚されてしまう場合を考えてこうする
+		if (TThit) {
+			ttValue = tte->value();
+			ttdepth = tte->depth();
+			ttEval = tte->eval();
+			ttBound = tte->bound();
+			ttMove = tte->move();
+		}
+		else {
+			ttValue = Value_error;
+			ttdepth = DEPTH_NONE;
+			ttEval = Value_error;
+			ttBound = BOUND_NONE;
+			ttMove = MOVE_NONE;
+		}
+
+	}
+
+
+
+
+#endif
+
 
 
 	//王手がかかっている場合は前向き枝切りはしない
 	//（もし前向き枝切りが出来てしまったらこのノードで詰んでしまう）
 moves_loop:
 	
-#ifdef USE_TT
+#ifdef USETT
 	movepicker mp(pos,ss,ttMove);
 #else 
 	movepicker mp(pos, ss, MOVE_NONE);
@@ -570,6 +627,10 @@ moves_loop:
 
 		if (NT == Root&&thisthread->find_rootmove(move) == nullptr) { continue; }
 
+		//これ早くなるんだろうか？？
+#ifdef PREFETCH
+		TT.prefetch(pos.key_after_move(move));
+#endif
 
 		/*
 		capture propawnの指し手になりうるのはcappropawnのステージとEVERSIONのステージだけ
@@ -593,6 +654,9 @@ moves_loop:
 		pos.do_move(move, &si,givescheck);*/
 
 		pos.do_move(move, &si);
+#ifdef PREF2
+		TT.prefetch(pos.key());
+#endif
 		doFullDepthSearch = (PVNode&&movecount == 1);
 
 
@@ -913,9 +977,17 @@ Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
 		//	}
 		//}
 
+		//これ早くなるんだろうか？？
+#ifdef PREFETCH
+		TT.prefetch(pos.key_after_move(move));
+#endif
+
 
 		movecount++;
 		pos.do_move(move, &si);
+#ifdef PREF2
+		TT.prefetch(pos.key());
+#endif
 		/*bool givescheck = pos.is_gives_check(move);
 		pos.do_move(move, &si, givescheck);*/
 		value = -qsearch<NT>(pos, ss + 1, -beta, -alpha, depth - ONE_PLY);

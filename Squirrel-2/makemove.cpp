@@ -567,6 +567,29 @@ ExtMove* make_move_DROP(const Position& pos, const Bitboard& target, ExtMove* mo
 	return movelist;
 }
 
+//AperyŽQl‚Ì‹î‚¤‚¿
+ExtMove* make_move_DROP_fast(const Position& pos, const Bitboard& target, ExtMove* movelist) {
+
+	Color US = pos.sidetomove();
+	auto hands = pos.hand(US);
+	Square to;
+	Piece pc;
+	Bitboard target2;
+
+	if (have_hand(hands)) {
+
+		if (num_pt(hands, PAWN)) {
+
+		}
+
+
+
+	}
+
+
+	return movelist;
+}
+
 /*
 
 int8_t obstacle_tate = (occ256.b64(0) >> occ256_shift_table_tate[sq])&effectmask;
