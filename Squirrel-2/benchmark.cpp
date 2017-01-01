@@ -41,6 +41,7 @@ void speed_genmove(const Position & pos)
 	std::cout << "num of moves = " << count << std::endl;
 	for (int i = 0; i < count; ++i) {
 		std::cout << moves_[i].move << ", ";
+		check_move(moves_[i].move);
 	}
 	std::cout << std::endl;
 

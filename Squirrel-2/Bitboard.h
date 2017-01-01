@@ -54,12 +54,16 @@ struct Bitboard
 		__m128i m;
 #endif
 	};
+
+	uint64_t b_(const int index) { ASSERT(index == 0 || index == 1); return b[index]; }
+
 	//コンストラクタ
 	Bitboard() {}
 	Bitboard(uint64_t num1, uint64_t num2) { b[0] = num1; b[1] = num2; }
 	//popした後値の変わるpop
 	Square pop();
-
+	Square pop_fromb0();
+	Square pop_fromb1();
 	Bitboard& operator=(const Bitboard& b1) { b[0] = b1.b[0];b[1]=b1.b[1]; return *this; }
 
 	//https://msdn.microsoft.com/en-us/library/1beaceh8(v=vs.100).aspx
@@ -67,6 +71,8 @@ struct Bitboard
 	Bitboard& operator^=(const Bitboard& b1) { m= _mm_xor_si128(m, b1.m); return *this; }
 	Bitboard& operator|=(const Bitboard& b1) { m = _mm_or_si128(m, b1.m); return *this; }
 	Bitboard& andnot(const Bitboard& b1) { m = _mm_andnot_si128(b1.m, m); return *this; }//順番注意
+	Bitboard operator << (const int i) { m = _mm_slli_epi64(m, i); return *this; }//64bitずつに対して左シフト　
+	Bitboard operator >> (const int i)  { m = _mm_srli_epi64(m, i); return *this; }//右シフト
 #else
 	Bitboard& operator^=(const Bitboard& b1) { b[0] = (b[0] ^ b1.b[0]);  b[1] = (b[1] ^ b1.b[1]); return *this; }
 	Bitboard& operator|=(const Bitboard& b1) { b[0] = (b[0] | b1.b[0]);  b[1] = (b[1] | b1.b[1]); return *this; }
@@ -149,3 +155,28 @@ Bitboard rook_effect(const Occ_256 & occ, const Square sq);
 Bitboard bishop_effect(const Occ_256 & occ, const Square sq);
 Bitboard dragon_effect(const Occ_256 & occ, const Square sq);
 Bitboard unicorn_effect(const Occ_256 & occ, const Square sq);
+
+
+//foreach
+//bitboardのb[0]とb[1]それぞれに対してコードを生成するためのdefine.最適化されるはず（ここんところよくわからん）
+#define foreachBB(bb,sq,state)\
+	do{\
+		while(bb.b_(0)){\
+			sq = bb.pop_fromb0();\
+			state;\
+		}\
+		while(bb.b_(1)){\
+			sq = bb.pop_fromb1();\
+			state;\
+		}\
+	}while(false);
+
+
+//unrollerは屋根裏王方式のほうがいいらしい？（Apery方式だと最適化されないことがあったらしい）（ここんところよくわからん）
+//駒うちができる歩以外の駒種は最大6つまでであるのでunrollerは6つでいい
+#define unroller1(state){const int i=0;state;}
+#define unroller2(state){unroller1(state); const int i=1; state;}
+#define unroller3(state){unroller2(state); const int i=2; state;}
+#define unroller4(state){unroller3(state); const int i=3; state;}
+#define unroller5(state){unroller4(state); const int i=4; state;}
+#define unroller6(state){unroller5(state); const int i=5; state;}

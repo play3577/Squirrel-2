@@ -276,11 +276,11 @@ constexpr int shift[8] = { 0,0,6,9,12,15,17,19 };
 constexpr int mask[8] = { 0,0b11111,0b111,0b111,0b111,0b11,0b11,0b111 };
 
 
-constexpr bool have_hand(const Hand h) { return(h != 0); }
-constexpr bool have_pawn(const Hand h) { return(h&PAWN_MASK); }
-constexpr bool have_pt(const Hand h, const Piece pt) { return((h >> shift[pt])&mask[pt]); }//コレは上手く行っているか後で確認しなければならない。（OK）
-constexpr int  num_pt(const Hand h, const Piece pt) { return((h >> shift[pt])&mask[pt]); }//コレは上と同じなのでhave_ptは要らないかもしれない。・・OK
-
+constexpr bool have_hand(const Hand& h) { return(h != 0); }
+constexpr bool have_pawn(const Hand& h) { return(h&PAWN_MASK); }
+constexpr bool have_pt(const Hand& h, const Piece pt) { return((h >> shift[pt])&mask[pt]); }//コレは上手く行っているか後で確認しなければならない。（OK）
+constexpr int  num_pt(const Hand& h, const Piece pt) { return((h >> shift[pt])&mask[pt]); }//コレは上と同じなのでhave_ptは要らないかもしれない。・・OK
+inline bool have_except_pawn(const Hand& h) { return bool(h&~PAWN_MASK); }//pawn以外の駒を持っているか？
 //上手く行っているか確認が必要（OK）
 inline void makehand(Hand &hand,const Piece pt,const int num){
 	hand = Hand(hand&~(mask[pt] << shift[pt]));

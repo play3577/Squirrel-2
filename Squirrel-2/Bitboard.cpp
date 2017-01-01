@@ -55,6 +55,18 @@ Square Bitboard::pop()
 	return (b[0] != 0) ? Square(pop_lsb(b[0])) : Square(pop_lsb(b[1])+45);
 }
 
+Square Bitboard::pop_fromb0()
+{
+	ASSERT(b[0] != 0);
+	return Square(pop_lsb(b[0]));
+}
+
+Square Bitboard::pop_fromb1()
+{
+	ASSERT(b[1] != 0);
+	return Square(pop_lsb(b[1]) + 45);
+}
+
 std::ostream & operator<<(std::ostream & os, const Bitboard & board)
 {
 	for (Rank r = RankA; r < Rank_Num; r++) {
