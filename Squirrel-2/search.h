@@ -28,6 +28,7 @@ struct Stack {
 	Move excludedMove = MOVE_NONE;
 	bool skip_early_prunning = false;
 	Move killers[2];
+	Value static_eval;
 };
 
 
@@ -59,6 +60,8 @@ inline std::ostream& operator<<(std::ostream& os, const SearchLimit& sl) {
 }
 
 extern SearchLimit limit;
+
+void search_init();
 
 inline Value mated_in_ply(int ply) { return Value(Value_Mated + ply); }
 inline Value mate_in_ply(int ply) { return Value(Value_Mate - ply); }

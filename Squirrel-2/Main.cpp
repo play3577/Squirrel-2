@@ -39,6 +39,7 @@ int main() {
 	init_occ256();
 	Eval::init();
 	Zoblist::init();
+	search_init();
 	/*if (Options["usebook"] == true) {
 		BOOK::init();
 	}*/

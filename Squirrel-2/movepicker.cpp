@@ -70,6 +70,10 @@ void movepicker::generatemove()
 		goodQuiet = std::partition(move_, end_, [](const ExtMove& m){ return m.value > Value_Zero; });
 		insertion_sort(move_, goodQuiet);
 		break;
+	case BAD_CAPTURES:
+		current_ = move_ + 600 - 1;
+		end_ = end_badcaptures;
+		break;
 	case START_Eversion:
 		current_ = end_;
 		st = STOP;
@@ -123,7 +127,12 @@ Move movepicker::return_nextmove()
 		case CAP_PRO_PAWN:
 			m = current_++->move;
 			if (m != ttMove) {
-				return m;
+
+				if (pos_.see_sign(m) >= Value_Zero) {
+					return m;
+				}
+				(end_badcaptures--)->move = m;
+				//return m;
 			}
 			break;
 		case Killers:
@@ -144,6 +153,9 @@ Move movepicker::return_nextmove()
 				) {
 				return m;
 			}
+			break;
+		case BAD_CAPTURES:
+			return (current_--)->move;
 			break;
 		case START_Eversion:
 			current_++;

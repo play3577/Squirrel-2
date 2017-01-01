@@ -10,6 +10,7 @@ enum Stage {
 	CAP_PRO_PAWN,
 	Killers,
 	QUIET,
+	BAD_CAPTURES,
 	START_Eversion,
 	EVERSION,
 	START_Qsearch,
@@ -25,6 +26,7 @@ class movepicker {
 
 private:
 	ExtMove move_[600], *current_, *end_;
+	ExtMove *end_badcaptures = move_ + 600 - 1;
 	Stage st;
 	const Position& pos_;
 	Square recapsq_;

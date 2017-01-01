@@ -32,6 +32,49 @@ Value futility_margin(Depth d) { ASSERT(d < 7*ONE_PLY); return Value(150 * d / O
 //d手で挽回できる点数であるのでだんだんと大きくならないとおかしい.(局所最適解に陥っている？（by屋根さん）)
 const int razor_margin[4] = { 483, 570, 603, 554 };
 
+
+//探索用の定数
+/*
+rootを3にしたほうがメモリの節約になっていいか？？やっぱだめだな
+*/
+int FutilityMoveCounts[2][16]; // [improving][depth]
+int Reductions[3][2][64][64];  // [pv][improving][depth][moveNumber]
+
+template <bool PvNode> Depth reduction(bool i, Depth d, int mn) {
+	return Reductions[PvNode][i][std::min(d / ONE_PLY, 63)][std::min(mn, 63)] * ONE_PLY;
+}
+
+//探索乗数の初期化
+//値をもっと真剣に見ていく
+void search_init() {
+
+	for (int imp = 0; imp <= 1; ++imp) {
+		for (int d = 1; d < 64; ++d) {
+			for (int mc = 1; mc < 64; ++mc)
+			{
+				double r = log(d) * log(mc) / 2;
+				if (r < 0.80) {
+					continue;
+				}
+				Reductions[NonPV][imp][d][mc] = int(std::round(r));
+				Reductions[PV][imp][d][mc] = std::max(Reductions[NonPV][imp][d][mc] - 1, 0);
+
+				// Increase reduction for non-PV nodes when eval is not improving
+				if (!imp && Reductions[NonPV][imp][d][mc] >= 2) {
+					Reductions[NonPV][imp][d][mc]++;
+				}
+			}
+		}
+	}
+	for (int d = 0; d < 16; ++d)
+	{
+		FutilityMoveCounts[0][d] = int(2.4 + 0.773 * pow(d + 0.00, 1.8));
+		FutilityMoveCounts[1][d] = int(2.9 + 1.045 * pow(d + 0.49, 1.8));
+	}
+
+}
+
+
 /*
 この関数で詰み関連のスコアを「root nodeからあと何手で詰むか」から「今の局面から後何手で詰むか」に変換をする。
 なぜかというと置換表から値を取り出すときにrootnodeからの手数が違う局面から取り出されることがあるので、
@@ -364,7 +407,7 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 	//評価関数は毎回呼び出したほうが差分計算でお得
 	//毎回評価関数を呼び出すのでSFのようにTTのevalとどちらが信用性があるか比較する必要はないと思う。
 	//そうなるとtt->eval()は保存する必要が無いか...???う～～んもしかしたらtt.eval()を用いたほうがメリットが有るのかもしれない...（ここは後でよく考えよう）
-	staticeval = Eval::eval(pos);
+	ss->static_eval=staticeval = Eval::eval(pos);
 
 	//ここに前向き枝切りのコードを書く
 
