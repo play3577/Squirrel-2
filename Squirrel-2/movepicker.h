@@ -33,13 +33,15 @@ private:
 	void generatemove();
 	void quietscore();
 	void capturepropawn_score();
+	void score_eversion();
 	Value Threshold;
 	ExtMove killers[2];
 	Move ttMove;
 	const Stack* ss;
+	Depth depth_;
 public:
 	//通常探索用コンストラクタ
-	movepicker(const Position& pos,Stack* ss_,Move ttm) :pos_(pos),ss(ss_) {
+	movepicker(const Position& pos,Stack* ss_,Move ttm,Depth d) :pos_(pos),ss(ss_),depth_(d) {
 
 		current_ = end_ = move_;
 
@@ -86,4 +88,7 @@ public:
 		return int(end_ - move_);
 	};
 
+	int see_sign()const {
+		return st == CAP_PRO_PAWN ? 1 : st == BAD_CAPTURES ? -1 : 0;
+	}
 };

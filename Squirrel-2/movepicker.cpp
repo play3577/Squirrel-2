@@ -67,8 +67,13 @@ void movepicker::generatemove()
 		quietscore();
 		//ここSF8はもっと詳しくsortしている
 		//将棋だと駒打ちなどがあるときにここの要素数が多くなってしまうのでまずはgoodquietmoveだけソートするようにしてみる（ここ調整が必要）
-		goodQuiet = std::partition(move_, end_, [](const ExtMove& m){ return m.value > Value_Zero; });
-		insertion_sort(move_, goodQuiet);
+		if (depth_ < 3 * ONE_PLY) {
+			goodQuiet = std::partition(move_, end_, [](const ExtMove& m) { return m.value > Value_Zero; });
+			insertion_sort(move_, goodQuiet);
+		}
+		else {
+			insertion_sort(move_, end_);
+		}
 		break;
 	case BAD_CAPTURES:
 		current_ = move_ + 600 - 1;
@@ -81,6 +86,11 @@ void movepicker::generatemove()
 	case EVERSION:
 		ASSERT(pos_.is_incheck());
 		end_ = move_eversion(pos_, move_);
+		if (end_ - move_ > 1) {
+			score_eversion();
+			insertion_sort(move_, end_);
+		}
+		
 		break;
 	case START_Qsearch:
 		current_ = end_;
@@ -226,4 +236,25 @@ void movepicker::capturepropawn_score()
 		}
 	}
 
+}
+
+void movepicker::score_eversion()
+{
+	const HistoryStats& history = pos_.searcher()->history;
+	Value see;
+
+	for (ExtMove* i = move_; i < end_; i++) {
+		const Move m = i->move;
+		const Piece movept = piece_type(moved_piece(m));
+		const Piece capturedpt = piece_type(pos_.piece_on(move_to(m)));
+		if ((see = pos_.see_sign(m)) < Value_Zero) {
+			i->value = see - HistoryStats::Max;
+		}
+		else if(pos_.capture_or_propawn(m)){
+			i->value = Value(Eval::piece_value[capturedpt]) - LVA(movept);
+		}
+		else {
+			i->value=history[movept][move_to(m)];
+		}
+	}
 }
