@@ -679,7 +679,7 @@ moves_loop:
 		capture propawnの指し手になりうるのはcappropawnのステージとEVERSIONのステージだけ
 		*/
 		Stage st = mp.ret_stage();
-		if (st == CAP_PRO_PAWN) {
+		if (st == CAP_PRO_PAWN||st==BAD_CAPTURES) {
 			//ASSERT(pos.capture_or_propawn(move) == true); 今のところassertなくても大丈夫そう
 			CaptureorPropawn = true;
 		}

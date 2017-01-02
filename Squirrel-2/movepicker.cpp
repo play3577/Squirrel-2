@@ -52,7 +52,7 @@ void movepicker::generatemove()
 	case CAP_PRO_PAWN:case Gen_Malticut:
 		end_=move_generation<Cap_Propawn>(pos_, move_);
 		capturepropawn_score();
-		insertion_sort(move_, end_);
+		//insertion_sort(move_, end_);
 		break;
 	case Killers:
 		killers[0].move = ss->killers[0];
@@ -81,6 +81,9 @@ void movepicker::generatemove()
 	case EVERSION:
 		ASSERT(pos_.is_incheck());
 		end_ = move_eversion(pos_, move_);
+		if (end_ - move_ > 1) {
+			eversion_score();
+		}
 		break;
 	case START_Qsearch:
 		current_ = end_;
@@ -89,6 +92,9 @@ void movepicker::generatemove()
 	case RECAPTURE:
 		//Žw‚µŽè‚Ì¶¬ŠÖ”‚ð‚±‚±‚É“ü‚ê‚é
 		end_ = move_recapture(pos_, move_, recapsq_);
+		/*if (end_ - move_ > 1) {
+			capturepropawn_score();
+		}*/
 		break;
 	case STOP:
 		break;
@@ -125,7 +131,7 @@ Move movepicker::return_nextmove()
 			return ttMove;
 			break;
 		case CAP_PRO_PAWN:
-			m = current_++->move;
+			m = pick_best(current_++, end_);
 			if (m != ttMove) {
 
 				if (pos_.see_sign(m) >= Value_Zero) {
@@ -162,7 +168,8 @@ Move movepicker::return_nextmove()
 			return ttMove;
 			break;
 		case EVERSION:
-			m = current_++->move;
+		//	m = current_++->move;
+			m = pick_best(current_++, end_);
 			if (m != ttMove) {
 				return m;
 			}
@@ -171,7 +178,10 @@ Move movepicker::return_nextmove()
 			break;
 		case RECAPTURE:
 			m = current_++->move;
-			return m;
+			//m = pick_best(current_++, end_);
+			//if (move_to(m) == recapsq_) {
+				return m;
+			//}
 			break;
 		case STOP:
 			return MOVE_NONE;
@@ -226,4 +236,48 @@ void movepicker::capturepropawn_score()
 		}
 	}
 
+}
+
+void movepicker::eversion_score()
+{
+	const HistoryStats& history=pos_.searcher()->history;
+	Value see;
+
+	for (ExtMove* i = move_; i < end_; i++) {
+
+		const Move m = i->move;
+		const Piece movept = piece_type(moved_piece(m));
+		const Piece capturedpt = piece_type(pos_.piece_on(move_to(m)));
+		//piece_color(pcboard[move_to(m)]) == sidetomove()
+
+		if (pos_.piece_on(move_to(m)) != NO_PIECE) {
+			if (piece_color(pos_.piece_on(move_to(m))) == pos_.sidetomove()) {
+				cout << pos_ << endl;
+				check_move(m);
+				ASSERT(0);
+			}
+		}
+
+		if ((see = pos_.see_sign(m))<Value_Zero) {
+			i->value = see - HistoryStats::Max;
+		}
+		//‚±‚±‚Å‚à‚µ‚©‚µ‚½‚çƒoƒO‚ª‚ ‚é‚Ì‚©‚à‚µ‚ê‚È‚¢
+		else if (pos_.capture_or_propawn(m)) {
+			i->value = Value(Eval::piece_value[capturedpt]) - LVA(movept) + HistoryStats::Max;
+			if (is_promote(m)) {
+				ASSERT(movept <= GOLD);
+				i->value += Value(Eval::diff_promote[movept]);
+			}
+		}
+		else {
+			i->value = history[movept][move_to(m)];
+		}
+	}
+
+}
+
+Move movepicker::pick_best(ExtMove * begin, ExtMove * end)
+{
+	std::swap(*begin, *std::max_element(begin, end));
+	return begin->move;
 }

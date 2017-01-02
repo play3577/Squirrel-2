@@ -33,6 +33,8 @@ private:
 	void generatemove();
 	void quietscore();
 	void capturepropawn_score();
+	void eversion_score();
+	Move pick_best(ExtMove* begin, ExtMove* end);
 	Value Threshold;
 	ExtMove killers[2];
 	Move ttMove;
@@ -85,5 +87,7 @@ public:
 		//cout << "num_move " << (end_ - move_) << endl;
 		return int(end_ - move_);
 	};
-
+	int see_sign()const {
+		return st == CAP_PRO_PAWN ? 1 : st == BAD_CAPTURES ? -1 : 0;
+	}
 };
