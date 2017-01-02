@@ -34,7 +34,7 @@ public:
 	//未実装
 	void save(Key k, Value v, Bound b, Depth d, Move m, Value ev, uint8_t g){
 	
-		//ASSERT(d / int(ONE_PLY) * int(ONE_PLY) == d);//halfplyの延長もあるのでここはコメントアウトする
+		ASSERT(d / int(ONE_PLY) * int(ONE_PLY) == d);
 		// Preserve any existing move for the same position
 		//
 
