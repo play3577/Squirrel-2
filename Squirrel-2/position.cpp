@@ -995,6 +995,15 @@ bool Position::capture_or_propawn(const Move m) const {
 	return false;
 }
 
+bool Position::capture(const Move m) const
+{
+	if (pcboard[move_to(m)] != NO_PIECE) {
+		ASSERT(piece_color(pcboard[move_to(m)]) != sidetomove());
+		return true;
+	}
+	return false;
+}
+
 bool Position::is_legal(const Move m) const {
 
 	Piece movedpiece = moved_piece(m);

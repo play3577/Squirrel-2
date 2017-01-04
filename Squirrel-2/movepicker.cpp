@@ -49,10 +49,13 @@ void movepicker::generatemove()
 	case START_Normal:
 		st = STOP;
 		break;
-	case CAP_PRO_PAWN:case Gen_Malticut:
+	case CAP_PRO_PAWN:case Gen_Malticut:case Gen_Probcut:
 		end_=move_generation<Cap_Propawn>(pos_, move_);
 		capturepropawn_score();
 		//insertion_sort(move_, end_);
+		break;
+	case Start_Probcut:
+		st = STOP;
 		break;
 	case Killers:
 		killers[0].move = ss->killers[0];
@@ -123,8 +126,17 @@ Move movepicker::return_nextmove()
 		case Start_Multicut:
 			break;
 		case Gen_Malticut:
-			m = current_++->move;
+			//m = current_++->move;
+			m = pick_best(current_++, end_);
 			return m;
+			break;
+		case Start_Probcut:
+			++current_;
+			return ttMove;
+			break;
+		case Gen_Probcut:
+			m = pick_best(current_++, end_);
+			if (m != ttMove&&pos_.see(m)>Threshold) { return m; }
 			break;
 		case START_Normal:
 			current_++;

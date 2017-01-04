@@ -6,6 +6,8 @@
 #include "book.h"
 #include <random>
 
+#define Probcut
+
 #define PREFETCH
 //#define PREF2
 SearchLimit limit;
@@ -533,6 +535,7 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 
 	}
 
+#ifdef   multicut 
 	//step9 multicut 
 	//nullmove‚æ‚è‚àã‚­‚È‚Á‚Ä‚µ‚Ü‚Á‚½I
 	//‚à‚Á‚ÆğŒ‚ğl‚¦‚é
@@ -586,6 +589,39 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 //end_multicut:
 //
 //
+#endif
+#ifdef Probcut
+
+	if (!PVNode
+		&&depth >= 5 * ONE_PLY
+		&&std::abs(beta) < Value_mate_in_maxply)
+	{
+		Value rbeta = std::min(beta + 200, Value_Infinite);
+		Depth rdepth = depth - 4 * ONE_PLY;
+
+		ASSERT(rdepth >=ONE_PLY);
+		
+		//‚±‚±probcut‚æ‚¤‚É•Ï‚¦‚é
+		movepicker mp(pos,ttMove,rbeta-staticeval);
+
+		while ((move = mp.return_nextmove()) != MOVE_NONE) {
+
+			if (pos.is_legal(move)) {
+
+				pos.do_move(move, &si);
+				value = -search<NonPV>(pos, (ss + 1), -rbeta, -rbeta + 1, rdepth);
+				pos.undo_move();
+
+				if (value >= rbeta) { return value; }
+			}
+
+		}
+	}
+
+
+
+
+#endif
 
 	//“à•””½•œ[‰»
 	/*

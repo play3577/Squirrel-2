@@ -6,6 +6,8 @@ enum Stage {
 
 	Start_Multicut,
 	Gen_Malticut,
+	Start_Probcut,
+	Gen_Probcut,
 	START_Normal,
 	CAP_PRO_PAWN,
 	Killers,
@@ -39,6 +41,7 @@ private:
 	ExtMove killers[2];
 	Move ttMove;
 	const Stack* ss;
+
 public:
 	//通常探索用コンストラクタ
 	movepicker(const Position& pos,Stack* ss_,Move ttm) :pos_(pos),ss(ss_) {
@@ -78,6 +81,21 @@ public:
 		Threshold = v;//まだ使わない
 		st = Start_Multicut;
 	}
+
+	movepicker(const Position& pos, Move ttm, Value th) :pos_(pos), Threshold(th) {
+
+
+		ASSERT(pos.is_incheck() == false);
+		current_ = end_ = move_;
+		st = Start_Probcut;
+		ttMove = (ttm != MOVE_NONE
+			&&pos_.pseudo_legal(ttm)
+			//&& pos_.capture(ttm)
+			&&pos_.capture_or_propawn(ttm)
+			&& pos.see(ttm) > Threshold )? ttm : MOVE_NONE;
+		end_ += (ttMove != MOVE_NONE);
+	}
+
 
 	inline Stage ret_stage() { return st; }
 

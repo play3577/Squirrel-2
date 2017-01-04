@@ -558,7 +558,7 @@ public:
 
 	bool capture_or_propawn(const Move m)const;
 
-
+	bool capture(const Move m)const;
 
 	//‚±‚ÌŠÖ”‚Å‘Å‚¿•à‹l‚ßA‰¤‚Ì©Eè‚ğÈ‚­B
 	/*
