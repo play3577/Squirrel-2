@@ -980,12 +980,12 @@ void Position::check_occbitboard()const {
 bool Position::capture_or_propawn(const Move m) const {
 
 	if (pcboard[move_to(m)] != NO_PIECE) {
-		//手番の駒を取ろうとしていないかのチェックはしておく
+		/*//手番の駒を取ろうとしていないかのチェックはしておく
 		if (piece_color(pcboard[move_to(m)]) == sidetomove()) {
 			cout << *this << endl;
 			cout << m << endl;
 			ASSERT(0);
-		}
+		}*/
 		return true;
 	}
 	else if (piece_type(moved_piece(m)) == PAWN&&is_promote(m)) {

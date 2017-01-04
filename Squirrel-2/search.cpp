@@ -392,10 +392,17 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 		&&ttdepth >= depth
 		&&ttValue != Value_error//これ今のところいらない(ここもっと詳しく読む必要がある)
 		&& (ttValue >= beta ? (ttBound&BOUND_LOWER) : (ttBound&BOUND_UPPER))//BOUND_EXACT = BOUND_UPPER | BOUND_LOWERであるのでどちらの&も満たす
+		//&& (pos.piece_on(move_to(ttMove)) == NO_PIECE || piece_color(pos.piece_on(move_to(ttMove))) != pos.sidetomove())//ここでこの局面で非合法手だったら省く
 		) {
 
 		//ttMoveがquietでttvalue>=betaであればhistoryを更新することができる。
 		if (ttValue >= beta&&ttMove != MOVE_NONE) {
+			//hashの偶然一致でここでバグって落ちることが起こったが、レアケースであるため無視をすることにする
+
+			/*if (pos.piece_on(move_to(ttMove)) != NO_PIECE && piece_color(pos.piece_on(move_to(ttMove))) == pos.sidetomove()) {
+
+				ASSERT(0);
+			}*/
 			if (pos.capture_or_propawn(ttMove)==false) {
 				update_stats(pos, ss, ttMove, nullptr, 0, bonus(depth));
 			}
@@ -546,49 +553,49 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 	https://groups.google.com/forum/?fromgroups=#!searchin/fishcooking/Probcut%7Csort:relevance/fishcooking/mpssXCKNuFo/T34cijXSfF8J
 	https://chessprogramming.wikispaces.com/Multi-Cut
 	*/
-//	if (!PVNode
-//		&&depth >= 5 * ONE_PLY
-//		&&std::abs(beta) < Value_mate_in_maxply)
-//	{
-//		//Value rbeta = std::min(beta + 200, Value_Infinite);
-//		Depth rdepth = depth - 4 * ONE_PLY;
-//		ASSERT(rdepth >= ONE_PLY);
-//		ASSERT(pos.state()->lastmove != MOVE_NULL);
-//
-//		//ここでどんな指してを生成すべきなのか....
-//		//capturepropawn??killerも含めてみるのもありかもしれない
-//		movepicker mp_prob(pos,beta);
-//
-//		int c = 0;
-//		const int overbeta= 3;
-//		
-//		
-//		Value bestvalue2 = -Value_Infinite;
-//
-//		while ((move = mp_prob.return_nextmove()) != MOVE_NONE) {
-//			//生成された指しての数が少なかった場合はmulticutは出来ない。
-//			//domoveする前にgotoする
-//			if (mp_prob.num_move() < overbeta) { goto end_multicut; }
-//			if (!pos.is_legal(move)) { continue; }
-//			
-//			pos.do_move(move, &si);
-//			value = -search<NonPV>(pos, (ss + 1), -beta, -beta + 1, rdepth);
-//			pos.undo_move();
-//
-//			if (value > bestvalue2) {
-//				bestvalue2 = value;
-//				if (value > beta) {
-//					c = c + 1;
-//					//fail soft
-//					if (c >= overbeta) return bestvalue2;
-//				}
-//			}//end of value>bestvalue2
-//		}
-//	}
-//
-//end_multicut:
-//
-//
+	if (!PVNode
+		&&depth >= 5 * ONE_PLY
+		&&std::abs(beta) < Value_mate_in_maxply)
+	{
+		//Value rbeta = std::min(beta + 200, Value_Infinite);
+		Depth rdepth = depth - 4 * ONE_PLY;
+		ASSERT(rdepth >= ONE_PLY);
+		ASSERT(pos.state()->lastmove != MOVE_NULL);
+
+		//ここでどんな指してを生成すべきなのか....
+		//capturepropawn??killerも含めてみるのもありかもしれない
+		movepicker mp_prob(pos,beta);
+
+		int c = 0;
+		const int overbeta= 3;
+		
+		
+		Value bestvalue2 = -Value_Infinite;
+
+		while ((move = mp_prob.return_nextmove()) != MOVE_NONE) {
+			//生成された指しての数が少なかった場合はmulticutは出来ない。
+			//domoveする前にgotoする
+			if (mp_prob.num_move() < overbeta) { goto end_multicut; }
+			if (!pos.is_legal(move)) { continue; }
+			
+			pos.do_move(move, &si);
+			value = -search<NonPV>(pos, (ss + 1), -beta, -beta + 1, rdepth);
+			pos.undo_move();
+
+			if (value > bestvalue2) {
+				bestvalue2 = value;
+				if (value > beta) {
+					c = c + 1;
+					//fail soft
+					if (c >= overbeta) return bestvalue2;
+				}
+			}//end of value>bestvalue2
+		}
+	}
+
+end_multicut:
+
+
 #endif
 #ifdef Probcut
 
@@ -821,7 +828,10 @@ moves_loop:
 		bestvalue= excludedmove?alpha: mated_in_ply(ss->ply);
 	}
 	else if (bestMove != MOVE_NONE) {
-
+		//行先に駒がないまたは自分の駒ではない
+		/*if (pos.piece_on(move_to(bestMove)) != NO_PIECE && piece_color(pos.piece_on(move_to(bestMove))) == pos.sidetomove()) {
+			ASSERT(0);
+		}*/
 		if (!pos.capture_or_propawn(bestMove)) {
 			update_stats(pos, ss, bestMove, Quiets_Moves, quiets_count, bonus(depth));
 		}
