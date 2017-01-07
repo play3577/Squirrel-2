@@ -10,6 +10,13 @@
 using namespace std;
 
 
+#if defined(_MSC_VER)
+#endif
+#if defined(__GNUC__) 
+#include <cmath>//for memset
+#endif
+
+
 string itos(int number);
 
 //sfen‚Ì•¶Žš—ñ‚ð‹î‚ÌŽí—Þ‚É•ÏŠ·‚·‚é‚½‚ß‚Ìƒ}ƒbƒv

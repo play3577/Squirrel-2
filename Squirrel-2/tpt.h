@@ -125,7 +125,7 @@ public:
 	//TPTのサイズをMB単位でリサイズする。その時は必ず置換表をクリアすること。
 	void resize(size_t mbSize);
 	//置換表のクリア
-	void clear() { std::memset(table, 0, cluster_count * sizeof(Cluster));}
+	void clear() { memset(table, 0, cluster_count * sizeof(Cluster));}
 
 	//prefetch
 	void prefetch(Key key) const {

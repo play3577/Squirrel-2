@@ -6,6 +6,14 @@
 #include "book.h"
 #include <random>
 
+
+#if defined(_MSC_VER)
+#endif
+#if defined(__GNUC__) 
+#include <algorithm>
+#endif
+
+
 #define Probcut
 
 #define PREFETCH
@@ -43,7 +51,7 @@ int FutilityMoveCounts[2][16]; // [improving][depth]
 int Reductions[3][2][64][64];  // [pv][improving][depth][moveNumber]
 
 template <bool PvNode> Depth reduction(bool i, Depth d, int mn) {
-	return Reductions[PvNode][i][std::min(d / ONE_PLY, 63)][std::min(mn, 63)] * ONE_PLY;
+	return Reductions[PvNode][i][std::min(int(d / ONE_PLY), 63)][std::min(mn, 63)] * ONE_PLY;
 }
 
 //íTçıèÊêîÇÃèâä˙âª
@@ -123,7 +131,9 @@ void check_time() {
 
 Value Thread::think() {
 
-
+	Stack stack[MAX_PLY + 7], *ss = stack + 5;
+	std::memset(stack, 0, (MAX_PLY + 7) * sizeof(Stack));
+	Value bestvalue, alpha, beta;
 
 	if (end == RootMoves) {
 #ifndef LEARN
@@ -166,9 +176,7 @@ Value Thread::think() {
 #ifdef USETT
 	TT.new_search();
 #endif
-	Stack stack[MAX_PLY + 7], *ss = stack + 5;
-	std::memset(stack, 0,(MAX_PLY+7)*sizeof(Stack));
-	Value bestvalue, alpha, beta;
+	
 	bestvalue = alpha = Value_Mated;
 	beta = Value_Mate;
 	rootdepth = 0;

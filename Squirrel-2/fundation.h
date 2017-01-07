@@ -1,8 +1,16 @@
 #pragma once
 
 #include <iostream>
-#include <crtdbg.h>
+
 #include <string>
+
+#if defined(_MSC_VER)
+#include <crtdbg.h>
+#endif
+#if defined(__GNUC__) 
+#include <assert.h>
+#define ASSERT_(x) assert(x)
+#endif
 
 //やねうら王のアイデア
 #ifdef _DEBUG
@@ -34,6 +42,14 @@
 
 //#define DIFFTEST
 
+
+
+#if defined(_MSC_VER)
+#endif
+#if defined(__GNUC__) 
+#include <string.h>//for memset
+#include <cstring>
+#endif
 
 
 //教師手との差がこの範囲内に収まらなかった特徴は更新しない。
@@ -129,20 +145,18 @@ enum Piece:uint8_t {
 
 };
 
-constexpr Piece inverse(const Piece pc) { return Piece(pc^WHITE_piece); }//xorでwhitepieceフラグを反転させる。
-constexpr bool is_ok(const Piece pc) { return ((B_PAWN <= pc&&pc <= B_DRAGON) || (W_PAWN <= pc&&pc <= W_DRAGON)); }
-constexpr Color piece_color(const Piece pc) { return (pc& WHITE_piece) ? WHITE : BLACK; }
-constexpr Piece piece_type(const Piece pc) { return Piece(pc & 0b1111); }//手番の情報を除く
-constexpr bool can_promote(const Piece pt){ return ((B_PAWN <= pt&&pt <= B_ROOK) /*|| (W_PAWN <= pt&&pt <= W_ROOK)*/); }
+inline Piece inverse(const Piece pc) { return Piece(pc^WHITE_piece); }//xorでwhitepieceフラグを反転させる。
+inline bool is_ok(const Piece pc) { return ((B_PAWN <= pc&&pc <= B_DRAGON) || (W_PAWN <= pc&&pc <= W_DRAGON)); }
+inline Color piece_color(const Piece pc) { return (pc& WHITE_piece) ? WHITE : BLACK; }
+inline Piece piece_type(const Piece pc) { return Piece(pc & 0b1111); }//手番の情報を除く
+inline bool can_promote(const Piece pt){ return ((B_PAWN <= pt&&pt <= B_ROOK) /*|| (W_PAWN <= pt&&pt <= W_ROOK)*/); }
 inline Piece promotepiece(const Piece pc) { ASSERT(can_promote(piece_type(pc)));  return Piece(pc | PROMOTE); }
-constexpr Piece rowpiece(const Piece pc) { /*ASSERT(!can_promote(pc));*/ return Piece(pc&~PROMOTE); }//do_moveでなっていない駒も一律でこの関数に突っ込みたいのでASSERTは外す
-constexpr Piece add_color(const Piece pt, const Color c) { return (c == BLACK) ? pt : Piece(pt | WHITE_piece); }
+inline Piece rowpiece(const Piece pc) { /*ASSERT(!can_promote(pc));*/ return Piece(pc&~PROMOTE); }//do_moveでなっていない駒も一律でこの関数に突っ込みたいのでASSERTは外す
+inline Piece add_color(const Piece pt, const Color c) { return (c == BLACK) ? pt : Piece(pt | WHITE_piece); }
 
 //表示用（コレでうまくいくか....????）OK上手く行けてた。
-constexpr char* outputPiece[PC_ALL] = { " 0"," P"," L"," N"," S"," B"," R"," G","_K","+P","+L","+N","+S","+B","+R","15","16",
-											" p"," l"," n"," s"," b"," r"," g","_k","+p","+l","+n","+s","+b","+r" };
-constexpr char* USIPiece[PC_ALL] = { "0","P","L","N","S","B","R","G","K","+P","+L","+N","+S","+B","+R","15","16",
-													"p","l","n","s","b","r","g","k","+p","+l","+n","+s","+b","+r" };
+extern char* outputPiece[PC_ALL] ;
+extern char* USIPiece[PC_ALL];
 std::ostream& operator<<(std::ostream& os, const Piece pc);//usi形式表示
 std::ostream& outputpiece(std::ostream& os, const Piece pc);
 

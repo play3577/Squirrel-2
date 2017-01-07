@@ -13,17 +13,43 @@
  http://kawa0810.hateblo.jp/entry/20120304/1330852197
  */
 	
+
+#if defined(_MSC_VER)
 #include <intrin.h>
+#endif
+#if defined(__GNUC__) 
+#include <immintrin.h>
+
+#endif
 #include "fundation.h"
 
 //[0]èc [1]â° [2] plus45 [3] minus45
+//__m256iÇégÇ¶ÇÈÇÃÇÕVC++ÇæÇØÇæÇ¡ÇΩÇÃÇ©(ÅL•É÷•ÅM)
 struct Occ_256 {
-__m256i b256;
-uint64_t b64(const int i) const {
-	return b256.m256i_u64[i];
-	
-}
 
+	__m256i b256;
+
+	uint64_t b64(const int i)const{
+
+
+#if defined(_MSC_VER)
+		return b256.m256i_u64[i];
+#endif
+#if defined(__GNUC__) 
+		return uint64_t(_mm256_extract_epi64(b256, i));
+#endif
+	}
+
+	void set(const uint64_t value, const int index) {
+
+#if defined(_MSC_VER)
+		b256.m256i_u64[index]=value;
+#endif
+#if defined(__GNUC__) 
+		_mm256_insert_epi64(b256, value, index);
+#endif
+		
+	}
 /*
 Integer 256-bit vector logical operations.
 			
@@ -48,35 +74,65 @@ Occ_256& andnot(const Occ_256& b1) { b256 = _mm256_andnot_si256(b256, b1.b256); 
 #else
 //4âÒ operationÇÇµÇ»ÇØÇÍÇŒÇ»ÇÁÇ»Ç¢ÇÃÇ≈ëÅÇ≠Ç»ÇÁÇ»Ç¢....
 //ÇµÇ©Çµattacker_toÇ»Ç«Ç≈occÇàÍÇ¬ÇæÇØìnÇπÇŒÇ¢Ç¢ÇÃÇ≈ìnÇ∑Ç∆Ç±ÇÎÇæÇØëÅÇ≠Ç»ÇÈÅHÅH
-Occ_256& operator^=(const Occ_256& b1) { 
-	b256.m256i_i64[0] = b256.m256i_i64[0] ^ b1.b256.m256i_i64[0];  
-	b256.m256i_i64[1] = b256.m256i_i64[1] ^ b1.b256.m256i_i64[1];
-	b256.m256i_i64[2] = b256.m256i_i64[2] ^ b1.b256.m256i_i64[2];
-	b256.m256i_i64[3] = b256.m256i_i64[3] ^ b1.b256.m256i_i64[3];
-	return *this; 
-}
-Occ_256& operator|=(const Occ_256& b1) { 
-	b256.m256i_i64[0] = b256.m256i_i64[0] | b1.b256.m256i_i64[0];
-	b256.m256i_i64[1] = b256.m256i_i64[1] | b1.b256.m256i_i64[1];
-	b256.m256i_i64[2] = b256.m256i_i64[2] | b1.b256.m256i_i64[2];
-	b256.m256i_i64[3] = b256.m256i_i64[3] | b1.b256.m256i_i64[3];
+	Occ_256& operator^=(Occ_256& b1) { 
 
-	return *this;
-}
-Occ_256& operator&=(const Occ_256& b1) { 
-	b256.m256i_i64[0] = b256.m256i_i64[0] & b1.b256.m256i_i64[0];
-	b256.m256i_i64[1] = b256.m256i_i64[1] & b1.b256.m256i_i64[1];
-	b256.m256i_i64[2] = b256.m256i_i64[2] & b1.b256.m256i_i64[2];
-	b256.m256i_i64[3] = b256.m256i_i64[3] & b1.b256.m256i_i64[3];
+#if defined(_MSC_VER)
+		b256.m256i_u64[0] = b256.m256i_u64[0] ^ b1.b256.m256i_u64[0];
+		b256.m256i_u64[1] = b256.m256i_u64[1] ^ b1.b256.m256i_u64[1];
+		b256.m256i_u64[2] = b256.m256i_u64[2] ^ b1.b256.m256i_u64[2];
+		b256.m256i_u64[3] = b256.m256i_u64[3] ^ b1.b256.m256i_u64[3];
+#endif
+#if defined(__GNUC__) 
+		_mm256_insert_epi64(b256, (b64(0) ^ b1.b64(0)),0);
+		_mm256_insert_epi64(b256, (b64(1) ^ b1.b64(1)), 1);
+		_mm256_insert_epi64(b256, (b64(2) ^ b1.b64(2)), 2);
+		_mm256_insert_epi64(b256, (b64(3) ^ b1.b64(3)), 3);
+#endif
+	
+		return *this; 
+	}
+	Occ_256& operator|=(const Occ_256& b1) { 
 
-	return *this; 
-}
+#if defined(_MSC_VER)
+		b256.m256i_u64[0] = b256.m256i_u64[0] | b1.b256.m256i_u64[0];
+		b256.m256i_u64[1] = b256.m256i_u64[1] | b1.b256.m256i_u64[1];
+		b256.m256i_u64[2] = b256.m256i_u64[2] | b1.b256.m256i_u64[2];
+		b256.m256i_u64[3] = b256.m256i_u64[3] | b1.b256.m256i_u64[3];
+#endif
+#if defined(__GNUC__) 
+		_mm256_insert_epi64(b256, (b64(0) | b1.b64(0)), 0);
+		_mm256_insert_epi64(b256, (b64(1) | b1.b64(1)), 1);
+		_mm256_insert_epi64(b256, (b64(2) | b1.b64(2)), 2);
+		_mm256_insert_epi64(b256, (b64(3) | b1.b64(3)), 3);
+#endif
+	
+
+		return *this;
+	}
+	Occ_256& operator&=(const Occ_256& b1){ 
+
+#if defined(_MSC_VER)
+		b256.m256i_u64[0] = b256.m256i_u64[0] & b1.b256.m256i_u64[0];
+		b256.m256i_u64[1] = b256.m256i_u64[1] & b1.b256.m256i_u64[1];
+		b256.m256i_u64[2] = b256.m256i_u64[2] & b1.b256.m256i_u64[2];
+		b256.m256i_u64[3] = b256.m256i_u64[3] & b1.b256.m256i_u64[3];
+#endif
+#if defined(__GNUC__) 
+		_mm256_insert_epi64(b256, (b64(0) & b1.b64(0)), 0);
+		_mm256_insert_epi64(b256, (b64(1) & b1.b64(1)), 1);
+		_mm256_insert_epi64(b256, (b64(2) & b1.b64(2)), 2);
+		_mm256_insert_epi64(b256, (b64(3) & b1.b64(3)), 3);
+#endif
+	
+
+		return *this; 
+	}
 //Occ_256& andnot(const Occ_256& b1) {
 //	
-//	b256.m256i_i64[0] = b256.m256i_i64[0] &~ b1.b256.m256i_i64[0];
-//	b256.m256i_i64[1] = b256.m256i_i64[1] &~ b1.b256.m256i_i64[1];
-//	b256.m256i_i64[2] = b256.m256i_i64[2] &~ b1.b256.m256i_i64[2];
-//	b256.m256i_i64[3] = b256.m256i_i64[3] &~ b1.b256.m256i_i64[3];
+//	b256.m256i_u64[0] = b256.m256i_u64[0] &~ b1.b256.m256i_u64[0];
+//	b256.m256i_u64[1] = b256.m256i_u64[1] &~ b1.b256.m256i_u64[1];
+//	b256.m256i_u64[2] = b256.m256i_u64[2] &~ b1.b256.m256i_u64[2];
+//	b256.m256i_u64[3] = b256.m256i_u64[3] &~ b1.b256.m256i_u64[3];
 //	return *this; 
 //}
 #endif
@@ -85,10 +141,19 @@ Occ_256& operator&=(const Occ_256& b1) {
 inline Occ_256& operator^(const Occ_256& b1,const Occ_256& b2) {
 	Occ_256 occ_;
 
-	occ_.b256.m256i_i64[0] = b2.b256.m256i_i64[0] ^ b1.b256.m256i_i64[0];
-	occ_.b256.m256i_i64[1] = b2.b256.m256i_i64[1] ^ b1.b256.m256i_i64[1];
-	occ_.b256.m256i_i64[2] = b2.b256.m256i_i64[2] ^ b1.b256.m256i_i64[2];
-	occ_.b256.m256i_i64[3] = b2.b256.m256i_i64[3] ^ b1.b256.m256i_i64[3];
+#if defined(_MSC_VER)
+	occ_.b256.m256i_u64[0] = b2.b256.m256i_u64[0] ^ b1.b256.m256i_u64[0];
+	occ_.b256.m256i_u64[1] = b2.b256.m256i_u64[1] ^ b1.b256.m256i_u64[1];
+	occ_.b256.m256i_u64[2] = b2.b256.m256i_u64[2] ^ b1.b256.m256i_u64[2];
+	occ_.b256.m256i_u64[3] = b2.b256.m256i_u64[3] ^ b1.b256.m256i_u64[3];
+#endif
+#if defined(__GNUC__) 
+	_mm256_insert_epi64(occ_.b256, (b1.b64(0) ^ b1.b64(0)), 0);
+	_mm256_insert_epi64(occ_.b256, (b1.b64(1) ^ b1.b64(1)), 1);
+	_mm256_insert_epi64(occ_.b256, (b1.b64(2) ^ b1.b64(2)), 2);
+	_mm256_insert_epi64(occ_.b256, (b1.b64(3) ^ b1.b64(3)), 3);
+#endif
+	
 	return occ_;
 }
 

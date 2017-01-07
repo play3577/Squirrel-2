@@ -241,10 +241,16 @@ void init_occ256()
 
 		Square sq2 = sq - 9;
 
-		SquareBB256[sq].b256.m256i_u64[0] = (sq2sq_256[sq] != Error_SQ) ? 1ULL << sq2sq_256[sq]:0;
+		/*SquareBB256[sq].b256.m256i_u64[0] = (sq2sq_256[sq] != Error_SQ) ? 1ULL << sq2sq_256[sq]:0;
 		SquareBB256[sq].b256.m256i_u64[1] = (sq2sq90_256[sq] != Error_SQ) ? 1ULL << sq2sq90_256[sq] : 0;
 		SquareBB256[sq].b256.m256i_u64[2] = (sq2sq_p45_256[sq] != Error_SQ) ? 1ULL << sq2sq_p45_256[sq] : 0;
-		SquareBB256[sq].b256.m256i_u64[3] = (sq2sq_m45_256[sq] != Error_SQ) ? 1ULL << sq2sq_m45_256[sq] : 0;
+		SquareBB256[sq].b256.m256i_u64[3] = (sq2sq_m45_256[sq] != Error_SQ) ? 1ULL << sq2sq_m45_256[sq] : 0;*/
+		SquareBB256[sq].set((sq2sq_256[sq] != Error_SQ) ? 1ULL << sq2sq_256[sq] : 0,0);
+		SquareBB256[sq].set((sq2sq90_256[sq] != Error_SQ) ? 1ULL << sq2sq90_256[sq] : 0,1);
+		SquareBB256[sq].set((sq2sq_p45_256[sq] != Error_SQ) ? 1ULL << sq2sq_p45_256[sq] : 0,2);
+		SquareBB256[sq].set((sq2sq_m45_256[sq] != Error_SQ) ? 1ULL << sq2sq_m45_256[sq] : 0,3);
+
+
 		/*cout << int(sq) << endl;
 		cout << SquareBB256[sq] << endl;*/
 	}
@@ -293,7 +299,7 @@ return os;
 
 std::ostream & operator<<(std::ostream & os, const Occ_256 & board)
 {
-	const uint64_t occ_tate[4] = { board.b256.m256i_u64[0], board.b256.m256i_u64[1],board.b256.m256i_u64[2],board.b256.m256i_u64[3] };
+	const uint64_t occ_tate[4] = { board.b64(0), board.b64(1),board.b64(2),board.b64(3) };
 
 
 	for (int i = 0; i < 4; i++) {

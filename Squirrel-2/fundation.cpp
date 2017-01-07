@@ -67,7 +67,11 @@ std::ostream & operator<<(std::ostream & os, const Square sq)
 	return os;
 }
 
+char* outputPiece[PC_ALL] = { " 0"," P"," L"," N"," S"," B"," R"," G","_K","+P","+L","+N","+S","+B","+R","15","16",
+" p"," l"," n"," s"," b"," r"," g","_k","+p","+l","+n","+s","+b","+r" };
 
+char* USIPiece[PC_ALL] = { "0","P","L","N","S","B","R","G","K","+P","+L","+N","+S","+B","+R","15","16",
+"p","l","n","s","b","r","g","k","+p","+l","+n","+s","+b","+r" };
 
 std::ostream & operator<<(std::ostream & os, const Move m)
 {

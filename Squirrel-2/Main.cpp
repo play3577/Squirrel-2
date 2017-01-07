@@ -25,10 +25,18 @@ int main() {
 
 	//この記法が許されるのはVC++だけらしいのでlinuxに移植する場合は別の方法を使わないといけない
 	//cout << __argv[0] << endl;
+
+#if defined(_MSC_VER)
 	string ename = __argv[0];
 	string::size_type hoge = ename.find_last_of('\\');
-	if(hoge==string::npos){ hoge = ename.find_last_of('/'); }
+	if (hoge == string::npos) { hoge = ename.find_last_of('/'); }
 	string ename2 = ename.substr(hoge + 1);
+#endif
+#if defined(__GNUC__) 
+	string ename2 = "Squirrel_linux";
+#endif
+
+	
 	//cout << ename2 << endl;
 
 

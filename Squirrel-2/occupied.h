@@ -143,7 +143,7 @@ inline void make_indextate() {
 縦の利き　OK
 あとでconstexprにするか値をテーブルに格納するかして高速化する
 */
-constexpr int shift_tate(Square sq) {
+inline int shift_tate(Square sq) {
 
 	ASSERT(is_ok(sq));
 	//return shift_table_tate[sq];
@@ -152,7 +152,7 @@ constexpr int shift_tate(Square sq) {
 
 }
 
-constexpr int index_tate(Square sq) {
+inline int index_tate(Square sq) {
 
 	ASSERT(is_ok(sq));
 	return index_table_tate[sq];
@@ -186,14 +186,14 @@ inline void make_indexyoko() {
 		(9 * f <= sq&&sq <= 9 * f + 3) ? index_table_yoko[sq]= 1 : index_table_yoko[sq]= 0;
 	}
 }
-constexpr int shift_yoko(Square sq) {
+inline int shift_yoko(Square sq) {
 
 	ASSERT(is_ok(sq));
 	return shift_table_yoko[sq];
 
 }
 
-constexpr int index_yoko(Square sq) {
+inline int index_yoko(Square sq) {
 
 	ASSERT(is_ok(sq));
 	return index_table_yoko[sq];
@@ -209,14 +209,14 @@ void make_indexplus45();
 void make_shiftplus45();
 
 
-constexpr int index_plus45(Square sq) {
+inline int index_plus45(Square sq) {
 
 	ASSERT(is_ok(sq));
 	//indexは間違ってなかった。
 	return indexPlus45[sq];
 }
 
-constexpr int shift_plus45(Square sq) {
+inline int shift_plus45(Square sq) {
 
 	ASSERT(is_ok(sq));
 
@@ -233,14 +233,14 @@ extern int shiftMinus45[SQ_NUM];
 void make_shiftMinus45();
 
 
-constexpr int index_Minus45(Square sq) {
+inline int index_Minus45(Square sq) {
 
 	ASSERT(is_ok(sq));
 	//indexは間違ってなかった。
 	return indexMinus45[sq];
 }
 
-constexpr int shift_Minus45(Square sq) {
+inline int shift_Minus45(Square sq) {
 
 	ASSERT(is_ok(sq));
 

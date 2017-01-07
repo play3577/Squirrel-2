@@ -74,7 +74,7 @@ std::ostream & operator<<(std::ostream & os, const Bitboard & board)
 
 			Square sq = make_square(r, f);
 			if (sq <= 44) {
-				if ((board.b[0])&(1ui64 << sq)) {
+				if ((board.b[0])&(1ULL << sq)) {
 					os << "*";
 				}
 				else {
@@ -82,7 +82,7 @@ std::ostream & operator<<(std::ostream & os, const Bitboard & board)
 				}
 			}
 			else {
-				if ((board.b[1])&(1ui64 << (sq-45))) {
+				if ((board.b[1])&(1ULL << (sq-45))) {
 					os << "*";
 				}
 				else {
@@ -103,7 +103,7 @@ bitを上位下位入れ替えるための関数
 int change_indian(int i) {
 
 	//iは7bit以下でなければならない
-	_ASSERT((i >> 8) == 0);
+	ASSERT((i >> 8) == 0);
 
 	int ret = 0;
 	for (int b = 0; b < 7; b++) {
@@ -151,10 +151,10 @@ void bitboard_init()
 
 		//31bit離れたところにもう一つbitが立ってしまっている！！！！！！！（解決した）
 		if (sq <= SQ5I) {
-			SquareBB[sq] = Bitboard(uint64_t(1ui64 << sq), 0);
+			SquareBB[sq] = Bitboard(uint64_t(1ULL << sq), 0);
 		}
 		else {
-			SquareBB[sq] = Bitboard(0, uint64_t(1ui64 << (sq - SQ6A)));
+			SquareBB[sq] = Bitboard(0, uint64_t(1ULL << (sq - SQ6A)));
 		}
 		ALLBB ^= SquareBB[sq];
 	}

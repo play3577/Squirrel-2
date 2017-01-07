@@ -1,0 +1,128 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|ARM">
+      <Configuration>Debug</Configuration>
+      <Platform>ARM</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|ARM">
+      <Configuration>Release</Configuration>
+      <Platform>ARM</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x86">
+      <Configuration>Debug</Configuration>
+      <Platform>x86</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x86">
+      <Configuration>Release</Configuration>
+      <Platform>x86</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{66da0501-c45d-41bc-9188-936d349b662d}</ProjectGuid>
+    <Keyword>Linux</Keyword>
+    <RootNamespace>squirrel2_linux</RootNamespace>
+    <MinimumVisualStudioVersion>15.0</MinimumVisualStudioVersion>
+    <ApplicationType>Linux</ApplicationType>
+    <ApplicationTypeRevision>1.0</ApplicationTypeRevision>
+    <TargetLinuxPlatform>Generic</TargetLinuxPlatform>
+    <LinuxProjectType>{D51BCBC9-82E9-4017-911E-C93873C4EA2B}</LinuxProjectType>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'" Label="Configuration">
+    <UseDebugLibraries>true</UseDebugLibraries>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM'" Label="Configuration">
+    <UseDebugLibraries>false</UseDebugLibraries>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x86'" Label="Configuration">
+    <UseDebugLibraries>true</UseDebugLibraries>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x86'" Label="Configuration">
+    <UseDebugLibraries>false</UseDebugLibraries>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <UseDebugLibraries>true</UseDebugLibraries>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <UseDebugLibraries>false</UseDebugLibraries>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings" />
+  <ImportGroup Label="Shared" />
+  <ImportGroup Label="PropertySheets" />
+  <PropertyGroup Label="UserMacros" />
+  <ItemGroup>
+    <ClCompile Include="..\..\Squirrel-2\benchmark.cpp" />
+    <ClCompile Include="..\..\Squirrel-2\Bitboard.cpp" />
+    <ClCompile Include="..\..\Squirrel-2\bitop.cpp" />
+    <ClCompile Include="..\..\Squirrel-2\book.cpp" />
+    <ClCompile Include="..\..\Squirrel-2\evaluate.cpp" />
+    <ClCompile Include="..\..\Squirrel-2\fundation.cpp" />
+    <ClCompile Include="..\..\Squirrel-2\game_database.cpp" />
+    <ClCompile Include="..\..\Squirrel-2\Hash.cpp" />
+    <ClCompile Include="..\..\Squirrel-2\learner.cpp" />
+    <ClCompile Include="..\..\Squirrel-2\Main.cpp" />
+    <ClCompile Include="..\..\Squirrel-2\makemove.cpp" />
+    <ClCompile Include="..\..\Squirrel-2\misc.cpp" />
+    <ClCompile Include="..\..\Squirrel-2\movepicker.cpp" />
+    <ClCompile Include="..\..\Squirrel-2\occupied.cpp" />
+    <ClCompile Include="..\..\Squirrel-2\occupied_m256.cpp" />
+    <ClCompile Include="..\..\Squirrel-2\position.cpp" />
+    <ClCompile Include="..\..\Squirrel-2\search.cpp" />
+    <ClCompile Include="..\..\Squirrel-2\Thread.cpp" />
+    <ClCompile Include="..\..\Squirrel-2\tpt.cpp" />
+    <ClCompile Include="..\..\Squirrel-2\usi.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\Squirrel-2\benchmark.h" />
+    <ClInclude Include="..\..\Squirrel-2\Bitboard.h" />
+    <ClInclude Include="..\..\Squirrel-2\bitop.h" />
+    <ClInclude Include="..\..\Squirrel-2\book.h" />
+    <ClInclude Include="..\..\Squirrel-2\evaluate.h" />
+    <ClInclude Include="..\..\Squirrel-2\fundation.h" />
+    <ClInclude Include="..\..\Squirrel-2\game_database.h" />
+    <ClInclude Include="..\..\Squirrel-2\Hash.h" />
+    <ClInclude Include="..\..\Squirrel-2\learner.h" />
+    <ClInclude Include="..\..\Squirrel-2\makemove.h" />
+    <ClInclude Include="..\..\Squirrel-2\misc.h" />
+    <ClInclude Include="..\..\Squirrel-2\movepicker.h" />
+    <ClInclude Include="..\..\Squirrel-2\moveStats.h" />
+    <ClInclude Include="..\..\Squirrel-2\occupied.h" />
+    <ClInclude Include="..\..\Squirrel-2\occupied_m256.h" />
+    <ClInclude Include="..\..\Squirrel-2\position.h" />
+    <ClInclude Include="..\..\Squirrel-2\search.h" />
+    <ClInclude Include="..\..\Squirrel-2\Thread.h" />
+    <ClInclude Include="..\..\Squirrel-2\tpt.h" />
+    <ClInclude Include="..\..\Squirrel-2\usi.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\Squirrel-2\Makefile" />
+    <None Include="..\..\Squirrel-2\Squirrel-2.vcxproj" />
+    <None Include="..\..\Squirrel-2\Squirrel-2.vcxproj.filters" />
+  </ItemGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <CppLanguageStandard>c++1y</CppLanguageStandard>
+      <AdditionalOptions>-mavx </AdditionalOptions>
+      <Optimization>MaxSpeed</Optimization>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <CppLanguageStandard>c++1y</CppLanguageStandard>
+      <AdditionalOptions>-mavx </AdditionalOptions>
+      <Optimization>MaxSpeed</Optimization>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets" />
+</Project>

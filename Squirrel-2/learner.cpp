@@ -133,7 +133,7 @@ void renewal_PP() {
 	int h;
 
 	//‚±‚ñ‚È‚ñ‚Å‚¢‚¢‚Ì‚©H
-	h =  std::abs(uint8_t(mt())) % 3;
+	h =  std::abs(int(mt())) % 3;
 
 	//‘ÎÌ«‚ÍdJ‚Ì’†‚ÉŠÜ‚Ü‚ê‚Ä‚¢‚é‚Ì‚Å‚±‚±‚Å‚Íl‚¦‚È‚­‚Ä‚¢‚¢
 	for (BonaPiece i = f_hand_pawn; i < fe_end2; i++) {

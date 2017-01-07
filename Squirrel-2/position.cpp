@@ -4,6 +4,14 @@
 #include "evaluate.h"
 #include <sstream>
 
+
+#if defined(_MSC_VER)
+#endif
+#if defined(__GNUC__) 
+#include <stddef.h>
+#endif
+
+
 Sfen2Piece Sfen2Piece_;
 
 using namespace Eval;
@@ -939,12 +947,12 @@ void Position::check_effectocc256()
 	//	cout << "obstacle" << static_cast<std::bitset<7>>(obstacle_tate) << endl;
 	//	cout << LongBishopEffect_plus45[sq][obstacle_tate] << endl;
 	//}
-	for (Square sq = SQ1A; sq < SQ_NUM; sq++) {
-		//‰Šú‹Ç–ÊOK
-		int8_t obstacle_tate = (occ256.b256.m256i_u64[3] >> occ256_shift_table_m45[sq])&effectmask;
-		cout << "obstacle" << static_cast<std::bitset<7>>(obstacle_tate) << endl;
-		cout << LongBishopEffect_minus45[sq][obstacle_tate] << endl;
-	}
+	//for (Square sq = SQ1A; sq < SQ_NUM; sq++) {
+	//	//‰Šú‹Ç–ÊOK
+	//	int8_t obstacle_tate = (occ256.b256.m256i_u64[3] >> occ256_shift_table_m45[sq])&effectmask;
+	//	cout << "obstacle" << static_cast<std::bitset<7>>(obstacle_tate) << endl;
+	//	cout << LongBishopEffect_minus45[sq][obstacle_tate] << endl;
+	//}
 }
 
 

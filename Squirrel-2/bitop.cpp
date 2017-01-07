@@ -3,11 +3,21 @@
 
 uint64_t find_lsb(uint64_t &bb)
 {
-	unsigned long index = 0;
+	
 	
 	//lsbを探す。（将棋なので０ということはないと思われる。）
+
+#if defined(_MSC_VER)
+	unsigned long index = 0;
 	_BitScanForward64(&index, bb);
 	return (index);
+#endif
+#if defined(__GNUC__) 
+	return uint64_t(__builtin_ctzll(bb));
+#endif
+
+	
+	
 }
 
 uint64_t pop_lsb(uint64_t & bb)
@@ -26,9 +36,16 @@ uint64_t pop_lsb(uint64_t & bb)
 
 uint64_t find_msb(uint64_t  b) {
 	ASSERT(b);
+	
+#if defined(_MSC_VER)
 	unsigned long idx;
+
 	_BitScanReverse64(&idx, b);
 	return (uint64_t)idx;
+#endif
+#if defined(__GNUC__) 
+	return uint64_t(63-__builtin_clzll(b));
+#endif
 }
 
 
