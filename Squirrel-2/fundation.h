@@ -27,11 +27,14 @@
 
 
 //#define CHECKPOS
-//#define LEARN
+#define LEARN
 
 
 #ifndef LEARN
 #define USETT
+#endif
+#ifdef USETT
+#define PREFETCH
 #endif
 
 //やねうら王のアイディア

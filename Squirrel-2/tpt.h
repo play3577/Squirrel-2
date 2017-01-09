@@ -134,5 +134,6 @@ public:
 		_mm_prefetch(reinterpret_cast<char *>(first_entry(key)), _MM_HINT_T0);
 	}
 };
-
+#ifdef USETT
 extern TranspositionTable TT;
+#endif

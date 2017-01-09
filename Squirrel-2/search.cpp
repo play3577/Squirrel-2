@@ -13,10 +13,10 @@
 #include <algorithm>
 #endif
 
-
+#ifdef USETT
 #define Probcut
+#endif
 
-#define PREFETCH
 //#define PREF2
 SearchLimit limit;
 Signal signal;

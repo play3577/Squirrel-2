@@ -99,8 +99,8 @@ void USI::init_option(OptionMap &o,string engine_name)
 	o["EngineName"] << USIOption(name.c_str());
 	o["is_0.1s"] << USIOption(false);
 	//o["bookpath"] << USIOption("c:/book2/book2016928fg2800_40.db");
-	o["bookpath"] << USIOption("c:/book/standard_book.db");
-	o["usebook"] << USIOption(false);
+	o["bookpath"] << USIOption("c:/book2/standard_book.db");
+	o["usebook"] << USIOption(true);
 	o["randombook"] << USIOption(true);
 }
 

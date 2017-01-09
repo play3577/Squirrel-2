@@ -166,7 +166,7 @@ void Eval::learner()
 {
 	//初期化
 	int readgames = 10000;
-	const int numgames = 1;//コレじゃ少ないかもしれないけど200棋譜の20iterationに２日かかったのでコレぐらいが妥当か
+	const int numgames = 1000;//コレじゃ少ないかもしれないけど200棋譜の20iterationに２日かかったのでコレぐらいが妥当か
 	const int numiteration = 100;
 	/*bonanzaではparse2を３２回繰り返すらしいんでそれを参考にする。
 	学習の損失の現象が進むに連れてnum_parse2の値を減らしていく
@@ -275,7 +275,7 @@ void Eval::learner()
 				//合法てリストに教師手が入っていなければここから先おかしくなってしまうのでこの棋譜を使っての学週はここで中断
 
 				//is_okで落ちてくれるのは最後まで利用できたということなのでありがたい
-				if(is_ok(teacher_move)==false){ cout << "is not ok" << endl; goto ERROR_OCCURED; }
+				if (is_ok(teacher_move) == false) { cout << "is not ok" << endl; goto ERROR_OCCURED; }
 
 				if (!swapmove(moves, int(num_moves), teacher_move)) { 
 					cout << "cant swap" << endl;
