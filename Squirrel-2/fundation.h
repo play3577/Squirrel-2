@@ -5,7 +5,7 @@
 #include <string>
 
 #if defined(_MSC_VER)
-#include <crtdbg.h>
+#define _CRTDBG_MAP_ALLOC #include <stdlib.h> #include <crtdbg.h>  
 #endif
 #if defined(__GNUC__) 
 #include <assert.h>

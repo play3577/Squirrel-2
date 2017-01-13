@@ -256,7 +256,12 @@ void Position::do_move(const Move m, StateInfo * newst)
 		int num = num_pt(hands[sidetomove()], pt);
 		ASSERT(add_color(pt, sidetomove()) == movedpiece);
 		ASSERT(sidetomove() == c);
-		ASSERT(num != 0);
+		//ASSERT(num != 0);
+		if (num == 0) {
+			cout << *this << endl;
+			check_move(m);
+			ASSERT(0);
+		}
 
 		//dirtybonap‚ÌXV(ˆê”Ô–‡”‚Ì‘å‚«‚¢‹î‚©‚ç‘Å‚Á‚Ä‚¢‚­‚±‚Æ‚É‚·‚é)
 		st->dirtyuniform[0] = list.hand2Uniform[c][pt][num];
@@ -1075,6 +1080,14 @@ bool Position::is_legal(const Move m) const {
 		check_move(m);
 		ASSERT(0);
 	}
+
+#ifdef LEARN
+	if (is_drop(m) && (num_pt(hand(sidetomove()), piece_type(movedpiece)) == 0)) {
+		return false;
+	}
+#endif
+
+
 	return true;
 
 

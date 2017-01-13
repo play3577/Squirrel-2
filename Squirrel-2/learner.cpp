@@ -162,11 +162,16 @@ void renewal_PP() {
 
 //学習用関数
 //学習の並列化もさせたいが、t2.microは1coreしかなかったので....
+/*
+学習部で同じ差し手を繰り返してしまうバグは教師データが原因でもなかったし仕掛けたassertにもかからなかった！！
+iterationが増えると起こる？？
+
+*/
 void Eval::learner()
 {
 	//初期化
 	int readgames = 10000;
-	const int numgames = 1000;//コレじゃ少ないかもしれないけど200棋譜の20iterationに２日かかったのでコレぐらいが妥当か
+	const int numgames = 1000;//debug用
 	const int numiteration = 100;
 	/*bonanzaではparse2を３２回繰り返すらしいんでそれを参考にする。
 	学習の損失の現象が進むに連れてnum_parse2の値を減らしていく
@@ -258,13 +263,14 @@ void Eval::learner()
 
 			auto thisgame = games[g];
 			pos.set_hirate();
-			for (int ply = 0; ply < thisgame.ply; ply++) {
+			for (int ply = 0; ply < (thisgame.moves.size()-1); ply++) {
 				diddepth = ply;
 				minfo_list.clear();
 
 				const Color rootColor = pos.sidetomove();
 
 				//この局面の差し手を生成する
+				memset(moves, 0, sizeof(moves));//初期化
 				end = test_move_generation(pos, moves);
 				ptrdiff_t num_moves = end - moves;
 
@@ -301,6 +307,7 @@ void Eval::learner()
 
 					Move m = moves[move_i];
 					if (pos.is_legal(m) == false) { continue; }
+					if (pos.state()->lastmove == m) { cout << games[g].black_P << " " << games[g].white_P; ASSERT(0); }
 					didmoves++;
 					pos.do_move(m, &si[ply]);
 					th.set(pos);
@@ -366,8 +373,11 @@ void Eval::learner()
 						StateInfo si2[3];//最大でも深さ３
 						int j = 0;
 						//教師手とPVで局面をすすめる
+						//if (pos.is_legal(minfo_list[i].move) == false) { ASSERT(0); }
 						pos.do_move(minfo_list[i].move, &si[ply]);
+
 						for (Move m : minfo_list[i].pv) {
+							if (pos.is_legal(m) == false) { cout << games[g].black_P << " " << games[g].white_P; ASSERT(0); }
 							pos.do_move(m, &si2[j]);
 							j++;
 						}
@@ -383,11 +393,13 @@ void Eval::learner()
 					StateInfo si2[3];//最大でも深さ３
 					int j = 0;
 					//教師手に対してdJ/dviを更新
-					if (pos.is_legal(minfo_list[0].move) == false) { ASSERT(0); }
+					if (pos.is_legal(minfo_list[0].move) == false) { cout << games[g].black_P << " " << games[g].white_P; ASSERT(0); }
+					if (pos.state()->lastmove == minfo_list[0].move) { cout << games[g].black_P << " " << games[g].white_P; ASSERT(0); }
 					pos.do_move(minfo_list[0].move, &si[ply]);
 					//pvの指し手が非合法手になっている事がある？？
 					for (Move m : minfo_list[0].pv) {
-						if (pos.is_legal(m) == false) { ASSERT(0); }
+						if (pos.is_legal(m) == false) { cout << games[g].black_P << " " << games[g].white_P;  ASSERT(0); }
+						if (pos.state()->lastmove == m) { cout << games[g].black_P << " " << games[g].white_P; ASSERT(0); }
 						pos.do_move(m, &si2[j]);
 						j++;
 					}
