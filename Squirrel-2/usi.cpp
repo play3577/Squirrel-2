@@ -309,7 +309,8 @@ void USI::loop()
 			cout << "do you really wanna learning fv? [y/n]  " ;
 			cin >> yn;
 			if (yn != "y") { cout << "OK I do not  learning"; break; }
-			Eval::learner();
+			//Eval::learner();
+			Eval::parallel_learner();
 #endif
 #ifndef LEARN
 			cout << "not learning mode" << endl;

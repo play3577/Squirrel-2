@@ -15,7 +15,7 @@ namespace Eval {
 
 	void learner();
 
-
+	void parallel_learner();
 
 	struct MoveInfo {
 
@@ -30,18 +30,15 @@ namespace Eval {
 	};
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+	
 }
+
+int sign(const double d);
+
+bool swapmove(ExtMove* moves, const int num, const Move m);
+
+void learnphase1();
+void learnphase1body(int number);
+
+void learnphase2();
+void learnphase2body();

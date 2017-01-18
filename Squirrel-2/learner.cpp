@@ -171,8 +171,8 @@ void Eval::learner()
 {
 	//初期化
 	int readgames = 10000;
-	const int numgames = 1000;//debug用
-	const int numiteration = 100;
+	const int numgames = 1500;//debug用
+	const int numiteration = 1000;
 	/*bonanzaではparse2を３２回繰り返すらしいんでそれを参考にする。
 	学習の損失の現象が進むに連れてnum_parse2の値を減らしていく
 	*/
@@ -185,6 +185,10 @@ void Eval::learner()
 	int diddepth = 0;
 
 	//目的関数。コレが小さくなってくれば学習が進んでいるとみなせる。(はずっ！)
+	/*
+	学習が進むにつれて教師手の価値がほかの差し手よりも大きくなるので目的関数は大きくなっていく。
+	この値がほぼ変わらなくても強くなることはあるのでこの値は全く参考にならない
+	*/
 	double objective_function = 0;
 
 
@@ -320,99 +324,7 @@ void Eval::learner()
 				}
 				//ここでこの局面の指し手による探索終了
 
-				{
-
-
-					/*
-					教師手ではない指してによる局面に現れる特徴ベクトルは価値を低く、
-					教師手による局面に現れる特徴ベクトルは価値を高く、
-					両方に出てくる特徴ベクトルに対しては価値を動かさないようにしたい。
-
-					そのためのsum_diff。
-					*/
-					double sum_diff = Value_Zero;
-					if (minfo_list.size() == 0) { cout << "listsize==0" << endl; goto ERROR_OCCURED; }
-
-					//教師手以外の指してに対して
-					for (int i = 1; i < minfo_list.size(); i++) {
-
-						//評価値と教師手の差分を取る。
-						const Value diff = minfo_list[i].score - minfo_list[0].score;
-
-						/*
-						http://kifuwarabe.warabenture.com/2016/11/23/%E3%81%A9%E3%81%86%E3%81%B6%E3%81%A4%E3%81%97%E3%82%87%E3%81%86%E3%81%8E%E3%82%92%E3%83%97%E3%83%AD%E3%82%B0%E3%83%A9%E3%82%82%E3%81%86%E3%81%9C%E2%98%86%EF%BC%88%EF%BC%92%EF%BC%94%EF%BC%89%E3%80%80/
-						シグモイド関数に値を入れるのは教師手の価値と同じぐらいの価値の指し手に対して学習をし、
-						悪い手を更に悪く、教師手を更に良く学習させないようにし、
-						値が大きく離れたらそのパラメーターをいじったりしないようにし、収束させるためである。
-
-						しかし教師手よりもかなり高く良い手だとコンピューターが誤判断している指し手がシグモイド関数の微分に入ってきてしまった場合それに対する出て来る値も小さくなってしまい、
-						値が下げられないのではないか？
-						それは良くない気がするのだけれど実際どうなんだろうか？
-						*/
-
-
-						//=======================================================================================================================
-						//bonanzaなどでは手番の色によってdiffsigの符号を変えているがそんなことする必要あるのか？？なぜ？？
-						//=======================================================================================================================
-
-						/*
-						この指し手の価値が教師手よりも大きかったため、価値を下げたい場合を考える。
-						黒番の場合は最終的にupdate_dJに入るのは-dsig
-						白番の場合は最終的にupdate_dJに入るのはdsigになる。
-						
-						詳しい解説
-						https://twitter.com/daruma3940/status/801638488130994177
-						*/
-						double diffsig = dsigmoid(diff);
-						diffsig = (rootColor == BLACK ? diffsig : -diffsig);
-						
-						sum_diff += diffsig;
-						objective_function += sigmoid(diff);
-
-
-						StateInfo si2[3];//最大でも深さ３
-						int j = 0;
-						//教師手とPVで局面をすすめる
-						//if (pos.is_legal(minfo_list[i].move) == false) { ASSERT(0); }
-						pos.do_move(minfo_list[i].move, &si[ply]);
-
-						for (Move m : minfo_list[i].pv) {
-							if (pos.is_legal(m) == false) { cout << games[g].black_P << " " << games[g].white_P; ASSERT(0); }
-							pos.do_move(m, &si2[j]);
-							j++;
-						}
-						update_dJ(pos, -diffsig);//pvの先端（leaf node）に移動してdJを計算するのがTD-leafということ？？
-						//局面を戻す
-						for (int jj = 0; jj < j; jj++) {
-							pos.undo_move();
-						}
-						pos.undo_move();
-					}//end of (教師手以外の指してに対して)
-					
-					
-					StateInfo si2[3];//最大でも深さ３
-					int j = 0;
-					//教師手に対してdJ/dviを更新
-					if (pos.is_legal(minfo_list[0].move) == false) { cout << games[g].black_P << " " << games[g].white_P; ASSERT(0); }
-					if (pos.state()->lastmove == minfo_list[0].move) { cout << games[g].black_P << " " << games[g].white_P; ASSERT(0); }
-					pos.do_move(minfo_list[0].move, &si[ply]);
-					//pvの指し手が非合法手になっている事がある？？
-					for (Move m : minfo_list[0].pv) {
-						if (pos.is_legal(m) == false) { cout << games[g].black_P << " " << games[g].white_P;  ASSERT(0); }
-						if (pos.state()->lastmove == m) { cout << games[g].black_P << " " << games[g].white_P; ASSERT(0); }
-						pos.do_move(m, &si2[j]);
-						j++;
-					}
-					update_dJ(pos, sum_diff);
-					for (int jj = 0; jj < j; jj++) {
-						pos.undo_move();
-					}
-					pos.undo_move();
-
-				}//勾配計算
 				
-				//次の局面へ
-				pos.do_move(teacher_move, &si[ply]);
 			}// for gameply
 
 		ERROR_OCCURED:;
