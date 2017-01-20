@@ -1,6 +1,10 @@
 #define _CRT_SECURE_NO_WARNINGS
 
+
+
+
 #include "learner.h"
+#ifdef LEARN
 #include <random>
 #include <vector>
 #include <time.h>       /* time_t, struct tm, time, localtime */
@@ -14,6 +18,8 @@
 #include <mutex>
 using namespace Eval;
 using namespace std;
+
+
 
 #define LOG
 
@@ -170,10 +176,13 @@ void Eval::parallel_learner() {
 	//初期化
 	int readgames = 10000;
 	numgames = 100;//debug用
-	const int numiteration = 10;
+	int numiteration = 10;
 	maxthreadnum = omp_get_max_threads();
 
-
+	cout << "numgames:>>";
+	cin >> numgames;
+	cout << "numiteration?>>";
+	cin >> numiteration;
 
 	/*bonanzaではparse2を３２回繰り返すらしいんでそれを参考にする。
 	学習の損失の現象が進むに連れてnum_parse2の値を減らしていく
@@ -229,19 +238,27 @@ void Eval::parallel_learner() {
 	//siやmoves,positionは並列させる関数内で生成する
 
 	for (size_t i = 0; i < maxthreadnum; i++) {
-		Parse2Data hoge;
-		parse2Datas.push_back(hoge);
+		Parse2Data piyo;
+		parse2Datas.push_back(piyo);
 	}
 
 	for (int iteration = 0; iteration < numiteration; iteration++) {
-
+		//時間計測の開始
+		limit.starttime = now();
+		//過去の情報をクリアする
+		objective_function = 0;
 		for (auto& datas : parse2Datas) {
 			datas.clear();
 		}
-
+		//学習
 		learnphase1();
 		learnphase2();
 
+
+		std::cout << "iteration" << iteration << "/maxiteration :" << numiteration << " objfunc" << objective_function << " elasped " << (now() - limit.starttime + 1) / (1000 * 60) << " min" << std::endl;
+#ifdef LOG
+		ofs << " iteration " << iteration << " objfunc" << objective_function << " elasped " << (now() - limit.starttime + 1) / (1000 * 60) << " min" << endl;
+#endif
 	}
 
 
@@ -483,3 +500,4 @@ void learnphase2() {
 	read_PP();
 }
 
+#endif//learn

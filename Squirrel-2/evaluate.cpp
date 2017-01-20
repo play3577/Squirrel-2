@@ -332,8 +332,18 @@ namespace Eval {
 		for (int i = 0; i < 40; i++) {
 			for (int j = 0; j < i; j++) {
 				//listの内容の順番はどうでもいいと思うのだけれど...
+
+				//この方法では見てはいけないメモリを見てしまっているのでセグフォが起こる！　
+#if defined(_MSC_VER)
 				bPP += PP[list_fb[i]][list_fb[j]];
 				wPP -= PP[list_fw[i]][list_fw[j]];
+#endif
+#if defined(__GNUC__) 
+				bPP += PP[pos.evallist().bplist_fb[i]][pos.evallist().bplist_fb[j]];
+				wPP -= PP[pos.evallist().bplist_fw[i]][pos.evallist().bplist_fw[j]];
+#endif
+
+				
 			}
 		}
 		pos.state()->bpp = (bPP);
@@ -727,7 +737,8 @@ namespace Eval {
 				for (Piece pt = PAWN; pt < KING; pt++) {
 
 					//コレは意図した記述
-					if (num = num_pt(h, pt)) {
+					num = num_pt(h, pt);
+					if (num !=0) {
 
 						for (int i = 1; i < num + 1; i++) {
 							bplist_fb[uniform[pt]] = bonapiece(hc, pt, i);
@@ -905,7 +916,7 @@ namespace Eval {
 		//手駒以外
 
 		//縦型bitboardなのでrank=sq%9,file=sq/9
-		BonaPiece bprank, bpfile;
+		//BonaPiece bprank, bpfile;
 		//盤上の駒
 		if (f_pawn <= bp&&bp < e_pawn) {
 			sq = bp - f_pawn;

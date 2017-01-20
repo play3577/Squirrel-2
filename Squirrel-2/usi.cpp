@@ -94,7 +94,13 @@ void USI::init_option(OptionMap &o,string engine_name)
 //#endif
 	o["USI_Ponder"] << USIOption(false);
 	o["Threads"] << USIOption(1, 1, 128);
+#if defined(__unix__) 
+	o["eval"] << USIOption("/home/daruma/fvPP/fv_PP.bin");
+#else
 	o["eval"] << USIOption("c:/book2/fv_PP.bin");
+#endif
+
+	
 	o["USI_Hash"] << USIOption(1, 1, 256);
 	o["EngineName"] << USIOption(name.c_str());
 	o["is_0.1s"] << USIOption(false);
@@ -144,7 +150,7 @@ void is_ready() {
 	if (first_ready == true) {
 		Eval::read_PP();
 
-		if (Options["usebook"] == true) {
+		if (bool(Options["usebook"]) == true) {
 			BOOK::init();
 		}
 	}
@@ -236,6 +242,7 @@ void position(Position& pos, istringstream& is) {
 }
 
 
+
 void USI::loop()
 {
 	Position pos;
@@ -253,6 +260,7 @@ void USI::loop()
 		istringstream is(cmd);//parse‚·‚é‚½‚ß‚Ìistringstream
 		token.clear();
 		is >> skipws >> token;//ŠÔ‚Ì‹ó”’•¶š‚Í“Ç‚İ”ò‚Î‚µ‚Ätoken‚É“ü‚ê‚éB
+
 
 		if (token == "usi") {
 			cout << self_introduction() << endl;

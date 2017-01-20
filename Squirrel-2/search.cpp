@@ -26,6 +26,10 @@ inline Value bonus(const Depth d1) { int d = d1 / ONE_PLY; return Value(d*d + 2 
 void update_stats(const Position& pos, Stack* ss, Move move, Move* quiets, int quietsCnt, Value bonus);
 
 
+template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value beta, Depth depth);
+
+template <Nodetype NT>
+Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth);
 
 
 
@@ -605,6 +609,7 @@ end_multicut:
 
 
 #endif
+
 #ifdef Probcut
 
 	if (!PVNode
@@ -684,7 +689,6 @@ end_multicut:
 			ttBound = BOUND_NONE;
 			ttMove = MOVE_NONE;
 		}
-
 	}
 
 
@@ -900,7 +904,7 @@ Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
 	Bound ttBound;
 	Depth ttdepth;
 	Value futilitybase = -Value_Infinite;
-	Value futilityvalue;
+	//Value futilityvalue;
 	if (PvNode)
 	{
 		// To flag BOUND_EXACT when eval above alpha and no available moves
@@ -1195,3 +1199,17 @@ void update_stats(const Position& pos, Stack* ss,const Move bestmove,
 	}
 
 }
+
+
+
+/*
+Root,
+PV,
+NonPV,
+*/
+//
+//template Value search<Root>(Position &pos, Stack* ss, Value alpha, Value beta, Depth depth);
+//template Value search<PV>(Position &pos, Stack* ss, Value alpha, Value beta, Depth depth);
+//template Value search<NonPV>(Position &pos, Stack* ss, Value alpha, Value beta, Depth depth);
+//template <Nodetype NT>
+//Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth);

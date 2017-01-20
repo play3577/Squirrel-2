@@ -27,7 +27,7 @@
 
 
 //#define CHECKPOS
-#define LEARN
+//#define LEARN
 
 
 #ifndef LEARN

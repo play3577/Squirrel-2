@@ -484,7 +484,7 @@ ExtMove* make_move_ASGOLD(const Position& pos, const Bitboard& target, ExtMove* 
 ExtMove* make_move_KING(const Position& pos, const Bitboard& target, ExtMove* movelist) {
 
 	Color US = pos.sidetomove();
-	Color ENEMY = opposite(US);
+//	Color ENEMY = opposite(US);
 	//こいつらは成れない
 
 
@@ -963,13 +963,22 @@ ExtMove * test_move_generation(const Position & pos, ExtMove * movelist)
 	}
 	return movelist;
 }
+//
+//ExtMove * test_drop_fast(const Position & pos, ExtMove * movelist)
+//{
+//	return nullptr;
+//}
 
-ExtMove * test_drop_fast(const Position & pos, ExtMove * movelist)
-{
-	return nullptr;
-}
 
-
-
+/*
+Cap_Propawn,//ここは飛車の成を入れるとか、歩の成を省くとかlance nightのナリを含めるとか 色々考える必要がある
+Quiet,
+Eversion,
+Recapture,
+Drop,
+*/
 
 //ExtMove * move_generation<Cap_Propawn>(const Position& pos, ExtMove * movelist);
+template ExtMove* move_generation<Cap_Propawn>(const Position& pos, ExtMove* movelist);
+template ExtMove* move_generation<Quiet>(const Position& pos, ExtMove* movelist);
+template ExtMove* move_generation<Drop>(const Position& pos, ExtMove* movelist);

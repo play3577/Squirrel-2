@@ -213,7 +213,7 @@ void movepicker::quietscore()
 	const HistoryStats& history = pos_.searcher()->history;
 
 	ptrdiff_t num_move = end_ - move_;
-	int j = 0;
+//	int j = 0;
 	for (int i = 0; i < num_move; i++) {
 
 		Piece pc = moved_piece(move_[i].move);

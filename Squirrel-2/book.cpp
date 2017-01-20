@@ -91,6 +91,7 @@ bool BookDataStream::preparebook() {
 		cout << " cant read book" << endl;
 		return false;
 	}
+	return true;
 }
 
 void BOOK::init() {

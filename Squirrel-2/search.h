@@ -65,7 +65,3 @@ void search_init();
 
 inline Value mated_in_ply(int ply) { return Value(Value_Mated + ply); }
 inline Value mate_in_ply(int ply) { return Value(Value_Mate - ply); }
-template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value beta, Depth depth);
-
-template <Nodetype NT>
-Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth);

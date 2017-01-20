@@ -192,7 +192,7 @@ void Position::put_piece(const Color c, const Piece pt, const Square sq)
 ‘Šè‚Ì‹î‚ğæ‚Á‚½‚Ì‚É©•ª‚Ìpawnbb‚ªÁ‚¦‚Ä‚¢‚é
 
 */
-#define GIVESCHECK
+//#define GIVESCHECK
 
 
 

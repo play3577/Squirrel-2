@@ -249,7 +249,7 @@ public:
 	bool is_effect_to_removepiece(const Color US, const Square to,const Square  ksq)const {
 
 		Color ENEMY = opposite(US);
-		Bitboard ourksq= SquareBB[ksq];
+		//Bitboard ourksq= SquareBB[ksq];
 
 		Occ_256 occ256_ = occ256^SquareBB256[ksq];
 

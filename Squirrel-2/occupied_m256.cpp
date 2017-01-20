@@ -236,10 +236,14 @@ void init_occ256()
 	for (Square sq = SQ1A; sq <= SQ9I; sq++) {
 
 		//初期化
-		SquareBB256[sq] = ZeroBB256;
+		//SquareBB256[sq] = ZeroBB256;
 
-
-		Square sq2 = sq - 9;
+		/*
+		linux buildするとSquareBBが全部ゼロになってしまう？？
+		なぜなんだ...
+		
+		*/
+//		Square sq2 = sq - 9;
 
 		/*SquareBB256[sq].b256.m256i_u64[0] = (sq2sq_256[sq] != Error_SQ) ? 1ULL << sq2sq_256[sq]:0;
 		SquareBB256[sq].b256.m256i_u64[1] = (sq2sq90_256[sq] != Error_SQ) ? 1ULL << sq2sq90_256[sq] : 0;
@@ -251,8 +255,14 @@ void init_occ256()
 		SquareBB256[sq].set((sq2sq_m45_256[sq] != Error_SQ) ? 1ULL << sq2sq_m45_256[sq] : 0,3);
 
 
-		/*cout << int(sq) << endl;
-		cout << SquareBB256[sq] << endl;*/
+
+#if defined(_MSC_VER)
+#endif
+#if defined(__GNUC__) 
+		cout << int(sq) << endl;
+		cout << SquareBB256[sq] << endl;
+#endif
+		
 	}
 	
 
@@ -308,9 +318,9 @@ std::ostream & operator<<(std::ostream & os, const Occ_256 & board)
 
 		uint64_t occ = occ_tate[i];
 		
-		for (int i = 0; i < 7; i++) {
+		for (int j = 0; j < 7; j++) {
 			for (int sq = 56; sq >= 0; sq = sq - 7) {
-				if (occ&(1ULL << (sq+i))) {
+				if (occ&(1ULL << (sq+j))) {
 					/*os << sq;*/os << "*";
 				}
 				else { os << "."; }
