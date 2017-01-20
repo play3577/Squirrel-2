@@ -249,16 +249,29 @@ void init_occ256()
 		SquareBB256[sq].b256.m256i_u64[1] = (sq2sq90_256[sq] != Error_SQ) ? 1ULL << sq2sq90_256[sq] : 0;
 		SquareBB256[sq].b256.m256i_u64[2] = (sq2sq_p45_256[sq] != Error_SQ) ? 1ULL << sq2sq_p45_256[sq] : 0;
 		SquareBB256[sq].b256.m256i_u64[3] = (sq2sq_m45_256[sq] != Error_SQ) ? 1ULL << sq2sq_m45_256[sq] : 0;*/
-		SquareBB256[sq].set((sq2sq_256[sq] != Error_SQ) ? 1ULL << sq2sq_256[sq] : 0,0);
-		SquareBB256[sq].set((sq2sq90_256[sq] != Error_SQ) ? 1ULL << sq2sq90_256[sq] : 0,1);
-		SquareBB256[sq].set((sq2sq_p45_256[sq] != Error_SQ) ? 1ULL << sq2sq_p45_256[sq] : 0,2);
-		SquareBB256[sq].set((sq2sq_m45_256[sq] != Error_SQ) ? 1ULL << sq2sq_m45_256[sq] : 0,3);
+
+
+		
+
+		
+
 
 
 
 #if defined(_MSC_VER)
+		SquareBB256[sq].set((sq2sq_256[sq] != Error_SQ) ? 1ULL << sq2sq_256[sq] : 0, 0);
+		SquareBB256[sq].set((sq2sq90_256[sq] != Error_SQ) ? 1ULL << sq2sq90_256[sq] : 0, 1);
+		SquareBB256[sq].set((sq2sq_p45_256[sq] != Error_SQ) ? 1ULL << sq2sq_p45_256[sq] : 0, 2);
+		SquareBB256[sq].set((sq2sq_m45_256[sq] != Error_SQ) ? 1ULL << sq2sq_m45_256[sq] : 0, 3);
 #endif
 #if defined(__GNUC__) 
+		uint64_t b1 = (sq2sq_256[sq] != Error_SQ) ? 1ULL << sq2sq_256[sq] : 0;
+		uint64_t b2 = (sq2sq90_256[sq] != Error_SQ) ? 1ULL << sq2sq90_256[sq] : 0;
+		uint64_t b3 = (sq2sq_p45_256[sq] != Error_SQ) ? 1ULL << sq2sq_p45_256[sq] : 0;
+		uint64_t b4 = (sq2sq_m45_256[sq] != Error_SQ) ? 1ULL << sq2sq_m45_256[sq] : 0;
+		//b1が一番下に来てしまっている！
+		//SquareBB256[sq].b256 = _mm256_set_epi64x(b1, b2, b3, b4);
+		SquareBB256[sq].b256 = _mm256_set_epi64x(b4, b3, b2, b1);
 		cout << int(sq) << endl;
 		cout << SquareBB256[sq] << endl;
 #endif

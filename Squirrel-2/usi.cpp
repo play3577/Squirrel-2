@@ -613,6 +613,9 @@ void USI::loop()
 			cout << "see sign" << pos.see_sign(m) << endl;
 			cout << "see "<<pos.see(m) << endl;
 		}
+		else if (token == "occ") {
+			pos.check_occbitboard();
+		}
 
 	} while (token != "quit");
 

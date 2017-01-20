@@ -120,7 +120,7 @@
     <ClCompile>
       <CppLanguageStandard>c++1y</CppLanguageStandard>
       <AdditionalOptions>-mavx </AdditionalOptions>
-      <Optimization>MaxSpeed</Optimization>
+      <Optimization>Full</Optimization>
     </ClCompile>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
