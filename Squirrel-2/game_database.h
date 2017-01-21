@@ -9,8 +9,14 @@
 #include <vector>
 using namespace std;
 
-#define gamedatabasefile  "C:/book2/records_sum.txt"
 
+
+#if defined(_MSC_VER)
+#define gamedatabasefile  "C:/book2/records_sum.txt"
+#endif
+#if defined(__unix__) 
+#define gamedatabasefile "/home/daruma/fvPP/records_sum.txt"
+#endif
 
 enum GameResult
 {

@@ -48,7 +48,12 @@ Bitboard CantGo_KNIGHT[ColorALL];
 Direction direct_table[SQ_NUM][SQ_NUM];
 
 
+Bitboard GivesCheckStepBB[ColorALL][PT_ALL][SQ_NUM];
+Bitboard GivesCheckRookBB[ColorALL][SQ_NUM][128];
+Bitboard GivesCheckBishopBB[ColorALL][SQ_NUM][128];
+Bitboard GivesCheckLanceBB[ColorALL][SQ_NUM][128];
 
+void checkbb();
 
 Square Bitboard::pop()
 {
@@ -446,10 +451,19 @@ void bitboard_init()
 		}
 	}
 
+	
+
+
+
+
+
+
+
 	//check_between();
 	//check_directtable();
 	//bitboard_debug();
 }
+
 
 
 void bitboard_debug()

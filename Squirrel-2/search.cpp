@@ -277,7 +277,8 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 	Bound ttBound;
 	Depth ttdepth;
 	bool CaptureorPropawn;
-
+	bool givescheck, improve, singler_extension, move_count_pruning;
+	Depth extension, newdepth;
 
 #ifndef LEARN
 	//timer threadを用意せずにここで時間を確認する。
@@ -340,6 +341,12 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 		}
 
 	}
+
+	//ssは過去の情報を消しておく必要がある
+	(ss + 1)->excludedMove = MOVE_NONE;
+	(ss + 1)->skip_early_prunning = false;
+	(ss + 2)->killers[0] = (ss + 2)->killers[1] = MOVE_NONE;
+
 	// Step 4. Transposition table lookup. We don't want the score of a partial
 	// search to overwrite a previous full search TT value, so we use a different
 	// position key in case of an excluded move.
@@ -702,6 +709,39 @@ end_multicut:
 	//（もし前向き枝切りが出来てしまったらこのノードで詰んでしまう）
 moves_loop:
 	
+
+//#define EXTENSION
+		
+#ifdef EXTENSION
+			//静的評価値が前の自分の手番よりもよくなっているかまたは以前の評価値が存在しなかった
+	improve = ss->static_eval >= (ss - 2)->static_eval || (ss - 2)->static_eval == Value_error;
+	
+		/*=================================================================================
+				singularExtension
+				その局面で良い差し手が一つしかないときにその指し手を延長させる
+			
+				条件
+			
+				rootnodeではない。（まあそりゃそうだ）
+				深さは8以上（これはどうだろう....あまり考えがわからない）
+				ttMoveが存在する（ttMoveはよい差し手になりうるはずなのでその指し手を延長したい）
+				評価値がこれ以上よくなりうる可能性がある
+				延長された差し手をまた延長するのはよろしくない
+				ttvalueはttdepthがdepth-3*ONE_PLYで割と保証されている
+		===================================================================================*/
+	singler_extension = !RootNode
+		 &&depth >= 8 * ONE_PLY
+		&&ttMove != MOVE_NONE
+		&&excludedmove != MOVE_NONE
+		&& (ttBound&BOUND_LOWER)//LOWER or EXACT
+		 && ttdepth >= depth - 3 * ONE_PLY;
+#endif
+		
+		
+
+
+
+
 #ifdef USETT
 	movepicker mp(pos,ss,ttMove);
 #else 
@@ -709,6 +749,7 @@ moves_loop:
 #endif
 	while ((move = mp.return_nextmove()) != MOVE_NONE) {
 
+		if (move == ss->excludedMove) {continue;}
 		if (!RootNode) {
 			if (pos.is_legal(move) == false) { continue; }
 		}
@@ -747,6 +788,9 @@ moves_loop:
 		}
 
 		++movecount;
+
+
+
 		//check_move(move);
 		/*bool givescheck=pos.is_gives_check(move);
 		pos.do_move(move, &si,givescheck);*/

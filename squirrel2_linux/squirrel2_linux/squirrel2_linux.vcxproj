@@ -76,6 +76,7 @@
     <ClCompile Include="..\..\Squirrel-2\movepicker.cpp" />
     <ClCompile Include="..\..\Squirrel-2\occupied.cpp" />
     <ClCompile Include="..\..\Squirrel-2\occupied_m256.cpp" />
+    <ClCompile Include="..\..\Squirrel-2\Parallel_learner.cpp" />
     <ClCompile Include="..\..\Squirrel-2\position.cpp" />
     <ClCompile Include="..\..\Squirrel-2\search.cpp" />
     <ClCompile Include="..\..\Squirrel-2\Thread.cpp" />

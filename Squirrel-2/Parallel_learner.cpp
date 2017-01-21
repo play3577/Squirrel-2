@@ -228,7 +228,14 @@ void Eval::parallel_learner() {
 	while ((hoge = str.find_first_of(":")) != string::npos) {
 		str.erase(hoge, 1);
 	}
+
+#if defined(_MSC_VER)
 	filepath = "c:/book2/log/" + str + ".txt";
+#endif
+#if defined(__unix__) 
+	filepath = "/home/daruma/fvPP/" + str + ".txt";
+#endif
+	//filepath = "c:/book2/log/" + str + ".txt";
 	ofstream ofs(filepath);
 	if (ofs.fail()) { cout << "log fileError"; }
 

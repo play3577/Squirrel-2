@@ -224,7 +224,16 @@ void Eval::learner()
 	while ((hoge = str.find_first_of(":")) != string::npos) {
 		str.erase(hoge, 1);
 	}
+	///home/daruma/fvPP/
+
+#if defined(_MSC_VER)
 	filepath = "c:/book2/log/" + str + ".txt";
+#endif
+#if defined(__unix__) 
+	//filepath = "/home/daruma/fvPP/" + str + ".txt";
+	filepath = "/home/daruma/fvPP/aa.txt";
+#endif
+	
 	ofstream ofs(filepath);
 	if (ofs.fail()) { cout << "log fileError"; }
 

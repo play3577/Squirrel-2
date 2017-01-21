@@ -235,29 +235,7 @@ void init_occ256()
 	//OK
 	for (Square sq = SQ1A; sq <= SQ9I; sq++) {
 
-		//初期化
-		//SquareBB256[sq] = ZeroBB256;
-
-		/*
-		linux buildするとSquareBBが全部ゼロになってしまう？？
-		なぜなんだ...
-		
-		*/
-//		Square sq2 = sq - 9;
-
-		/*SquareBB256[sq].b256.m256i_u64[0] = (sq2sq_256[sq] != Error_SQ) ? 1ULL << sq2sq_256[sq]:0;
-		SquareBB256[sq].b256.m256i_u64[1] = (sq2sq90_256[sq] != Error_SQ) ? 1ULL << sq2sq90_256[sq] : 0;
-		SquareBB256[sq].b256.m256i_u64[2] = (sq2sq_p45_256[sq] != Error_SQ) ? 1ULL << sq2sq_p45_256[sq] : 0;
-		SquareBB256[sq].b256.m256i_u64[3] = (sq2sq_m45_256[sq] != Error_SQ) ? 1ULL << sq2sq_m45_256[sq] : 0;*/
-
-
-		
-
-		
-
-
-
-
+	
 #if defined(_MSC_VER)
 		SquareBB256[sq].set((sq2sq_256[sq] != Error_SQ) ? 1ULL << sq2sq_256[sq] : 0, 0);
 		SquareBB256[sq].set((sq2sq90_256[sq] != Error_SQ) ? 1ULL << sq2sq90_256[sq] : 0, 1);
@@ -279,46 +257,9 @@ void init_occ256()
 	}
 	
 
-
-
-
-
-
 	return;
 
 }
-
-/*=========================================================================
-std::ostream & operator<<(std::ostream & os, const Bitboard & board)
-{
-for (Rank r = RankA; r < Rank_Num; r++) {
-for (File f = File9; f >= File1; f--) {
-
-Square sq = make_square(r, f);
-if (sq <= 44) {
-if ((board.b[0])&(1ui64 << sq)) {
-os << "*";
-}
-else {
-os << ".";
-}
-}
-else {
-if ((board.b[1])&(1ui64 << (sq-45))) {
-os << "*";
-}
-else {
-os << ".";
-}
-
-}
-}
-os << std::endl;
-}
-return os;
-}
-=============================================================================*/
-
 
 std::ostream & operator<<(std::ostream & os, const Occ_256 & board)
 {
