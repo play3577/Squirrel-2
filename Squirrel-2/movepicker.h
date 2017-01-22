@@ -41,10 +41,11 @@ private:
 	ExtMove killers[2];
 	Move ttMove;
 	const Stack* ss;
+	Depth depth_;
 
 public:
 	//通常探索用コンストラクタ
-	movepicker(const Position& pos,Stack* ss_,Move ttm) :pos_(pos),ss(ss_) {
+	movepicker(const Position& pos,Stack* ss_,Move ttm,Depth d) :pos_(pos),ss(ss_),depth_(d) {
 
 		current_ = end_ = move_;
 

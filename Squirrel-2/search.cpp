@@ -710,12 +710,12 @@ end_multicut:
 moves_loop:
 	
 
-//#define EXTENSION
+#define EXTENSION
 		
-#ifdef EXTENSION
+
 			//静的評価値が前の自分の手番よりもよくなっているかまたは以前の評価値が存在しなかった
 	improve = ss->static_eval >= (ss - 2)->static_eval || (ss - 2)->static_eval == Value_error;
-	
+#ifdef EXTENSION
 		/*=================================================================================
 				singularExtension
 				その局面で良い差し手が一つしかないときにその指し手を延長させる
@@ -743,7 +743,7 @@ moves_loop:
 
 
 #ifdef USETT
-	movepicker mp(pos,ss,ttMove);
+	movepicker mp(pos,ss,ttMove,depth);
 #else 
 	movepicker mp(pos, ss, MOVE_NONE);
 #endif
@@ -788,14 +788,96 @@ moves_loop:
 		}
 
 		++movecount;
+		extension = DEPTH_ZERO;
+		givescheck = pos.is_gives_check(move);
+
+		 move_count_pruning = depth < 16 * ONE_PLY&&movecount >= FutilityMoveCounts[improve][depth / ONE_PLY];
+
+#ifdef EXTENSION
+					//=====================
+					//差し手の延長
+					//=====================
+			
+			
+				// Step 12. Extend checks
+					/*=========================================================================================================
+					王手をかける指し手を延長する
+					
+					条件
+					王手をかける指し手
+					後ろのほうの差し手でない
+					seeが正である
+					
+					技巧では王手をかけられた局面に許される合法手の数は少ないのでseeが負の局面でも王手をHALF_PLY延長するらしいそれに習う。
+					==========================================================================================================*/
+			
+			if (givescheck
+				 && !move_count_pruning) {
+			if (pos.see_sign(move) >= Value_Zero) { extension = ONE_PLY; }
+			//else { extension = HALF_PLY; }
+			}
+			//singler extension
+			/*
+			この局面でttmove以外の差し手以外に良い差し手がなければttmoveを延長する
+			*/
+			if (singler_extension
+				 &&move == ttMove
+				&& !extension) {
+			
+				Value rBeta = ttValue - 2 * depth / ONE_PLY;
+			Depth d = (depth / (2 * int(ONE_PLY)))*int(ONE_PLY);
+			ss->excludedMove = move;
+			ss->skip_early_prunning = true;
+			value = search<NonPV>(pos, ss, rBeta - 1, rBeta, d);
+			ss->skip_early_prunning = false;
+			ss->excludedMove = MOVE_NONE;
+			if (value < rBeta) {
+				extension = ONE_PLY;
+				
+			}
+			
+		}
+#endif
+		newdepth = depth - ONE_PLY + extension;
+		
+
+		//前向き枝切り
+		//これは差し手の延長を考える前にすべきではないか？？？？
+		if (!RootNode
+			&& !incheck
+			&&bestvalue > Value_mated_in_maxply) {
+
+			if (!CaptureorPropawn
+				&& !givescheck) {
+
+				if (move_count_pruning) { continue; }
+				Depth predicted_depth = std::max(newdepth - reduction<PVNode>(improve, depth, movecount), DEPTH_ZERO);
+
+				//親ノードのfutility
+				if (predicted_depth < 7 * ONE_PLY
+					&&staticeval + 256 + 200 * predicted_depth / int(ONE_PLY) <= alpha) {
+					continue;
+				}
+
+				if (predicted_depth < 8 * ONE_PLY) {
+					Value see_v = predicted_depth < 4 * ONE_PLY ? Value_Zero :
+						Value(-Eval::PawnValue * 2 * int(predicted_depth - 3 * ONE_PLY) / ONE_PLY);
+					if (pos.see_sign(move)) { continue; }
+				}
+
+			}
+			else if (depth < 3 * ONE_PLY
+				&& (mp.see_sign() < 0 || (!mp.see_sign() && pos.see_sign(move) < Value_Zero))) {
+				continue;
+			}
+
+		}
 
 
 
-		//check_move(move);
-		/*bool givescheck=pos.is_gives_check(move);
-		pos.do_move(move, &si,givescheck);*/
 
-		pos.do_move(move, &si);
+		
+		pos.do_move(move, &si, givescheck);
 #ifdef PREF2
 		TT.prefetch(pos.key());
 #endif
@@ -803,13 +885,13 @@ moves_loop:
 
 
 		if (!doFullDepthSearch) {
-			if (depth - ONE_PLY >= ONE_PLY) {
+			if (newdepth >= ONE_PLY) {
 				//null window search
-				value = -search<NonPV>(pos, ss + 1, -(alpha+1), -alpha, depth - ONE_PLY);
+				value = -search<NonPV>(pos, ss + 1, -(alpha+1), -alpha, newdepth);
 			}
 			else {
 				//value = Eval::eval(pos);
-				value = -qsearch<NonPV>(pos, ss + 1, -(alpha + 1), -alpha, depth - ONE_PLY);
+				value = -qsearch<NonPV>(pos, ss + 1, -(alpha + 1), -alpha, DEPTH_ZERO);
 			}
 			doFullDepthSearch = (value > alpha);
 		}
@@ -819,12 +901,12 @@ moves_loop:
 			//ss->pvmove = move;
 			(ss + 1)->pv = pv;
 			(ss + 1)->pv[0] = MOVE_NONE;
-			if (depth - ONE_PLY >= ONE_PLY) {
-				value = -search<PV>(pos, ss + 1, -beta, -alpha, depth - ONE_PLY);
+			if (newdepth >= ONE_PLY) {
+				value = -search<PV>(pos, ss + 1, -beta, -alpha, newdepth);
 			}
 			else {
 				//value = Eval::eval(pos);
-				value = -qsearch<PV>(pos, ss + 1, -beta, -alpha, depth - ONE_PLY);
+				value = -qsearch<PV>(pos, ss + 1, -beta, -alpha, DEPTH_ZERO);
 			}
 		}
 		//cout << "undo move " <<move<< endl;

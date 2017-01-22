@@ -70,8 +70,14 @@ void movepicker::generatemove()
 		quietscore();
 		//ここSF8はもっと詳しくsortしている
 		//将棋だと駒打ちなどがあるときにここの要素数が多くなってしまうのでまずはgoodquietmoveだけソートするようにしてみる（ここ調整が必要）
-		goodQuiet = std::partition(move_, end_, [](const ExtMove& m){ return m.value > Value_Zero; });
-		insertion_sort(move_, goodQuiet);
+		if (depth_ < 3 * ONE_PLY) {
+			goodQuiet = std::partition(move_, end_, [](const ExtMove& m) { return m.value > Value_Zero; });
+			insertion_sort(move_, goodQuiet);
+		}
+		else {
+			insertion_sort(move_, end_);
+			
+		}
 		break;
 	case BAD_CAPTURES:
 		current_ = move_ + 600 - 1;
