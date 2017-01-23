@@ -300,7 +300,7 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 	}
 #endif
 	//seldepth‚ÌXV‚ð‚±‚±‚Ås‚¤
-	if (PVNode&&(thisthread->seldepth < pos.state()->ply_from_startpos+1)) {
+	if (PVNode&&(thisthread->seldepth < ss->ply)) {
 		thisthread->seldepth = ss->ply;
 	}
 
