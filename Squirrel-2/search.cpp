@@ -149,9 +149,10 @@ Value Thread::think() {
 	Move pondermove;
 
 	//‚±‚±‚Ébook‚ğ’T‚·ƒR[ƒh‚ğ“ü‚ê‚é
-	if (Options["usebook"]) {
+	if (Options["usebook"]==true) {
 
-		auto bookentry = book.find(rootpos.make_sfen());
+		const string sfen = rootpos.make_sfen();
+		auto bookentry = book.find(sfen);
 
 		if (bookentry != book.end()) {
 			std::vector<BookEntry> entrys = bookentry->second;
@@ -170,7 +171,9 @@ Value Thread::think() {
 			if (limit.is_ponder == false) {
 				signal.stop = true;
 			}
+			cout << "book move" << endl;
 			goto ID_END;
+
 		}//book‚ğŒ©‚Â‚¯‚½ê‡
 
 		

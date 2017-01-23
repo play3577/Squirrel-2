@@ -87,7 +87,10 @@ private:
 
 	uint64_t nodes;
 
+	
 public:
+
+	int ply_from_startpos;
 
 	inline void set_occ256(const Square sq) { occ256 ^= SquareBB256[sq]; }
 	inline void remove_occ256(const Square sq) { occ256^=SquareBB256[sq]; }

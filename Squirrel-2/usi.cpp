@@ -234,10 +234,11 @@ void position(Position& pos, istringstream& is) {
 		m = Sfen2Move(token, pos);
 		pos.do_move(m, &g_st[ply]);
 		ply++;
+		pos.ply_from_startpos++;
 	}
 
 
-	cout << pos << endl;
+	//cout << pos << endl;
 
 }
 
