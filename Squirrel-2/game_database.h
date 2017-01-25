@@ -13,6 +13,8 @@ using namespace std;
 
 #if defined(_MSC_VER)
 #define gamedatabasefile  "C:/book2/records_sum.txt"
+#define nichkihu "C:/book2/2chkifu.csa1"
+#define fg2800_2ch "C:/book2/fg_2800_2chkihu.csa"
 #endif
 #if defined(__unix__) 
 #define gamedatabasefile "/home/daruma/fvPP/records_sum.txt"

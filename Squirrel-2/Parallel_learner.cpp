@@ -174,9 +174,9 @@ int num_parse2;
 void Eval::parallel_learner() {
 
 	//初期化
-	int readgames = 10000;
-	numgames = 100;//debug用
-	int numiteration = 10;
+	int readgames = 100000;
+	numgames = 2000;
+	int numiteration = 1000;
 	maxthreadnum = omp_get_max_threads();
 
 	cout << "numgames:>>";
@@ -188,7 +188,8 @@ void Eval::parallel_learner() {
 	学習の損失の現象が進むに連れてnum_parse2の値を減らしていく
 	*/
 	num_parse2 = 32;
-	ifstream gamedata(gamedatabasefile);
+	ifstream gamedata(fg2800_2ch);
+	//ifstream gamedata(nichkihu);
 	GameDataStream gamedatastream(gamedata);
 	
 

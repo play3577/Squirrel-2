@@ -50,7 +50,7 @@ bool GameDataStream::read_onegame(Game * game)
 	//指し手の情報から合法手であればその指し手をuint16の指し手情報に変換
 	std::istringstream moves(line);
 	Position pos; pos.set_hirate();
-	StateInfo si[256];
+	StateInfo si[500];
 	game->moves.clear();
 
 	for (int ply = 0; ply < game_ply; ply++) {
@@ -59,7 +59,7 @@ bool GameDataStream::read_onegame(Game * game)
 		if (!moves) { break; }//正しく読み込めなかった場合は中断をする。
 		Move move=CSA2Move(move_str,pos);
 
-		if (move == MOVE_NONE || !pos.is_legal(move)) {
+		if (move == MOVE_NONE || !pos.is_legal(move)||!pos.pseudo_legal(move)) {
 			break;
 		}
 		//指し手をgameに追加

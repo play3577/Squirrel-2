@@ -209,7 +209,7 @@ Value Thread::think() {
 
 	//cout << limit.endtime << endl;
 #ifdef LEARN
-	maxdepth = 2;
+	maxdepth = 3;
 #endif
 #ifndef LEARN
 	maxdepth = MAX_DEPTH;
@@ -712,9 +712,12 @@ end_multicut:
 	//ÅiÇ‡ÇµëOå¸Ç´é}êÿÇËÇ™èoóàÇƒÇµÇ‹Ç¡ÇΩÇÁÇ±ÇÃÉmÅ[ÉhÇ≈ãlÇÒÇ≈ÇµÇ‹Ç§Åj
 moves_loop:
 	
+#ifndef  LEARN
 
 #define EXTENSION
-		
+
+#endif // ! LEARN
+
 
 			//ê√ìIï]âøílÇ™ëOÇÃé©ï™ÇÃéËî‘ÇÊÇËÇ‡ÇÊÇ≠Ç»Ç¡ÇƒÇ¢ÇÈÇ©Ç‹ÇΩÇÕà»ëOÇÃï]âøílÇ™ë∂ç›ÇµÇ»Ç©Ç¡ÇΩ
 	improve = ss->static_eval >= (ss - 2)->static_eval || (ss - 2)->static_eval == Value_error;
@@ -748,7 +751,7 @@ moves_loop:
 #ifdef USETT
 	movepicker mp(pos,ss,ttMove,depth);
 #else 
-	movepicker mp(pos, ss, MOVE_NONE);
+	movepicker mp(pos, ss, MOVE_NONE,depth);
 #endif
 	while ((move = mp.return_nextmove()) != MOVE_NONE) {
 
@@ -884,6 +887,8 @@ moves_loop:
 #ifdef PREF2
 		TT.prefetch(pos.key());
 #endif
+
+#if 1
 		doFullDepthSearch = (PVNode&&movecount == 1);
 
 
@@ -912,6 +917,69 @@ moves_loop:
 				value = -qsearch<PV>(pos, ss + 1, -beta, -alpha, DEPTH_ZERO);
 			}
 		}
+#endif
+#if 0
+		// Step 15. Reduced depth search (LMR). If the move fails high it will be
+		// re-searched at full depth.
+		// ê[Ç≥Çå∏ÇÁÇµÇΩíTçıÅBÇ‡ÇµÇ±ÇÃéwÇµéËÇ™ó«Ç¢ç∑ÇµéËÇ≈Ç†ÇÈÇ±Ç∆Ç™ï™Ç©ÇÍÇŒäÆëSÇ»ê[Ç≥Ç≈íTçıÇµÇ»Ç®Ç∑
+		if (depth >= 3 * ONE_PLY
+			&&movecount > 1
+			&& (!CaptureorPropawn || move_count_pruning)
+			)
+		{
+			//Ç±Ç±PVnodeÇ≈Ç¢Ç¢ÇÃÇ©ÅHÅHÅH
+			Depth r = reduction<PVNode>(improve, depth, movecount);
+
+			if (CaptureorPropawn) {
+				r -= r ? ONE_PLY : DEPTH_ZERO;
+			}
+			else {
+
+				Value val = thisthread->history[moved_piece(move)][move_to(move)];
+				int rHist = (val - 1600) / 4000;
+				r = std::max(DEPTH_ZERO, (int(r / ONE_PLY) - rHist)*ONE_PLY);
+
+			}
+
+			Depth d = std::max(newdepth - r, ONE_PLY);
+			value = -search<NonPV>(pos, ss + 1, -(alpha + 1), -alpha, d);
+			//d==newdepthÇÃèÍçáÇÕìØÇ∂èåèÇ≈çƒíTçıÇ∑ÇÈÇ±Ç∆Ç…Ç»Ç¡ÇƒÇµÇ‹Ç§
+			doFullDepthSearch = (value > alpha&&d != newdepth);
+		}
+		else {
+
+			doFullDepthSearch = (!PVNode || movecount > 1);
+		}
+
+
+		if (doFullDepthSearch) {
+			if (newdepth >= ONE_PLY) {
+				//null window search
+				value = -search<NonPV>(pos, ss + 1, -(alpha + 1), -alpha, newdepth);
+			}
+			else {
+				//value = Eval::eval(pos);
+				value = -qsearch<NonPV>(pos, ss + 1, -(alpha + 1), -alpha, DEPTH_ZERO);
+			}
+
+		}
+
+
+		if (PVNode && (movecount == 1 || (value>alpha && (RootNode || value<beta)))) {
+			//ss->pvmove = move;
+			(ss + 1)->pv = pv;
+			(ss + 1)->pv[0] = MOVE_NONE;
+			if (newdepth >= ONE_PLY) {
+				value = -search<PV>(pos, ss + 1, -beta, -alpha, newdepth);
+			}
+			else {
+				//value = Eval::eval(pos);
+				value = -qsearch<PV>(pos, ss + 1, -beta, -alpha, DEPTH_ZERO);
+			}
+		}
+
+#endif
+
 		//cout << "undo move " <<move<< endl;
 		pos.undo_move();
 
@@ -1164,11 +1232,12 @@ Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
 		futilitybase = bestvalue + 128;
 	}
 
-	
-#ifdef LEARN
-	//äwèKéûÇÕê∏éqíTçıê[Ç≥ÇRÇ‹Ç≈Ç≈é~ÇﬂÇÈÅBÅiÇ±ÇÒÇ»Ç±Ç∆ÇÕÇπÇ∏ÉoÉbÉTÉäé}ÇêÿÇÍÇÈé}êÿÇËï˚ñ@Çì±ì¸ÇµÇΩÇ¢Åj
-	if (depth < -3 * ONE_PLY) { return bestvalue; }
-#endif
+//	
+//#ifdef LEARN
+//	//äwèKéûÇÕê∏éqíTçıê[Ç≥ÇRÇ‹Ç≈Ç≈é~ÇﬂÇÈÅBÅiÇ±ÇÒÇ»Ç±Ç∆ÇÕÇπÇ∏ÉoÉbÉTÉäé}ÇêÿÇÍÇÈé}êÿÇËï˚ñ@Çì±ì¸ÇµÇΩÇ¢Åj
+//	if (depth < -3 * ONE_PLY) { return bestvalue; }
+//#endif
+
 	//ÉRÉåÇ≈è„éËÇ≠ëOÇÃéwÇµéËÇÃà⁄ìÆêÊÇó^Ç¶ÇÁÇÍÇƒÇ¢ÇÈÇ∆évÇ§
 	//Ç±Ç±Ç≈nullmoveÇ™ì¸Ç¡ÇƒÇ´ÇΩèÍçáÇÃÇ±Ç∆Ç‡çlÇ¶Ç»Ç¢Ç∆Ç¢ÇØÇ»Ç¢ÅB
 	//Ç∆Ç¢Ç§Ç©nullmoveÇ™ì¸Ç¡ÇƒÇ´ÇΩÇÁéÊÉäï‘Ç∑Ç»ÇÒÇƒÇ†ÇËÇ¶Ç»Ç¢ÇÃÇ≈Ç±Ç±Ç≈ï]âøílï‘Ç∑ÇµÇ©ñ≥Ç¢Ç≈ÇµÇÂ(â§éËÇ‡ê∂ê¨Ç∑ÇÈÇ»ÇÁòbÇÕï Åj

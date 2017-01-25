@@ -1072,7 +1072,12 @@ bool Position::is_legal(const Move m) const {
 	//from‚É‚¢‚é‹î‚Æ“®‚©‚»‚¤‚Æ‚µ‚Ä‚¢‚é‹î‚Í“¯‚¶
 	if (!isDrop) { ASSERT(piece_on(from) == movedpiece); }
 	//Žæ‚ë‚¤‚Æ‚µ‚Ä‚¢‚é‹î‚ÍŽ©•ª‚Ì‹î‚Å‚Í‚È‚¢
+#ifdef LEARN
+	if (piece_on(to) != NO_PIECE && piece_color(piece_on(to)) == sidetomove_) { return false; }
+#else
 	ASSERT(piece_on(to) == NO_PIECE || piece_color(piece_on(to)) != sidetomove_);
+#endif
+	
 	//Žæ‚ë‚¤‚Æ‚µ‚Ä‚¢‚é‹î‚Í‹Ê‚Å‚Í‚È‚¢
 	if (piece_type(piece_on(to)) == KING) {
 
