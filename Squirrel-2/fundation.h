@@ -156,7 +156,7 @@ inline bool can_promote(const Piece pt){ return ((B_PAWN <= pt&&pt <= B_ROOK) /*
 inline Piece promotepiece(const Piece pc) { ASSERT(can_promote(piece_type(pc)));  return Piece(pc | PROMOTE); }
 inline Piece rowpiece(const Piece pc) { /*ASSERT(!can_promote(pc));*/ return Piece(pc&~PROMOTE); }//do_moveでなっていない駒も一律でこの関数に突っ込みたいのでASSERTは外す
 inline Piece add_color(const Piece pt, const Color c) { return (c == BLACK) ? pt : Piece(pt | WHITE_piece); }
-
+inline bool is_promote_piece(const Piece pc) { return bool(pc&PROMOTE); }
 //表示用（コレでうまくいくか....????）OK上手く行けてた。
 extern char* outputPiece[PC_ALL] ;
 extern char* USIPiece[PC_ALL];

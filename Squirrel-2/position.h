@@ -615,6 +615,10 @@ public:
 	Key key_after_move(const Move m);
 
 
+
+	//ƒnƒtƒ}ƒ“•„†‰»
+	string pack_haffman_sfen()const;
+	string	unpack_haffman_sfen(string sfen)const;
 };
 
 std::ostream& operator<<(std::ostream& os, const Position& pos);

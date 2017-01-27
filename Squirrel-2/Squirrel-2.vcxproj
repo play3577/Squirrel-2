@@ -190,6 +190,7 @@
     <ClCompile Include="movepicker.cpp" />
     <ClCompile Include="occupied.cpp" />
     <ClCompile Include="occupied_m256.cpp" />
+    <ClCompile Include="Packedsfen.cpp" />
     <ClCompile Include="Parallel_learner.cpp" />
     <ClCompile Include="position.cpp" />
     <ClCompile Include="search.cpp" />

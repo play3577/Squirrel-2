@@ -617,6 +617,9 @@ void USI::loop()
 		else if (token == "occ") {
 			pos.check_occbitboard();
 		}
+		else if (token == "psfen") {
+			pos.pack_haffman_sfen();
+		}
 
 	} while (token != "quit");
 

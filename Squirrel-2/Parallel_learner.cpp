@@ -311,7 +311,7 @@ void learnphase1body(int number) {
 
 	//ここで宣言したいのだけれどこれでいいのだろうか？
 	Position pos;
-	StateInfo si[256];
+	StateInfo si[500];
 	ExtMove moves[600], *end;
 	vector<MoveInfo> minfo_list;
 	Thread th;
@@ -443,6 +443,7 @@ void learnphase1body(int number) {
 					pos.do_move(minfo_list[i].move, &si[ply]);
 
 					for (Move m : minfo_list[i].pv) {
+						if (j >= 3) { break; }
 						if (pos.is_legal(m) == false) { cout << games[g].black_P << " " << games[g].white_P; ASSERT(0); }
 						pos.do_move(m, &si2[j]);
 						j++;
@@ -464,6 +465,7 @@ void learnphase1body(int number) {
 				pos.do_move(minfo_list[0].move, &si[ply]);
 				//pvの指し手が非合法手になっている事がある？？
 				for (Move m : minfo_list[0].pv) {
+					if (j >= 3) { break; }
 					if (pos.is_legal(m) == false) { cout << games[g].black_P << " " << games[g].white_P;  ASSERT(0); }
 					if (pos.state()->lastmove == m) { cout << games[g].black_P << " " << games[g].white_P; ASSERT(0); }
 					pos.do_move(m, &si2[j]);
