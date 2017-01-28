@@ -186,5 +186,5 @@ string	Position::unpack_haffman_sfen(string sfen)const {
 
 
 
-
+	return nsfen;
 }

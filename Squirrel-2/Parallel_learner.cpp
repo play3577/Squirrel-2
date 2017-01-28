@@ -16,6 +16,7 @@
 #include <omp.h>
 #include <thread>
 #include <mutex>
+#include <cstdio>
 using namespace Eval;
 using namespace std;
 
@@ -155,9 +156,97 @@ void param_sym_leftright(dJValue &data) {
 
 
 
+
+//
+//int64_t maxmoves=0;
+//std::mutex mutex_m;
+//std::mutex mutex_h;
+//int64_t huicchi_moves = 0;
+//
+//
+//void lock_maxmoves_inclement(int moves) {
+//	std::unique_lock<std::mutex> lock(mutex_m);
+//	maxmoves+=moves;
+//}
+//
+//void lock_huicchimoves_inclement() {
+//	std::unique_lock<std::mutex> lock(mutex_h);
+//	 huicchi_moves ++;
+//}
+
+
+
 Parse2Data sum_parse2Datas;
 std::vector<Parse2Data> parse2Datas;
 std::vector<Game> games;
+std::vector<Game> testset;
+
+
+/*
+学習中に一致率を計算させていたがなんかバグってcpu使用率が０になってしまうことが頻発したので
+一致率計算の関数を用意して最後に一致率を計算する。
+*/
+double concordance() {
+
+
+	int num_tests = 500;//500棋譜で確認する
+
+
+	//ここで宣言したいのだけれどこれでいいのだろうか？
+	Position pos;
+	StateInfo si[500];
+	ExtMove moves[600], *end;
+	vector<MoveInfo> minfo_list;
+	Thread th;
+	end = moves;
+
+	int64_t num_concordance_move = 0;
+	int64_t num_all_move = 0;
+
+	for (int g = 0; g < num_tests; g++) {
+
+		auto thisgame = testset[g];//ここ学習用のデータと区別しておいたほうがいいか？？
+		pos.set_hirate();
+		for (int ply = 0; ply < (thisgame.moves.size() - 1); ply++) {
+
+			const Color rootColor = pos.sidetomove();
+
+			//この局面の差し手を生成する
+			memset(moves, 0, sizeof(moves));//初期化
+			end = test_move_generation(pos, moves);
+			ptrdiff_t num_moves = end - moves;
+
+
+			//棋譜の差し手
+			Move teacher_move = thisgame.moves[ply];
+			//棋譜の差し手は合法手か？
+			if (is_ok(teacher_move) == false) { cout << "is not ok" << endl; goto ERROR_OCCURED; }
+			if (!swapmove(moves, int(num_moves), teacher_move)) {
+				cout << "cant swap" << endl;
+				goto ERROR_OCCURED;
+			}
+			if (pos.is_legal(teacher_move) == false) { cout << "teacher ilegal" << endl; goto ERROR_OCCURED; }
+			//探索を行ってpv[0]がteachermoveか確認する。
+			th.set(pos);
+			Value  score = th.think();
+			if (th.pv[0] == teacher_move) { num_concordance_move++; }
+
+			pos.do_move(teacher_move, &si[ply]);
+			num_all_move++;
+		}
+	ERROR_OCCURED:;
+	}
+
+	//cout <<"一致率 "<< double(num_concordance_move * 100 / num_all_move)<<" %"<<endl;
+	return double(num_concordance_move * 100 / num_all_move);
+}
+
+
+
+
+
+
+
 
 
 
@@ -174,7 +263,8 @@ int num_parse2;
 void Eval::parallel_learner() {
 
 	//初期化
-	int readgames = 100000;
+	int readgames = 90000;
+	int numtestset = 2500;
 	numgames = 2000;
 	int numiteration = 1000;
 	maxthreadnum = omp_get_max_threads();
@@ -207,8 +297,23 @@ void Eval::parallel_learner() {
 			games.push_back(game);
 		}
 	}
+	for (int i = 0; i < numtestset; ++i) {
+		Game game;
 
+		if (gamedatastream.read_onegame(&game)
+			&& game.ply >= 60
+			&& game.result != draw)
+		{
+			testset.push_back(game);
+		}
+	}
 	cout << "read kihu OK!" << endl;
+
+//#define Test_icchiritu
+
+#ifdef Test_icchiritu
+	concordance();
+#endif
 
 
 #ifdef LOG
@@ -255,6 +360,8 @@ void Eval::parallel_learner() {
 		limit.starttime = now();
 		//過去の情報をクリアする
 		objective_function = 0;
+		//maxmoves = 0;
+		//huicchi_moves = 0;
 		for (auto& datas : parse2Datas) {
 			datas.clear();
 		}
@@ -266,7 +373,13 @@ void Eval::parallel_learner() {
 		std::cout << "iteration" << iteration << "/maxiteration :" << numiteration << " objfunc" << objective_function << " elasped " << (now() - limit.starttime + 1) / (1000 * 60) << " min" << std::endl;
 #ifdef LOG
 		ofs << " iteration " << iteration << " objfunc" << objective_function << " elasped " << (now() - limit.starttime + 1) / (1000 * 60) << " min" << endl;
+		//ofs << "一致率 " << ((maxmoves- huicchi_moves) * 100 / (maxmoves + 1)) << endl;
+		//cout << "一致率 " << ((maxmoves - huicchi_moves) * 100 / (maxmoves + 1)) <<" %"<< endl;
+		double icchiritu = concordance();
+		ofs << "一致率 " <<icchiritu << " %" << endl;
+		cout << "一致率 " << icchiritu <<" %"<< endl;
 #endif
+
 	}
 
 
@@ -282,6 +395,7 @@ int index_ = 0;
 
 int lock_index_inclement() {
 	std::unique_lock<std::mutex> lock(mutex_);
+	printf(".");
 	return index_++;
 }
 
@@ -361,6 +475,9 @@ void learnphase1body(int number) {
 			//num_moves = std::min(int(num_moves), 15);
 			//cout << "num_moves " << num_moves << endl;
 
+			//Value teachervalue;
+			//bool huicchi_firsttime = true;
+			ASSERT(moves[0].move == teacher_move);
 			for (int move_i = 0; move_i < num_moves; move_i++) {
 
 				Move m = moves[move_i];
@@ -370,11 +487,13 @@ void learnphase1body(int number) {
 				pos.do_move(m, &si[ply]);
 				th.set(pos);
 				Value  score = th.think();
+				//if (m==teacher_move) { teachervalue = score; }
 				if (abs(score) < Value_mate_in_maxply) {
 					minfo_list.push_back(MoveInfo(m, th.pv, score));
 				}
 				else { pos.undo_move(); break; }
 				pos.undo_move();
+				//if (score > teachervalue&&huicchi_firsttime == true) { huicchi_firsttime = false;  lock_huicchimoves_inclement(); }
 			}
 			//ここでこの局面の指し手による探索終了
 			
@@ -484,7 +603,8 @@ void learnphase1body(int number) {
 		
 		}
 	ERROR_OCCURED:;
-		cout << "game number: " << g << "/ maxgamenum: " << numgames << " didmoves " << didmoves << " diddepth " << diddepth << endl;
+		//cout << "game number: " << g << "/ maxgamenum: " << numgames << " didmoves " << didmoves << " diddepth " << diddepth << endl;
+		//lock_maxmoves_inclement(diddepth);
 	}
 
 }
