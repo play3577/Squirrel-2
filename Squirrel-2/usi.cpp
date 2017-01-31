@@ -103,16 +103,18 @@ void USI::init_option(OptionMap &o,string engine_name)
 	
 	o["USI_Hash"] << USIOption(1, 1, 256);
 	o["EngineName"] << USIOption(name.c_str());
-	o["is_0.1s"] << USIOption(false);
+	//o["is_0.1s"] << USIOption(false);
 	//o["bookpath"] << USIOption("c:/book2/book2016928fg2800_40.db");
 	o["bookpath"] << USIOption("c:/book2/standard_book.db");
 	o["usebook"] << USIOption(true);
 	o["randombook"] << USIOption(true);
+	o["use_defined_time"] << USIOption(false);
+	o["defined_time"] << USIOption(100,100,100000);
 }
 
 
-/// operator<<() is used to print all the options default values in chronological
-/// insertion order (the idx field) and in the format defined by the UCI protocol.
+// operator<<() is used to print all the options default values in chronological
+// insertion order (the idx field) and in the format defined by the UCI protocol.
 std::ostream& USI::operator<<(std::ostream& os, const OptionMap& om) {
 
 	for (size_t idx = 0; idx < om.size(); idx++) {
@@ -123,15 +125,15 @@ std::ostream& USI::operator<<(std::ostream& os, const OptionMap& om) {
 				const USIOption& o = it.second;
 				os << "\noption name " << it.first << " type " << o.type;
 
-				if (o.type != "button") {
+				if (o.type != "check") {
 					os << " default " << o.value;
 				}
 
 				if (o.type == "spin") {
 					os << " min " << o.min << " max " << o.max;
 				}
-				if (o.type == "button") {
-					os << " defalt ";
+				if (o.type == "check") {
+					os << " default ";
 					if (o.value == "true") { os << "true"; }
 					else { os << "false"; }
 				}
@@ -297,7 +299,7 @@ void USI::loop()
 			}*/
 
 			type = option.return_type();
-			if (type == "button") {
+			if (type == "check") {
 				value == "true" ? option.change(true) : option.change(false);
 			}
 			else if (type == "spin") {

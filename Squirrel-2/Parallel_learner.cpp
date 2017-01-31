@@ -187,7 +187,9 @@ std::vector<Game> testset;
 一致率計算の関数を用意して最後に一致率を計算する。
 */
 double concordance() {
-
+	std::random_device rd;
+	std::mt19937 t_mt(rd());
+	std::shuffle(testset.begin(), testset.end(), t_mt);//シャッフルさせてるがしないほうがいい？？
 
 	int num_tests = 500;//500棋譜で確認する
 

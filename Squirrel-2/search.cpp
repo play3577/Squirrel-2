@@ -196,8 +196,11 @@ Value Thread::think() {
 	this->resetCalls = false;
 	this->call_count = 0;
 #ifndef  LEARN
+	if ((bool)Options["use_defined_time"] == true) {
+		limit.endtime = Options["defined_time"] + limit.starttime;
+	}
 	//超テキトーな時間制御のコードあとで何とかする
-	if (limit.remain_time[rootpos.sidetomove()] / 40 < limit.byoyomi) {
+	else if (limit.remain_time[rootpos.sidetomove()] / 40 < limit.byoyomi) {
 		limit.endtime = limit.byoyomi + limit.starttime;
 	}
 	else {
