@@ -20,9 +20,10 @@
 //#define PREF2
 SearchLimit limit;
 Signal signal;
-
+CounterMoveHistoryStats CounterMoveHistory;
 
 inline Value bonus(const Depth d1) { int d = d1 / ONE_PLY; return Value(d*d + 2 * d - 2); }
+void update_cm_stats(Stack* ss, Piece pc, Square s, Value bonus);
 void update_stats(const Position& pos, Stack* ss, Move move, Move* quiets, int quietsCnt, Value bonus);
 
 
@@ -56,6 +57,17 @@ int Reductions[3][2][64][64];  // [pv][improving][depth][moveNumber]
 
 template <bool PvNode> Depth reduction(bool i, Depth d, int mn) {
 	return Reductions[PvNode][i][std::min(int(d / ONE_PLY), 63)][std::min(mn, 63)] * ONE_PLY;
+}
+
+//ここ後でマルチスレッドように変える
+void search_clear(Thread& th) {
+
+	TT.clear();
+	CounterMoveHistory.clear();
+	th.fromTo.clear();
+	th.history.clear();
+	th.counterMoves.clear();
+
 }
 
 //探索乗数の初期化
@@ -179,7 +191,6 @@ Value Thread::think() {
 		
 	}//end book
 
-	history.clear();
 #ifdef USETT
 	TT.new_search();
 #endif
@@ -349,7 +360,8 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 	}
 
 	//ssは過去の情報を消しておく必要がある
-	(ss + 1)->excludedMove = MOVE_NONE;
+	ss->currentMove = (ss + 1)->excludedMove=bestMove = MOVE_NONE;
+	ss->counterMoves = nullptr;
 	(ss + 1)->skip_early_prunning = false;
 	(ss + 2)->killers[0] = (ss + 2)->killers[1] = MOVE_NONE;
 
@@ -419,7 +431,7 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 		&& (ttValue >= beta ? (ttBound&BOUND_LOWER) : (ttBound&BOUND_UPPER))//BOUND_EXACT = BOUND_UPPER | BOUND_LOWERであるのでどちらの&も満たす
 		//&& (pos.piece_on(move_to(ttMove)) == NO_PIECE || piece_color(pos.piece_on(move_to(ttMove))) != pos.sidetomove())//ここでこの局面で非合法手だったら省く
 		) {
-
+		ss->currentMove = ttMove; // Can be MOVE_NONE
 		//ttMoveがquietでttvalue>=betaであればhistoryを更新することができる。
 		if (ttValue >= beta&&ttMove != MOVE_NONE) {
 			//hashの偶然一致でここでバグって落ちることが起こったが、レアケースであるため無視をすることにする
@@ -527,6 +539,8 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 		&&staticeval >= beta
 		&& (staticeval >= beta - 35 * (int(depth / ONE_PLY) - 6) || depth >= 13 * ONE_PLY)
 		) {
+		ss->currentMove = MOVE_NULL;
+		ss->counterMoves = nullptr;
 		ASSERT(staticeval >= beta);
 
 		//Rの値は場合分けをして後で詳しく見る
@@ -640,7 +654,8 @@ end_multicut:
 		while ((move = mp.return_nextmove()) != MOVE_NONE) {
 
 			if (pos.is_legal(move)) {
-
+				ss->currentMove = move;
+				ss->counterMoves = &CounterMoveHistory[moved_piece(move)][move_to(move)];
 				pos.do_move(move, &si);
 				value = -search<NonPV>(pos, (ss + 1), -rbeta, -rbeta + 1, rdepth);
 				pos.undo_move();
@@ -720,7 +735,9 @@ moves_loop:
 #define EXTENSION
 
 #endif // ! LEARN
-
+	const CounterMoveStats* cmh = (ss - 1)->counterMoves;
+	const CounterMoveStats* fmh = (ss - 2)->counterMoves;
+	const CounterMoveStats* fmh2 = (ss - 4)->counterMoves;
 
 			//静的評価値が前の自分の手番よりもよくなっているかまたは以前の評価値が存在しなかった
 	improve = ss->static_eval >= (ss - 2)->static_eval || (ss - 2)->static_eval == Value_error;
@@ -796,7 +813,7 @@ moves_loop:
 			CaptureorPropawn = pos.capture_or_propawn(move);
 		}
 
-		++movecount;
+		ss->moveCount=++movecount;
 		extension = DEPTH_ZERO;
 		givescheck = pos.is_gives_check(move);
 
@@ -883,7 +900,8 @@ moves_loop:
 		}
 
 
-
+		ss->currentMove = move;
+		ss->counterMoves = &CounterMoveHistory[moved_piece(move)][move_to(move)];
 
 		
 		pos.do_move(move, &si, givescheck);
@@ -1040,15 +1058,36 @@ moves_loop:
 		bestvalue= excludedmove?alpha: mated_in_ply(ss->ply);
 	}
 	else if (bestMove != MOVE_NONE) {
+
+		//bestmmoveはalpha値を超えるような指してのこと
+		//アルファ値を超えるような有効な指し手があった場合
+		//（βカットを起こしてしまった指してに対しても探索が短くなるという意味で良い値をつけるべきである）
+
 		//行先に駒がないまたは自分の駒ではない
 		/*if (pos.piece_on(move_to(bestMove)) != NO_PIECE && piece_color(pos.piece_on(move_to(bestMove))) == pos.sidetomove()) {
 			ASSERT(0);
 		}*/
+		// Quiet best move: update killers, history and countermoves
+		//bestmoveがQUIETであった場合はbestmoveに良い値をつけて他の指してに悪い値をつける
 		if (!pos.capture_or_propawn(bestMove)) {
 			update_stats(pos, ss, bestMove, Quiets_Moves, quiets_count, bonus(depth));
 		}
+		//Extra penalty for a quiet TT move in previous ply when it gets refutedやり返されてしまったTTの差し手に悪い値をつける。
+		if ((ss - 1)->moveCount == 1 && !pos.state()->DirtyPiece[1] == NO_PIECE && (ss - 1)->currentMove != MOVE_NULL) {
+			int d = depth / ONE_PLY;
+			Value penalty = Value(d * d + 4 * d + 1);
+			Square prevSq = move_to((ss - 1)->currentMove);
+			update_cm_stats(ss - 1, moved_piece((ss - 1)->currentMove), prevSq, -penalty);//移動した後の駒であるのでこれでいい。しかし駒種はchessと違い成りが含まれるかもしれないので移動前の駒種を使う
+		}
 	}
-
+	// Bonus for prior countermove that caused the fail low
+	//alphaを超えるような差し手がなかったということは相手の差し手はよい差し手であったので相手の差し手のcountermoveに良い値をつける
+	else if (depth >= 3 * ONE_PLY && !pos.state()->DirtyPiece[1] == NO_PIECE&& is_ok((ss - 1)->currentMove)&& (ss - 1)->currentMove!=MOVE_NULL) {
+		int d = depth / ONE_PLY;
+		Value bonus = Value(d * d + 2 * d - 2);
+		Square prevSq = move_to((ss - 1)->currentMove);
+		update_cm_stats(ss - 1, moved_piece((ss - 1)->currentMove), prevSq, bonus);
+	}
 
 #ifdef USETT
 	//http://yaneuraou.yaneu.com/2015/02/24/stockfish-dd-search-%E6%8E%A2%E7%B4%A2%E9%83%A8/ 　から引用
@@ -1390,17 +1429,44 @@ void update_stats(const Position& pos, Stack* ss,const Move bestmove,
 
 
 	//bestmoveに+=正のbonus
+	Color c = pos.sidetomove();
 	Thread* thisthread = pos.searcher();
 	thisthread->history.update(moved_piece(bestmove), move_to(bestmove), bonus);
+	thisthread->fromTo.update(c, bestmove, bonus);
+	update_cm_stats(ss, moved_piece(bestmove), move_to(bestmove), bonus);
+
+	//countermoveとcurrentmoveの格納はまだ
+	if ((ss - 1)->counterMoves)
+	{
+		Square prevSq = move_to((ss - 1)->currentMove);
+		thisthread->counterMoves.update(pos.piece_on(prevSq), prevSq, bestmove);
+	}
 
 	// Decrease all the other played quiet moves
 	//alphaを更新しなかった指し手に対して+=負の値
 	for (int i = 0; i < quietsCnt; ++i) {
+		thisthread->fromTo.update(c, quiets[i], -bonus);
 		thisthread->history.update(moved_piece(quiets[i]), move_to(quiets[i]), -bonus);
+		update_cm_stats(ss, moved_piece(quiets[i]), move_to(quiets[i]), -bonus);
 	}
 
 }
 
+void update_cm_stats(Stack* ss, Piece pc, Square s, Value bonus) {
+
+	CounterMoveStats* cmh = (ss - 1)->counterMoves;
+	CounterMoveStats* fmh1 = (ss - 2)->counterMoves;
+	CounterMoveStats* fmh2 = (ss - 4)->counterMoves;
+
+	if (cmh)
+		cmh->update(pc, s, bonus);
+
+	if (fmh1)
+		fmh1->update(pc, s, bonus);
+
+	if (fmh2)
+		fmh2->update(pc, s, bonus);
+}
 
 
 /*

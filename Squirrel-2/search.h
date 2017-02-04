@@ -3,7 +3,7 @@
 #include "fundation.h"
 #include "position.h"
 #include "misc.h"
-
+#include "moveStats.h"
 #include <atomic>
 
 enum Nodetype {
@@ -19,6 +19,7 @@ struct Signal {
 
 };
 
+void search_clear(Thread& th);
 
 //pvの為にSearchStackを導入
 struct Stack {
@@ -26,9 +27,12 @@ struct Stack {
 	Move *pv;
 	int ply = 0;
 	Move excludedMove = MOVE_NONE;
+	Move currentMove=MOVE_NONE;
 	bool skip_early_prunning = false;
 	Move killers[2];
 	Value static_eval;
+	int moveCount;
+	CounterMoveStats* counterMoves=nullptr;//countermovehistorytableのentryへのポインタを格納する。
 };
 
 

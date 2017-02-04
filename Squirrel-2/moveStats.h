@@ -61,7 +61,7 @@ vが324の値を超えるのはd=18
 template<typename T, bool CM = false>
 struct Stats {
 
-	static const Value Max = Value(1 << 14);
+	static const Value Max = Value(1 << 14);//Valueは16bit整数にしているのでそれに収まるように調整
 
 	const T* operator[](Piece pc) const { return table[pc]; }
 	T* operator[](Piece pc) { return table[pc]; }
@@ -92,5 +92,35 @@ struct Stats {
 private:
 	T table[PC_ALL][SQ_NUM];
 };
-
+typedef Stats<Move> MoveStats;
 typedef Stats<Value, false> HistoryStats;
+//http://yaneuraou.yaneu.com/2016/02/28/pseudo-legal%E3%81%AE%E5%88%A4%E5%AE%9A%E3%81%8C%E3%83%9E%E3%82%B8%E3%81%A7%E9%9B%A3%E3%81%97%E3%81%84%E4%BB%B6/
+//上のようなことに注意する。
+//countermoveは将棋のような手筋があるゲームではかなり有効らしい。
+typedef Stats<Value, true> CounterMoveStats;
+typedef Stats<CounterMoveStats> CounterMoveHistoryStats;
+
+/*
+上のstatsはtoとpcしか考慮していなかったがこちらはfromとtoを考慮するstats.
+*/
+struct FromToStats {
+
+	Value get(Color c, Move m) const { return table[c][move_from(m)][move_to(m)]; }
+	void clear() { std::memset(table, 0, sizeof(table)); }
+
+	void update(Color c, Move m, Value v)
+	{
+		if (abs(int(v)) >= 324)
+			return;
+
+		Square f = move_from(m);
+		Square t = move_to(m);
+
+		table[c][f][t] -= table[c][f][t] * abs(int(v)) / 324;
+		table[c][f][t] += (v) * 32;
+	}
+
+private:
+	Value table[ColorALL][SQ_NUM][SQ_NUM];
+};
+

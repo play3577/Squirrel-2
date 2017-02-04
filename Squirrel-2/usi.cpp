@@ -270,7 +270,7 @@ void USI::loop()
 			cout << Options << endl;
 			cout << "usiok" << endl;
 		}
-		else if (token == "isready") { is_ready(); cout << "readyok" << endl; }
+		else if (token == "isready") { is_ready(); search_clear(th);  cout << "readyok" << endl; }
 		else if (token == "position") { position(pos, is); }
 		else if (token == "go") { go(pos, is, th); }
 		else if (token == "setoption") {

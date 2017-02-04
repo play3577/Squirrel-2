@@ -60,9 +60,9 @@ void movepicker::generatemove()
 	case Killers:
 		killers[0].move = ss->killers[0];
 		killers[1].move = ss->killers[1];
-		//killers[2] = countermove;
+		killers[2] = countermove;
 		current_ = killers;
-		end_ = current_ + 2;
+		end_ = current_ + 2 + (countermove != killers[0] && countermove != killers[1]);
 		break;
 	case QUIET:
 		end_ = move_generation<Quiet>(pos_, move_);
@@ -173,10 +173,11 @@ Move movepicker::return_nextmove()
 
 			if (m != killers[0].move
 				&& m != killers[1].move
+				&& m != killers[2].move
 				&&m!=ttMove
 				) {
 				return m;
-			}
+				}
 			break;
 		case BAD_CAPTURES:
 			return (current_--)->move;
@@ -217,7 +218,11 @@ Move movepicker::return_nextmove()
 void movepicker::quietscore()
 {
 	const HistoryStats& history = pos_.searcher()->history;
-
+	const FromToStats& fromTo= pos_.searcher()->fromTo;
+	const CounterMoveStats* cm = (ss - 1)->counterMoves;
+	const CounterMoveStats* fm = (ss - 2)->counterMoves;
+	const CounterMoveStats* f2 = (ss - 4)->counterMoves;
+	Color c = pos_.sidetomove();
 	ptrdiff_t num_move = end_ - move_;
 //	int j = 0;
 	for (int i = 0; i < num_move; i++) {
@@ -226,7 +231,12 @@ void movepicker::quietscore()
 		Square to = move_to(move_[i].move);
 		ASSERT(is_ok(pc));
 		ASSERT(is_ok(to));
-		move_[i].value = history[pc][to];
+		//move_[i].value = history[pc][to];
+		move_[i].value = history[pc][to]
+			+ (cm ? (*cm)[pc][to] : Value_Zero)
+			+ (fm ? (*fm)[pc][to] : Value_Zero)
+			+ (f2 ? (*f2)[pc][to] : Value_Zero)
+			+ fromTo.get(c, move_[i].move);
 	}
 
 }
@@ -259,6 +269,8 @@ void movepicker::capturepropawn_score()
 void movepicker::eversion_score()
 {
 	const HistoryStats& history=pos_.searcher()->history;
+	const FromToStats& fromTo = pos_.searcher()->fromTo;
+
 	Value see;
 
 	for (ExtMove* i = move_; i < end_; i++) {
@@ -288,7 +300,7 @@ void movepicker::eversion_score()
 			}
 		}
 		else {
-			i->value = history[movept][move_to(m)];
+			i->value = history[movept][move_to(m)]+fromTo.get(pos_.sidetomove(),i->move);
 		}
 	}
 
@@ -298,4 +310,22 @@ Move movepicker::pick_best(ExtMove * begin, ExtMove * end)
 {
 	std::swap(*begin, *std::max_element(begin, end));
 	return begin->move;
+}
+
+//通常探索用コンストラクタ
+
+ movepicker::movepicker(const Position & pos, Stack * ss_, Move ttm, Depth d) :pos_(pos), ss(ss_), depth_(d) {
+
+	current_ = end_ = move_;
+
+	if (pos.is_incheck()) {
+		st = START_Eversion;
+	}
+	else {
+		st = START_Normal;
+		Square prevSq = move_to((ss - 1)->currentMove);
+		countermove = pos.searcher()->counterMoves[moved_piece((ss - 1)->currentMove)][prevSq];
+	}
+	ttMove = (ttm && pos.pseudo_legal(ttm)) ? ttm : MOVE_NONE;
+	end_ += (ttMove != MOVE_NONE);
 }

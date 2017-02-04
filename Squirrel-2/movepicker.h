@@ -38,26 +38,14 @@ private:
 	void eversion_score();
 	Move pick_best(ExtMove* begin, ExtMove* end);
 	Value Threshold;
-	ExtMove killers[2];
+	ExtMove killers[3];
 	Move ttMove;
 	const Stack* ss;
 	Depth depth_;
-
+	Move countermove;
 public:
 	//通常探索用コンストラクタ
-	movepicker(const Position& pos,Stack* ss_,Move ttm,Depth d) :pos_(pos),ss(ss_),depth_(d) {
-
-		current_ = end_ = move_;
-
-		if (pos.is_incheck()) {
-			st = START_Eversion;
-		}
-		else {
-			st = START_Normal;
-		}
-		ttMove = (ttm && pos.pseudo_legal(ttm)) ? ttm : MOVE_NONE;
-		end_ += (ttMove != MOVE_NONE);
-	}
+	movepicker(const Position& pos, Stack* ss_, Move ttm, Depth d);
 
 	//精子探索用コンストラクタ
 	movepicker(const Position& pos, Square recapsq,Move ttm) :pos_(pos) {

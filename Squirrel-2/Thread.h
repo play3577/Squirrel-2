@@ -20,6 +20,8 @@ public:
 	int call_count = 0;
 	int seldepth = 0;
 	HistoryStats history;
+	MoveStats counterMoves;
+	FromToStats fromTo;
 public:
 
 	std::vector<Move> pv;//“Ç‚Ý‹Ø
