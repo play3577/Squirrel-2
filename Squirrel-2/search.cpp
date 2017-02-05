@@ -27,7 +27,7 @@ void update_cm_stats(Stack* ss, Piece pc, Square s, Value bonus);
 void update_stats(const Position& pos, Stack* ss, Move move, Move* quiets, int quietsCnt, Value bonus);
 
 
-template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value beta, Depth depth);
+template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value beta, Depth depth, bool cutNode);
 
 template <Nodetype NT>
 Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth);
@@ -62,7 +62,9 @@ template <bool PvNode> Depth reduction(bool i, Depth d, int mn) {
 //ここ後でマルチスレッドように変える
 void search_clear(Thread& th) {
 
+#ifndef LEARN
 	TT.clear();
+#endif
 	CounterMoveHistory.clear();
 	th.fromTo.clear();
 	th.history.clear();
@@ -149,7 +151,7 @@ Value Thread::think() {
 
 	Stack stack[MAX_PLY + 7], *ss = stack + 5;
 	std::memset(stack, 0, (MAX_PLY + 7) * sizeof(Stack));
-	Value bestvalue, alpha, beta;
+	Value bestvalue, alpha, beta,delta;
 
 	if (end == RootMoves) {
 #ifndef LEARN
@@ -223,7 +225,7 @@ Value Thread::think() {
 
 	//cout << limit.endtime << endl;
 #ifdef LEARN
-	maxdepth = 3;
+	maxdepth = 4;//この値-1が実際に探索される深さ
 #endif
 #ifndef LEARN
 	maxdepth = MAX_DEPTH;
@@ -233,8 +235,15 @@ Value Thread::think() {
 //	Eval::eval(rootpos);
 	while (++rootdepth <maxdepth&&!signal.stop) {
 
+		/*if (rootdepth >= 5) {
+			delta = Value(40);
+			alpha = std::max(previousScore - delta, -Value_Infinite);
+			beta = std::min(previousScore + delta, Value_Infinite);
+		}*/
+research:
 		//ここで探索関数を呼び出す。
-		bestvalue = search<Root>(rootpos, ss, alpha, beta, rootdepth*ONE_PLY);
+		ASSERT(alpha < beta);
+		bestvalue = search<Root>(rootpos, ss, alpha, beta, rootdepth*ONE_PLY,false);
 
 		sort_RootMove();
 
@@ -243,22 +252,39 @@ Value Thread::think() {
 			break;
 		}
 
+		/*if (bestvalue < alpha) {
+			beta = (alpha + beta) / 2;
+			alpha = std::max(bestvalue - delta, -Value_Infinite);
+			delta += delta / 4 + 5;
+			goto research;
+		}
+		else if (bestvalue >= beta)
+		{
+			alpha = (alpha + beta) / 2;
+			beta = std::min(bestvalue + delta, Value_Infinite);
+			delta += delta / 4 + 5;
+			goto research;
+		}*/
+
+
+
 #ifndef LEARN
 		print_pv(rootdepth,bestvalue);
-		cout <<"評価値"<< int(bestvalue)*100/int(Eval::PawnValue) << endl;
+		//cout <<"評価値"<< int(bestvalue)*100/int(Eval::PawnValue) << endl;
 #endif
 	}//end of 反復深化
-
+	sort_RootMove();
 ID_END:
 
 #ifndef LEARN
+	//print_pv(rootdepth, bestvalue);
 	cout << "bestmove " << RootMoves[0] << endl;
 #endif // !LEARN
-
+	previousScore = RootMoves[0].value;
 	return bestvalue;
 }
 
-template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value beta, Depth depth) {
+template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value beta, Depth depth,bool cutNode) {
 
 	ASSERT(alpha < beta);
 
@@ -270,7 +296,7 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 	bool doFullDepthSearch = false;
 
 	Move pv[MAX_PLY + 1];
-	Move move;
+	Move move = MOVE_NONE;
 	Move bestMove=MOVE_NONE;
 	Move excludedmove=MOVE_NONE;
 	Move Quiets_Moves[64];
@@ -443,6 +469,18 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 			if (pos.capture_or_propawn(ttMove)==false) {
 				update_stats(pos, ss, ttMove, nullptr, 0, bonus(depth));
 			}
+			// Extra penalty for a quiet TT move in previous ply when it gets refuted
+			//やり返されてしまった以前のquietなTTmoveに対してペナルティーをかける
+			//※(ss-1)->moveCount == 1 なのでTTmoveとは限らないのではないか？？
+			if ((ss - 1)->moveCount == 1 && pos.state()->DirtyPiece[1]==NO_PIECE&& (ss - 1)->currentMove!=MOVE_NULL)
+			{
+				int d = depth / ONE_PLY;
+				Value penalty = Value(d * d + 4 * d + 1);
+				Square prevSq = move_to((ss - 1)->currentMove);
+				update_cm_stats(ss - 1, moved_piece((ss-1)->currentMove), prevSq, -penalty);
+			}
+
+
 		}
 
 		return ttValue;
@@ -550,7 +588,7 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 		(ss + 1)->skip_early_prunning = true;//前向き枝切りはしない。（２回連続パスはよろしくない）
 
 		//nullmoveは取り合いが起こらないので静止探索を呼ばない。（静止探索で王手も探索するように成れば実装を変更する）
-		null_value = (depth - R) < ONE_PLY ? staticeval : -search<NonPV>(pos, ss + 1, -(beta), -beta + 1, depth - R);
+		null_value = (depth - R) < ONE_PLY ? staticeval : -search<NonPV>(pos, ss + 1, -(beta), -beta + 1, depth - R,!cutNode);
 		(ss + 1)->skip_early_prunning = false;
 		pos.undo_nullmove();
 
@@ -571,7 +609,7 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 			//またここに入ってこないように前向き枝切りには入らないようにする。
 			ss->skip_early_prunning = true;
 			//do_moveをしていないのでss,betaでよい。
-			Value v= (depth - R) < ONE_PLY ? staticeval : search<NonPV>(pos, ss ,beta-1, beta, depth - R);
+			Value v= (depth - R) < ONE_PLY ? staticeval : search<NonPV>(pos, ss ,beta-1, beta, depth - R,false);
 			ss->skip_early_prunning = false;
 
 			if (v >= beta) {
@@ -657,7 +695,7 @@ end_multicut:
 				ss->currentMove = move;
 				ss->counterMoves = &CounterMoveHistory[moved_piece(move)][move_to(move)];
 				pos.do_move(move, &si);
-				value = -search<NonPV>(pos, (ss + 1), -rbeta, -rbeta + 1, rdepth);
+				value = -search<NonPV>(pos, (ss + 1), -rbeta, -rbeta + 1, rdepth,!cutNode);
 				pos.undo_move();
 
 				if (value >= rbeta) { return value; }
@@ -699,7 +737,7 @@ end_multicut:
 		Depth d = (3 * (int)depth / (4 * ONE_PLY) - 2)*ONE_PLY;
 		ss->skip_early_prunning = true;
 		//ここで帰ってきた値を何かに利用できないか？？？
-		search<NT>(pos, ss, alpha, beta, d);
+		search<NT>(pos, ss, alpha, beta, d,cutNode);
 		ss->skip_early_prunning = false;
 		tte = TT.probe(poskey, TThit);
 		//TTが汚されてしまう場合を考えてこうする
@@ -839,8 +877,8 @@ moves_loop:
 			
 			if (givescheck
 				 && !move_count_pruning) {
-			if (pos.see_sign(move) >= Value_Zero) { extension = ONE_PLY; }
-			//else { extension = HALF_PLY; }
+				if (pos.see_sign(move) >= Value_Zero) { extension = ONE_PLY; }
+				else { extension = HALF_PLY; }
 			}
 			//singler extension
 			/*
@@ -854,7 +892,7 @@ moves_loop:
 			Depth d = (depth / (2 * int(ONE_PLY)))*int(ONE_PLY);
 			ss->excludedMove = move;
 			ss->skip_early_prunning = true;
-			value = search<NonPV>(pos, ss, rBeta - 1, rBeta, d);
+			value = search<NonPV>(pos, ss, rBeta - 1, rBeta, d,cutNode);
 			ss->skip_early_prunning = false;
 			ss->excludedMove = MOVE_NONE;
 			if (value < rBeta) {
@@ -879,6 +917,14 @@ moves_loop:
 				if (move_count_pruning) { continue; }
 				Depth predicted_depth = std::max(newdepth - reduction<PVNode>(improve, depth, movecount), DEPTH_ZERO);
 
+				// Countermoves based pruning
+				if (predicted_depth < 3 * ONE_PLY
+					&& (!cmh || (*cmh)[moved_piece(move)][move_to(move)] < Value_Zero)
+					&& (!fmh || (*fmh)[moved_piece(move)][move_to(move)] < Value_Zero)
+					&& (!fmh2 || (*fmh2)[moved_piece(move)][move_to(move)] < Value_Zero || (cmh && fmh))) {
+					continue;
+				}
+
 				//親ノードのfutility
 				if (predicted_depth < 7 * ONE_PLY
 					&&staticeval + 256 + 200 * predicted_depth / int(ONE_PLY) <= alpha) {
@@ -888,7 +934,7 @@ moves_loop:
 				if (predicted_depth < 8 * ONE_PLY) {
 					Value see_v = predicted_depth < 4 * ONE_PLY ? Value_Zero :
 						Value(-Eval::PawnValue * 2 * int(predicted_depth - 3 * ONE_PLY) / ONE_PLY);
-					if (pos.see_sign(move)) { continue; }
+					if (pos.see_sign(move)<see_v) { continue; }
 				}
 
 			}
@@ -909,7 +955,7 @@ moves_loop:
 		TT.prefetch(pos.key());
 #endif
 
-#if 1
+#if 0
 		doFullDepthSearch = (PVNode&&movecount == 1);
 
 
@@ -939,10 +985,16 @@ moves_loop:
 			}
 		}
 #endif
-#if 0
+#if 1
 		// Step 15. Reduced depth search (LMR). If the move fails high it will be
 		// re-searched at full depth.
 		// 深さを減らした探索。もしこの指し手が良い差し手であることが分かれば完全な深さで探索しなおす
+		/*
+		絶対にここで枝を刈りすぎている
+
+		nonPVの指し手はPVになれないのもいかがなものかと思う。
+		でもnonPVが勝手にPVになったらそれはPVがおかしくなるか...????でもそれでレーティング下がってるしなぁ...
+		*/
 		if (depth >= 3 * ONE_PLY
 			&&movecount > 1
 			&& (!CaptureorPropawn || move_count_pruning)
@@ -956,14 +1008,24 @@ moves_loop:
 			}
 			else {
 
-				Value val = thisthread->history[moved_piece(move)][move_to(move)];
-				int rHist = (val - 1600) / 4000;
+				//捕獲から逃れる指し手の場合はreducationを減らす
+				if (pos.see(make_move(move_to(move), move_from(move), PAWN))<Value_Zero) {
+					r -= 2 * ONE_PLY;
+				}
+
+				Value val = thisthread->history[moved_piece(move)][move_to(move)]
+					+ (cmh ? (*cmh)[moved_piece(move)][move_to(move)] : Value_Zero)
+					+ (fmh ? (*fmh)[moved_piece(move)][move_to(move)] : Value_Zero)
+					+ (fmh2 ? (*fmh2)[moved_piece(move)][move_to(move)] : Value_Zero)
+					+ thisthread->fromTo.get(opposite(pos.sidetomove()), move);
+
+				int rHist = (val - 8000) / 20000;
 				r = std::max(DEPTH_ZERO, (int(r / ONE_PLY) - rHist)*ONE_PLY);
 
 			}
 
 			Depth d = std::max(newdepth - r, ONE_PLY);
-			value = -search<NonPV>(pos, ss + 1, -(alpha + 1), -alpha, d);
+			value = -search<NonPV>(pos, ss + 1, -(alpha + 1), -alpha, d,true);
 			//d==newdepthの場合は同じ条件で再探索することになってしまう
 			doFullDepthSearch = (value > alpha&&d != newdepth);
 		}
@@ -976,7 +1038,7 @@ moves_loop:
 		if (doFullDepthSearch) {
 			if (newdepth >= ONE_PLY) {
 				//null window search
-				value = -search<NonPV>(pos, ss + 1, -(alpha + 1), -alpha, newdepth);
+				value = -search<NonPV>(pos, ss + 1, -(alpha + 1), -alpha, newdepth,!cutNode);
 			}
 			else {
 				//value = Eval::eval(pos);
@@ -991,7 +1053,7 @@ moves_loop:
 			(ss + 1)->pv = pv;
 			(ss + 1)->pv[0] = MOVE_NONE;
 			if (newdepth >= ONE_PLY) {
-				value = -search<PV>(pos, ss + 1, -beta, -alpha, newdepth);
+				value = -search<PV>(pos, ss + 1, -beta, -alpha, newdepth,false);
 			}
 			else {
 				//value = Eval::eval(pos);
@@ -1073,7 +1135,7 @@ moves_loop:
 			update_stats(pos, ss, bestMove, Quiets_Moves, quiets_count, bonus(depth));
 		}
 		//Extra penalty for a quiet TT move in previous ply when it gets refutedやり返されてしまったTTの差し手に悪い値をつける。
-		if ((ss - 1)->moveCount == 1 && !pos.state()->DirtyPiece[1] == NO_PIECE && (ss - 1)->currentMove != MOVE_NULL) {
+		if ((ss - 1)->moveCount == 1 && pos.state()->DirtyPiece[1] == NO_PIECE && (ss - 1)->currentMove != MOVE_NULL) {
 			int d = depth / ONE_PLY;
 			Value penalty = Value(d * d + 4 * d + 1);
 			Square prevSq = move_to((ss - 1)->currentMove);
@@ -1082,7 +1144,7 @@ moves_loop:
 	}
 	// Bonus for prior countermove that caused the fail low
 	//alphaを超えるような差し手がなかったということは相手の差し手はよい差し手であったので相手の差し手のcountermoveに良い値をつける
-	else if (depth >= 3 * ONE_PLY && !pos.state()->DirtyPiece[1] == NO_PIECE&& is_ok((ss - 1)->currentMove)&& (ss - 1)->currentMove!=MOVE_NULL) {
+	else if (depth >= 3 * ONE_PLY && pos.state()->DirtyPiece[1] == NO_PIECE&& is_ok((ss - 1)->currentMove)&& (ss - 1)->currentMove!=MOVE_NULL) {
 		int d = depth / ONE_PLY;
 		Value bonus = Value(d * d + 2 * d - 2);
 		Square prevSq = move_to((ss - 1)->currentMove);

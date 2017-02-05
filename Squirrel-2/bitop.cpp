@@ -31,6 +31,7 @@ uint64_t pop_lsb(uint64_t & bb)
 #else
 	bb &= bb - 1;
 #endif
+	
 	return lsb;
 }
 

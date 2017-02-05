@@ -34,7 +34,8 @@ public:
 	//–¢ŽÀ‘•
 	void save(Key k, Value v, Bound b, Depth d, Move m, Value ev, uint8_t g){
 	
-		ASSERT(d / int(ONE_PLY) * int(ONE_PLY) == d);
+		//ASSERT(d / int(ONE_PLY) * int(ONE_PLY) == d);//0.5Žè‰„’·‚à‚ ‚é‚Ì‚Å
+
 		// Preserve any existing move for the same position
 		//
 

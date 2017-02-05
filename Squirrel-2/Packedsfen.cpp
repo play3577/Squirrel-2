@@ -65,7 +65,7 @@ string board_haffman_str[KING] = {
 	"1110",//SILVER
 	"111110",//BISHOP
 	"111111",//ROOk
-	"1111",//gold(あえて0を消してpromoteで0を足す)
+	"1111",//gold(あえて0を消してpromoteで0を足す)しかしこの方法だとunpackの時におかしくなる
 };
 
 
@@ -104,7 +104,7 @@ int64_t decimal(int64_t binary) {
 }
 
 //バイナリデータとして書き込むのかなぁ？？
-string Position::pack_haffman_sfen() const{
+string Position::pack_haffman_sfen(){
 
 	//stringで確保して後でintに変換するか(´･ω･｀)
 	string psfen;
@@ -172,17 +172,128 @@ string Position::pack_haffman_sfen() const{
 
 	}
 
+	unpack_haffman_sfen(packed_sfen);
+
 	return psfen;
 }
 
+string board_unhaffman_str[KING] = {
+	"0",//空き
+	"10",//PAWN
+	"1100",//LANCE
+	"1101",//KNIGHT
+	"1110",//SILVER
+	"111110",//BISHOP
+	"111111",//ROOk
+	"11110",//金
+};
 
-string	Position::unpack_haffman_sfen(string sfen)const {
 
+string hand_unhaffman_str[KING] = {
+	"",
+	"00",//PAWN
+	"1000",//LANCE
+	"1010",//KNIGHT
+	"1100",//SILVER
+	"111100",//BIshop
+	"111110",//ROOK
+	"1110",//GOLD
+};
+
+string	Position::unpack_haffman_sfen(bool *psfen_){
+
+
+	clear();
+	
+	bool *psfen = psfen_;
 	string nsfen;
 
 
+	int index = 0;
+	
+	//手版と王の位置を忘れていた(;´･ω･)
+
+	//手版
+	psfen[index++] == false ? sidetomove_ = BLACK : sidetomove_ = WHITE;
+
+	//王の位置
+	string sbksq, swksq;
+	for (; index < 8; index++) { sbksq += itos(psfen[index]); }
+	for (; index <15 ; index++) { swksq += itos(psfen[index]); }
+	Square bksq =(Square)decimal(stoi(sbksq));
+	Square wksq = (Square)decimal(stoi(swksq));
+	pcboard[bksq] = B_KING;
+	pcboard[wksq] = W_KING;
+	int sq = 0;
+	//index = 16;
+	//盤上
+	
+		string spiece;
+		Color c;
+		bool promote;
+		Piece pc;
+		while (true) {
+			if (sq >= SQ_NUM) { break; }
+			if (sq == bksq || sq == wksq) { sq++; }
+			
+			if (index > 256) {
+				cout << *this << endl;
+			}
+			spiece += itos(psfen[index++]);
+			
+			for (Piece  i = NO_PIECE; i < KING; i++) {
+
+				if (spiece == board_unhaffman_str[(int)i]) {
+					if (i == GOLD) {
+						c = (Color)psfen[index++];
+						pcboard[sq] = add_color(i, c);
+						spiece.clear();
+						sq++;
+						break;
+					}
+					else if (i == NO_PIECE) {
+						pcboard[sq] = NO_PIECE;
+						spiece.clear();
+						sq++;
+						break;
+						
+					}
+					else {
+						promote = psfen[index++];
+						c= (Color)psfen[index++];
+					    promote? pcboard[sq] = promotepiece(add_color(i, c)): pcboard[sq] = add_color(i, c);
+						spiece.clear();
+						sq++;
+						break;
+					}
+				}
+			}
+		}
+	
+	//indexが256であれば持ち駒が存在しない
+	//if (index == 256) { goto FINISH; }
+		cout << *this << endl;
+	//手駒
+	string shand;
+	//Color c;
+	while (index < 256) {
+		
+		shand += itos(psfen[index++]);
+		ASSERT(shand.size() <= 6);
+		for (Piece i = PAWN; i < KING; i++) {
+			if (shand == hand_unhaffman_str[(int)i]) {
+				c = (Color)psfen[index++];
+				makehand(hands[c], i, num_pt(hand(c), i) + 1);
+				shand.clear();
+			}
+		}
+	}
+
+	cout << make_sfen() << endl;
 
 
+
+FINISH:;
 
 
 

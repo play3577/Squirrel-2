@@ -1602,7 +1602,12 @@ cout <<  << endl;
 //SF‚Íconst‚Â‚¢‚Ä‚È‚¢‚¯‚Ç‚Â‚¯‚Ä‚¨‚¢‚½‚Ù‚¤‚ª‚¢‚¢‚æ‚Ë...
 Value Position::see_sign(const Move m) const
 {
-	ASSERT(is_ok(m));
+	//ASSERT(is_ok(m));
+	if (is_ok(m) == false) {
+		cout << *this << endl;
+		cout << m << endl;
+		ASSERT(0);
+	}
 
 	// Early return if SEE cannot be negative because captured piece value
 	// is not less then capturing one. Note that king moves always return

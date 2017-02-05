@@ -22,6 +22,7 @@ public:
 	HistoryStats history;
 	MoveStats counterMoves;
 	FromToStats fromTo;
+	Value previousScore=Value_Zero;
 public:
 
 	std::vector<Move> pv;//“Ç‚Ý‹Ø
@@ -30,7 +31,7 @@ public:
 	int rdepth() { return rootdepth; }
 	Value think();
 
-	ExtMove* find_rootmove(Move object) {
+	ExtMove* find_rootmove(const Move object) {
 		for (ExtMove* i = RootMoves; i < end; i++) {
 			if (i->move == object) { return i; }
 		}

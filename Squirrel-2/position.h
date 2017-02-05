@@ -617,8 +617,8 @@ public:
 
 
 	//ƒnƒtƒ}ƒ“•„†‰»
-	string pack_haffman_sfen()const;
-	string	unpack_haffman_sfen(string sfen)const;
+	string pack_haffman_sfen();
+	string	unpack_haffman_sfen(bool *sfen);
 };
 
 std::ostream& operator<<(std::ostream& os, const Position& pos);
