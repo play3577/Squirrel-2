@@ -20,7 +20,7 @@
 using namespace Eval;
 using namespace std;
 
-#define test_learn
+//#define test_learn
 
 #define LOG
 
@@ -638,10 +638,9 @@ void learnphase2() {
 	}
 
 	//書き出し読み込みをここで行って値の更新
-#ifndef test_learn
 	write_PP();
 	read_PP();
-#endif // test_learn
+
 
 	
 }

@@ -53,6 +53,7 @@ const int razor_margin[4] = { 483, 570, 603, 554 };
 rootを3にしたほうがメモリの節約になっていいか？？やっぱだめだな
 */
 int FutilityMoveCounts[2][16]; // [improving][depth]
+//これは小さいほうが条件が緩い
 int Reductions[3][2][64][64];  // [pv][improving][depth][moveNumber]
 
 template <bool PvNode> Depth reduction(bool i, Depth d, int mn) {
@@ -74,13 +75,15 @@ void search_clear(Thread& th) {
 
 //探索乗数の初期化
 //値をもっと真剣に見ていく
+//値は小さいほうが枝切りが緩い
 void search_init() {
 
 	for (int imp = 0; imp <= 1; ++imp) {
 		for (int d = 1; d < 64; ++d) {
 			for (int mc = 1; mc < 64; ++mc)
 			{
-				double r = log(d) * log(mc) / 2;
+				//double r = log(d) * log(mc) / 2;
+				double r = log(d) * log(mc) / 2.5;//少し緩くしてみる。
 				if (r < 0.80) {
 					continue;
 				}
@@ -96,8 +99,12 @@ void search_init() {
 	}
 	for (int d = 0; d < 16; ++d)
 	{
-		FutilityMoveCounts[0][d] = int(2.4 + 0.773 * pow(d + 0.00, 1.8));
-		FutilityMoveCounts[1][d] = int(2.9 + 1.045 * pow(d + 0.49, 1.8));
+		/*FutilityMoveCounts[0][d] = int(2.4 + 0.773 * pow(d + 0.00, 1.8));
+		FutilityMoveCounts[1][d] = int(2.9 + 1.045 * pow(d + 0.49, 1.8));*/
+		//すこし緩くしてみる
+		//これが大きいほうが条件が緩い
+		FutilityMoveCounts[0][d] = int(3.4 + 0.773 * pow(d + 0.00, 1.8));
+		FutilityMoveCounts[1][d] = int(3.9 + 1.045 * pow(d + 0.49, 1.8));
 	}
 
 }
@@ -958,7 +965,7 @@ moves_loop:
 #if 0
 		doFullDepthSearch = (PVNode&&movecount == 1);
 
-
+		//この方法だとnonPVnodeからPVnodeに移ってこれるのでPVがおかしくなる可能性があるか？？？？？
 		if (!doFullDepthSearch) {
 			if (newdepth >= ONE_PLY) {
 				//null window search
@@ -994,13 +1001,20 @@ moves_loop:
 
 		nonPVの指し手はPVになれないのもいかがなものかと思う。
 		でもnonPVが勝手にPVになったらそれはPVがおかしくなるか...????でもそれでレーティング下がってるしなぁ...
+
+		事故対戦を見てみたがlmrを入れると指し手に切れ味がなくなって
+		相手の玉をなかなか詰めることができていないように感じた。
+		終盤は入れないほうがいいか？
+		適当に不を鳴らせる指し手も目立ったのでPAWNPROMOTEは含めないほうがいいのかも
 		*/
 		if (depth >= 3 * ONE_PLY
 			&&movecount > 1
 			&& (!CaptureorPropawn || move_count_pruning)
+			&&((pos.ply_from_startpos+(ss)->ply)<50)
+			&&mp.ret_stage()!=Killers
 			)
 		{
-			//ここPVnodeでいいのか？？？
+			//PVではreducationはしない その他ではreducationする
 			Depth r = reduction<PVNode>(improve, depth, movecount);
 
 			if (CaptureorPropawn) {
@@ -1008,6 +1022,8 @@ moves_loop:
 			}
 			else {
 
+				// Increase reduction for cut nodes
+				if (cutNode) {r += ONE_PLY;}
 				//捕獲から逃れる指し手の場合はreducationを減らす
 				if (pos.see(make_move(move_to(move), move_from(move), PAWN))<Value_Zero) {
 					r -= 2 * ONE_PLY;

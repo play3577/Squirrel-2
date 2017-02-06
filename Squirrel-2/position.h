@@ -89,6 +89,7 @@ private:
 
 	
 public:
+	void change_stm() { sidetomove_ = opposite(sidetomove_); }
 
 	int ply_from_startpos;
 
@@ -619,6 +620,9 @@ public:
 	//ƒnƒtƒ}ƒ“•„†‰»
 	string pack_haffman_sfen();
 	string	unpack_haffman_sfen(bool *sfen);
+
+	//ˆêè‹l
+	bool mate1ply();
 };
 
 std::ostream& operator<<(std::ostream& os, const Position& pos);

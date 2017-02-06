@@ -622,6 +622,12 @@ void USI::loop()
 		else if (token == "psfen") {
 			pos.pack_haffman_sfen();
 		}
+		else if (token=="mate") {
+			pos.mate1ply();
+		}
+		else if (token == "cstm") {
+			pos.change_stm();
+		}
 
 	} while (token != "quit");
 
