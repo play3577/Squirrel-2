@@ -76,7 +76,7 @@ bool Position::mate1ply()
 	cout << f_effect << endl;
 
 	//-------------‹î‚¤‚¿
-
+	bool didkingdrop = false;
 	//‚Ü‚¸‚Í”òŽÔ
 	if (num_pt(h, ROOK) != 0) {
 		
@@ -88,13 +88,17 @@ bool Position::mate1ply()
 		while (matecandicateBB.isNot()) {
 			Square to = matecandicateBB.pop();
 			Bitboard can_escape =andnot( step_effect(enemy,KING,eksq),f_effect| rook_effect(occ_without_eksq, to));
-			if (can_escape.isNot()) { return true; }
+			//‰¤‚ª“¦‚°‚ç‚ê‚È‚¢‚Ü‚½‚Í‚Ù‚©‚Ì‹î‚Å‰¤Žè‹î‚ð•ßŠl‚Å‚«‚È‚¢@BBBBBBBBB‰¤Žè‹î‚ð•ßŠl‚µ‚æ‚¤‚Æ‚µ‚½‹î‚ªpin‚³‚ê‚Ä‚¢‚½ê‡‚Í‚»‚ê‚Í‹l‚Ý‚É‚È‚Á‚Ä‚µ‚Ü‚¤‚È
+			//‚±‚Ì•û–@‚Í‚©‚È‚è’x‚¢‚ÆŽv‚¤
+			//‹î‚ðˆÚ“®‚³‚¹‚ÄpinƒSƒ}‚ÌŒø‚«‚ª’Ê‚ç‚È‚¢‚©ƒ`ƒFƒbƒN‚·‚é‚Ì‚ÍŠÈ’P‚Å‚Í‚È‚¢‚È.......
+			if (can_escape.isNot()&& effect_toBB_withouteffectking(enemy,to).isNot()) { return true; }
 		}
 
-		//(‚±‚ê‚Å‹l‚Ü‚È‚¯‚ê‚Î‹à‹âŠp‚ÌŽÎ‚ß‚ÆŒj‚Ì‹î‚¤‚¿‚Ì‚Ý‚ðl‚¦‚é)‚¢‚âŽüˆÍ”ª¡‚É”­¶‚·‚éŒø‚«‚Ì‚ ‚éˆÊ’u‚ª•Ï‚í‚Á‚Ä‚­‚é‚Ì‚Å‚±‚ê‚Å‚Í‚¾‚ßIII
-
+		//(‚±‚ê‚Å‹l‚Ü‚È‚¯‚ê‚Î‹à‹âŠp‚ÌŽÎ‚ß‚ÆŒj‚Ì‹î‚¤‚¿‚Ì‚Ý‚ðl‚¦‚é)‚¢‚âŽüˆÍ”ª¡‚É”­¶‚·‚éŒø‚«‚Ì‚ ‚éˆÊ’u‚ª•Ï‚í‚Á‚Ä‚­‚é‚Ì‚Å‚±‚ê‚Å‚Í‚¾‚ßII
+		//‚±‚ê‚Å‹l‚Ü‚È‚¢‚Æ‚¢‚¤‚±‚Æ‚©‚ç‚í‚©‚é‚Ì‚ÍŽÔ‚Æ‹à‚ÌŒã‚ë‘Å‚¿‚Å‚Í‹l‚Ü‚È‚¢‚Æ‚¢‚¤‚­‚ç‚¢‚Ì‚à‚Ì‚©....Œµ‚µ‚¢‚È...
+		didkingdrop = true;
 	}
-
+	//-------------------‹à
 
 
 	return false;

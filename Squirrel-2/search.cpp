@@ -82,8 +82,8 @@ void search_init() {
 		for (int d = 1; d < 64; ++d) {
 			for (int mc = 1; mc < 64; ++mc)
 			{
-				//double r = log(d) * log(mc) / 2;
-				double r = log(d) * log(mc) / 2.5;//少し緩くしてみる。
+				double r = log(d) * log(mc) / 2;
+				//double r = log(d) * log(mc) / 2.5;//少し緩くしてみる。
 				if (r < 0.80) {
 					continue;
 				}
@@ -99,12 +99,12 @@ void search_init() {
 	}
 	for (int d = 0; d < 16; ++d)
 	{
-		/*FutilityMoveCounts[0][d] = int(2.4 + 0.773 * pow(d + 0.00, 1.8));
-		FutilityMoveCounts[1][d] = int(2.9 + 1.045 * pow(d + 0.49, 1.8));*/
+		FutilityMoveCounts[0][d] = int(2.4 + 0.773 * pow(d + 0.00, 1.8));
+		FutilityMoveCounts[1][d] = int(2.9 + 1.045 * pow(d + 0.49, 1.8));
 		//すこし緩くしてみる
 		//これが大きいほうが条件が緩い
-		FutilityMoveCounts[0][d] = int(3.4 + 0.773 * pow(d + 0.00, 1.8));
-		FutilityMoveCounts[1][d] = int(3.9 + 1.045 * pow(d + 0.49, 1.8));
+		//FutilityMoveCounts[0][d] = int(3.4 + 0.773 * pow(d + 0.00, 1.8));
+		//FutilityMoveCounts[1][d] = int(3.9 + 1.045 * pow(d + 0.49, 1.8));
 	}
 
 }
@@ -837,10 +837,7 @@ moves_loop:
 
 		if (NT == Root&&thisthread->find_rootmove(move) == nullptr) { continue; }
 
-		//これ早くなるんだろうか？？
-#ifdef PREFETCH
-		TT.prefetch(pos.key_after_move(move));
-#endif
+	
 
 		/*
 		capture propawnの指し手になりうるのはcappropawnのステージとEVERSIONのステージだけ
@@ -951,7 +948,10 @@ moves_loop:
 			}
 
 		}
-
+		//これ早くなるんだろうか？？
+#ifdef PREFETCH
+		TT.prefetch(pos.key_after_move(move));
+#endif
 
 		ss->currentMove = move;
 		ss->counterMoves = &CounterMoveHistory[moved_piece(move)][move_to(move)];
@@ -962,14 +962,14 @@ moves_loop:
 		TT.prefetch(pos.key());
 #endif
 
-#if 0
+#if 1
 		doFullDepthSearch = (PVNode&&movecount == 1);
 
 		//この方法だとnonPVnodeからPVnodeに移ってこれるのでPVがおかしくなる可能性があるか？？？？？
 		if (!doFullDepthSearch) {
 			if (newdepth >= ONE_PLY) {
 				//null window search
-				value = -search<NonPV>(pos, ss + 1, -(alpha+1), -alpha, newdepth);
+				value = -search<NonPV>(pos, ss + 1, -(alpha+1), -alpha, newdepth, !cutNode);
 			}
 			else {
 				//value = Eval::eval(pos);
@@ -984,7 +984,7 @@ moves_loop:
 			(ss + 1)->pv = pv;
 			(ss + 1)->pv[0] = MOVE_NONE;
 			if (newdepth >= ONE_PLY) {
-				value = -search<PV>(pos, ss + 1, -beta, -alpha, newdepth);
+				value = -search<PV>(pos, ss + 1, -beta, -alpha, newdepth,false);
 			}
 			else {
 				//value = Eval::eval(pos);
@@ -992,7 +992,7 @@ moves_loop:
 			}
 		}
 #endif
-#if 1
+#if 0
 		// Step 15. Reduced depth search (LMR). If the move fails high it will be
 		// re-searched at full depth.
 		// 深さを減らした探索。もしこの指し手が良い差し手であることが分かれば完全な深さで探索しなおす
@@ -1006,11 +1006,13 @@ moves_loop:
 		相手の玉をなかなか詰めることができていないように感じた。
 		終盤は入れないほうがいいか？
 		適当に不を鳴らせる指し手も目立ったのでPAWNPROMOTEは含めないほうがいいのかも
+
+		あんまり条件を緩くしすぎてもレーティング下がってしまった。
 		*/
 		if (depth >= 3 * ONE_PLY
+			&& ((pos.ply_from_startpos + (ss)->ply)<50)
 			&&movecount > 1
 			&& (!CaptureorPropawn || move_count_pruning)
-			&&((pos.ply_from_startpos+(ss)->ply)<50)
 			&&mp.ret_stage()!=Killers
 			)
 		{
@@ -1222,6 +1224,7 @@ Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
 	Depth ttdepth;
 	Value futilitybase = -Value_Infinite;
 	//Value futilityvalue;
+	bool evasionPrunable;
 	if (PvNode)
 	{
 		// To flag BOUND_EXACT when eval above alpha and no available moves
@@ -1395,6 +1398,19 @@ Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
 		//		continue;
 		//	}
 		//}
+#if 1
+		// Detect non-capture evasions that are candidates to be pruned
+		evasionPrunable = incheck
+			&&  bestvalue > Value_mated_in_maxply
+			&& !pos.capture(move);
+		// Don't search moves with negative SEE values
+		if ((!incheck || evasionPrunable)
+			&& !is_promote(move)
+			&& pos.see_sign(move) < Value_Zero) {
+			continue;
+		}
+#endif
+
 
 		//これ早くなるんだろうか？？
 #ifdef PREFETCH
