@@ -310,7 +310,7 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 	int quiets_count=0;
 	Value value,null_value;
 	StateInfo si;
-	Value staticeval;
+	Value staticeval=Value_Zero;
 	int movecount = 0;
 	bool incheck = pos.is_incheck();
 	Thread* thisthread = pos.searcher();
@@ -494,6 +494,13 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 	}
 #endif
 
+	
+	
+
+	/*bonanzaではparse2を３２回繰り返すらしいんでそれを参考にする。
+	学習の損失の現象が進むに連れてnum_parse2の値を減らしていく
+	*/
+
 
 	//評価関数は毎回呼び出したほうが差分計算でお得
 	//毎回評価関数を呼び出すのでSFのようにTTのevalとどちらが信用性があるか比較する必要はないと思う。
@@ -588,7 +595,11 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 		ss->counterMoves = nullptr;
 		ASSERT(staticeval >= beta);
 
+
+
+
 		//Rの値は場合分けをして後で詳しく見る
+		//staticevalに大きな値が付きすぎていてRが大きくなりすぎている！（どどど　どうしよう...）(しかし一致率表示させようとしてる時だけに起こる現象なのでメモリエラーが原因なのかもしれない)
 		Depth R= Depth(((823 + 67 * int(depth / ONE_PLY)) / 256 + std::min(int(staticeval - beta) / Eval::PawnValue, 3)) * ONE_PLY);
 
 		pos.do_nullmove(&si);
@@ -818,12 +829,21 @@ moves_loop:
 #else 
 	movepicker mp(pos, ss, MOVE_NONE,depth);
 #endif
+	//学習中countermovesにおかしな指し手が入っている
 	while ((move = mp.return_nextmove()) != MOVE_NONE) {
 
 		if (move == ss->excludedMove) {continue;}
+		//学習中はrootでもillegalが入ってくる可能性がある？
+//#ifndef LEARN
 		if (!RootNode) {
 			if (pos.is_legal(move) == false) { continue; }
 		}
+//#else
+//	if (pos.is_legal(move) == false) { continue; }
+//#endif
+//#ifdef LEARN
+//		if (is_ok(move) == false) { continue; }
+//#endif
 		//二歩が入ってこないことは確認した
 		/*if (pos.check_nihu(move) == true) {
 
@@ -1223,7 +1243,7 @@ Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
 	Bound ttBound;
 	Depth ttdepth;
 	Value futilitybase = -Value_Infinite;
-	//Value futilityvalue;
+	Value futilityvalue;
 	bool evasionPrunable;
 	if (PvNode)
 	{
@@ -1371,6 +1391,10 @@ Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
 #endif
 
 	while ((move = mp.return_nextmove()) != MOVE_NONE) {
+//
+//#ifdef LEARN
+//		if (is_ok(move) == false) { continue; }
+//#endif
 
 		if (pos.is_legal(move) == false) { continue; }
 		/*if (pos.check_nihu(move) == true) {
@@ -1383,21 +1407,26 @@ Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
 			UNREACHABLE;
 		}*/
 		
-		
+		bool givescheck = pos.is_gives_check(move);
 
 		//弱くなった
 		//futility 
-		//if (!incheck
-		//	//&&!givescheck  これ条件として入れるべきだと思うけれど今のdomoveの仕様ではなかなか難しい。
-		//	&&futilitybase > -Value_known_win
-		//	) {
-		//	futilityvalue = futilitybase + Value(Eval::piece_value[pos.piece_on(move_to(move))]);
-		//	//取り合いなので一手目をとった時にalpha-128を超えられないようであればその指し手を考えない
-		//	if (futilityvalue <= alpha) {
-		//		bestvalue = std::max(bestvalue, futilityvalue);
-		//		continue;
-		//	}
-		//}
+		if (!incheck
+			&&!givescheck  //これ条件として入れるべきだと思うけれど今のdomoveの仕様ではなかなか難しい。
+			&&futilitybase > -Value_known_win
+			) {
+			futilityvalue = futilitybase + Value(Eval::piece_value[pos.piece_on(move_to(move))]);
+			//取り合いなので一手目をとった時にalpha-128を超えられないようであればその指し手を考えない
+			if (futilityvalue <= alpha) {
+				bestvalue = std::max(bestvalue, futilityvalue);
+				continue;
+			}
+			if (futilitybase <= alpha && pos.see(move) <= Value_Zero)
+			{
+				bestvalue = std::max(bestvalue, futilitybase);
+				continue;
+			}
+		}
 #if 1
 		// Detect non-capture evasions that are candidates to be pruned
 		evasionPrunable = incheck
@@ -1419,12 +1448,12 @@ Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
 
 
 		movecount++;
-		pos.do_move(move, &si);
+		//pos.do_move(move, &si);
 #ifdef PREF2
 		TT.prefetch(pos.key());
 #endif
-		/*bool givescheck = pos.is_gives_check(move);
-		pos.do_move(move, &si, givescheck);*/
+		
+		pos.do_move(move, &si, givescheck);
 		value = -qsearch<NT>(pos, ss + 1, -beta, -alpha, depth - ONE_PLY);
 		pos.undo_move();
 #ifndef LEARN

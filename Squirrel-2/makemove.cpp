@@ -944,7 +944,7 @@ ExtMove * move_recapture(const Position & pos, ExtMove * movelist, Square recaps
 	movelist = make_move_ASGOLD(pos, target, movelist);
 	movelist = make_move_UNICORN(pos, target, movelist);
 	movelist = make_move_DRAGON(pos, target, movelist);
-	movelist = make_move_KING(pos, target, movelist);
+	movelist = make_move_KING(pos, target, movelist);//‚±‚ê‚Å‘Šè‚ÌŒø‚«‚Ì‚ ‚éêŠ‚ÉˆÚ“®‚µ‚Ä‚µ‚Ü‚¤‚±‚Æ‚ª‚ ‚é‚ª‚»‚ê‚Íislegal‚Å‚µ‚ç‚×‚Ä‚¢‚é‚Í‚¸
 
 	return movelist;
 }

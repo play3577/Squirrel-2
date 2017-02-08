@@ -62,6 +62,7 @@ bool GameDataStream::read_onegame(Game * game)
 		if (move == MOVE_NONE || !pos.is_legal(move)||!pos.pseudo_legal(move)) {
 			break;
 		}
+		
 		//Žw‚µŽè‚ðgame‚É’Ç‰Á
 		game->moves.push_back(move);
 		//‹Ç–Ê‚ð“®‚©‚·

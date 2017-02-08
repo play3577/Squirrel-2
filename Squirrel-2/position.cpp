@@ -1080,10 +1080,14 @@ bool Position::is_legal(const Move m) const {
 	
 	//Žæ‚ë‚¤‚Æ‚µ‚Ä‚¢‚é‹î‚Í‹Ê‚Å‚Í‚È‚¢
 	if (piece_type(piece_on(to)) == KING) {
-
-		cout << *this << endl;
+//#ifndef LEARN
+		cout <<endl<< *this << endl;
 		check_move(m);
 		ASSERT(0);
+//#else 
+		//ŠwK’†‚ÍlŠÔ‚ÌŠû•ˆ‚Å‘ŠŽè‚ÌŒø‚«‚Ì‚ ‚éêŠ‚É‰¤‚ð“®‚©‚µ‚Ä‚µ‚Ü‚¤‚±‚Æ‚ª‹N‚±‚Á‚Ä‚µ‚Ü‚¤‚±‚Æ‚à‚ ‚é‚Ý‚½‚¢
+		//return false;
+//#endif
 	}
 
 #ifdef LEARN

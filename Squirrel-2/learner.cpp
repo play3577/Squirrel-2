@@ -154,8 +154,7 @@ void renewal_PP() {
 		}
 	}
 	//書き出した後読み込むことで値を更新する　ここで32回も書き出し書き込みを行うのは無駄最後にまとめて行う
-	//write_PP();
-	//read_PP();
+	
 	
 }
 
@@ -451,6 +450,7 @@ void Eval::learner()
 			renewal_PP();
 		}
 		//書き出し読み込みをここで行って値の更新
+
 		write_PP();
 		read_PP();
 

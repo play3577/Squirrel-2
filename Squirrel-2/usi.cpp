@@ -573,8 +573,9 @@ void USI::loop()
 			const ptrdiff_t count = end - moves_;
 			std::cout << "num of moves = " << count << std::endl;
 			for (int i = 0; i < count; ++i) {
-				std::cout << moves_[i].move << ", ";
+				std::cout << moves_[i].move << ", " << " islegal:" << pos.is_legal(moves_[i].move);
 				check_move(moves_[i].move);
+				//cout<< " islegal:"<<pos.is_legal(moves_[i].move);
 			}
 			std::cout << std::endl;
 
