@@ -196,57 +196,51 @@ double concordance() {
 	int num_tests = 500;//500棋譜で確認する
 	if (num_tests > testset.size()) { num_tests = testset.size(); }
 	ASSERT(num_tests <= testset.size());
-
 	//ここで宣言したいのだけれどこれでいいのだろうか？
 	Position pos;
 	StateInfo si[500];
-	//ExtMove moves[600], *end;
-	//vector<MoveInfo> minfo_list;
+	ExtMove moves[600], *end;
+	vector<MoveInfo> minfo_list;
 	Thread th;
-	//end = moves;
+	end = moves;
 
 	int64_t num_concordance_move = 0;
 	int64_t num_all_move = 0;
 
 	for (int g = 0; g < num_tests; g++) {
 
-
-		memset(si, 0, sizeof(si));//初期化
-
-		auto thisgame = games[g];//ここ学習用のデータと区別しておいたほうがいいか？？
+		auto thisgame = testset[g];//ここ学習用のデータと区別しておいたほうがいいか？？
 		pos.set_hirate();
 		for (int ply = 0; ply < (thisgame.moves.size() - 1); ply++) {
-			ASSERT(ply < 500);
+
 			const Color rootColor = pos.sidetomove();
 
 			//この局面の差し手を生成する
-		//	memset(moves, 0, sizeof(moves));//初期化
-			//end = test_move_generation(pos, moves);
-		//	ptrdiff_t num_moves = end - moves;
+			memset(moves, 0, sizeof(moves));//初期化
+			end = test_move_generation(pos, moves);
+			ptrdiff_t num_moves = end - moves;
 
 
 			//棋譜の差し手
 			Move teacher_move = thisgame.moves[ply];
 			//棋譜の差し手は合法手か？
 			if (is_ok(teacher_move) == false) { cout << "is not ok" << endl; goto ERROR_OCCURED; }
-			/*if (!swapmove(moves, int(num_moves), teacher_move)) {
+			if (!swapmove(moves, int(num_moves), teacher_move)) {
 				cout << "cant swap" << endl;
 				goto ERROR_OCCURED;
-			}*/
-			if (pos.is_legal(teacher_move) == false||pos.pseudo_legal(teacher_move)==false) { cout << "teacher ilegal" << endl; goto ERROR_OCCURED; }
+			}
+			if (pos.is_legal(teacher_move) == false) { cout << "teacher ilegal" << endl; goto ERROR_OCCURED; }
 			//探索を行ってpv[0]がteachermoveか確認する。
 			th.set(pos);
-			th.counterMoves.clear();
-			th.think();
+			Value  score = th.think();
 			if (th.pv[0] == teacher_move) { num_concordance_move++; }
 
 			pos.do_move(teacher_move, &si[ply]);
-			
 			num_all_move++;
 		}
 	ERROR_OCCURED:;
 	}
-
+	
 	//cout <<"一致率 "<< double(num_concordance_move * 100 / num_all_move)<<" %"<<endl;
 	return double((double)num_concordance_move * 100 / (double)num_all_move);
 }
@@ -324,10 +318,10 @@ void Eval::parallel_learner() {
 	}
 	cout << "read kihu OK!" << endl;
 
-//#define Test_icchiritu
+#define Test_icchiritu
 
 #ifdef Test_icchiritu
-	concordance();
+	cout<<concordance()<<endl;
 #endif
 
 
@@ -457,7 +451,7 @@ void learnphase1body(int number) {
 	//============================================================
 	//ここlockingindexincrementにする必要がある！！
 	//=============================================================
-	for (int g = lock_index_inclement(); g < numgames; g=lock_index_inclement()){
+	for (int g = lock_index_inclement(); g < numgames; g = lock_index_inclement()) {
 		didmoves = 0;
 		auto thisgame = games[g];
 		pos.set_hirate();
@@ -483,7 +477,7 @@ void learnphase1body(int number) {
 
 			if (!swapmove(moves, int(num_moves), teacher_move)) {
 				cout << "cant swap" << endl;
-				
+
 				goto ERROR_OCCURED;
 			}
 			if (pos.is_legal(teacher_move) == false) { cout << "teacher ilegal" << endl; goto ERROR_OCCURED; }
@@ -501,12 +495,11 @@ void learnphase1body(int number) {
 			for (int move_i = 0; move_i < num_moves; move_i++) {
 
 				Move m = moves[move_i];
-				if (pos.is_legal(m) == false||pos.pseudo_legal(m)==false||is_ok(m)==false) { continue; }
+				if (pos.is_legal(m) == false) { continue; }
 				if (pos.state()->lastmove == m) { cout << games[g].black_P << " " << games[g].white_P; ASSERT(0); }
 				didmoves++;
 				pos.do_move(m, &si[ply]);
 				th.set(pos);
-				th.counterMoves.clear();
 				Value  score = th.think();
 				//if (m==teacher_move) { teachervalue = score; }
 				if (abs(score) < Value_mate_in_maxply) {
@@ -517,7 +510,7 @@ void learnphase1body(int number) {
 				//if (score > teachervalue&&huicchi_firsttime == true) { huicchi_firsttime = false;  lock_huicchimoves_inclement(); }
 			}
 			//ここでこの局面の指し手による探索終了
-			
+
 			//ここからsum_gradJの更新
 			{
 
@@ -526,7 +519,6 @@ void learnphase1body(int number) {
 				教師手ではない指してによる局面に現れる特徴ベクトルは価値を低く、
 				教師手による局面に現れる特徴ベクトルは価値を高く、
 				両方に出てくる特徴ベクトルに対しては価値を動かさないようにしたい。
-
 				そのためのsum_diff。
 				どの差し手を指してもつまされることが分かった場合もlistsize==0になる！
 				*/
@@ -550,7 +542,6 @@ void learnphase1body(int number) {
 					シグモイド関数に値を入れるのは教師手の価値と同じぐらいの価値の指し手に対して学習をし、
 					悪い手を更に悪く、教師手を更に良く学習させないようにし、
 					値が大きく離れたらそのパラメーターをいじったりしないようにし、収束させるためである。
-
 					しかし教師手よりもかなり高く良い手だとコンピューターが誤判断している指し手がシグモイド関数の微分に入ってきてしまった場合それに対する出て来る値も小さくなってしまい、
 					値が下げられないのではないか？
 					それは良くない気がするのだけれど実際どうなんだろうか？
@@ -565,7 +556,6 @@ void learnphase1body(int number) {
 					この指し手の価値が教師手よりも大きかったため、価値を下げたい場合を考える。
 					黒番の場合は最終的にupdate_dJに入るのは-dsig
 					白番の場合は最終的にupdate_dJに入るのはdsigになる。
-
 					詳しい解説
 					https://twitter.com/daruma3940/status/801638488130994177
 					*/
@@ -576,22 +566,20 @@ void learnphase1body(int number) {
 					objective_function += sigmoid(diff);
 
 
-					StateInfo si2[MAX_DEPTH];//静止探索の先まで進めることにする
-					//StateInfo si2[3];
+					StateInfo si2[64];//最大でも深さ３
 					int j = 0;
 					//教師手とPVで局面をすすめる
 					//if (pos.is_legal(minfo_list[i].move) == false) { ASSERT(0); }
 					pos.do_move(minfo_list[i].move, &si[ply]);
 
 					for (Move m : minfo_list[i].pv) {
-						if (j >= MAX_DEPTH) { break; }//mateを見つけた時ここがMaxdepthを超える？
-						//if (j >= 3) { break; } 
+						if (j >= 64) { break; }
 						if (pos.is_legal(m) == false) { cout << games[g].black_P << " " << games[g].white_P; ASSERT(0); }
 						pos.do_move(m, &si2[j]);
 						j++;
 					}
 					parse2Datas[number].gradJ.update_dJ(pos, -diffsig);//pvの先端（leaf node）に移動してdJを計算するのがTD-leafということ？？
-											 //局面を戻す
+																	   //局面を戻す
 					for (int jj = 0; jj < j; jj++) {
 						pos.undo_move();
 					}
@@ -599,24 +587,21 @@ void learnphase1body(int number) {
 				}//end of (教師手以外の指してに対して)
 
 
-				StateInfo si2[MAX_DEPTH];//静止探索の先まで進めることにする
-				//StateInfo si2[3];
+				StateInfo si2[64];//最大でも深さ３
 				int j = 0;
 				//教師手に対してdJ/dviを更新
 				if (pos.is_legal(minfo_list[0].move) == false) { cout << games[g].black_P << " " << games[g].white_P; ASSERT(0); }
 				if (pos.state()->lastmove == minfo_list[0].move) { cout << games[g].black_P << " " << games[g].white_P; ASSERT(0); }
 				pos.do_move(minfo_list[0].move, &si[ply]);
 				//pvの指し手が非合法手になっている事がある？？
-				//cout << "size pv:" << minfo_list[0].pv.size() << endl;
 				for (Move m : minfo_list[0].pv) {
-					if (j >= MAX_DEPTH) { break; }
-					//if (j >= 3) { break; }
+					if (j >= 64) { break; }
 					if (pos.is_legal(m) == false) { cout << games[g].black_P << " " << games[g].white_P;  ASSERT(0); }
 					if (pos.state()->lastmove == m) { cout << games[g].black_P << " " << games[g].white_P; ASSERT(0); }
 					pos.do_move(m, &si2[j]);
 					j++;
 				}
-				parse2Datas[number].gradJ.update_dJ(pos, sum_diff);//末端の局面に点数をつける
+				parse2Datas[number].gradJ.update_dJ(pos, sum_diff);
 				for (int jj = 0; jj < j; jj++) {
 					pos.undo_move();
 				}
@@ -626,12 +611,13 @@ void learnphase1body(int number) {
 
 			 //次の局面へ
 			pos.do_move(teacher_move, &si[ply]);
-		
+
 		}
 	ERROR_OCCURED:;
 		//cout << "game number: " << g << "/ maxgamenum: " << numgames << " didmoves " << didmoves << " diddepth " << diddepth << endl;
 		//lock_maxmoves_inclement(diddepth);
 	}
+
 
 }
 

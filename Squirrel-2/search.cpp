@@ -20,7 +20,12 @@
 //#define PREF2
 SearchLimit limit;
 Signal signal;
+#ifndef LEARN
+//•À—ñŠwK’†‚É‚±‚±‚ªN‚³‚ê‚Ä‚µ‚Ü‚¤‚Ì‚ð–h‚®
 CounterMoveHistoryStats CounterMoveHistory;
+#endif // !LEARN
+
+
 
 inline Value bonus(const Depth d1) { int d = d1 / ONE_PLY; return Value(d*d + 2 * d - 2); }
 void update_cm_stats(Stack* ss, Piece pc, Square s, Value bonus);
@@ -65,8 +70,9 @@ void search_clear(Thread& th) {
 
 #ifndef LEARN
 	TT.clear();
-#endif
 	CounterMoveHistory.clear();
+#endif
+	
 	th.fromTo.clear();
 	th.history.clear();
 	th.counterMoves.clear();
@@ -974,8 +980,11 @@ moves_loop:
 #endif
 
 		ss->currentMove = move;
+#ifndef LEARN
 		ss->counterMoves = &CounterMoveHistory[moved_piece(move)][move_to(move)];
-
+#else
+		ss->counterMoves = nullptr;
+#endif
 		
 		pos.do_move(move, &si, givescheck);
 #ifdef PREF2
