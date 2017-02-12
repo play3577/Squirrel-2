@@ -15,11 +15,26 @@ position sfen lngp1gRnl/2G3Gb1/pp3Sppp/3k5/9/9/PPPPPPPPP/1B7/LNS1K1SNL b RS3p 1 
 飛車うち　pinゴマ動かすので飛車とれない
 position sfen lngpkgRnl/2G3Gb1/pp3Sppp/9/9/9/PPPPPPPPP/1B7/LNS1K1SNL b RS3p 1 OK
 
+金うち　詰ませることができる
+position sfen ln2k2nl/2G3Gb1/pp3Sppp/9/9/9/PPPPPPPPP/1B7/LNSGKGSNL b GSr4p 1 OK
+
+金うち　ほかの駒で飛車とれる
+position sfen ln1gkg1nl/2G3Gb1/pp3Sppp/9/9/9/PPPPPPPPP/1B7/LNS1K1SNL b GSr4p 1 OK
+
+金うち　逃げれる
+position sfen lngp1gRnl/2G3Gb1/pp3Sppp/3k5/9/9/PPPPPPPPP/1B7/LNS1K1SNL b GS3p 1 OK
+
+金うち　pinゴマ動かすので飛車とれない
+position sfen lngpkgRnl/2G3Gb1/pp3Sppp/9/9/9/PPPPPPPPP/1B7/LNS1K1SNL b GS3p 1 OK
+
 
 銀うち　　　詰ませることができる
-position sfen ln2k2nl/2G3Gb1/pp3Sppp/9/9/9/PPPPPPPPP/1B7/LNSGKGSNL b RSr4p 1
+position sfen ln2k2nl/2G3Gb1/pp3Sppp/9/9/9/PPPPPPPPP/1B7/LNSGKGSNL b Sr4p 1 OK
 ぎん　ほかの駒で取れる
-position sfen ln1gkg1nl/2G3Gb1/pp3Sppp/9/9/9/PPPPPPPPP/1B7/LNS1K1SNL b RSr4p 1
+position sfen ln1gkg1nl/2G3Gb1/pp3Sppp/9/9/9/PPPPPPPPP/1B7/LNS1K1SNL b Sr4p 1 OK
+
+銀　pinゴマ動かすので飛車とれない
+position sfen lngpkgRnl/2G3Gb1/pp3Sppp/9/9/9/PPPPPPPPP/1B7/LNS1K1SNL b S3p 1　OK
 */
 
 
@@ -70,6 +85,10 @@ bool Position::mate1ply()
 	const Square eksq = ksq(enemy);//詰ませたい相手玉の位置。
 	const Hand h = hand(sidetomove());//手番側の持ち駒。
 
+
+	
+
+
 	const Occ_256 occ_without_eksq = occ256^SquareBB256[eksq];//相手の王の場所を除いたoccupied
 	Bitboard can_dropBB = andnot(ALLBB, occ(BLACK) | occ(WHITE));//駒のいない場所BB
 
@@ -100,11 +119,8 @@ bool Position::mate1ply()
 
 	//-----------------------------------------------------------------駒うち
 	bool didrookdrop = false;
-	//まずは飛車
+	//----------------------------------------------飛車
 	if (num_pt(h, ROOK) != 0) {
-		
-		//--------------------飛車
-
 		//近接王手の駒を打てる味方の効きの聞いている場所のみを考える(飛車のstepeffectなんて作ってもしゃーないと思っていたけれどこんなところで役に立つとはなぁ(´･ω･｀))
 		Bitboard matecandicateBB = can_dropBB&StepEffect[enemy][ROOK][eksq]&f_effect;
 
@@ -128,8 +144,113 @@ bool Position::mate1ply()
 		//これで詰まないということからわかるのは香車と金の後ろ打ちでは詰まないというくらいのものか....厳しいな...
 		didrookdrop = true;
 	}
-	//-------------------金
-	
+
+	//ここまでOK
+
+	//---------------------------------金
+	bool didgolddrop = false;
+
+	Square kingback = ((us == BLACK) ? eksq - Square(1) : eksq + Square(1));
+	//kingが端っこにいれば後ろには打てないのでerrorSqにしておく
+	if ((us == BLACK&&sqtorank(eksq) == RankA) || (us == WHITE&&sqtorank(eksq) == RankI)) {kingback = Error_SQ;}
+
+	if (num_pt(h, GOLD) != 0) {
+
+		Bitboard matecandicateBB = can_dropBB&StepEffect[enemy][GOLD][eksq] & f_effect;
+		
+		//もし飛車うって詰まないことが確認されていて、玉が端っこにいなければ、後ろから金を打つのをやめる必要がある
+		if (didgolddrop&&kingback != Error_SQ) { andnot(matecandicateBB, SquareBB[kingback]); }
+
+		cout << "matecandicate" << endl << matecandicateBB << endl;
+		//王手をかけることのできる、一手離れた、味方の効きが存在した場合
+		while (matecandicateBB.isNot()) {
+			Square to = matecandicateBB.pop();
+			cout << to << endl;
+			//王が逃げることのできる升
+			Bitboard can_escape = andnot(step_effect(enemy, KING, eksq), f_effect | StepEffect[us][GOLD][to]);
+
+			cout << "canescape" << endl << can_escape << endl;
+			//逃げられないかつほかの駒で取れない場合はつまされてしまっている。
+			if (can_escape.isNot() == false && cancapture_checkpiece(to) == false) { return true; }//これで詰まされた。
+		}
+		didgolddrop = true;
+	}
+
+	//------------------------------------角
+	bool didbishopdrop = false;
+	if (num_pt(h, BISHOP)) {
+
+		Bitboard matecandicateBB = can_dropBB&StepEffect[enemy][BISHOP][eksq] & f_effect;
+		cout << "matecandicate" << endl << matecandicateBB << endl;
+		while (matecandicateBB.isNot()) {
+			Square to = matecandicateBB.pop();
+			cout << to << endl;
+			//王が逃げることのできる升
+			Bitboard can_escape = andnot(step_effect(enemy, KING, eksq), f_effect | bishop_effect(occ_without_eksq,to));
+			cout << "canescape" << endl << can_escape << endl;
+			if (can_escape.isNot() == false && cancapture_checkpiece(to) == false) { return true; }//これで詰まされた。
+		}
+		didbishopdrop = true;
+	}
+	//-----------------------------------銀
+	/*
+	金で詰まなかった場合は斜め後ろからのみを考える。
+	角で詰まなかった場合は前からのみを考える
+	両方で詰まなかった場合は考える必要はない。
+	*/
+	if (num_pt(h, SILVER) != 0&&(!didbishopdrop||!didgolddrop)) {
+
+		Bitboard matecandicateBB = can_dropBB&StepEffect[enemy][SILVER][eksq] & f_effect;
+		if (didbishopdrop) { matecandicateBB=matecandicateBB & StepEffect[enemy][GOLD][eksq]; }
+		else if (didgolddrop) { andnot(matecandicateBB, StepEffect[enemy][GOLD][eksq]); }
+
+		cout << "matecandicate" << endl << matecandicateBB << endl;
+		while (matecandicateBB.isNot()) {
+			Square to = matecandicateBB.pop();
+			cout << to << endl;
+			//王が逃げることのできる升
+			Bitboard can_escape = andnot(step_effect(enemy, KING, eksq), f_effect | StepEffect[us][SILVER][to]);
+			cout << "canescape" << endl << can_escape << endl;
+			if (can_escape.isNot() == false && cancapture_checkpiece(to) == false) { return true; }//これで詰まされた。
+		}
+	}
+	//---------------------------------香車
+	//飛車で詰まなかった場合は考える必要はない
+	if (num_pt(h, LANCE) != 0&&!didrookdrop) {
+		Bitboard matecandicateBB = can_dropBB&StepEffect[enemy][LANCE][eksq] & f_effect;
+		cout << "matecandicate" << endl << matecandicateBB << endl;
+
+		while (matecandicateBB.isNot()) {
+			Square to = matecandicateBB.pop();
+			cout << to << endl;
+			//王が逃げることのできる升
+			Bitboard can_escape = andnot(step_effect(enemy, KING, eksq), f_effect | lance_effect(occ_without_eksq,us,to));
+			cout << "canescape" << endl << can_escape << endl;
+			if (can_escape.isNot() == false && cancapture_checkpiece(to) == false) { return true; }//これで詰まされた。
+		}
+	}
+	//---------------------------------桂馬
+	if (num_pt(h, KNIGHT) != 0) {
+		//桂馬はほかの駒で支えてもらう必要はない
+		Bitboard matecandicateBB = can_dropBB&StepEffect[enemy][KNIGHT][eksq];
+		cout << "matecandicate" << endl << matecandicateBB << endl;
+
+		while (matecandicateBB.isNot()) {
+			Square to = matecandicateBB.pop();
+			cout << to << endl;
+			//王が逃げることのできる升
+			Bitboard can_escape = andnot(step_effect(enemy, KING, eksq), f_effect);
+			cout << "canescape" << endl << can_escape << endl;
+			if (can_escape.isNot() == false && cancapture_checkpiece(to) == false) { return true; }//これで詰まされた。
+		}
+
+	}
+
+	//----------------------------------ここから駒の移動による王手
+
+
+
+
 
 	return false;
 }
