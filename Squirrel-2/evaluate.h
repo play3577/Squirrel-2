@@ -2,7 +2,7 @@
 #include "fundation.h"
 
 #include <algorithm>
-
+#include <unordered_map>
 
 
 
@@ -91,6 +91,109 @@ namespace Eval {
 		 
 	};
 	inline BonaPiece operator++(BonaPiece& d, int) { BonaPiece prev = d; d = BonaPiece(int(d) + 1); return prev; }
+
+	constexpr BonaPiece bpindices[] = {
+		f_hand_pawn,
+		e_hand_pawn,
+		f_hand_lance,
+		e_hand_lance,
+		f_hand_knight,
+		e_hand_knight,
+		f_hand_silver,
+		e_hand_silver,
+		f_hand_gold,
+		e_hand_gold,
+		f_hand_bishop,
+		e_hand_bishop,
+		f_hand_rook,
+		e_hand_rook,
+		//fe_hand_end = e_hand_rook + 2,
+		f_pawn,
+		e_pawn,
+		f_lance,
+		e_lance,
+		f_knight,
+		e_knight,
+		f_silver,
+		e_silver,
+		f_gold,//これpro_pawnとかで分けたほうが正確になっていいか？？
+		e_gold,
+		f_bishop,
+		e_bishop,
+		f_unicorn,
+		e_unicorn,
+		f_rook,
+		e_rook,
+		f_dragon,
+		e_dragon,
+		//fe_end,
+		f_king,
+		e_king,
+		//fe_end2 = e_king + 81,
+	};
+
+	class Bp2Piece :public std::unordered_map<BonaPiece, Piece> {
+
+	public:
+		Bp2Piece() {
+			//先手から見た駒を返す。（後手から見たbpに対して使ってしまわないように注意）
+			(*this)[f_pawn] = B_PAWN;
+			(*this)[f_lance] = B_LANCE;
+			(*this)[f_knight] = B_KNIGHT;
+			(*this)[f_silver] = B_SILVER;
+			(*this)[f_bishop] = B_BISHOP;
+			(*this)[f_rook] = B_ROOK;
+			(*this)[f_gold] = B_GOLD;
+			(*this)[f_king] = B_KING;
+			(*this)[f_unicorn] = B_UNICORN;
+			(*this)[f_dragon] = B_DRAGON;
+
+			(*this)[e_pawn] = W_PAWN;
+			(*this)[e_lance] = W_LANCE;
+			(*this)[e_knight] = W_KNIGHT;
+			(*this)[e_silver] = W_SILVER;
+			(*this)[e_bishop] = W_BISHOP;
+			(*this)[e_rook] = W_ROOK;
+			(*this)[e_gold] = W_GOLD;
+			(*this)[e_king] = W_KING;
+			(*this)[e_unicorn] = W_UNICORN;
+			(*this)[e_dragon] = W_DRAGON;
+		}
+
+		bool is_ok(const BonaPiece psuedo_piece) const {
+			return (this->find(psuedo_piece) != this->end());
+		}
+
+		Piece bp_to_piece(BonaPiece piece) const {
+			if (is_ok(piece) == false) { return NO_PIECE; }//持ち駒
+			return this->find(piece)->second;
+		}
+
+	};
+	extern Bp2Piece bp2piece;
+
+
+	//bonapieceからsq成分を抜き出す(Apery参考)
+	inline Square bp2sq(const BonaPiece bp) {
+		//bpよりも大きな純粋bonapieceの配列要素を返す
+		const auto bp_upper = upper_bound(begin(bpindices), end(bpindices), bp);
+		return (Square)(bp - *(bp_upper - 1));
+	}
+	//bpからsqを抜く
+	inline BonaPiece bpwithoutsq(const BonaPiece bp) {
+		const auto bp_upper = upper_bound(begin(bpindices), end(bpindices), bp);
+		return *(bp_upper-1);
+		//return *lower_bound(begin(bpindices), end(bpindices), bp);
+	}
+	//bpから色を取り出す
+	inline Color bp2color(const BonaPiece bp) {
+		const auto bp_upper = upper_bound(begin(bpindices), end(bpindices), bp);
+		return ((bp_upper - 1 - begin(bpindices)) & 1) == 1 ? WHITE : BLACK;
+	}
+
+
+
+
 
 	//駒落ちに対応するためにBP_ZEROを許す
 	inline bool is_ok(BonaPiece bp) { return (BONA_PIECE_ZERO <= bp&&bp < fe_end2); }

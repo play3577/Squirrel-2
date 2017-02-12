@@ -104,17 +104,17 @@ void Eval::initialize_PP()
 
 	if (YorN != "y") { cout << "I don't initialize." << endl; return; }
 	memset(PP, 0, sizeof(PP));
-	std::random_device rd;
-	std::mt19937 mt(rd());
-	//初期化は対称性を考えながらせねばならない(というか乱数で初期化する必要あるか？？)
-	for (BonaPiece bp1 = f_hand_pawn; bp1 < fe_end2; bp1++) {
-		for (BonaPiece bp2 = f_hand_pawn; bp2 < bp1; bp2++) {
+	//std::random_device rd;
+	//std::mt19937 mt(rd());
+	////初期化は対称性を考えながらせねばならない(というか乱数で初期化する必要あるか？？)
+	//for (BonaPiece bp1 = f_hand_pawn; bp1 < fe_end2; bp1++) {
+	//	for (BonaPiece bp2 = f_hand_pawn; bp2 < bp1; bp2++) {
 
-			int a = int32_t(mt()) % 100;
-			PP[bp1][bp2]=PP[bp2][bp1]= a;
+	//		int a = int32_t(mt()) % 100;
+	//		PP[bp1][bp2]=PP[bp2][bp1]= a;
 
-		}
-	}
+	//	}
+	//}
 	write_PP();
 	cout << "initialize param PP!" << endl;
 }

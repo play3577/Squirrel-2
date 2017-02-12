@@ -629,6 +629,9 @@ void USI::loop()
 		else if (token == "cstm") {
 			pos.change_stm();
 		}
+		else if (token == "bplist") {
+			pos.evallist().print_bplist();
+		}
 
 	} while (token != "quit");
 

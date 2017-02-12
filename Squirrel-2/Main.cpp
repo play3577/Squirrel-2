@@ -41,13 +41,14 @@ int main() {
 
 
 
-	//Eval::initialize_PP();
+	
 	USI::init_option(Options,ename2);
 	bitboard_init();
 	init_occ256();
 	Eval::init();
 	Zoblist::init();
 	search_init();
+	//Eval::initialize_PP();
 	/*if (Options["usebook"] == true) {
 		BOOK::init();
 	}*/

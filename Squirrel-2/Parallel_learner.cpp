@@ -44,6 +44,7 @@ struct  dJValue
 			}
 		}
 	}
+
 	void clear() { memset(this, 0, sizeof(*this));}
 
 
@@ -60,6 +61,20 @@ struct  dJValue
 
 
 
+/*
+次元下げされた要素。
+PP（p0,p1）=PP絶対(左右対称、手番対称)+PP相対(平行移動、手番対称)＋P絶対（左右対称、手番対象）
+*/
+struct lowerDimPP
+{
+	int32_t absolute_pp[fe_end2][fe_end2];//絶対PP　左右対称にするためにi0は盤の右半分だけを示すようにさせる。
+	int32_t relative_pp[PC_ALL][PC_ALL][17][17];//相対PP
+	int32_t absolute_p[fe_end2];//絶対P 左右対称にするためにi0は盤の右半分だけを示すようにさせる。
+};
+lowerDimPP lowdimPP;
+
+void lower__dimPP(lowerDimPP& lowdim,const dJValue& gradJ);
+void weave_lowdim_to_gradj(dJValue& newgradJ, const lowerDimPP& lowdim);
 
 struct Parse2Data {
 	
@@ -386,10 +401,10 @@ void Eval::parallel_learner() {
 		ofs << " iteration " << iteration << " objfunc" << objective_function << " elasped " << (now() - limit.starttime + 1) / (1000 * 60) << " min" << endl;
 		//ofs << "一致率 " << ((maxmoves- huicchi_moves) * 100 / (maxmoves + 1)) << endl;
 		//cout << "一致率 " << ((maxmoves - huicchi_moves) * 100 / (maxmoves + 1)) <<" %"<< endl;
-		/*cout << "calcurate 一致率" << endl;
+		cout << "calcurate 一致率" << endl;
 		double icchiritu = concordance();
 		ofs << "一致率 " <<icchiritu << " %" << endl;
-		cout << "一致率 " << icchiritu <<" %"<< endl;*/
+		cout << "一致率 " << icchiritu <<" %"<< endl;
 #endif
 
 	}
@@ -629,7 +644,7 @@ void learnphase2() {
 	}
 
 	//左右対称性を考える。
-	param_sym_leftright(sum_parse2Datas.gradJ);
+	//param_sym_leftright(sum_parse2Datas.gradJ);
 
 	//num_parse2回パラメーターを更新する。コレで-64から+64の範囲内でパラメーターが動くことになる。
 	//bonanzaではこの32回の間にdJが罰金項によってどんどんゼロに近づけられている。
@@ -644,6 +659,73 @@ void learnphase2() {
 #endif
 
 	
+}
+
+//gradJは既に左右対称性を持たされているものとする。
+//(bp1,bp2)要素について次元下げを行う
+/*
+次元下げについて全然わからないので直感でコード書いてる（これが一番いけない気がする）
+（まず次元下げの理念ぐらいちゃんと理解しておいたほうがいいのではないか？）
+まず一回どんなものか自分で書いてみたほうがほかの人の書いたコードを見たとき理解するのが早いのでまず一回書いてみる。
+*/
+void each_PP(lowerDimPP & lowdim, const dJValue& gradJ,const BonaPiece bp1,const BonaPiece bp2) {
+	if (bp1 == bp2) { return; }//一致する場所はevaluateで見ないのでgradJも0になっている。これは無視していい。
+	/*Piece pc;
+	Square sq;*/
+	//絶対PP
+	lowdim.absolute_pp[bp1][bp2]=gradJ.dJ[bp1][bp2];
+
+	//絶対P
+	lowdim.absolute_p[bp1] += gradJ.dJ[bp1][bp2];
+	lowdim.absolute_p[bp2] += gradJ.dJ[bp1][bp2];
+	
+	//相対PP（盤上の駒だけ）
+	if (bp1 >= fe_hand_end&&bp2 >= fe_hand_end) {
+		Piece pc1 = bp2piece.bp_to_piece(bpwithoutsq(bp1)), pc2 = bp2piece.bp_to_piece(bpwithoutsq(bp2));//bp1,bp2の駒種
+		Square sq1=bp2sq(bp1), sq2=bp2sq(bp2);//bp1,bp2の駒の位置
+		lowdim.relative_pp[pc1][pc2][sqtofile(sq1) - sqtofile(sq2) + 8][sqtorank(sq1) - sqtorank(sq2) + 8]+= gradJ.dJ[bp1][bp2];
+	}
+}
+
+void lower__dimPP(lowerDimPP & lowdim,dJValue& gradJ)
+{
+	//gradjを左右対称に
+	param_sym_leftright(gradJ);
+
+	for (BonaPiece bp1 = BONA_PIECE_ZERO; bp1 < fe_end2; bp1++) {
+		for (BonaPiece bp2 = BONA_PIECE_ZERO; bp2 < fe_end2; bp2++) {
+			each_PP(lowdim, gradJ, bp1, bp2);
+		}
+	}
+}
+
+//この関数で次元下げされた値をgradJに織り込んでいく。（weave：織り込む）
+void weave_eachPP(dJValue& newgradJ, const lowerDimPP& lowdim, const BonaPiece bp1, const BonaPiece bp2) {
+	if (bp1 == bp2) { return; }//一致する場所はevaluateで見ないのでgradJも0でいい。これは無視していい。
+	//絶対PP
+	newgradJ.dJ[bp1][bp2] = lowdim.absolute_pp[bp1][bp2];
+
+	//絶対P
+	newgradJ.dJ[bp1][bp2] += lowdim.absolute_p[bp1];
+	newgradJ.dJ[bp1][bp2] += lowdim.absolute_p[bp2];
+
+	//相対PP（盤上の駒だけ）
+	if (bp1 >= fe_hand_end&&bp2 >= fe_hand_end) {
+		Piece pc1=bp2piece.bp_to_piece(bpwithoutsq(bp1)), pc2 = bp2piece.bp_to_piece(bpwithoutsq(bp2));//bp1,bp2の駒種
+		Square sq1=bp2sq(bp1), sq2=bp2sq(bp2);//bp1,bp2の駒の位置
+		newgradJ.dJ[bp1][bp2]+=lowdim.relative_pp[pc1][pc2][sqtofile(sq1) - sqtofile(sq2) + 8][sqtorank(sq1) - sqtorank(sq2) + 8];//平行移動
+	}
+}
+
+
+//次元下げされた値をもとにしてgradJを構築する。
+void weave_lowdim_to_gradj(dJValue& newgradJ, const lowerDimPP& lowdim) {
+
+	for (BonaPiece bp1 = BONA_PIECE_ZERO; bp1 < fe_end2; bp1++) {
+		for (BonaPiece bp2 = BONA_PIECE_ZERO; bp2 < fe_end2; bp2++) {
+			weave_eachPP(newgradJ, lowdim, bp1, bp2);
+		}
+	}
 }
 
 #endif//learn

@@ -7,6 +7,8 @@
 
 namespace Eval {
 
+	Bp2Piece bp2piece;
+
 	//三角テーブルにすべきか....??
 	int32_t PP[fe_end2][fe_end2];
 
@@ -756,18 +758,12 @@ namespace Eval {
 	void BonaPList::print_bplist()
 	{
 
-
-
 		for (int i = 0; i < Num_Uniform; i++) {
-			cout << "fb:" << bplist_fb[i];
-			cout << "fw:" << bplist_fw[i] << endl;
+			cout << "fb:" << bplist_fb[i]<<" "<<bp2sq(bplist_fb[i])<<" "<<bpwithoutsq(bplist_fb[i])<<bp2color(bplist_fb[i])<<" "<<bp2piece.bp_to_piece(bpwithoutsq(bplist_fb[i]))<<endl;
+			cout << "fw:" << bplist_fw[i] << " " << bp2sq(bplist_fw[i]) << " " << bpwithoutsq(bplist_fw[i]) << bp2color(bplist_fw[i]) << " " << bp2piece.bp_to_piece(bpwithoutsq(bplist_fw[i])) << endl<<endl;
 		}
 
-
 	}//endof print bp
-	
-
-
 	
 
 	std::ostream & operator<<(std::ostream & os, const Eval::BonaPiece bp)
@@ -1024,5 +1020,129 @@ namespace Eval {
 		}
 		
 	}
+
+	//もっと簡単に変換する方法がAperyにあったはずなのでそれを参考にさせてもらおう...
+	/*
+	//bonapieceから駒種とsquareを抜き出してくる関数
+	void  bonap_to_piece_sq(const BonaPiece bp,Square& sq,Piece& pc) {
+
+		//手駒のbpは左右反転なんて出来ないのでそのままの値を返す。
+		if (bp < fe_hand_end) {
+			return ;
+		}
+
+		int sq, symsq;
+		//手駒以外
+
+		//縦型bitboardなのでrank=sq%9,file=sq/9
+		//BonaPiece bprank, bpfile;
+		//盤上の駒
+		if (f_pawn <= bp&&bp < e_pawn) {
+			 sq= Square(bp - f_pawn);
+			 pc = B_PAWN;
+			return B_PAWN;
+		}
+		else if (e_pawn <= bp&&bp < f_lance) {
+			sq = bp - e_pawn;
+			symsq = sym_rl_sq(Square(sq));
+			return BonaPiece(e_pawn + symsq);
+		}
+		else if (f_lance <= bp&&bp < e_lance) {
+			sq = bp - f_lance;
+			symsq = sym_rl_sq(Square(sq));
+			return BonaPiece(f_lance + symsq);
+		}
+		else if (e_lance <= bp&&bp < f_knight) {
+			sq = bp - e_lance;
+			symsq = sym_rl_sq(Square(sq));
+			return BonaPiece(e_lance + symsq);
+		}
+		else if (f_knight <= bp&&bp < e_knight) {
+			sq = bp - f_knight;
+			symsq = sym_rl_sq(Square(sq));
+			return BonaPiece(f_knight + symsq);
+		}
+		else if (e_knight <= bp &&bp< f_silver) {
+			sq = bp - e_knight;
+			symsq = sym_rl_sq(Square(sq));
+			return BonaPiece(e_knight + symsq);
+		}
+		else if (f_silver <= bp&&bp < e_silver) {
+			sq = bp - f_silver;
+			symsq = sym_rl_sq(Square(sq));
+			return BonaPiece(f_silver + symsq);
+		}
+		else if (e_silver <= bp&&bp < f_gold) {
+			sq = bp - e_silver;
+			symsq = sym_rl_sq(Square(sq));
+			return BonaPiece(e_silver + symsq);
+		}
+		else if (f_gold <= bp&&bp < e_gold) {
+			sq = bp - f_gold;
+			symsq = sym_rl_sq(Square(sq));
+			return BonaPiece(f_gold + symsq);
+		}
+		else if (e_gold <= bp&&bp < f_bishop) {
+			sq = bp - e_gold;
+			symsq = sym_rl_sq(Square(sq));
+			return BonaPiece(e_gold + symsq);
+		}
+		else if (bp<e_bishop) {
+			sq = bp - f_bishop;
+			symsq = sym_rl_sq(Square(sq));
+			return BonaPiece(f_bishop + symsq);
+		}
+		else if (bp<f_unicorn) {
+			sq = bp - e_bishop;
+			symsq = sym_rl_sq(Square(sq));
+			return BonaPiece(e_bishop + symsq);
+		}
+		else if (bp < e_unicorn) {
+			sq = bp - f_unicorn;
+			symsq = sym_rl_sq(Square(sq));
+			return BonaPiece(f_unicorn + symsq);
+		}
+		else if (bp < f_rook) {
+			sq = bp - e_unicorn;
+			symsq = sym_rl_sq(Square(sq));
+			return BonaPiece(e_unicorn + symsq);
+		}
+		else if (bp < e_rook) {
+			sq = bp - f_rook;
+			symsq = sym_rl_sq(Square(sq));
+			return BonaPiece(f_rook + symsq);
+		}
+		else if (bp < f_dragon) {
+			sq = bp - e_rook;
+			symsq = sym_rl_sq(Square(sq));
+			return BonaPiece(e_rook + symsq);
+		}
+		else if (bp < e_dragon) {
+			sq = bp - f_dragon;
+			symsq = sym_rl_sq(Square(sq));
+			return BonaPiece(f_dragon + symsq);
+		}
+		else if (bp < f_king) {
+			sq = bp - e_dragon;
+			symsq = sym_rl_sq(Square(sq));
+			return BonaPiece(e_dragon + symsq);
+		}
+		else if (bp < e_king) {
+			sq = bp - f_king;
+			symsq = sym_rl_sq(Square(sq));
+			return BonaPiece(f_king + symsq);
+		}
+		else if (bp < fe_end2) {
+			sq = bp - e_king;
+			symsq = sym_rl_sq(Square(sq));
+			return BonaPiece(e_king + symsq);
+		}
+		else {
+			UNREACHABLE;
+			return BONA_PIECE_ZERO;
+		}
+
+	}
+	*/
 
 }
