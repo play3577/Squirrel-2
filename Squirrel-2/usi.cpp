@@ -624,7 +624,7 @@ void USI::loop()
 			pos.pack_haffman_sfen();
 		}
 		else if (token=="mate") {
-			pos.mate1ply();
+			cout << pos.mate1ply() << endl;;
 		}
 		else if (token == "cstm") {
 			pos.change_stm();

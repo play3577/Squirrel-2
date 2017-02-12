@@ -623,6 +623,7 @@ public:
 
 	//ˆêŽè‹l
 	bool mate1ply();
+	bool cancapture_checkpiece(Square to);
 };
 
 std::ostream& operator<<(std::ostream& os, const Position& pos);

@@ -1,6 +1,29 @@
 #include "position.h"
 
 /*
+王手一手詰めテスト局面
+
+飛車うち　詰ませることができる
+position sfen ln2k2nl/2G3Gb1/pp3Sppp/9/9/9/PPPPPPPPP/1B7/LNSGKGSNL b RSr4p 1 OK
+
+飛車うち　ほかの駒で飛車とれる
+position sfen ln1gkg1nl/2G3Gb1/pp3Sppp/9/9/9/PPPPPPPPP/1B7/LNS1K1SNL b RSr4p 1 ok
+
+飛車うち　逃げれる
+position sfen lngp1gRnl/2G3Gb1/pp3Sppp/3k5/9/9/PPPPPPPPP/1B7/LNS1K1SNL b RS3p 1 OK
+
+飛車うち　pinゴマ動かすので飛車とれない
+position sfen lngpkgRnl/2G3Gb1/pp3Sppp/9/9/9/PPPPPPPPP/1B7/LNS1K1SNL b RS3p 1 OK
+
+
+銀うち　　　詰ませることができる
+position sfen ln2k2nl/2G3Gb1/pp3Sppp/9/9/9/PPPPPPPPP/1B7/LNSGKGSNL b RSr4p 1
+ぎん　ほかの駒で取れる
+position sfen ln1gkg1nl/2G3Gb1/pp3Sppp/9/9/9/PPPPPPPPP/1B7/LNS1K1SNL b RSr4p 1
+*/
+
+
+/*
 一手詰め関数
 
 一つでも相手の王を詰ませるような差し手を発見できればこちらのもの
@@ -73,10 +96,10 @@ bool Position::mate1ply()
 		}
 	}
 	//まずはここまで動いているか確認するか(´･ω･｀)　→OK
-	cout << f_effect << endl;
+	cout <<"feffect"<<endl<< f_effect << endl;
 
-	//-------------駒うち
-	bool didkingdrop = false;
+	//-----------------------------------------------------------------駒うち
+	bool didrookdrop = false;
 	//まずは飛車
 	if (num_pt(h, ROOK) != 0) {
 		
@@ -85,21 +108,55 @@ bool Position::mate1ply()
 		//近接王手の駒を打てる味方の効きの聞いている場所のみを考える(飛車のstepeffectなんて作ってもしゃーないと思っていたけれどこんなところで役に立つとはなぁ(´･ω･｀))
 		Bitboard matecandicateBB = can_dropBB&StepEffect[enemy][ROOK][eksq]&f_effect;
 
+		cout <<"matecandicate"<<endl<< matecandicateBB << endl;
+
+		//王手をかけることのできる、一手離れた、味方の効きが存在した場合
 		while (matecandicateBB.isNot()) {
 			Square to = matecandicateBB.pop();
+			cout << to << endl;
+			//王が逃げることのできる升
 			Bitboard can_escape =andnot( step_effect(enemy,KING,eksq),f_effect| rook_effect(occ_without_eksq, to));
+
+			cout <<"canescape"<<endl<< can_escape << endl;
 			//王が逃げられないまたはほかの駒で王手駒を捕獲できない　。。。。。。。。。王手駒を捕獲しようとした駒がpinされていた場合はそれは詰みになってしまうな
 			//この方法はかなり遅いと思う
 			//駒を移動させてpinゴマの効きが通らないかチェックするのは簡単ではないな.......
-			if (can_escape.isNot()&& effect_toBB_withouteffectking(enemy,to).isNot()) { return true; }
+			if (can_escape.isNot()==false&& cancapture_checkpiece(to)==false) { return true; }//これで詰まされた。
 		}
 
 		//(これで詰まなければ金銀角の斜めと桂の駒うちのみを考える)いや周囲八升に発生する効きのある位置が変わってくるのでこれではだめ！！
 		//これで詰まないということからわかるのは香車と金の後ろ打ちでは詰まないというくらいのものか....厳しいな...
-		didkingdrop = true;
+		didrookdrop = true;
 	}
 	//-------------------金
+	
 
+	return false;
+}
+/*
+王手をかけている駒をとれるかどうか
+そしてとったときに玉に王手がかからないか
+*/
+bool Position::cancapture_checkpiece(Square to) {
 
+	const Color us = sidetomove();
+	const Color enemy = opposite(sidetomove());
+	const Square eksq = ksq(enemy);//詰ませたい相手玉の位置。
+
+	//受け側の王手駒へ危機のある駒の位置
+	Bitboard enemygurder = effect_toBB_withouteffectking(enemy, to);
+
+	cout <<"gurader"<<endl<< enemygurder << endl;
+
+	while (enemygurder.isNot()) {
+		Square from = enemygurder.pop();
+		Occ_256 occ_movedgurad = occ256^SquareBB256[to] ^ SquareBB256[from];
+		//駒を動かした後,王に効きがかからなかったのでこれは王を守れた
+		if (attackers_to(us, eksq, occ_movedgurad).isNot()==false) {
+			return true;
+		}
+	}
+
+	//王手駒をほかの駒で取れなかった。
 	return false;
 }
