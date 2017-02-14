@@ -20,10 +20,9 @@
 //#define PREF2
 SearchLimit limit;
 Signal signal;
-#ifndef LEARN
-//並列学習中にここが侵されてしまうのを防ぐ
-CounterMoveHistoryStats CounterMoveHistory;
-#endif // !LEARN
+
+
+
 
 
 
@@ -70,8 +69,9 @@ void search_clear(Thread& th) {
 
 #ifndef LEARN
 	TT.clear();
-	CounterMoveHistory.clear();
 #endif
+	th.CounterMoveHistory.clear();
+
 	
 	th.fromTo.clear();
 	th.history.clear();
@@ -498,15 +498,24 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 
 		return ttValue;
 	}
+
+
+//#define MATEONE
+
+#ifdef MATEONE
+	if (!RootNode && !incheck) {
+		if (pos.mate1ply()) {
+			ss->static_eval = bestvalue = mated_in_ply((ss->ply));
+			tte->save(poskey,ss->static_eval, BOUND_EXACT, depth, MOVE_NONE, ss->static_eval, TT.generation());
+			return bestvalue;
+		}
+	}
+#endif //mateone
+
 #endif
-
-	
 	
 
-	/*bonanzaではparse2を３２回繰り返すらしいんでそれを参考にする。
-	学習の損失の現象が進むに連れてnum_parse2の値を減らしていく
-	*/
-
+	
 
 	//評価関数は毎回呼び出したほうが差分計算でお得
 	//毎回評価関数を呼び出すのでSFのようにTTのevalとどちらが信用性があるか比較する必要はないと思う。
@@ -717,7 +726,7 @@ end_multicut:
 
 			if (pos.is_legal(move)) {
 				ss->currentMove = move;
-				ss->counterMoves = &CounterMoveHistory[moved_piece(move)][move_to(move)];
+				ss->counterMoves = &thisthread->CounterMoveHistory[moved_piece(move)][move_to(move)];
 				pos.do_move(move, &si);
 				value = -search<NonPV>(pos, (ss + 1), -rbeta, -rbeta + 1, rdepth,!cutNode);
 				pos.undo_move();
@@ -839,27 +848,11 @@ moves_loop:
 	while ((move = mp.return_nextmove()) != MOVE_NONE) {
 
 		if (move == ss->excludedMove) {continue;}
-		//学習中はrootでもillegalが入ってくる可能性がある？
-//#ifndef LEARN
+	
 		if (!RootNode) {
 			if (pos.is_legal(move) == false) { continue; }
 		}
-//#else
-//	if (pos.is_legal(move) == false) { continue; }
-//#endif
-//#ifdef LEARN
-//		if (is_ok(move) == false) { continue; }
-//#endif
-		//二歩が入ってこないことは確認した
-		/*if (pos.check_nihu(move) == true) {
 
-			cout << "nihu "<< endl;
-			cout << move << endl;
-			cout << pos << endl;
-			cout << "pbb black"<<endl<<pos.pawnbb(BLACK) << endl;
-			cout << "pbb white"<<endl << pos.pawnbb(WHITE) << endl;
-			UNREACHABLE;
-		}*/
 
 		if (NT == Root&&thisthread->find_rootmove(move) == nullptr) { continue; }
 
@@ -980,21 +973,22 @@ moves_loop:
 #endif
 
 		ss->currentMove = move;
-#ifndef LEARN
-		ss->counterMoves = &CounterMoveHistory[moved_piece(move)][move_to(move)];
-#else
-		ss->counterMoves = nullptr;
-#endif
+
+		ss->counterMoves = &thisthread->CounterMoveHistory[moved_piece(move)][move_to(move)];
+
 		
 		pos.do_move(move, &si, givescheck);
 #ifdef PREF2
 		TT.prefetch(pos.key());
 #endif
 
-#if 1
+#if 0
 		doFullDepthSearch = (PVNode&&movecount == 1);
 
 		//この方法だとnonPVnodeからPVnodeに移ってこれるのでPVがおかしくなる可能性があるか？？？？？
+		/*
+		学習があまり強くならないのは学習部にバグがあるのではなく探索が悪くて、つまりこれが原因か！？
+		*/
 		if (!doFullDepthSearch) {
 			if (newdepth >= ONE_PLY) {
 				//null window search
@@ -1021,7 +1015,7 @@ moves_loop:
 			}
 		}
 #endif
-#if 0
+#if 1
 		// Step 15. Reduced depth search (LMR). If the move fails high it will be
 		// re-searched at full depth.
 		// 深さを減らした探索。もしこの指し手が良い差し手であることが分かれば完全な深さで探索しなおす
@@ -1054,7 +1048,7 @@ moves_loop:
 			else {
 
 				// Increase reduction for cut nodes
-				if (cutNode) {r += ONE_PLY;}
+				if (cutNode) {r += 2*ONE_PLY;}
 				//捕獲から逃れる指し手の場合はreducationを減らす
 				if (pos.see(make_move(move_to(move), move_from(move), PAWN))<Value_Zero) {
 					r -= 2 * ONE_PLY;
@@ -1478,12 +1472,15 @@ Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
 			//alpha値は底上げされた
 			if (value > alpha) {
 				
+				if (PvNode) {
+					update_pv(ss->pv, move, (ss + 1)->pv);
+				}
+
 				if (PvNode && value < beta) 
 				{
 					//ここでalpha値を超えの処理をする。
 					alpha = value;
 					bestMove = move;
-					update_pv(ss->pv, move, (ss + 1)->pv);
 				}
 				else 
 				{

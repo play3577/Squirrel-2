@@ -53,6 +53,12 @@ Bitboard GivesCheckRookBB[ColorALL][SQ_NUM][128];
 Bitboard GivesCheckBishopBB[ColorALL][SQ_NUM][128];
 Bitboard GivesCheckLanceBB[ColorALL][SQ_NUM][128];
 
+
+//pinゴマの位置テーブルを作成するために使うoccupiedを考慮しないとび効きテーブル。
+Bitboard RookPsuedoAttack[SQ_NUM];//OK
+Bitboard BishopPsuedoAttack[SQ_NUM];//OK
+Bitboard LancePsuedoAttack[ColorALL][SQ_NUM];//OK
+
 void checkbb();
 
 Square Bitboard::pop()
@@ -444,19 +450,131 @@ void bitboard_init()
 					BetweenBB[from][to] |= SquareBB[beteen];
 
 					beteen += Square(d);
-				
 				}
 			}
-
 		}
 	}
 
-	
 
+	//-----------------------------psuedo attack
 
+	//横
+	for (Square sq = SQ1A; sq < SQ_NUM; sq++) {
+		int direc_rook_yoko[2] = { 9,-9 };
+		Square oldto;
+		File tofile;
+		for (int i = 0; i < 2; i++) {
+			to = sq;
+			oldto = sq;
+			do {
+				oldto = to;
+				to += Square(direc_rook_yoko[i]);
+				//tofile = sqtofile(to);
+				if (is_ok(to) && (to != sq)&& abs(sqtorank(to) - sqtorank(oldto)) < 2 && abs(sqtofile(to) - sqtofile(oldto)) < 2) {
+					RookPsuedoAttack[sq] ^= SquareBB[to];
+				}
+				//横や縦の関係であればこの方法は使えるけど斜めでは通用しないぞ...
+			} while (abs(sqtorank(to) - sqtorank(oldto)) < 2 && abs(sqtofile(to) - sqtofile(oldto)) < 2 && is_ok(to));
+		}	
+	}
+	//縦
+	for (Square sq = SQ1A; sq < SQ_NUM; sq++) {
+		int direc_rook_yoko[2] = { 1,-1 };
+		Square oldto;
+		File tofile;
+		for (int i = 0; i < 2; i++) {
+			to = sq;
+			oldto = sq;
+			do {
+				oldto = to;
+				to += Square(direc_rook_yoko[i]);
+				//tofile = sqtofile(to);
+				if (is_ok(to) && (to != sq) && abs(sqtorank(to) - sqtorank(oldto)) < 2 && abs(sqtofile(to) - sqtofile(oldto)) < 2) {
+					RookPsuedoAttack[sq] ^= SquareBB[to];
+				}
+				//横や縦の関係であればこの方法は使えるけど斜めでは通用しないぞ...
+			} while (abs(sqtorank(to) - sqtorank(oldto)) < 2 && abs(sqtofile(to) - sqtofile(oldto)) < 2 && is_ok(to));
+		}
+	}
+/*
+	for (Square sq = SQ1A; sq < SQ_NUM; sq++) {
+		cout<<sq<<endl<<RookPsuedoAttack[sq]<<endl;
+	}
+*/
+	//斜めプラス４５度
+	for (Square sq = SQ1A; sq < SQ_NUM; sq++) {
+		/*File sqfile = sqtofile(sq);
+		Rank sqrank = sqtorank(sq);*/
+		
+		int direc_bishop_p45[2] = { -10, +10 };
 
+		Rank torank;
+		File tofile;//横方向への射影。
+		Square oldto;
+		Rank oldrank;
+		for (int i = 0; i < 2; i++) {
+			to = sq;
+				//tofile = sqtofile(to);
+			do {
+				/*
+				oldtoを保持してoldtoとnewtoのrankが２つ以上離れないようにする。
+				*/
+				oldto = to;
+				oldrank = sqtorank(oldto);
+				to += Square(direc_bishop_p45[i]);
+				torank = sqtorank(to);
+				tofile = sqtofile(to);
+				if (is_ok(to) && (to != sq) && (abs(torank - oldrank)<2)) {
+					BishopPsuedoAttack[sq] ^= SquareBB[to];
+				}
+			} while (is_ok(to) && (abs(torank - oldrank)<2));
+		}
+	}
 
+	for (Square sq = SQ1A; sq < SQ_NUM; sq++) {
+		/*File sqfile = sqtofile(sq);
+		Rank sqrank = sqtorank(sq);*/
 
+		int direc_bishop_p45[2] = { -8, +8 };
+
+		Rank torank;
+		File tofile;//横方向への射影。
+		Square oldto;
+		Rank oldrank;
+		for (int i = 0; i < 2; i++) {
+			to = sq;
+			//tofile = sqtofile(to);
+			do {
+				/*
+				oldtoを保持してoldtoとnewtoのrankが２つ以上離れないようにする。
+				*/
+				oldto = to;
+				oldrank = sqtorank(oldto);
+				to += Square(direc_bishop_p45[i]);
+				torank = sqtorank(to);
+				tofile = sqtofile(to);
+				if (is_ok(to) && (to != sq) && (abs(torank - oldrank)<2)) {
+					BishopPsuedoAttack[sq] ^= SquareBB[to];
+				}
+			} while (is_ok(to) && (abs(torank - oldrank)<2));
+		}
+	}
+
+	//香車のテーブルの作成
+	for (Color c = BLACK; c < ColorALL; c++) {
+		for (Square sq = SQ_ZERO; sq < SQ_NUM; sq++) {
+				LancePsuedoAttack[c][sq] = (RookPsuedoAttack[sq] & InFront_BB[c][sqtorank(sq)]);
+				
+		}
+	}
+
+	/*for (Color c = BLACK; c < ColorALL; c++) {
+		for (Square sq = SQ1A; sq < SQ_NUM; sq++) {
+
+			cout << sq << endl << LancePsuedoAttack[c][sq] << endl;
+			cout <<"more than one"<< more_than_one(LancePsuedoAttack[c][sq]) << endl;
+		}
+	}*/
 
 
 	//check_between();

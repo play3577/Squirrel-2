@@ -55,7 +55,7 @@ struct Bitboard
 #endif
 	};
 
-	uint64_t b_(const int index) { ASSERT(index == 0 || index == 1); return b[index]; }
+	uint64_t b_(const int index)const { ASSERT(index == 0 || index == 1); return b[index]; }
 
 	//コンストラクタ
 	Bitboard() {}
@@ -162,6 +162,31 @@ Bitboard rook_effect(const Occ_256 & occ, const Square sq);
 Bitboard bishop_effect(const Occ_256 & occ, const Square sq);
 Bitboard dragon_effect(const Occ_256 & occ, const Square sq);
 Bitboard unicorn_effect(const Occ_256 & occ, const Square sq);
+
+//----------------------------------------------------------------------------------
+//pinゴマの位置テーブルを作成するために使うoccupiedを考慮しないとび効きテーブル。
+//----------------------------------------------------------------------------------
+extern Bitboard RookPsuedoAttack[SQ_NUM];//OK
+extern Bitboard BishopPsuedoAttack[SQ_NUM];//OK
+extern Bitboard LancePsuedoAttack[ColorALL][SQ_NUM];
+
+
+inline bool more_than_one(const Bitboard& b) {
+
+	if (b.b_(0) != 0) {
+		//b(0)が0出なければb(0)に2つ以上bitがあるかb(1)に1つ以上bitが立っていればいい。
+		if (b.b_(1) != 0 || (b.b_(0)&(b.b_(0) - 1))) { return true; }
+	}
+	else if (b.b_(1) != 0) {
+		//b.b_(0)がゼロであることは上で確認されている。
+		if (b.b_(1)&(b.b_(1) - 1)) { return true; }
+	}
+	return false;
+}
+
+
+
+
 
 
 //foreach

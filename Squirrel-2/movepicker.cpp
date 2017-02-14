@@ -324,11 +324,8 @@ Move movepicker::pick_best(ExtMove * begin, ExtMove * end)
 	else {
 		st = START_Normal;
 		Square prevSq = move_to((ss - 1)->currentMove);
-#ifndef LEARN
+
 		countermove = pos.searcher()->counterMoves[moved_piece((ss - 1)->currentMove)][prevSq];
-#else
-		countermove = MOVE_NONE;
-#endif // !LEARN
 
 		
 	}

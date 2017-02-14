@@ -226,6 +226,7 @@ double concordance() {
 
 		auto thisgame = testset[g];//ここ学習用のデータと区別しておいたほうがいいか？？
 		pos.set_hirate();
+		th.cleartable();
 		for (int ply = 0; ply < (thisgame.moves.size() - 1); ply++) {
 
 			const Color rootColor = pos.sidetomove();
@@ -246,6 +247,7 @@ double concordance() {
 			}
 			if (pos.is_legal(teacher_move) == false) { cout << "teacher ilegal" << endl; goto ERROR_OCCURED; }
 			//探索を行ってpv[0]がteachermoveか確認する。
+			
 			th.set(pos);
 			Value  score = th.think();
 			if (th.pv[0] == teacher_move) { num_concordance_move++; }
@@ -470,6 +472,7 @@ void learnphase1body(int number) {
 		didmoves = 0;
 		auto thisgame = games[g];
 		pos.set_hirate();
+		th.cleartable();
 		for (int ply = 0; ply < (thisgame.moves.size() - 1); ply++) {
 			diddepth = ply;
 			minfo_list.clear();
@@ -514,6 +517,7 @@ void learnphase1body(int number) {
 				if (pos.state()->lastmove == m) { cout << games[g].black_P << " " << games[g].white_P; ASSERT(0); }
 				didmoves++;
 				pos.do_move(m, &si[ply]);
+				
 				th.set(pos);
 				Value  score = th.think();
 				//if (m==teacher_move) { teachervalue = score; }
@@ -644,7 +648,8 @@ void learnphase2() {
 	}
 
 	//左右対称性を考える。
-	//param_sym_leftright(sum_parse2Datas.gradJ);
+	//左右対称性もgradJに与えるのではなく、gradJを左側にまとめて評価関数を更新してから、評価関数を左右対称にすべきなのかもしれない。
+	param_sym_leftright(sum_parse2Datas.gradJ);
 
 	//num_parse2回パラメーターを更新する。コレで-64から+64の範囲内でパラメーターが動くことになる。
 	//bonanzaではこの32回の間にdJが罰金項によってどんどんゼロに近づけられている。

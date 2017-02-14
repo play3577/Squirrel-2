@@ -86,7 +86,8 @@ bool Position::mate1ply()
 	const Hand h = hand(sidetomove());//手番側の持ち駒。
 
 
-	
+	//---------今のところ駒うちだけ見る
+	//if (h == (Hand)0) { return false; }
 
 
 	const Occ_256 occ_without_eksq = occ256^SquareBB256[eksq];//相手の王の場所を除いたoccupied
@@ -115,7 +116,7 @@ bool Position::mate1ply()
 		}
 	}
 	//まずはここまで動いているか確認するか(´･ω･｀)　→OK
-	cout <<"feffect"<<endl<< f_effect << endl;
+	//cout <<"feffect"<<endl<< f_effect << endl;
 
 	//-----------------------------------------------------------------駒うち
 	bool didrookdrop = false;
@@ -124,16 +125,16 @@ bool Position::mate1ply()
 		//近接王手の駒を打てる味方の効きの聞いている場所のみを考える(飛車のstepeffectなんて作ってもしゃーないと思っていたけれどこんなところで役に立つとはなぁ(´･ω･｀))
 		Bitboard matecandicateBB = can_dropBB&StepEffect[enemy][ROOK][eksq]&f_effect;
 
-		cout <<"matecandicate"<<endl<< matecandicateBB << endl;
+		//cout <<"matecandicate"<<endl<< matecandicateBB << endl;
 
 		//王手をかけることのできる、一手離れた、味方の効きが存在した場合
 		while (matecandicateBB.isNot()) {
 			Square to = matecandicateBB.pop();
-			cout << to << endl;
+		//	cout << to << endl;
 			//王が逃げることのできる升
 			Bitboard can_escape =andnot( step_effect(enemy,KING,eksq),f_effect| rook_effect(occ_without_eksq, to));
 
-			cout <<"canescape"<<endl<< can_escape << endl;
+			//cout <<"canescape"<<endl<< can_escape << endl;
 			//王が逃げられないまたはほかの駒で王手駒を捕獲できない　。。。。。。。。。王手駒を捕獲しようとした駒がpinされていた場合はそれは詰みになってしまうな
 			//この方法はかなり遅いと思う
 			//駒を移動させてpinゴマの効きが通らないかチェックするのは簡単ではないな.......
@@ -161,15 +162,15 @@ bool Position::mate1ply()
 		//もし飛車うって詰まないことが確認されていて、玉が端っこにいなければ、後ろから金を打つのをやめる必要がある
 		if (didgolddrop&&kingback != Error_SQ) { andnot(matecandicateBB, SquareBB[kingback]); }
 
-		cout << "matecandicate" << endl << matecandicateBB << endl;
+//		cout << "matecandicate" << endl << matecandicateBB << endl;
 		//王手をかけることのできる、一手離れた、味方の効きが存在した場合
 		while (matecandicateBB.isNot()) {
 			Square to = matecandicateBB.pop();
-			cout << to << endl;
+//			cout << to << endl;
 			//王が逃げることのできる升
 			Bitboard can_escape = andnot(step_effect(enemy, KING, eksq), f_effect | StepEffect[us][GOLD][to]);
 
-			cout << "canescape" << endl << can_escape << endl;
+//			cout << "canescape" << endl << can_escape << endl;
 			//逃げられないかつほかの駒で取れない場合はつまされてしまっている。
 			if (can_escape.isNot() == false && cancapture_checkpiece(to) == false) { return true; }//これで詰まされた。
 		}
@@ -181,13 +182,13 @@ bool Position::mate1ply()
 	if (num_pt(h, BISHOP)) {
 
 		Bitboard matecandicateBB = can_dropBB&StepEffect[enemy][BISHOP][eksq] & f_effect;
-		cout << "matecandicate" << endl << matecandicateBB << endl;
+//		cout << "matecandicate" << endl << matecandicateBB << endl;
 		while (matecandicateBB.isNot()) {
 			Square to = matecandicateBB.pop();
-			cout << to << endl;
+//			cout << to << endl;
 			//王が逃げることのできる升
 			Bitboard can_escape = andnot(step_effect(enemy, KING, eksq), f_effect | bishop_effect(occ_without_eksq,to));
-			cout << "canescape" << endl << can_escape << endl;
+//			cout << "canescape" << endl << can_escape << endl;
 			if (can_escape.isNot() == false && cancapture_checkpiece(to) == false) { return true; }//これで詰まされた。
 		}
 		didbishopdrop = true;
@@ -204,13 +205,13 @@ bool Position::mate1ply()
 		if (didbishopdrop) { matecandicateBB=matecandicateBB & StepEffect[enemy][GOLD][eksq]; }
 		else if (didgolddrop) { andnot(matecandicateBB, StepEffect[enemy][GOLD][eksq]); }
 
-		cout << "matecandicate" << endl << matecandicateBB << endl;
+//		cout << "matecandicate" << endl << matecandicateBB << endl;
 		while (matecandicateBB.isNot()) {
 			Square to = matecandicateBB.pop();
-			cout << to << endl;
+//			cout << to << endl;
 			//王が逃げることのできる升
 			Bitboard can_escape = andnot(step_effect(enemy, KING, eksq), f_effect | StepEffect[us][SILVER][to]);
-			cout << "canescape" << endl << can_escape << endl;
+//			cout << "canescape" << endl << can_escape << endl;
 			if (can_escape.isNot() == false && cancapture_checkpiece(to) == false) { return true; }//これで詰まされた。
 		}
 	}
@@ -218,14 +219,14 @@ bool Position::mate1ply()
 	//飛車で詰まなかった場合は考える必要はない
 	if (num_pt(h, LANCE) != 0&&!didrookdrop) {
 		Bitboard matecandicateBB = can_dropBB&StepEffect[enemy][LANCE][eksq] & f_effect;
-		cout << "matecandicate" << endl << matecandicateBB << endl;
+//		cout << "matecandicate" << endl << matecandicateBB << endl;
 
 		while (matecandicateBB.isNot()) {
 			Square to = matecandicateBB.pop();
-			cout << to << endl;
+//			cout << to << endl;
 			//王が逃げることのできる升
 			Bitboard can_escape = andnot(step_effect(enemy, KING, eksq), f_effect | lance_effect(occ_without_eksq,us,to));
-			cout << "canescape" << endl << can_escape << endl;
+//			cout << "canescape" << endl << can_escape << endl;
 			if (can_escape.isNot() == false && cancapture_checkpiece(to) == false) { return true; }//これで詰まされた。
 		}
 	}
@@ -233,20 +234,31 @@ bool Position::mate1ply()
 	if (num_pt(h, KNIGHT) != 0) {
 		//桂馬はほかの駒で支えてもらう必要はない
 		Bitboard matecandicateBB = can_dropBB&StepEffect[enemy][KNIGHT][eksq];
-		cout << "matecandicate" << endl << matecandicateBB << endl;
+//		cout << "matecandicate" << endl << matecandicateBB << endl;
 
 		while (matecandicateBB.isNot()) {
 			Square to = matecandicateBB.pop();
-			cout << to << endl;
+//			cout << to << endl;
 			//王が逃げることのできる升
 			Bitboard can_escape = andnot(step_effect(enemy, KING, eksq), f_effect);
-			cout << "canescape" << endl << can_escape << endl;
+//			cout << "canescape" << endl << can_escape << endl;
 			if (can_escape.isNot() == false && cancapture_checkpiece(to) == false) { return true; }//これで詰まされた。
 		}
 
 	}
 
 	//----------------------------------ここから駒の移動による王手
+	//dc_candicateとは二重王手候補つまり王への味方の効きを遮っている味方の駒。もしこれで王手をかけることができれば二重王手になりうるし、効きから外れるだけでも間接王手になる。
+
+	//pinedとはpinされている駒この駒を効きを作っている駒の方向以外へ動かしての王手はできないし、もしその方向で王手をできたとしてもpinしてる駒をとれなかった場合は取り返される。
+	//つまりpinゴマによる王手はかなり複雑で詰ませることのできる可能性は少ないので,pinゴマによる王手は考えないほうがいいのかもしれない
+	Bitboard dc_candicate[ColorALL],pinned[ColorALL];
+
+	slider_blockers(us, eksq, dc_candicate[us], pinned[enemy]);//攻め
+	slider_blockers(enemy, ksq(us), dc_candicate[enemy], pinned[us]);//受け
+
+
+
 
 
 
@@ -267,7 +279,7 @@ bool Position::cancapture_checkpiece(Square to) {
 	//受け側の王手駒へ危機のある駒の位置
 	Bitboard enemygurder = effect_toBB_withouteffectking(enemy, to);
 
-	cout <<"gurader"<<endl<< enemygurder << endl;
+//	cout <<"gurader"<<endl<< enemygurder << endl;
 
 	while (enemygurder.isNot()) {
 		Square from = enemygurder.pop();
@@ -280,4 +292,39 @@ bool Position::cancapture_checkpiece(Square to) {
 
 	//王手駒をほかの駒で取れなかった。
 	return false;
+}
+
+/*
+sliderblockersは　sをとび機器から守っている駒の位置（pinゴマの位置）を返す。
+もしbloclerを盤上から取り除けばｓは攻撃されてしまう。
+
+stmには攻撃側の色　、sに受け側の玉の位置が格納される。
+*/
+void Position::slider_blockers(const Color stm, const Square s,Bitboard& dc_candicate,Bitboard& pinned) const
+{
+	Bitboard betweengurad,betweenattack, pinners;
+
+	//sから飛び効きビームを放って攻撃側のとびゴマに当たればその升はその駒によって攻撃を受けている可能性がある。
+	//pinnersは攻撃ゴマ
+	pinners = (
+		(RookPsuedoAttack[s] & (occ_pt(stm, ROOK) | occ_pt(stm, DRAGON)))
+		| BishopPsuedoAttack[s] & (occ_pt(stm, BISHOP) | occ_pt(stm, UNICORN))
+		| (LancePsuedoAttack[opposite(stm)][s]&occ_pt(stm,LANCE))
+		);
+
+	while (pinners.isNot()) {
+
+		Square to = pinners.pop();
+		betweengurad = BetweenBB[s][to] & occ(opposite(stm));//これがpinされている駒候補
+		betweenattack = BetweenBB[s][to] & occ(stm);//これが二重王手候補
+
+		//間に一つしか駒がなかった(orそこに駒がなかった)のでその駒はpinされている。
+		//そこに駒がなかった場合でもresultには何も足されないので大丈夫
+		if (!more_than_one(betweenattack)) {dc_candicate |= betweenattack;}
+		if (!more_than_one(betweengurad)) { pinned |= betweengurad; }
+	}
+
+		
+
+	return;
 }

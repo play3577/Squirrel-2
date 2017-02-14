@@ -320,6 +320,7 @@ void Eval::learner()
 					if (pos.state()->lastmove == m) { cout << games[g].black_P << " " << games[g].white_P; ASSERT(0); }
 					didmoves++;
 					pos.do_move(m, &si[ply]);
+					th.cleartable();
 					th.set(pos);
 					Value  score = th.think();
 					if (abs(score) < Value_mate_in_maxply) {
@@ -440,7 +441,7 @@ void Eval::learner()
 		//dJは全指し手と全棋譜に対して足し上げられたのでここからbonanzaで言うparse2
 		
 		//SquirrelではPPに左右対称性があるものとして学習させる。
-		param_sym_leftright();//この関数の実装ちょっと怪しい
+		//param_sym_leftright();//この関数の実装ちょっと怪しい
 
 		//num_parse2回パラメーターを更新する。コレで-64から+64の範囲内でパラメーターが動くことになる。
 		//bonanzaではこの32回の間にdJが罰金項によってどんどんゼロに近づけられている。

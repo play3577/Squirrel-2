@@ -23,6 +23,8 @@ public:
 	MoveStats counterMoves;
 	FromToStats fromTo;
 	Value previousScore=Value_Zero;
+	//•À—ñŠwK’†‚É‚±‚±‚ªN‚³‚ê‚Ä‚µ‚Ü‚¤‚Ì‚ğ–h‚®
+	CounterMoveHistoryStats CounterMoveHistory;
 public:
 
 	std::vector<Move> pv;//“Ç‚İ‹Ø
@@ -39,5 +41,10 @@ public:
 	}
 	void sort_RootMove();
 	void print_pv(const int depth, Value v);
-
+	void cleartable() {
+		history.clear();
+		counterMoves.clear();
+		fromTo.clear();
+		CounterMoveHistory.clear();
+	}
 };
