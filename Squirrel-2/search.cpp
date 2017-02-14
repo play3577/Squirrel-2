@@ -500,20 +500,22 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 	}
 
 
-//#define MATEONE
+
+#endif
+
+#define MATEONE
 
 #ifdef MATEONE
 	if (!RootNode && !incheck) {
 		if (pos.mate1ply()) {
-			ss->static_eval = bestvalue = mated_in_ply((ss->ply));
-			tte->save(poskey,ss->static_eval, BOUND_EXACT, depth, MOVE_NONE, ss->static_eval, TT.generation());
+			ss->static_eval = bestvalue = mate_in_ply((ss->ply)+1);
+#ifdef USETT
+			tte->save(poskey, value_to_tt(bestvalue, ss->ply), BOUND_EXACT, depth, MOVE_NONE, ss->static_eval, TT.generation());
+#endif
 			return bestvalue;
 		}
 	}
 #endif //mateone
-
-#endif
-	
 
 	
 
@@ -1315,6 +1317,13 @@ Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
 		return ttValue;
 	}
 #endif
+	if (!incheck) {
+
+		if (pos.mate1ply()) {
+			return mate_in_ply(ss->ply + 1);
+		}
+
+	}
 
 
 

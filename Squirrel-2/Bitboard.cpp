@@ -569,12 +569,49 @@ void bitboard_init()
 	}
 
 	/*for (Color c = BLACK; c < ColorALL; c++) {
-		for (Square sq = SQ1A; sq < SQ_NUM; sq++) {
+	for (Square sq = SQ1A; sq < SQ_NUM; sq++) {
 
-			cout << sq << endl << LancePsuedoAttack[c][sq] << endl;
-			cout <<"more than one"<< more_than_one(LancePsuedoAttack[c][sq]) << endl;
-		}
+	cout << sq << endl << LancePsuedoAttack[c][sq] << endl;
+	cout <<"more than one"<< more_than_one(LancePsuedoAttack[c][sq]) << endl;
+	}
 	}*/
+
+
+	//------------------gives_check_table
+	/*
+	次の移動で王手をかけることのできる範囲が1になっているテーブル。
+	一手詰め関数のために使う
+	成りの場合は金の王手範囲を足せばいいだけ。
+
+
+	Bitboard GivesCheckStepBB[ColorALL][PT_ALL][SQ_NUM];
+	Bitboard GivesCheckRookBB[ColorALL][SQ_NUM][128];
+	Bitboard GivesCheckBishopBB[ColorALL][SQ_NUM][128];
+	Bitboard GivesCheckLanceBB[ColorALL][SQ_NUM][128];
+	*/
+
+	//歩による王手
+	/*
+	歩による王手はksqに相手番の歩を置いたときに効きのある場所に移動できるマス（つまり玉の2つ前）
+	*/
+	for (Square ksq = SQ_ZERO; ksq < SQ_NUM; ksq++) {
+		for (Color c = BLACK; c < ColorALL; c++) {
+			const Color op = opposite(c);
+			//王手をかけるマス
+			Bitboard check = StepEffect[op][PAWN][ksq];
+
+			while (check.isNot()) {
+				const Square sq = check.pop();
+				GivesCheckStepBB[c][PAWN][ksq] = StepEffect[op][PAWN][sq];
+				//cout << c << ksq << PAWN <<endl<< GivesCheckStepBB[c][PAWN][ksq] << endl;//ワンパス通った。
+			}
+		}
+	}
+
+
+
+
+
 
 
 	//check_between();

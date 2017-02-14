@@ -87,7 +87,7 @@ bool Position::mate1ply()
 
 
 	//---------今のところ駒うちだけ見る
-	//if (h == (Hand)0) { return false; }
+	if (h == (Hand)0) { return false; }
 
 
 	const Occ_256 occ_without_eksq = occ256^SquareBB256[eksq];//相手の王の場所を除いたoccupied
@@ -247,6 +247,7 @@ bool Position::mate1ply()
 
 	}
 
+	return false;
 	//----------------------------------ここから駒の移動による王手
 	//dc_candicateとは二重王手候補つまり王への味方の効きを遮っている味方の駒。もしこれで王手をかけることができれば二重王手になりうるし、効きから外れるだけでも間接王手になる。
 
@@ -264,7 +265,7 @@ bool Position::mate1ply()
 
 
 
-	return false;
+	
 }
 /*
 王手をかけている駒をとれるかどうか
