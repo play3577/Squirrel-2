@@ -16,46 +16,21 @@ using namespace std;
 
 
 
-
-
-double dJ[fe_end2][fe_end2];
-
-
-void param_sym_leftright();
-
-
-//dJ/dviをdJ配列にそれぞれ格納していく。
-void update_dJ(const Position pos, const double diff) {
-
-	const auto list1 = pos.evallist();
-
-	const BonaPiece *list_fb = list1.bplist_fb, *list_fw = list1.bplist_fw;
-	for (int i = 0; i < 40; i++) {
-		for (int j = 0; j < i; j++) {
-			dJ[list_fb[i]][list_fb[j]] += diff;
-			dJ[list_fw[i]][list_fw[j]] -= diff;
-			//PP対称性を考えて
-			dJ[list_fb[j]][list_fb[i]] += diff;
-			dJ[list_fw[j]][list_fw[i]] -= diff;
-		}
-	}
-}
-
 //コレだとd==0の場合の特徴量がどんどんマイナスに大きくなってしまう。と言うか出てこない特徴量はどんどんsparseにしていきたい。
 //私の最終目標は棋譜データの足りない分をスパースモデリング理論で補う学習方法の考案にあるのだ！
- int sign(const double d) {
-	 //return (d > 0) ? 1 : (d<0)?-1:0;
-	 return  (d > 0) ? 1: -1;
+int sign(const double d) {
+	return (d > 0) ? 1 : (d<0) ? -1 : 0;
+	//return  (d > 0) ? 1: -1;
 }
 
 //教師手の指し手をmoves配列の一番先頭に持ってくるための関数
 //moves配列の先頭ポインタ　num要素数　m教師手の指し手
 //配列の中に教師手が含まれない場合falseを返す
-bool swapmove(ExtMove* moves,const int num,const Move m) {
+bool swapmove(ExtMove* moves, const int num, const Move m) {
 
 	ExtMove first = moves[0];
 
-	for (int i = 0; i < num+1; i++) {
+	for (int i = 0; i < num + 1; i++) {
 
 		if (moves[i].move == m) {
 
@@ -119,6 +94,31 @@ void Eval::initialize_PP()
 	cout << "initialize param PP!" << endl;
 }
 
+
+#if 0
+double dJ[fe_end2][fe_end2];
+
+
+void param_sym_leftright();
+
+
+//dJ/dviをdJ配列にそれぞれ格納していく。
+void update_dJ(const Position pos, const double diff) {
+
+	const auto list1 = pos.evallist();
+
+	const BonaPiece *list_fb = list1.bplist_fb, *list_fw = list1.bplist_fw;
+	for (int i = 0; i < 40; i++) {
+		for (int j = 0; j < i; j++) {
+			dJ[list_fb[i]][list_fb[j]] += diff;
+			dJ[list_fw[i]][list_fw[j]] -= diff;
+			//PP対称性を考えて
+			dJ[list_fb[j]][list_fb[i]] += diff;
+			dJ[list_fw[j]][list_fw[i]] -= diff;
+		}
+	}
+}
+
 #define USE_PENALTY
 //パラメーターの更新のための関数
 void renewal_PP() {
@@ -146,8 +146,9 @@ void renewal_PP() {
 
 			Aperyに倣う
 			*/
-			if (PP[i][j]>0) { dJ[i][j] -= double(0.2/double(FV_SCALE)); }
+			/*if (PP[i][j]>0) { dJ[i][j] -= double(0.2/double(FV_SCALE)); }
 			else if (PP[i][j]<0) { dJ[i][j] += double(0.2/double(FV_SCALE)); }
+			*/
 #endif
 			int inc = h*sign(dJ[i][j]);
 			PP[i][j] += inc;
@@ -440,8 +441,7 @@ void Eval::learner()
 
 		//dJは全指し手と全棋譜に対して足し上げられたのでここからbonanzaで言うparse2
 		
-		//SquirrelではPPに左右対称性があるものとして学習させる。
-		param_sym_leftright();//この関数の実装ちょっと怪しい
+		
 
 		//num_parse2回パラメーターを更新する。コレで-64から+64の範囲内でパラメーターが動くことになる。
 		//bonanzaではこの32回の間にdJが罰金項によってどんどんゼロに近づけられている。
@@ -533,3 +533,4 @@ void param_sym_leftright() {
 		}
 	}
 }
+#endif

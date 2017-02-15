@@ -99,8 +99,8 @@ void renewal_PP(dJValue &data) {
 	for (BonaPiece i = f_hand_pawn; i < fe_end2; i++) {
 		for (BonaPiece j = f_hand_pawn; j < fe_end2; j++) {
 
-			if (PP[i][j]>0) { data.dJ[i][j] -= double(0.2 / double(FV_SCALE)); }
-			else if (PP[i][j]<0) { data.dJ[i][j] += double(0.2 / double(FV_SCALE)); }
+			/*if (PP[i][j]>0) { data.dJ[i][j] -= double(0.2 / double(FV_SCALE)); }
+			else if (PP[i][j]<0) { data.dJ[i][j] += double(0.2 / double(FV_SCALE)); }*/
 
 			int inc = h*sign(data.dJ[i][j]);
 			PP[i][j] += inc;
@@ -202,15 +202,22 @@ std::vector<Game> testset;
 一致率計算の関数を用意して最後に一致率を計算する。
 
 どこにバグがある？？？？？？？？？？
+
+
+学習用の寄付で一致率を図る。学習を進めると過学習を起こすはずであるのでそれで学習にバグがないかどうか確かめる
+
 */
 double concordance() {
 	/*std::random_device rd;
 	std::mt19937 t_mt(rd());*/
 	//std::shuffle(testset.begin(), testset.end(), t_mt);//シャッフルさせてるがしないほうがいい？？
 
-	int num_tests = 500;//500棋譜で確認する
-	if (num_tests > testset.size()) { num_tests = testset.size(); }
-	ASSERT(num_tests <= testset.size());
+	int num_tests = 1000;//1000棋譜で確認する
+	/*if (num_tests > testset.size()) { num_tests = testset.size(); }
+	ASSERT(num_tests <= testset.size());*/
+	if (num_tests > games.size()) { num_tests = games.size(); }
+	ASSERT(num_tests <= games.size());
+
 	//ここで宣言したいのだけれどこれでいいのだろうか？
 	Position pos;
 	StateInfo si[500];
@@ -224,7 +231,8 @@ double concordance() {
 
 	for (int g = 0; g < num_tests; g++) {
 
-		auto thisgame = testset[g];//ここ学習用のデータと区別しておいたほうがいいか？？
+		//auto thisgame = testset[g];//ここ学習用のデータと区別しておいたほうがいいか？？
+		auto thisgame = games[g];
 		pos.set_hirate();
 		th.cleartable();
 		for (int ply = 0; ply < (thisgame.moves.size() - 1); ply++) {
@@ -649,7 +657,8 @@ void learnphase2() {
 
 	//左右対称性を考える。
 	//左右対称性もgradJに与えるのではなく、gradJを左側にまとめて評価関数を更新してから、評価関数を左右対称にすべきなのかもしれない。
-	param_sym_leftright(sum_parse2Datas.gradJ);
+	//これやったらよわくなってしまったので、バグがある。
+	
 
 	//num_parse2回パラメーターを更新する。コレで-64から+64の範囲内でパラメーターが動くことになる。
 	//bonanzaではこの32回の間にdJが罰金項によってどんどんゼロに近づけられている。
