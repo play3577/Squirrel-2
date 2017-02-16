@@ -35,6 +35,20 @@ position sfen ln1gkg1nl/2G3Gb1/pp3Sppp/9/9/9/PPPPPPPPP/1B7/LNS1K1SNL b Sr4p 1 OK
 
 銀　pinゴマ動かすので飛車とれない
 position sfen lngpkgRnl/2G3Gb1/pp3Sppp/9/9/9/PPPPPPPPP/1B7/LNS1K1SNL b S3p 1　OK
+
+
+
+
+金の移動　詰む
+position sfen lnsg1gsnl/2pppp1b1/pp1R2ppp/4k4/1B3R3/4G4/PPPP1PPPP/9/LNSGK1SNL b P 1
+
+金移動　詰まない
+position sfen lnsg1gsnl/2pppp1b1/pp1R2ppp/4k4/5R3/4G4/PPPP1PPPP/1B7/LNSGK1SNL b P 1
+
+ピンは移動させない
+position sfen lnsg1gsn1/2pppp1b1/pp1R2ppp/4k4/1B2lR3/4G4/PPPP1PPPP/9/LNSGK1SNL b P 1
+
+
 */
 
 
@@ -85,18 +99,21 @@ bool Position::mate1ply()
 	const Square eksq = ksq(enemy);//詰ませたい相手玉の位置。
 	const Hand h = hand(sidetomove());//手番側の持ち駒。
 
-
-	//---------今のところ駒うちだけ見る
-	if (h == (Hand)0) { return false; }
-
-
-	const Occ_256 occ_without_eksq = occ256^SquareBB256[eksq];//相手の王の場所を除いたoccupied
+	Bitboard f_effect = ZeroBB;
 	Bitboard can_dropBB = andnot(ALLBB, occ(BLACK) | occ(WHITE));//駒のいない場所BB
-
+	const Occ_256 occ_without_eksq = occ256^SquareBB256[eksq];//相手の王の場所を除いたoccupied
 	//玉を移動させる前の王の周り8マスで味方の駒の効きがある場所のBB
 	//この方法はどうかと思うけれど....(´･ω･｀)
 	Bitboard friend_effectBB[8] = {ZeroBB};
-	Bitboard f_effect=ZeroBB;
+	//---------今のところ駒うちだけ見る
+	if (h == (Hand)0) { goto movecheck; }
+
+
+	
+	
+
+	
+	
 	/*
 	641
 	7k2
@@ -247,25 +264,84 @@ bool Position::mate1ply()
 
 	}
 
-	return false;
+movecheck:;
+
 	//----------------------------------ここから駒の移動による王手
+
+
 	//dc_candicateとは二重王手候補つまり王への味方の効きを遮っている味方の駒。もしこれで王手をかけることができれば二重王手になりうるし、効きから外れるだけでも間接王手になる。
 
 	//pinedとはpinされている駒この駒を効きを作っている駒の方向以外へ動かしての王手はできないし、もしその方向で王手をできたとしてもpinしてる駒をとれなかった場合は取り返される。
 	//つまりpinゴマによる王手はかなり複雑で詰ませることのできる可能性は少ないので,pinゴマによる王手は考えないほうがいいのかもしれない
 	Bitboard dc_candicate[ColorALL],pinned[ColorALL];
 
-	slider_blockers(us, eksq, dc_candicate[us], pinned[enemy]);//攻め
+	//slider_blockers(us, eksq, dc_candicate[us], pinned[enemy]);//攻め
 	slider_blockers(enemy, ksq(us), dc_candicate[enemy], pinned[us]);//受け
 
+	//駒の移動先。近接王手のみを考えるので王の周辺8マスかつ、自分の駒のいない場所でなければならない
+	const Bitboard movetoBB = andnot(StepEffect[us][KING][eksq], occ(us));
+	/*------------------------------------------------------------------------------------------
+	王手できる範囲にいる駒を王手をかけることができるマスかつ味方の効きのあるマスに動かしたとき、
+		その駒をほかの駒で取れないまたは王の逃げ先にほかの味方の効きがあれば詰み。
+
+		考える王手は近接王手のみ
+
+		これは先に考えた駒によって次の駒の移動を楽できるとかそういうのはないと思う。
+		駒の移動によって盤上の効きが変わってしまうので
+	-------------------------------------------------------------------------------------------*/
+
+
+	//ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーまずは詰ませる可能性の高い金から　OKワンパスは通った。
+	Bitboard matecandicate_Gold = (occ_pt(us, GOLD)|occ_pt(us,PRO_PAWN)|occ_pt(us,PRO_LANCE)|occ_pt(us,PRO_NIGHT)|occ_pt(us,PRO_SILVER))&PsuedoGivesCheckBB[us][GOLD][eksq];
+	//pinゴマを動かそうとしてはいけない
+	matecandicate_Gold = andnot(matecandicate_Gold, pinned[us]);
+
+	while (matecandicate_Gold.isNot()) {
+
+		const Square from = matecandicate_Gold.pop();
+		Bitboard toBB = movetoBB&StepEffect[us][GOLD][from];
+
+		//駒を取り除く.......こんなことしたくないんだけれど....
+		const Piece removedpiece = piece_on(from);
+		ASSERT(removedpiece);
+
+		remove_occ256(from);
+		remove_piece(us, removedpiece, from);
+
+		while (toBB.isNot())
+		{
+			const Square to = toBB.pop();
+			if (!attackers_to(us, to, occ256).isNot()) { continue; }//もし移動先に味方の駒の効きが聞いていなければとられてしまうので罪にならない。
+			if (cancapture_checkpiece(to)) { continue; }//王手をかけた駒を捕獲できた。
+			//ここからは玉が逃げることができるかどうか確認
+			Bitboard cankingescape = andnot(StepEffect[us][KING][eksq], (occ(enemy) | SquareBB[to] | StepEffect[us][GOLD][to]));
+			while (cankingescape.isNot()) {
+
+				const Square escapeto = cankingescape.pop();//逃げ先。
+				if (!attackers_to(us, escapeto, occ256).isNot()) { goto cant_mate_gold; }//逃げ先に攻撃側の効きがない。  逃げるとこができたので次のtoを考える。
+
+			}
+
+			//このwhileを抜けてこれたということはつまされてしまったということ。
+			//こんな実装方法で大丈夫だろうか.........
+			set_occ256(from);
+			put_piece(us, removedpiece, from);
+			return true;
+
+		cant_mate_gold:;
+
+		}
+
+		//取り除いた駒を戻す
+		//絶対に戻すのを忘れないようにする！！！！！！！！！！！！
+		set_occ256(from);
+		put_piece(us, removedpiece, from);
+	}
 
 
 
 
-
-
-
-	
+	return false;
 }
 /*
 王手をかけている駒をとれるかどうか
