@@ -296,13 +296,15 @@ void Eval::parallel_learner() {
 	int readgames = 20;
 	int numtestset = 19;
 #else
-	int readgames = 50000;
+	int readgames = 10000;
 	int numtestset = 500;
 #endif
 	
 	numgames = 2000;
 	int numiteration = 1000;
 	maxthreadnum = omp_get_max_threads();
+
+	cout <<"readgames "<< readgames << endl;
 
 	cout << "numgames:>>";
 	cin >> numgames;
@@ -341,6 +343,7 @@ void Eval::parallel_learner() {
 			testset.push_back(game);
 		}
 	}
+	cout <<"teacher games "<< games.size() << endl;
 	cout << "read kihu OK!" << endl;
 
 #define Test_icchiritu

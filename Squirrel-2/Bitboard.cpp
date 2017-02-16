@@ -48,10 +48,10 @@ Bitboard CantGo_KNIGHT[ColorALL];
 Direction direct_table[SQ_NUM][SQ_NUM];
 
 
-Bitboard GivesCheckStepBB[ColorALL][PT_ALL][SQ_NUM];
-Bitboard GivesCheckRookBB[ColorALL][SQ_NUM][128];
-Bitboard GivesCheckBishopBB[ColorALL][SQ_NUM][128];
-Bitboard GivesCheckLanceBB[ColorALL][SQ_NUM][128];
+Bitboard PsuedoGivesCheckBB[ColorALL][PT_ALL][SQ_NUM];
+//Bitboard GivesCheckRookBB[ColorALL][SQ_NUM][128];
+//Bitboard GivesCheckBishopBB[ColorALL][SQ_NUM][128];
+//Bitboard GivesCheckLanceBB[ColorALL][SQ_NUM][128];
 
 
 //pinゴマの位置テーブルを作成するために使うoccupiedを考慮しないとび効きテーブル。
@@ -320,6 +320,7 @@ void bitboard_init()
 		for (Square sq = SQ_ZERO; sq < SQ_NUM; sq++) {
 			for (int obstacle = 0; obstacle < 128; obstacle++) {
 				LanceEffect[c][sq][obstacle] = (LongRookEffect_tate[sq][obstacle] & InFront_BB[c][sqtorank(sq)]);
+				//cout << LanceEffect[c][sq][obstacle] << endl;
 			}
 		}
 	}
@@ -581,7 +582,9 @@ void bitboard_init()
 	/*
 	次の移動で王手をかけることのできる範囲が1になっているテーブル。
 	一手詰め関数のために使う
-	成りの場合は金の王手範囲を足せばいいだけ。
+	成りの場合は金の王手範囲を足せばいいだけ。//違う！！！！！
+	成りの場合は金の王手範囲を足せばいいだけではない！！！
+	玉の位置に相手の金を置いたところに成りで移動できるマスでなければならない！！！！！
 
 
 	Bitboard GivesCheckStepBB[ColorALL][PT_ALL][SQ_NUM];
@@ -593,6 +596,7 @@ void bitboard_init()
 	//歩による王手
 	/*
 	歩による王手はksqに相手番の歩を置いたときに効きのある場所に移動できるマス（つまり玉の2つ前）
+	と成りによって移動できるマス
 	*/
 	for (Square ksq = SQ_ZERO; ksq < SQ_NUM; ksq++) {
 		for (Color c = BLACK; c < ColorALL; c++) {
@@ -600,18 +604,170 @@ void bitboard_init()
 			//王手をかけるマス
 			Bitboard check = StepEffect[op][PAWN][ksq];
 
+			if ((CantGo_KNIGHT[c] & SquareBB[ksq]).isNot()) { check |= StepEffect[op][GOLD][ksq]; }
+			else if((canPromoteBB[c] & SquareBB[ksq]).isNot()){ check |= andnot(StepEffect[op][GOLD][ksq], StepEffect[op][BISHOP][ksq]); }
+			check=andnot(check, StepEffect[c][LANCE][ksq]);
+			//cout << ksq <<" "<<c<< endl << check << endl;
 			while (check.isNot()) {
 				const Square sq = check.pop();
-				GivesCheckStepBB[c][PAWN][ksq] = StepEffect[op][PAWN][sq];
-				//cout << c << ksq << PAWN <<endl<< GivesCheckStepBB[c][PAWN][ksq] << endl;//ワンパス通った。
+				PsuedoGivesCheckBB[c][PAWN][ksq] |= StepEffect[op][PAWN][sq];
+				
 			}
+			//cout << c << ksq << PAWN << endl << PsuedoGivesCheckBB[c][PAWN][ksq] << endl;//ワンパス通った。
+		}
+	}
+	/*
+	香車による王手の位置
+	*/
+	for (Square ksq = SQ_ZERO; ksq < SQ_NUM; ksq++) {
+		for (Color c = BLACK; c < ColorALL; c++) {
+			
+				const Color op = opposite(c);
+
+				bool is_king_rank123 = (canPromoteBB[c] & SquareBB[ksq]).isNot();//玉が敵陣の123段目にいる。
+			//	cout << is_king_rank123 << endl;
+				//cout << sqtofile(ksq) << endl;
+				//王の位置から香車の効きビームを出した位置。
+				/*
+				よく考えたら王の位置から香車の効きビームを出した位置はすでに王手がかかっている！！！！！！
+				そして成りの場合は金の王手範囲を足せばいいだけではない！！！
+				玉の位置に相手の金を置いたところに成りで移動できるマスでなければならない！！！！！
+				*/
+				/*
+				やはりobstacleも考えてtableを作るのは厳しい...
+				間に邪魔ゴマがいない場合のみを考えてchecktableを作り、邪魔ゴマがある場合はbetweenBBなどを使って別で考える。
+				*/
+
+				PsuedoGivesCheckBB[c][LANCE][ksq] |= LanceEffect[op][ksq][0];
+				if(sqtofile(ksq)!=File1&&is_king_rank123){ PsuedoGivesCheckBB[c][LANCE][ksq] |= LanceEffect[op][ksq-9][0]; }
+				if (sqtofile(ksq) != File9&&is_king_rank123) { PsuedoGivesCheckBB[c][LANCE][ksq] |= LanceEffect[op][ksq + 9][0]; }
+				//cout << c << ksq << LANCE << endl << PsuedoGivesCheckBB[c][LANCE][ksq] << endl;
+		}
+	}
+	//桂馬による王手。
+	for (Square ksq = SQ_ZERO; ksq < SQ_NUM; ksq++) {
+		for (Color c = BLACK; c < ColorALL; c++) {
+			const Color op = opposite(c);
+			//王手をかけるマス
+			Bitboard check = StepEffect[op][KNIGHT][ksq];
+
+			if ((CantGo_KNIGHT[c] & SquareBB[ksq]).isNot()) { check |= StepEffect[op][GOLD][ksq]; }
+			else if ((canPromoteBB[c] & SquareBB[ksq]).isNot()) { check |= andnot(StepEffect[op][GOLD][ksq], StepEffect[op][BISHOP][ksq]| StepEffect[op][PAWN][ksq]); }
+			//check = andnot(check, StepEffect[c][LANCE][ksq]);//桂馬の場合は後ろに回り込んで王手できるのでそれも考慮する
+			//cout << ksq <<" "<<c<< endl << check << endl;
+			while (check.isNot()) {
+				const Square sq = check.pop();
+				PsuedoGivesCheckBB[c][KNIGHT][ksq] |= StepEffect[op][KNIGHT][sq];
+
+			}
+			//cout << c << ksq << KNIGHT << endl << PsuedoGivesCheckBB[c][KNIGHT][ksq] << endl;//ワンパス通った。
+		}
+	}
+	//銀
+	//----------------------------------------------------------------------------------
+	//後ろに引きながら成る王手もできるか................これじゃだめだな..................
+	//----------------------------------------------------------------------------------
+	for (Square ksq = SQ_ZERO; ksq < SQ_NUM; ksq++) {
+		for (Color c = BLACK; c < ColorALL; c++) {
+			const Color op = opposite(c);
+			//王手をかけるマス
+			Bitboard check = StepEffect[op][SILVER][ksq];
+
+			if ((canPromoteBB[c] & SquareBB[ksq]).isNot()) { check |= StepEffect[op][GOLD][ksq]; }
+			//else if ((canPromoteBB[c] & SquareBB[ksq]).isNot()) { check |= andnot(StepEffect[op][GOLD][ksq], StepEffect[op][BISHOP][ksq] | StepEffect[op][PAWN][ksq]); }
+			//check = andnot(check, StepEffect[c][LANCE][ksq]);//桂馬の場合は後ろに回り込んで王手できるのでそれも考慮する
+			//cout << ksq << " " << c << endl << check << endl;
+			while (check.isNot()) {
+				const Square sq = check.pop();
+				PsuedoGivesCheckBB[c][SILVER][ksq] |= StepEffect[op][SILVER][sq];
+				
+			}
+			PsuedoGivesCheckBB[c][SILVER][ksq] = andnot(PsuedoGivesCheckBB[c][SILVER][ksq], SquareBB[ksq]);
+			//cout << c << ksq << SILVER << endl << PsuedoGivesCheckBB[c][SILVER][ksq] << endl;//ワンパス通った。
 		}
 	}
 
+	//金
+	for (Color c = BLACK; c < ColorALL; c++) {
+		for (Square ksq = SQ_ZERO; ksq < SQ_NUM; ksq++) {
+
+			const Color op = opposite(c);
+			//王手をかけるマス
+			Bitboard check = StepEffect[op][GOLD][ksq];
 
 
+			//cout << ksq << " " << c << endl << check << endl;
+			while (check.isNot()) {
+				const Square sq = check.pop();
+				PsuedoGivesCheckBB[c][GOLD][ksq] |= StepEffect[op][GOLD][sq];
 
+			}
+			PsuedoGivesCheckBB[c][GOLD][ksq] = andnot(PsuedoGivesCheckBB[c][GOLD][ksq], SquareBB[ksq]);
+			//cout << c << ksq << GOLD << endl << PsuedoGivesCheckBB[c][GOLD][ksq] << endl;//ワンパス通った。
+		}
+	}
+	//飛車(飛車はどこからでも王手できることになってしまうのか.......)
+	for (Color c = BLACK; c < ColorALL; c++) {
+		for (Square ksq = SQ_ZERO; ksq < SQ_NUM; ksq++) {
 
+			const Color op = opposite(c);
+			//王手をかけるマス
+			Bitboard check = RookPsuedoAttack[ksq];
+
+			if ((CantGo_KNIGHT[c] & SquareBB[ksq]).isNot()) { check |= StepEffect[op][KING][ksq]; }
+			else if ((canPromoteBB[c] & SquareBB[ksq]).isNot()) { check |= andnot(StepEffect[op][KING][ksq], StepEffect[op][BISHOP][ksq] | StepEffect[op][PAWN][ksq]); }
+			//check = andnot(check, StepEffect[c][LANCE][ksq]);//桂馬の場合は後ろに回り込んで王手できるのでそれも考慮する
+			//cout << ksq <<" "<<c<< endl << check << endl;
+			while (check.isNot()) {
+				const Square sq = check.pop();
+				PsuedoGivesCheckBB[c][ROOK][ksq] |= RookPsuedoAttack[sq];
+
+			}
+			PsuedoGivesCheckBB[c][ROOK][ksq] = andnot(PsuedoGivesCheckBB[c][ROOK][ksq], SquareBB[ksq]);
+			//cout << c << ksq << ROOK << endl << PsuedoGivesCheckBB[c][ROOK][ksq] << endl;//ワンパス通った。
+		}
+	}
+	//角
+	for (Color c = BLACK; c < ColorALL; c++) {
+		for (Square ksq = SQ_ZERO; ksq < SQ_NUM; ksq++) {
+
+			const Color op = opposite(c);
+			//王手をかけるマス
+			Bitboard check = BishopPsuedoAttack[ksq];
+
+			if ((CantGo_KNIGHT[c] & SquareBB[ksq]).isNot()) { check |= StepEffect[op][KING][ksq]; }
+			else if ((canPromoteBB[c] & SquareBB[ksq]).isNot()) { check |= andnot(StepEffect[op][KING][ksq], StepEffect[op][PAWN][ksq]); }
+			//check = andnot(check, StepEffect[c][LANCE][ksq]);//桂馬の場合は後ろに回り込んで王手できるのでそれも考慮する
+			//cout << ksq <<" "<<c<< endl << check << endl;
+			while (check.isNot()) {
+				const Square sq = check.pop();
+				PsuedoGivesCheckBB[c][BISHOP][ksq] |= BishopPsuedoAttack[sq];
+
+			}
+			PsuedoGivesCheckBB[c][BISHOP][ksq] = andnot(PsuedoGivesCheckBB[c][BISHOP][ksq], SquareBB[ksq]);
+			//cout << c << ksq << BISHOP << endl << PsuedoGivesCheckBB[c][BISHOP][ksq] << endl;//ワンパス通った。
+		}
+	}
+	//馬
+	for (Color c = BLACK; c < ColorALL; c++) {
+		for (Square ksq = SQ_ZERO; ksq < SQ_NUM; ksq++) {
+
+			const Color op = opposite(c);
+			//王手をかけるマス
+			Bitboard check = BishopPsuedoAttack[ksq];
+
+			check |= StepEffect[op][KING][ksq]; 
+			//check = andnot(check, StepEffect[c][LANCE][ksq]);//桂馬の場合は後ろに回り込んで王手できるのでそれも考慮する
+			//cout << ksq <<" "<<c<< endl << check << endl;
+			while (check.isNot()) {
+				const Square sq = check.pop();
+				PsuedoGivesCheckBB[c][UNICORN][ksq] |= BishopPsuedoAttack[sq];
+
+			}
+			PsuedoGivesCheckBB[c][UNICORN][ksq] = andnot(PsuedoGivesCheckBB[c][UNICORN][ksq], SquareBB[ksq]);
+			//cout << c << ksq << UNICORN << endl << PsuedoGivesCheckBB[c][UNICORN][ksq] << endl;//ワンパス通った。
+		}
+	}
 
 
 	//check_between();

@@ -137,10 +137,10 @@ void check_between();
 //==========================================
 //â§éËä÷òA
 //==========================================
-extern Bitboard GivesCheckStepBB[ColorALL][PT_ALL][SQ_NUM];
-extern Bitboard GivesCheckRookBB[ColorALL][SQ_NUM][128];
-extern Bitboard GivesCheckBishopBB[ColorALL][SQ_NUM][128];
-extern Bitboard GivesCheckLanceBB[ColorALL][SQ_NUM][128];
+//extern Bitboard GivesCheckStepBB[ColorALL][PT_ALL][SQ_NUM];
+//extern Bitboard GivesCheckRookBB[ColorALL][SQ_NUM][128];
+//extern Bitboard GivesCheckBishopBB[ColorALL][SQ_NUM][128];
+//extern Bitboard GivesCheckLanceBB[ColorALL][SQ_NUM][128];
 //===============================
 //å¯Ç´ä÷òAä÷êî
 //================================
