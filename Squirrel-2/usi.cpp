@@ -250,6 +250,7 @@ void USI::loop()
 {
 	Position pos;
 	Thread th;
+	th.cleartable();
 	string token, cmd;
 
 	//pos.set_hirate();

@@ -272,6 +272,9 @@ namespace Eval {
 
 	Value eval_diff_PP(const Position& pos);
 
+
+	Value eval_allPP_AVX2(const Position& pos);
+
 	//‚Q‹îŠÖŒW(32bit‚Ì¸“x‚Å‚Á‚Ä‚¨‚¢‚½‚Ù‚¤‚ª‹­‚­‚È‚é‚Æv‚¤)
 	extern int32_t PP[fe_end2][fe_end2];
 

@@ -5,12 +5,16 @@
 
 #include <utility>
 
+//declspecとは.....????		http://hp.vector.co.jp/authors/VA023539/tips/dll/006.htm
+#define ALIGNED(X) __declspec(align(X))
+
+
 namespace Eval {
 
 	Bp2Piece bp2piece;
 
 	//三角テーブルにすべきか....??
-	int32_t PP[fe_end2][fe_end2];
+	ALIGNED(32) int32_t PP[fe_end2][fe_end2];
 
 	int16_t piece_value[PC_ALL] = {
 		Value_Zero,
@@ -640,7 +644,9 @@ namespace Eval {
 		ASSERT(((bPP + wPP) / FV_SCALE) < INT16_MAX);
 		return Value((bPP + wPP) / FV_SCALE);
 
-	}//差分計算
+	}
+	
+	//差分計算
 
 	void BonaPList::makebonaPlist(const Position & pos)
 	{
@@ -1144,5 +1150,104 @@ namespace Eval {
 
 	}
 	*/
+	
+
+
+
+	/*
+	AVX2を用いた評価関数計算高速化。
+	
+	nodchipさんの本を参考に読み進めていく。
+	
+	PPはlist[40]を用いて計算を行うので
+	8個の要素ずつの計算で完了させることができりゅ。
+
+	PP要素は32bit
+
+	_mm256_i32gather_epi32
+	https://www.bing.com/search?q=_mm256_i32gather_epi32&pc=cosp&ptag=C1AE89FD93123&form=CONBDF&conlogo=CT3210127
+
+	_mm256_load_si256
+	https://www.bing.com/search?q=_mm256_load_si256&pc=cosp&ptag=C1AE89FD93123&form=CONBDF&conlogo=CT3210127
+
+	*/
+	Value eval_allPP_AVX2(const Position & pos)
+	{
+		int32_t bPP = 0, wPP = 0;
+		BonaPiece *list_fb = pos.evallist().bplist_fb, *list_fw = pos.evallist().bplist_fw;
+
+		__m256i zero = _mm256_setzero_si256();
+		__m256i bPP256 = zero, wPP256 = zero;
+
+		//40要素に対して計算を行う
+		for (int i = 0; i < 40; ++i) {
+
+			const BonaPiece k0_b = list_fb[i],k0_w=list_fw[i];
+
+			//pointer pp black||white
+			const auto* p_pp_b = PP[k0_b];
+			const auto* p_pp_w = PP[k0_w];
+
+			int j = 0;
+			//8要素一気に計算する
+			for (; j + 8 < i; j += 8) {
+
+				//bonapieceのindexを8要素ロードする。
+				__m256i indices_fb = _mm256_load_si256(reinterpret_cast<const __m256i*>(&list_fb[j]));
+				__m256i indices_fw = _mm256_load_si256(reinterpret_cast<const __m256i*>(&list_fw[j]));
+
+				//p_pp_bとp_pp_wから8要素をギャザーしてくる。（4というのはi32*4）
+				__m256i b = _mm256_i32gather_epi32(reinterpret_cast<const int*>(p_pp_b), indices_fb, 4);
+				__m256i w = _mm256_i32gather_epi32(reinterpret_cast<const int*>(p_pp_w), indices_fw, 4);
+
+				//下位128bitを16bit変数から32bit整数に変換する
+				__m256i blo = _mm256_cvtepi16_epi32(_mm256_extracti128_si256(b, 0));//0というのは128*0
+				__m256i wlo = _mm256_cvtepi16_epi32(_mm256_extracti128_si256(w, 0));
+
+				//bpp256,wpp256に足し合わせる
+				bPP256 = _mm256_add_epi32(bPP256, blo);
+				wPP256 = _mm256_add_epi32(wPP256, wlo);
+
+				//上位128bitを16bit変数から32bit整数に変換する
+				//_mm256_extracti128_si256 ：上位or下位128bitをxmmレジスタに格納する
+				//_mm256_cvtepi16_epi32 :16 ビットの符号付き整数から 32 ビットの整数への符号拡張パックド移動操作を実行 : https://www.bing.com/search?q=_mm256_cvtepi16_epi32&pc=cosp&ptag=C1AE89FD93123&form=CONBDF&conlogo=CT3210127
+				__m256i bhi = _mm256_cvtepi16_epi32(_mm256_extracti128_si256(b, 1));//0というのは128*0
+				__m256i whi = _mm256_cvtepi16_epi32(_mm256_extracti128_si256(w, 1));
+
+				//bpp256,wpp256に足し合わせる
+				bPP256 = _mm256_add_epi32(bPP256, bhi);
+				wPP256 = _mm256_add_epi32(wPP256, whi);
+			}
+
+		}
+		//上位128bitと下位128bitを独立して8byte(64bit)右シフトしたものを足し合わせる。なんで8byteシフトさせる？？全然わからん.......
+		bPP256 = _mm256_add_epi32(bPP256, _mm256_srli_si256(bPP256, 8));
+		wPP256 = _mm256_add_epi32(wPP256, _mm256_srli_si256(wPP256, 8));
+
+		//bpp256の上位128bitと下位128bitを足し合わせてbpp128の代入する
+		__m128i bpp128 = _mm_add_epi32(_mm256_extracti128_si256(bPP256,0), _mm256_extracti128_si256(bPP256, 1));
+		__m128i wpp128 = _mm_add_epi32(_mm256_extracti128_si256(wPP256, 0), _mm256_extracti128_si256(wPP256, 1));
+
+
+
+		pos.state()->bpp = (bPP);
+		pos.state()->wpp = wPP;
+		//評価値ホントに16bitで収まるかどうか確認
+		ASSERT(abs(bPP + wPP) / FV_SCALE < INT16_MAX);
+
+		return Value((bPP + wPP) / FV_SCALE);
+
+
+	}
+
+
+
+
+
+
+
+
+
+
 
 }

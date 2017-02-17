@@ -268,7 +268,9 @@ movecheck:;
 
 	//----------------------------------ここから駒の移動による王手
 
+//#define matemove
 
+#ifdef matemove
 	//dc_candicateとは二重王手候補つまり王への味方の効きを遮っている味方の駒。もしこれで王手をかけることができれば二重王手になりうるし、効きから外れるだけでも間接王手になる。
 
 	//pinedとはpinされている駒この駒を効きを作っている駒の方向以外へ動かしての王手はできないし、もしその方向で王手をできたとしてもpinしてる駒をとれなかった場合は取り返される。
@@ -293,7 +295,7 @@ movecheck:;
 
 	//ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーまずは詰ませる可能性の高い金から　OKワンパスは通った。
 	Bitboard matecandicate_Gold = (occ_pt(us, GOLD)|occ_pt(us,PRO_PAWN)|occ_pt(us,PRO_LANCE)|occ_pt(us,PRO_NIGHT)|occ_pt(us,PRO_SILVER))&PsuedoGivesCheckBB[us][GOLD][eksq];
-	//pinゴマを動かそうとしてはいけない
+	//pinゴマを動かそうとしてはいけない（まあpinをしている駒をとることで王手できる場合もあるがそれはイレギュラーなので考えないほうがいいだろう）
 	matecandicate_Gold = andnot(matecandicate_Gold, pinned[us]);
 
 	while (matecandicate_Gold.isNot()) {
@@ -328,7 +330,7 @@ movecheck:;
 			put_piece(us, removedpiece, from);
 			return true;
 
-		cant_mate_gold:;
+cant_mate_gold:;
 
 		}
 
@@ -337,7 +339,8 @@ movecheck:;
 		set_occ256(from);
 		put_piece(us, removedpiece, from);
 	}
-
+#endif
+	//------------------------------銀（成り、成らずがあるため、かなり複雑そう..............）
 
 
 
