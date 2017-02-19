@@ -331,6 +331,7 @@ void USI::loop()
 		//====================
 		//ここから下はデバッグ用コマンド
 		//====================
+#if 0
 		else if (token == "gm") {
 			//指し手生成速度計測
 			speed_genmove(pos);
@@ -633,7 +634,10 @@ void USI::loop()
 		else if (token == "bplist") {
 			pos.evallist().print_bplist();
 		}
-
+		else if (token == "list") {
+			pos.check_bplist();
+		}
+#endif
 	} while (token != "quit");
 
 

@@ -157,6 +157,28 @@ public:
 
 	Bitboard pawnbb(const Color c)const { return ExistPawnBB[c]; }
 
+	//ちゃんとbplistが更新されているか確認する
+	void check_bplist() {
+		Eval::BonaPList list2;
+		Eval::BonaPList copyedlist;
+
+		copyedlist = evallist();
+
+		list2.makebonaPlist(*this);
+
+		
+
+		sort(copyedlist.bplist_fb,&copyedlist.bplist_fb[40], [](const Eval::BonaPiece& m1, const  Eval::BonaPiece& m2) { return m1 <m2; });
+		sort(list2.bplist_fb, &list2.bplist_fb[40], [](const Eval::BonaPiece& m1, const  Eval::BonaPiece& m2) { return m1 <m2; });
+		sort(copyedlist.bplist_fw, &copyedlist.bplist_fw[40], [](const Eval::BonaPiece& m1, const  Eval::BonaPiece& m2) { return m1 <m2; });
+		sort(list2.bplist_fw, &list2.bplist_fw[40], [](const Eval::BonaPiece& m1, const  Eval::BonaPiece& m2) { return m1 <m2; });
+
+		for (int i = 0; i < 40; i++) {
+			ASSERT(copyedlist.bplist_fb[i] == list2.bplist_fb[i]);
+			ASSERT(copyedlist.bplist_fw[i] == list2.bplist_fw[i]);
+		}
+	}
+
 	Color sidetomove() const { return sidetomove_; }
 	Hand hand(Color c)const { return hands[c]; }
 	StateInfo* state() const { return st; }

@@ -213,10 +213,10 @@ double concordance() {
 	//std::shuffle(testset.begin(), testset.end(), t_mt);//シャッフルさせてるがしないほうがいい？？
 
 	int num_tests = 1000;//1000棋譜で確認する
-	/*if (num_tests > testset.size()) { num_tests = testset.size(); }
-	ASSERT(num_tests <= testset.size());*/
-	if (num_tests > games.size()) { num_tests = games.size(); }
-	ASSERT(num_tests <= games.size());
+	if (num_tests > testset.size()) { num_tests = testset.size(); }
+	ASSERT(num_tests <= testset.size());
+	/*if (num_tests > games.size()) { num_tests = games.size(); }
+	ASSERT(num_tests <= games.size());*/
 
 	//ここで宣言したいのだけれどこれでいいのだろうか？
 	Position pos;
@@ -231,8 +231,8 @@ double concordance() {
 
 	for (int g = 0; g < num_tests; g++) {
 
-		//auto thisgame = testset[g];//ここ学習用のデータと区別しておいたほうがいいか？？
-		auto thisgame = games[g];
+		auto thisgame = testset[g];//ここ学習用のデータと区別しておいたほうがいいか？？
+		//auto thisgame = games[g];
 		pos.set_hirate();
 		th.cleartable();
 		for (int ply = 0; ply < (thisgame.moves.size() - 1); ply++) {
@@ -315,7 +315,8 @@ void Eval::parallel_learner() {
 	*/
 	num_parse2 = 32;
 	//ifstream gamedata(fg2800_2ch);
-	ifstream gamedata(nichkihu);//ソフト棋譜の水平線効果を学習させないために2ch棋譜のみを使用して学習することにする。(技巧やapery(sdt4を除く)もそれで学習していたはずなので大丈夫だと思う)
+	//ifstream gamedata(nichkihu);//ソフト棋譜の水平線効果を学習させないために2ch棋譜のみを使用して学習することにする。(技巧やapery(sdt4を除く)もそれで学習していたはずなので大丈夫だと思う)
+	ifstream gamedata(gamedatabasefile);
 	GameDataStream gamedatastream(gamedata);
 	
 

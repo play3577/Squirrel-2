@@ -107,7 +107,9 @@ void randomwalker(Position & pos, int maxdepth)
 		bool givescheck = pos.is_gives_check(m);
 		pos.do_move(m, &si[depth], givescheck);
 		Key hash3 = pos.key();
+		pos.check_bplist();
 		pos.undo_move();
+		pos.check_bplist();
 		//Key hash2 = pos.key();
 
 		//ASSERT(k == hash3);

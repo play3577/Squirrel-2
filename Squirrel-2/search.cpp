@@ -524,14 +524,39 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 	//そうなるとtt->eval()は保存する必要が無いか...???う～～んもしかしたらtt.eval()を用いたほうがメリットが有るのかもしれない...（ここは後でよく考えよう）
 	ss->static_eval=staticeval = Eval::eval(pos);
 
-	//ここに前向き枝切りのコードを書く
-
+	//stockfish風にしてみる
+#if 0
 	//王手がかかっている場合は前向き枝切りはしない
 	//（もし前向き枝切りが出来てしまったらこのノードで詰んでしまう）
 	if (incheck) {
 		//	cout << "incheck" << endl;
+		ss->static_eval = staticeval = Value_error;
 		goto moves_loop;
 	}
+	else if (TThit) {
+
+		if (ttValue != Value_error) {
+			if (ttBound&(ttValue > staticeval ? BOUND_LOWER : BOUND_UPPER)) { staticeval = ttValue; }
+		}
+
+	}
+	else {
+		if ((ss - 1)->currentMove == MOVE_NULL) { staticeval = ss->static_eval = -(ss - 1)->static_eval + 2 * (Value)20;}
+#ifdef USETT
+		tte->save(poskey, Value_error, BOUND_NONE, DEPTH_NONE, MOVE_NONE, ss->static_eval, TT.generation());
+#endif
+	}
+#else
+	if (incheck) {
+		//	cout << "incheck" << endl;
+		goto moves_loop;
+	}
+	else if ((ss - 1)->currentMove == MOVE_NULL) {
+		staticeval = ss->static_eval = -(ss - 1)->static_eval + 2 * (Value)20;
+	}
+#endif
+
+
 	if (ss->skip_early_prunning == true) {
 		goto moves_loop;
 	}
@@ -1108,7 +1133,6 @@ moves_loop:
 
 		//cout << "undo move " <<move<< endl;
 		pos.undo_move();
-
 		//時間切れなのでbestmoveとPVを汚さないうちに値を返す。
 		if (signal.stop.load(std::memory_order_relaxed)) {
 			return Value_Zero;
@@ -1331,8 +1355,41 @@ Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
 
 
 	//静止探索は駒の取り合いのような評価値が不安定な局面を先延ばして探索を続けることで探索の末端評価値を補正し、より正確にするものであると思っている。
-	bestvalue=staticeval = Eval::eval(pos);
+	(ss)->static_eval=bestvalue=staticeval = Eval::eval(pos);
 
+	if (incheck) {
+		ss->static_eval = Value_error;
+		bestvalue = futilitybase = -Value_Infinite;
+	}
+	else {
+		/*
+		if (TThit) {
+			if (ttValue != Value_error) {
+				if (ttBound&(ttValue > bestvalue ? BOUND_LOWER : BOUND_UPPER)) { bestvalue = ttValue; }
+			}
+		}
+		else {
+			if ((ss - 1)->currentMove == MOVE_NULL){staticeval=bestvalue=  -(ss - 1)->static_eval + 2 * Value(20);}
+		}*/
+
+		if (bestvalue >= beta) {
+#ifdef USETT
+			if (!TThit) {
+				tte->save(posKey, value_to_tt(bestvalue, ss->ply), BOUND_LOWER, DEPTH_NONE, MOVE_NONE, staticeval, TT.generation());
+			}
+#endif
+			return bestvalue;
+
+		}
+
+		if (PvNode&&bestvalue > alpha) {
+			alpha = bestvalue;
+		}
+
+		futilitybase = bestvalue + 128;
+	}
+
+#if 0
 	if (!incheck) {
 
 		//stand pat 方式を試してみる。（もしあまりよろしくなければ採用を取り消す。）
@@ -1370,23 +1427,9 @@ Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
 		これは親ノードに伝わったときにβ値以上となってカットしたりα値を更新して探索窓を狭めたりできる可能性が高くなるためである。
 		このような性質を Fail-Soft と言い、 Null Window Search などの狭い探索窓による探索や置換表を使った探索をする場合にその効果がよく現れる。
 		*/
-		if (bestvalue >= beta) {
-#ifdef USETT
-			if (!TThit) {
-				tte->save(posKey, value_to_tt(bestvalue, ss->ply), BOUND_LOWER, DEPTH_NONE, MOVE_NONE, staticeval, TT.generation());
-			}
-#endif
-				return bestvalue;
-			
-		}
-
-		if (PvNode&&bestvalue > alpha) {
-			alpha = bestvalue;
-		}
-
-		futilitybase = bestvalue + 128;
+		
 	}
-
+#endif
 //	
 //#ifdef LEARN
 //	//学習時は精子探索深さ３までで止める。（こんなことはせずバッサリ枝を切れる枝切り方法を導入したい）
