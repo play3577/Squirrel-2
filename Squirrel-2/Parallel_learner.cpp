@@ -24,6 +24,9 @@ using namespace std;
 
 #define LOG
 
+
+#define SOFTKIFU
+
 //struct  Parse2data;
 
 struct  dJValue
@@ -99,9 +102,11 @@ void renewal_PP(dJValue &data) {
 	for (BonaPiece i = f_hand_pawn; i < fe_end2; i++) {
 		for (BonaPiece j = f_hand_pawn; j < fe_end2; j++) {
 
+			//bonanzaは4万局程に対してこの値なのでmin batchをつかうときはこれではだめ！！！！！
+#if 0
 			/*if (PP[i][j]>0) { data.dJ[i][j] -= double(0.2 / double(FV_SCALE)); }
 			else if (PP[i][j]<0) { data.dJ[i][j] += double(0.2 / double(FV_SCALE)); }*/
-
+#endif
 			int inc = h*sign(data.dJ[i][j]);
 			PP[i][j] += inc;
 		}
@@ -237,6 +242,17 @@ double concordance() {
 		th.cleartable();
 		for (int ply = 0; ply < (thisgame.moves.size() - 1); ply++) {
 
+#ifdef SOFTKIFU
+			/*if ((float(ply) / float(thisgame.moves.size())) > 0.9) {
+				cout << "progress:" << (float(ply) / float(thisgame.moves.size())) << " ply:" << ply << " maxply:" << thisgame.moves.size() << " progress over 90%" << endl;
+				goto ERROR_OCCURED;
+			}*/
+			//さすがにELO2800以上のソフトであれば最後の20手は王手の連続だろう...
+			if (ply > (thisgame.moves.size() - 20)) {
+				goto ERROR_OCCURED;
+			}
+#endif
+
 			const Color rootColor = pos.sidetomove();
 
 			//この局面の差し手を生成する
@@ -316,7 +332,9 @@ void Eval::parallel_learner() {
 	num_parse2 = 32;
 	//ifstream gamedata(fg2800_2ch);
 	//ifstream gamedata(nichkihu);//ソフト棋譜の水平線効果を学習させないために2ch棋譜のみを使用して学習することにする。(技巧やapery(sdt4を除く)もそれで学習していたはずなので大丈夫だと思う)
+#ifdef  SOFTKIFU
 	ifstream gamedata(gamedatabasefile);
+#endif //  SOFTKIFU
 	GameDataStream gamedatastream(gamedata);
 	
 
@@ -489,6 +507,16 @@ void learnphase1body(int number) {
 			diddepth = ply;
 			minfo_list.clear();
 
+#ifdef SOFTKIFU
+			/*if ((float(ply) / float(thisgame.moves.size())) > 0.9) {
+				cout <<"progress:"<< (float(ply) / float(thisgame.moves.size()))<<" ply:"<<ply<<" maxply:"<< thisgame.moves.size() <<  " progress over 90%" << endl;
+				goto ERROR_OCCURED;
+			}*/
+			if (ply >(thisgame.moves.size() - 20)) {
+				goto ERROR_OCCURED;
+			}
+#endif
+
 			const Color rootColor = pos.sidetomove();
 
 			//この局面の差し手を生成する
@@ -531,6 +559,9 @@ void learnphase1body(int number) {
 				pos.do_move(m, &si[ply]);
 				
 				th.set(pos);
+				/*---------------------------------------------------------------------------------------------------------
+				ここではPVの作成だけを行ってscoreはPVで末端まで移動させてeval()呼んで、その値を使用したほうがいい？？？
+				---------------------------------------------------------------------------------------------------------*/
 				Value  score = th.think();
 				//if (m==teacher_move) { teachervalue = score; }
 				if (abs(score) < Value_mate_in_maxply) {
@@ -666,6 +697,8 @@ void learnphase2() {
 
 	//num_parse2回パラメーターを更新する。コレで-64から+64の範囲内でパラメーターが動くことになる。
 	//bonanzaではこの32回の間にdJが罰金項によってどんどんゼロに近づけられている。
+	//値の更新だけを32かい行っても意味がない！！！！！！
+	//gradの作成から32回行わないといけない！！！
 	for (int i = 0; i < num_parse2; i++) {
 		renewal_PP(sum_parse2Datas.gradJ);
 	}

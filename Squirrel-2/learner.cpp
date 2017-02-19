@@ -21,7 +21,7 @@ using namespace std;
 int sign(const double d) {
 	return (d > 0) ? 1 : (d<0) ? -1 : 0;
 #if 0
-	//return  (d > 0) ? 1: -1; //‚±‚ê‚É‚·‚é‚Æ‚©‚È‚èŽã‚­‚È‚Á‚Ä‚µ‚Ü‚Á‚½B
+	//return  (d > 0) ? 1: -1; //‚±‚ê‚É‚·‚é‚Æ‚©‚È‚èŽã‚­‚È‚Á‚Ä‚µ‚Ü‚Á‚½B1000Šû•ˆ‚Å‚±‚ê‚ðŽg‚¨‚¤‚Æ‚·‚é‚Ì‚Í‚¾‚ß‚¾‚È....
 #endif
 }
 
