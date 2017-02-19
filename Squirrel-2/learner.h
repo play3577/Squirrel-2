@@ -21,13 +21,14 @@ namespace Eval {
 
 		Move move;
 		vector<Move> pv;
-		Value score;
 
-		MoveInfo(const Move m, const vector<Move> pv_, Value s) {
-			move = m; pv = pv_; score = s;
+		MoveInfo(const Move m, const vector<Move> pv_) {
+			move = m; pv = pv_; 
 		}
 
 	};
+
+	
 
 
 	
@@ -41,7 +42,7 @@ void learnphase1();
 void learnphase1body(int number);
 
 void learnphase2();
-void learnphase2body();
+void learnphase2body(int number);
 
 
 

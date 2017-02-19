@@ -273,6 +273,9 @@ double concordance() {
 			//探索を行ってpv[0]がteachermoveか確認する。
 			
 			th.set(pos);
+			th.l_alpha = Value_Mated;
+			th.l_beta = Value_Mate;
+			
 			Value  score = th.think();
 			if (th.pv[0] == teacher_move) { num_concordance_move++; }
 
@@ -311,14 +314,16 @@ void Eval::parallel_learner() {
 #ifdef test_learn
 	int readgames = 20;
 	int numtestset = 19;
+	maxthreadnum = 1;
 #else
 	int readgames = 10000;
 	int numtestset = 500;
+	maxthreadnum = omp_get_max_threads();
 #endif
 	
 	numgames = 2000;
 	int numiteration = 1000;
-	maxthreadnum = omp_get_max_threads();
+	
 
 	cout <<"readgames "<< readgames << endl;
 
@@ -365,7 +370,7 @@ void Eval::parallel_learner() {
 	cout <<"teacher games "<< games.size() << endl;
 	cout << "read kihu OK!" << endl;
 
-#define Test_icchiritu
+//#define Test_icchiritu
 
 #ifdef Test_icchiritu
 	cout<<concordance()<<endl;
@@ -499,6 +504,10 @@ void learnphase1body(int number) {
 	//ここlockingindexincrementにする必要がある！！
 	//=============================================================
 	for (int g = lock_index_inclement(); g < numgames; g = lock_index_inclement()) {
+
+		//iteration2で同じ局面に対してPVを作ってしまわないようにする。
+		games[g].other_pv.clear();
+
 		didmoves = 0;
 		auto thisgame = games[g];
 		pos.set_hirate();
@@ -550,6 +559,8 @@ void learnphase1body(int number) {
 			//Value teachervalue;
 			//bool huicchi_firsttime = true;
 			ASSERT(moves[0].move == teacher_move);
+			Value record_score;
+
 			for (int move_i = 0; move_i < num_moves; move_i++) {
 
 				Move m = moves[move_i];
@@ -562,15 +573,223 @@ void learnphase1body(int number) {
 				/*---------------------------------------------------------------------------------------------------------
 				ここではPVの作成だけを行ってscoreはPVで末端まで移動させてeval()呼んで、その値を使用したほうがいい？？？
 				---------------------------------------------------------------------------------------------------------*/
-				Value  score = th.think();
-				//if (m==teacher_move) { teachervalue = score; }
-				if (abs(score) < Value_mate_in_maxply) {
-					minfo_list.push_back(MoveInfo(m, th.pv, score));
+				
+				/*=================================
+				探索のalpha betaは後で実装する
+				==================================*/
+				if (move_i == 0) {
+					th.l_alpha = Value_Mated;
+					th.l_beta = Value_Mate;
 				}
-				else { pos.undo_move(); break; }
+				else {
+					th.l_alpha = record_score-(Value)256;
+					th.l_beta = record_score +(Value)256;
+				}
+
+				Value  score = th.think();
+				if (move_i == 0) { record_score = score; }
+				//if (m==teacher_move) { teachervalue = score; }
+				if (th.l_alpha<score&&score<th.l_beta) {
+					minfo_list.push_back(MoveInfo(m, th.pv));
+				}
+				/*else { 
+					pos.undo_move(); break; 
+				}*/
 				pos.undo_move();
 				//if (score > teachervalue&&huicchi_firsttime == true) { huicchi_firsttime = false;  lock_huicchimoves_inclement(); }
 			}
+
+			games[g].other_pv.push_back(minfo_list);
+
+			//次の局面へ
+			pos.do_move(teacher_move, &si[ply]);
+
+			//ここでこの局面の指し手による探索終了
+
+			//ここからsum_gradJの更新
+			//{
+
+
+			//	/*
+			//	教師手ではない指してによる局面に現れる特徴ベクトルは価値を低く、
+			//	教師手による局面に現れる特徴ベクトルは価値を高く、
+			//	両方に出てくる特徴ベクトルに対しては価値を動かさないようにしたい。
+			//	そのためのsum_diff。
+			//	どの差し手を指してもつまされることが分かった場合もlistsize==0になる！
+			//	*/
+			//	double sum_diff = Value_Zero;
+			//	if (minfo_list.size() == 0) {
+			//		cout << "listsize==0" << endl;
+			//		/*cout << pos << endl;
+			//		check_move(teacher_move);
+			//		cout << "aa" << endl;*/
+			//		goto ERROR_OCCURED;
+			//	}
+
+			//	//教師手以外の指してに対して
+			//	for (int i = 1; i < minfo_list.size(); i++) {
+
+			//		//評価値と教師手の差分を取る。
+			//		const Value diff = minfo_list[i].score - minfo_list[0].score;
+
+			//		/*
+			//		http://kifuwarabe.warabenture.com/2016/11/23/%E3%81%A9%E3%81%86%E3%81%B6%E3%81%A4%E3%81%97%E3%82%87%E3%81%86%E3%81%8E%E3%82%92%E3%83%97%E3%83%AD%E3%82%B0%E3%83%A9%E3%82%82%E3%81%86%E3%81%9C%E2%98%86%EF%BC%88%EF%BC%92%EF%BC%94%EF%BC%89%E3%80%80/
+			//		シグモイド関数に値を入れるのは教師手の価値と同じぐらいの価値の指し手に対して学習をし、
+			//		悪い手を更に悪く、教師手を更に良く学習させないようにし、
+			//		値が大きく離れたらそのパラメーターをいじったりしないようにし、収束させるためである。
+			//		しかし教師手よりもかなり高く良い手だとコンピューターが誤判断している指し手がシグモイド関数の微分に入ってきてしまった場合それに対する出て来る値も小さくなってしまい、
+			//		値が下げられないのではないか？
+			//		それは良くない気がするのだけれど実際どうなんだろうか？
+			//		*/
+
+
+			//		//=======================================================================================================================
+			//		//bonanzaなどでは手番の色によってdiffsigの符号を変えているがそんなことする必要あるのか？？なぜ？？
+			//		//=======================================================================================================================
+
+			//		/*
+			//		この指し手の価値が教師手よりも大きかったため、価値を下げたい場合を考える。
+			//		黒番の場合は最終的にupdate_dJに入るのは-dsig
+			//		白番の場合は最終的にupdate_dJに入るのはdsigになる。
+			//		詳しい解説
+			//		https://twitter.com/daruma3940/status/801638488130994177
+			//		*/
+			//		double diffsig = dsigmoid(diff);
+			//		diffsig = (rootColor == BLACK ? diffsig : -diffsig);
+
+			//		sum_diff += diffsig;
+			//		objective_function += sigmoid(diff);
+
+
+			//		StateInfo si2[64];//最大でも深さ３
+			//		int j = 0;
+			//		//教師手とPVで局面をすすめる
+			//		//if (pos.is_legal(minfo_list[i].move) == false) { ASSERT(0); }
+			//		pos.do_move(minfo_list[i].move, &si[ply]);
+
+			//		for (Move m : minfo_list[i].pv) {
+			//			if (j >= 64) { break; }
+			//			if (pos.is_legal(m) == false) { cout << games[g].black_P << " " << games[g].white_P; ASSERT(0); }
+			//			pos.do_move(m, &si2[j]);
+			//			j++;
+			//		}
+			//		parse2Datas[number].gradJ.update_dJ(pos, -diffsig);//pvの先端（leaf node）に移動してdJを計算するのがTD-leafということ？？
+			//														   //局面を戻す
+			//		for (int jj = 0; jj < j; jj++) {
+			//			pos.undo_move();
+			//		}
+			//		pos.undo_move();
+			//	}//end of (教師手以外の指してに対して)
+
+
+			//	StateInfo si2[64];//最大でも深さ３
+			//	int j = 0;
+			//	//教師手に対してdJ/dviを更新
+			//	if (pos.is_legal(minfo_list[0].move) == false) { cout << games[g].black_P << " " << games[g].white_P; ASSERT(0); }
+			//	if (pos.state()->lastmove == minfo_list[0].move) { cout << games[g].black_P << " " << games[g].white_P; ASSERT(0); }
+			//	pos.do_move(minfo_list[0].move, &si[ply]);
+			//	//pvの指し手が非合法手になっている事がある？？
+			//	for (Move m : minfo_list[0].pv) {
+			//		if (j >= 64) { break; }
+			//		if (pos.is_legal(m) == false) { cout << games[g].black_P << " " << games[g].white_P;  ASSERT(0); }
+			//		if (pos.state()->lastmove == m) { cout << games[g].black_P << " " << games[g].white_P; ASSERT(0); }
+			//		pos.do_move(m, &si2[j]);
+			//		j++;
+			//	}
+			//	parse2Datas[number].gradJ.update_dJ(pos, sum_diff);
+			//	for (int jj = 0; jj < j; jj++) {
+			//		pos.undo_move();
+			//	}
+			//	pos.undo_move();
+
+			//}//勾配計算
+
+			 
+
+		}
+	ERROR_OCCURED:;
+		//cout << "game number: " << g << "/ maxgamenum: " << numgames << " didmoves " << didmoves << " diddepth " << diddepth << endl;
+		//lock_maxmoves_inclement(diddepth);
+	}
+
+
+}
+
+void learnphase2() {
+	
+	vector<std::thread> threads(maxthreadnum - 1);//maxthreadnum-1だけstd::threadをたてる。
+	cout <<endl<< "parse2" << endl;
+	//num_parse2回パラメーターを更新する。コレで-64から+64の範囲内でパラメーターが動くことになる。
+	//bonanzaではこの32回の間にdJが罰金項によってどんどんゼロに近づけられている。
+	//値の更新だけを32かい行っても意味がない！！！！！！
+	//gradの作成から32回行わないといけない！！！
+	for (int i = 0; i < num_parse2; i++) {
+
+		sum_parse2Datas.clear();
+		for (auto& parse2 : parse2Datas) {
+			parse2.clear();
+		}
+		
+
+		
+		index_ = 0;
+		//並列学習開始
+		for (int i = 0; i < maxthreadnum - 1; ++i) {
+			threads[i] = std::thread([i] {learnphase2body(i); });
+		}
+		learnphase2body(maxthreadnum - 1);
+
+
+		//たしあげる
+		for (auto& parse2 : parse2Datas) {
+			sum_parse2Datas.gradJ.add(parse2.gradJ);
+		}
+		for (auto& th : threads) { th.join(); }
+
+		renewal_PP(sum_parse2Datas.gradJ);
+	}
+
+	//書き出し読み込みをここで行って値の更新
+#ifndef test_learn
+	write_PP();
+	read_PP();
+#endif
+
+	
+}
+
+void learnphase2body(int number)
+{
+
+	//ここで宣言したいのだけれどこれでいいのだろうか？
+	Position pos;
+	StateInfo si[500];
+	//ExtMove moves[600], *end;
+	vector<MoveInfo> minfo_list;
+	Thread th;
+	//end = moves;
+
+
+	int didmoves = 0;
+	int diddepth = 0;
+	//============================================================
+	//ここlockingindexincrementにする必要がある！！
+	//=============================================================
+	for (int g = lock_index_inclement(); g < numgames; g = lock_index_inclement()) {
+		didmoves = 0;
+		Move teacher_move;
+		auto thisgame = games[g];
+		pos.set_hirate();
+		th.cleartable();
+		ASSERT(thisgame.other_pv.size() < thisgame.ply);
+		for (int ply = 0; ply < thisgame.other_pv.size(); ply++) {
+			diddepth = ply;
+			minfo_list.clear();
+
+			minfo_list = thisgame.other_pv[ply];
+			
+
+			const Color rootColor = pos.sidetomove();
 			//ここでこの局面の指し手による探索終了
 
 			//ここからsum_gradJの更新
@@ -592,13 +811,52 @@ void learnphase1body(int number) {
 					cout << "aa" << endl;*/
 					goto ERROR_OCCURED;
 				}
+				teacher_move = thisgame.moves[ply];
+				ASSERT(teacher_move == minfo_list[0].move);
+				Value teachervalue;
 
+				//ーーーーーーーーーーーーーーーーーー
+				//教師手の評価値を求める。
+				//ーーーーーーーーーーーーーーーーーー
+				{
+					StateInfo si2[64];
+					int j = 0;
+
+					if (pos.is_legal(minfo_list[0].move) == false) { cout << games[g].black_P << " " << games[g].white_P; ASSERT(0); }
+					if (pos.state()->lastmove == minfo_list[0].move) { cout << games[g].black_P << " " << games[g].white_P; ASSERT(0); }
+					pos.do_move(minfo_list[0].move, &si[ply]);
+
+					for (Move m : minfo_list[0].pv) {
+						if (j >= 64) { break; }
+						if (pos.is_legal(m) == false) { cout << games[g].black_P << " " << games[g].white_P;  ASSERT(0); }
+						if (pos.state()->lastmove == m) { cout << games[g].black_P << " " << games[g].white_P; ASSERT(0); }
+						pos.do_move(m, &si2[j]);
+						j++;
+					}
+					teachervalue = (rootColor == pos.sidetomove())? Eval::eval_PP(pos) : -eval_PP(pos);
+					for (int jj = 0; jj < j; jj++) {
+						pos.undo_move();
+					}
+					pos.undo_move();
+				}
+				//=-----------------------------------------
 				//教師手以外の指してに対して
+				//=-----------------------------------------
 				for (int i = 1; i < minfo_list.size(); i++) {
 
-					//評価値と教師手の差分を取る。
-					const Value diff = minfo_list[i].score - minfo_list[0].score;
 
+					StateInfo si2[64];
+					int j = 0;
+					//教師手とPVで局面をすすめる
+					//if (pos.is_legal(minfo_list[i].move) == false) { ASSERT(0); }
+					pos.do_move(minfo_list[i].move, &si[ply]);
+
+					for (Move m : minfo_list[i].pv) {
+						if (j >= 64) { break; }
+						if (pos.is_legal(m) == false) { cout << games[g].black_P << " " << games[g].white_P; ASSERT(0); }
+						pos.do_move(m, &si2[j]);
+						j++;
+					}
 					/*
 					http://kifuwarabe.warabenture.com/2016/11/23/%E3%81%A9%E3%81%86%E3%81%B6%E3%81%A4%E3%81%97%E3%82%87%E3%81%86%E3%81%8E%E3%82%92%E3%83%97%E3%83%AD%E3%82%B0%E3%83%A9%E3%82%82%E3%81%86%E3%81%9C%E2%98%86%EF%BC%88%EF%BC%92%EF%BC%94%EF%BC%89%E3%80%80/
 					シグモイド関数に値を入れるのは教師手の価値と同じぐらいの価値の指し手に対して学習をし、
@@ -621,25 +879,15 @@ void learnphase1body(int number) {
 					詳しい解説
 					https://twitter.com/daruma3940/status/801638488130994177
 					*/
+					//評価値と教師手の差分を取る。
+					const Value score = (rootColor == pos.sidetomove()) ? Eval::eval_PP(pos) : -eval_PP(pos);
+					const Value diff = score - teachervalue;
 					double diffsig = dsigmoid(diff);
 					diffsig = (rootColor == BLACK ? diffsig : -diffsig);
 
 					sum_diff += diffsig;
 					objective_function += sigmoid(diff);
 
-
-					StateInfo si2[64];//最大でも深さ３
-					int j = 0;
-					//教師手とPVで局面をすすめる
-					//if (pos.is_legal(minfo_list[i].move) == false) { ASSERT(0); }
-					pos.do_move(minfo_list[i].move, &si[ply]);
-
-					for (Move m : minfo_list[i].pv) {
-						if (j >= 64) { break; }
-						if (pos.is_legal(m) == false) { cout << games[g].black_P << " " << games[g].white_P; ASSERT(0); }
-						pos.do_move(m, &si2[j]);
-						j++;
-					}
 					parse2Datas[number].gradJ.update_dJ(pos, -diffsig);//pvの先端（leaf node）に移動してdJを計算するのがTD-leafということ？？
 																	   //局面を戻す
 					for (int jj = 0; jj < j; jj++) {
@@ -648,27 +896,28 @@ void learnphase1body(int number) {
 					pos.undo_move();
 				}//end of (教師手以外の指してに対して)
 
-
-				StateInfo si2[64];//最大でも深さ３
-				int j = 0;
-				//教師手に対してdJ/dviを更新
-				if (pos.is_legal(minfo_list[0].move) == false) { cout << games[g].black_P << " " << games[g].white_P; ASSERT(0); }
-				if (pos.state()->lastmove == minfo_list[0].move) { cout << games[g].black_P << " " << games[g].white_P; ASSERT(0); }
-				pos.do_move(minfo_list[0].move, &si[ply]);
-				//pvの指し手が非合法手になっている事がある？？
-				for (Move m : minfo_list[0].pv) {
-					if (j >= 64) { break; }
-					if (pos.is_legal(m) == false) { cout << games[g].black_P << " " << games[g].white_P;  ASSERT(0); }
-					if (pos.state()->lastmove == m) { cout << games[g].black_P << " " << games[g].white_P; ASSERT(0); }
-					pos.do_move(m, &si2[j]);
-					j++;
-				}
-				parse2Datas[number].gradJ.update_dJ(pos, sum_diff);
-				for (int jj = 0; jj < j; jj++) {
+				//教師手を進めた局面でのgradJの更新
+				{
+					StateInfo si2[64];//最大でも深さ３
+					int j = 0;
+					//教師手に対してdJ/dviを更新
+					if (pos.is_legal(minfo_list[0].move) == false) { cout << games[g].black_P << " " << games[g].white_P; ASSERT(0); }
+					if (pos.state()->lastmove == minfo_list[0].move) { cout << games[g].black_P << " " << games[g].white_P; ASSERT(0); }
+					pos.do_move(minfo_list[0].move, &si[ply]);
+					//pvの指し手が非合法手になっている事がある？？
+					for (Move m : minfo_list[0].pv) {
+						if (j >= 64) { break; }
+						if (pos.is_legal(m) == false) { cout << games[g].black_P << " " << games[g].white_P;  ASSERT(0); }
+						if (pos.state()->lastmove == m) { cout << games[g].black_P << " " << games[g].white_P; ASSERT(0); }
+						pos.do_move(m, &si2[j]);
+						j++;
+					}
+					parse2Datas[number].gradJ.update_dJ(pos, sum_diff);
+					for (int jj = 0; jj < j; jj++) {
+						pos.undo_move();
+					}
 					pos.undo_move();
 				}
-				pos.undo_move();
-
 			}//勾配計算
 
 			 //次の局面へ
@@ -681,35 +930,13 @@ void learnphase1body(int number) {
 	}
 
 
-}
 
-void learnphase2() {
-	sum_parse2Datas.clear();
-	//たしあげる
-	for (auto& parse2 : parse2Datas) {
-		sum_parse2Datas.gradJ.add(parse2.gradJ);
-	}
 
-	//左右対称性を考える。
-	//左右対称性もgradJに与えるのではなく、gradJを左側にまとめて評価関数を更新してから、評価関数を左右対称にすべきなのかもしれない。
-	//これやったらよわくなってしまったので、バグがある。
-	
 
-	//num_parse2回パラメーターを更新する。コレで-64から+64の範囲内でパラメーターが動くことになる。
-	//bonanzaではこの32回の間にdJが罰金項によってどんどんゼロに近づけられている。
-	//値の更新だけを32かい行っても意味がない！！！！！！
-	//gradの作成から32回行わないといけない！！！
-	for (int i = 0; i < num_parse2; i++) {
-		renewal_PP(sum_parse2Datas.gradJ);
-	}
 
-	//書き出し読み込みをここで行って値の更新
-#ifndef test_learn
-	write_PP();
-	read_PP();
-#endif
 
-	
+
+
 }
 
 //gradJは既に左右対称性を持たされているものとする。

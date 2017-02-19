@@ -25,6 +25,13 @@ public:
 	Value previousScore=Value_Zero;
 	//•À—ñŠwK’†‚É‚±‚±‚ªN‚³‚ê‚Ä‚µ‚Ü‚¤‚Ì‚ğ–h‚®
 	CounterMoveHistoryStats CounterMoveHistory;
+
+#ifdef LEARN
+	Value l_alpha;
+	Value l_beta;
+#endif
+
+
 public:
 
 	std::vector<Move> pv;//“Ç‚İ‹Ø

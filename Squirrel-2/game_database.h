@@ -3,7 +3,7 @@
 //技巧の学習形式に直してくれるプログラムfg2gdbがあるのでここは技巧方式にする（申し訳ない）(それにしても素晴らしい実装だ)
 
 #include "fundation.h"
-
+#include "learner.h"
 #include <istream>
 #include <map>
 #include <vector>
@@ -40,6 +40,9 @@ struct Game
 	//指し手
 	vector<Move> moves;
 	int ply;
+	vector<vector<Eval::MoveInfo>> other_pv;
+
+
 };
 
 
