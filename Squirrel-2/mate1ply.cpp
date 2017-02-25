@@ -148,7 +148,7 @@ bool Position::mate1ply()
 		//近接王手の駒を打てる味方の効きの聞いている場所のみを考える(飛車のstepeffectなんて作ってもしゃーないと思っていたけれどこんなところで役に立つとはなぁ(´･ω･｀))
 		matecandicateBB = can_dropBB&StepEffect[enemy][ROOK][eksq]&f_effect;
 
-		cout <<"matecandicate"<<endl<< matecandicateBB << endl;
+//		cout <<"matecandicate"<<endl<< matecandicateBB << endl;
 		Square to;
 		
 		//王手をかけることのできる、一手離れた、味方の効きが存在した場合
@@ -156,11 +156,11 @@ bool Position::mate1ply()
 			to = matecandicateBB.pop();
 
 			
-			cout << to << endl;
+	//		cout << to << endl;
 			//王が逃げることのできる升
 			can_escape =andnot( step_effect(enemy,KING,eksq),/*f_effect*/SquareBB[to]| rook_effect(occ_without_eksq, to));
 
-			cout <<"canescape"<<endl<< can_escape << endl;
+//			cout <<"canescape"<<endl<< can_escape << endl;
 			//王が逃げられないまたはほかの駒で王手駒を捕獲できない　。。。。。。。。。王手駒を捕獲しようとした駒がpinされていた場合はそれは詰みになってしまうな
 			//この方法はかなり遅いと思う
 			//駒を移動させてpinゴマの効きが通らないかチェックするのは簡単ではないな.......
@@ -175,7 +175,7 @@ bool Position::mate1ply()
 
 			while (can_escape.isNot()) {
 				const Square escapeto = can_escape.pop();//逃げ先。
-				cout << "escape to:" << escapeto << endl;
+//				cout << "escape to:" << escapeto << endl;
 				if (!attackers_to(us, escapeto, occ256).isNot()) { 
 					remove_occ256(to);
 					remove_piece(us, ROOK, to);
@@ -200,32 +200,31 @@ cant_matedrop_rook:;
 	//---------------------------------金
 	bool didgolddrop = false;
 
-	Square kingback = ((us == BLACK) ? eksq - Square(1) : eksq + Square(1));
-	//kingが端っこにいれば後ろには打てないのでerrorSqにしておく
-	if ((us == BLACK&&sqtorank(eksq) == RankA) || (us == WHITE&&sqtorank(eksq) == RankI)) {kingback = Error_SQ;}
-	
-
 
 	if (num_pt(h, GOLD) != 0) {
 
-		matecandicateBB = can_dropBB&StepEffect[enemy][GOLD][eksq] & f_effect;
+		Square kingback = ((us == BLACK) ? eksq - Square(1) : eksq + Square(1));
+		//kingが端っこにいれば後ろには打てないのでerrorSqにしておく
+		if ((us == BLACK&&sqtorank(eksq) == RankA) || (us == WHITE&&sqtorank(eksq) == RankI)) { kingback = Error_SQ; }
+
+//		matecandicateBB = can_dropBB&StepEffect[enemy][GOLD][eksq] & f_effect;
 		
 		//もし飛車うって詰まないことが確認されていて、玉が端っこにいなければ、後ろから金を打つのをやめる必要がある
 		if (didrookdrop&&kingback != Error_SQ) { andnot(matecandicateBB, SquareBB[kingback]); }
 
 
 		Square to;
-		cout << "matecandicate" << endl << matecandicateBB << endl;
+//		cout << "matecandicate" << endl << matecandicateBB << endl;
 		//王手をかけることのできる、一手離れた、味方の効きが存在した場合
 		while (matecandicateBB.isNot()) {
 			to = matecandicateBB.pop();
 
 		
-			cout << to << endl;
+//			cout << to << endl;
 			//王が逃げることのできる升
 			can_escape = andnot(step_effect(enemy, KING, eksq), /*f_effect|*/SquareBB[to]|StepEffect[us][GOLD][to]);
 
-			cout << "canescape" << endl << can_escape << endl;
+//			cout << "canescape" << endl << can_escape << endl;
 			
 			if (cancapture_checkpiece(to) == true) { goto cant_matedrop_gold; }
 
@@ -234,7 +233,7 @@ cant_matedrop_rook:;
 			//そうでない場合は逃げ先の候補を一つ一つ検証していく。
 			while(can_escape.isNot()) {
 				const Square escapeto = can_escape.pop();//逃げ先。
-				cout << "escape to:" << escapeto << endl;
+//				cout << "escape to:" << escapeto << endl;
 				if (!attackers_to(us, escapeto, occ256).isNot()) {
 					remove_occ256(to);
 					remove_piece(us, GOLD, to); 
@@ -261,9 +260,28 @@ cant_matedrop_gold:;
 			Square to = matecandicateBB.pop();
 //			cout << to << endl;
 			//王が逃げることのできる升
-			can_escape = andnot(step_effect(enemy, KING, eksq), f_effect | bishop_effect(occ_without_eksq,to));
+			can_escape = andnot(step_effect(enemy, KING, eksq),/* f_effect*/SquareBB[to] | bishop_effect(occ_without_eksq,to));
 //			cout << "canescape" << endl << can_escape << endl;
-			if (can_escape.isNot() == false && cancapture_checkpiece(to) == false) { return true; }//これで詰まされた。
+
+			if (cancapture_checkpiece(to) == true) { goto cant_matedrop_bishop; }
+
+			set_occ256(to);
+			put_piece(us, BISHOP, to);
+			//そうでない場合は逃げ先の候補を一つ一つ検証していく。
+			while (can_escape.isNot()) {
+				const Square escapeto = can_escape.pop();//逃げ先。
+	//			cout << "escape to:" << escapeto << endl;
+				if (!attackers_to(us, escapeto, occ256).isNot()) {
+					remove_occ256(to);
+					remove_piece(us, BISHOP, to);
+					goto cant_matedrop_bishop;
+				}//逃げ先に攻撃側の効きがない。  逃げるとこができたので次のtoを考える。
+			}
+			//goto文で飛ばされなかったということはつまされた。
+			remove_occ256(to);
+			remove_piece(us, BISHOP, to);
+			return true;
+cant_matedrop_bishop:;
 		}
 		didbishopdrop = true;
 	}
@@ -284,9 +302,27 @@ cant_matedrop_gold:;
 			Square to = matecandicateBB.pop();
 //			cout << to << endl;
 			//王が逃げることのできる升
-			can_escape = andnot(step_effect(enemy, KING, eksq), f_effect | StepEffect[us][SILVER][to]);
+			can_escape = andnot(step_effect(enemy, KING, eksq),/* f_effect */SquareBB[to]| StepEffect[us][SILVER][to]);
 //			cout << "canescape" << endl << can_escape << endl;
-			if (can_escape.isNot() == false && cancapture_checkpiece(to) == false) { return true; }//これで詰まされた。
+			if (cancapture_checkpiece(to) == true) { goto cant_matedrop_silver; }
+
+			set_occ256(to);
+			put_piece(us, SILVER, to);
+			//そうでない場合は逃げ先の候補を一つ一つ検証していく。
+			while (can_escape.isNot()) {
+				const Square escapeto = can_escape.pop();//逃げ先。
+//				cout << "escape to:" << escapeto << endl;
+				if (!attackers_to(us, escapeto, occ256).isNot()) {
+					remove_occ256(to);
+					remove_piece(us, SILVER, to);
+					goto cant_matedrop_silver;
+				}//逃げ先に攻撃側の効きがない。  逃げるとこができたので次のtoを考える。
+			}
+			//goto文で飛ばされなかったということはつまされた。
+			remove_occ256(to);
+			remove_piece(us, SILVER, to);
+			return true;
+cant_matedrop_silver:;
 		}
 	}
 	//---------------------------------香車
@@ -299,24 +335,61 @@ cant_matedrop_gold:;
 			Square to = matecandicateBB.pop();
 //			cout << to << endl;
 			//王が逃げることのできる升
-			can_escape = andnot(step_effect(enemy, KING, eksq), f_effect | lance_effect(occ_without_eksq,us,to));
+			can_escape = andnot(step_effect(enemy, KING, eksq), /*f_effect*/SquareBB[to] | lance_effect(occ_without_eksq,us,to));
 //			cout << "canescape" << endl << can_escape << endl;
-			if (can_escape.isNot() == false && cancapture_checkpiece(to) == false) { return true; }//これで詰まされた。
+			if (cancapture_checkpiece(to) == true) { goto cant_matedrop_LANCE; }
+
+			set_occ256(to);
+			put_piece(us, LANCE, to);
+			//そうでない場合は逃げ先の候補を一つ一つ検証していく。
+			while (can_escape.isNot()) {
+				const Square escapeto = can_escape.pop();//逃げ先。
+//				cout << "escape to:" << escapeto << endl;
+				if (!attackers_to(us, escapeto, occ256).isNot()) {
+					remove_occ256(to);
+					remove_piece(us, LANCE, to);
+					goto cant_matedrop_LANCE;
+				}//逃げ先に攻撃側の効きがない。  逃げるとこができたので次のtoを考える。
+			}
+			//goto文で飛ばされなかったということはつまされた。
+			remove_occ256(to);
+			remove_piece(us, LANCE, to);
+			return true;
+		cant_matedrop_LANCE:;
 		}
 	}
 	//---------------------------------桂馬
 	if (num_pt(h, KNIGHT) != 0) {
 		//桂馬はほかの駒で支えてもらう必要はない
 		matecandicateBB = can_dropBB&StepEffect[enemy][KNIGHT][eksq];
-		cout << "matecandicate" << endl << matecandicateBB << endl;
+//		cout << "matecandicate" << endl << matecandicateBB << endl;
 
 		while (matecandicateBB.isNot()) {
 			Square to = matecandicateBB.pop();
-			cout << to << endl;
+//			cout << to << endl;
 			//王が逃げることのできる升
-			can_escape = andnot(step_effect(enemy, KING, eksq), f_effect);
-			cout << "canescape" << endl << can_escape << endl;
-			if (can_escape.isNot() == false && cancapture_checkpiece(to) == false) { return true; }//これで詰まされた。
+			can_escape = andnot(step_effect(enemy, KING, eksq), /*f_effect*/SquareBB[to]);
+//			cout << "canescape" << endl << can_escape << endl;
+
+			if (cancapture_checkpiece(to) == true) { goto cant_matedrop_KNIGHT; }
+
+			set_occ256(to);
+			put_piece(us, KNIGHT, to);
+			//そうでない場合は逃げ先の候補を一つ一つ検証していく。
+			while (can_escape.isNot()) {
+				const Square escapeto = can_escape.pop();//逃げ先。
+//				cout << "escape to:" << escapeto << endl;
+				if (!attackers_to(us, escapeto, occ256).isNot()) {
+					remove_occ256(to);
+					remove_piece(us, KNIGHT, to);
+					goto cant_matedrop_KNIGHT;
+				}//逃げ先に攻撃側の効きがない。  逃げるとこができたので次のtoを考える。
+			}
+			//goto文で飛ばされなかったということはつまされた。
+			remove_occ256(to);
+			remove_piece(us, KNIGHT, to);
+			return true;
+cant_matedrop_KNIGHT:;
 		}
 
 	}

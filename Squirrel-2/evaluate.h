@@ -175,9 +175,17 @@ namespace Eval {
 
 	//bonapieceからsq成分を抜き出す(Apery参考)
 	inline Square bp2sq(const BonaPiece bp) {
+		if (bp < f_pawn) { return Error_SQ; }
 		//bpよりも大きな純粋bonapieceの配列要素を返す
 		const auto bp_upper = upper_bound(begin(bpindices), end(bpindices), bp);
 		return (Square)(bp - *(bp_upper - 1));
+	}
+	inline int bp2numhand(const BonaPiece bp) {
+
+		if (bp >= f_pawn) { ASSERT(0); }
+		//bpよりも大きな純粋bonapieceの配列要素を返す
+		const auto bp_upper = upper_bound(begin(bpindices), end(bpindices), bp);
+		return (int)(bp - *(bp_upper - 1));
 	}
 	//bpからsqを抜く
 	inline BonaPiece bpwithoutsq(const BonaPiece bp) {
@@ -191,7 +199,23 @@ namespace Eval {
 		return ((bp_upper - 1 - begin(bpindices)) & 1) == 1 ? WHITE : BLACK;
 	}
 
+	inline BonaPiece inversebonapiece(const BonaPiece bp) {
 
+		const Square sq = bp2sq(bp);
+
+		const auto bp_upper = upper_bound(begin(bpindices), end(bpindices), bp);
+		if (sq != Error_SQ) {
+			const Square inverseSQ = hihumin_eye(sq);
+			if (bp2color(bp) == BLACK) { return BonaPiece(*(bp_upper)+inverseSQ); }
+			else { return  BonaPiece(*(bp_upper - 2) + inverseSQ); }
+		}
+		else {
+			
+			int num = bp2numhand(bp);
+			if (bp2color(bp) == BLACK) { return BonaPiece(*(bp_upper)+num); }
+			else { return  BonaPiece(*(bp_upper - 2) + num); }
+		}
+	}
 
 
 
@@ -259,6 +283,7 @@ namespace Eval {
 
 		//bplistの内容を表示
 		void print_bplist();
+		void list_check();
 	};
 
 

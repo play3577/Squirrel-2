@@ -197,7 +197,7 @@ namespace Eval {
 			return BonaPiece(f_hand_lance + (num-1));
 			break;
 		case B_KNIGHT:
-			return BonaPiece(f_hand_bishop + (num-1));
+			return BonaPiece(f_hand_knight + (num-1));
 			break;
 		case B_SILVER:
 			return BonaPiece(f_hand_silver + (num-1));
@@ -766,11 +766,21 @@ namespace Eval {
 
 		for (int i = 0; i < Num_Uniform; i++) {
 			cout << "fb:" << bplist_fb[i]<<" "<<bp2sq(bplist_fb[i])<<" "<<bpwithoutsq(bplist_fb[i])<<bp2color(bplist_fb[i])<<" "<<bp2piece.bp_to_piece(bpwithoutsq(bplist_fb[i]))<<endl;
-			cout << "fw:" << bplist_fw[i] << " " << bp2sq(bplist_fw[i]) << " " << bpwithoutsq(bplist_fw[i]) << bp2color(bplist_fw[i]) << " " << bp2piece.bp_to_piece(bpwithoutsq(bplist_fw[i])) << endl<<endl;
+			cout << "fw:" << bplist_fw[i] << " " << bp2sq(bplist_fw[i]) << " " << bpwithoutsq(bplist_fw[i]) << bp2color(bplist_fw[i]) << " " << bp2piece.bp_to_piece(bpwithoutsq(bplist_fw[i])) <<endl;
+			cout << "inverse fb:" << inversebonapiece(bplist_fb[i]) << "inverse fw:" << inversebonapiece(bplist_fw[i]) << endl << endl;
+			ASSERT(inversebonapiece(bplist_fb[i]) == bplist_fw[i]);
+			ASSERT(inversebonapiece(bplist_fw[i]) == bplist_fb[i]);
 		}
 
 	}//endof print bp
 	
+
+	void BonaPList::list_check() {
+		for (int i = 0; i < Num_Uniform; i++) {
+			ASSERT(inversebonapiece(bplist_fb[i]) == bplist_fw[i]);
+			ASSERT(inversebonapiece(bplist_fw[i]) == bplist_fb[i]);
+		}
+	}
 
 	std::ostream & operator<<(std::ostream & os, const Eval::BonaPiece bp)
 	{
