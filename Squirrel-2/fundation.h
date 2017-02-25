@@ -27,7 +27,7 @@
 //#define HAVE_AVX2
 
 //#define CHECKPOS
-#define LEARN
+//#define LEARN
 
 
 #ifndef LEARN

@@ -319,7 +319,7 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 	Value value,null_value;
 	StateInfo si;
 	Value staticeval=Value_Zero;
-	int movecount = 0;
+	int movecount=ss->moveCount = 0;
 	bool incheck = pos.is_incheck();
 	Thread* thisthread = pos.searcher();
 	ss->ply = (ss - 1)->ply + 1;
@@ -505,7 +505,10 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 
 #endif
 
-#define MATEONE
+
+//mate
+
+//#define MATEONE
 
 #ifdef MATEONE
 	if (!RootNode && !incheck) {
@@ -1340,9 +1343,11 @@ Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
 		&&ttValue != Value_error//これ今のところいらない(ここもっと詳しく読む必要がある)
 		&& (ttValue >= beta ? (ttBound&BOUND_LOWER) : (ttBound&BOUND_UPPER))//BOUND_EXACT = BOUND_UPPER | BOUND_LOWERであるのでどちらの&も満たす
 		) {
+		ss->currentMove = ttMove;
 		return ttValue;
 	}
 #endif
+#ifdef MATEONE
 	if (!incheck) {
 
 		if (pos.mate1ply()) {
@@ -1350,7 +1355,7 @@ Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
 		}
 
 	}
-
+#endif
 
 
 	//ここに前向き枝切りのコードを書く
@@ -1466,7 +1471,7 @@ Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
 		
 		bool givescheck = pos.is_gives_check(move);
 
-		//弱くなった
+		
 		//futility 
 		if (!incheck
 			&&!givescheck  //これ条件として入れるべきだと思うけれど今のdomoveの仕様ではなかなか難しい。

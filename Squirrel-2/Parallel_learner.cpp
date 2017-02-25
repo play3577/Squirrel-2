@@ -316,7 +316,7 @@ void Eval::parallel_learner() {
 	int numtestset = 19;
 	maxthreadnum = 1;
 #else
-	int readgames = 10000;
+	int readgames = 30000;
 	int numtestset = 500;
 	maxthreadnum = omp_get_max_threads();
 #endif
@@ -368,6 +368,7 @@ void Eval::parallel_learner() {
 		}
 	}
 	cout <<"teacher games "<< games.size() << endl;
+	cout << "test games " << testset.size() << endl;
 	cout << "read kihu OK!" << endl;
 
 //#define Test_icchiritu
@@ -433,12 +434,12 @@ void Eval::parallel_learner() {
 		learnphase2();
 
 
-		std::cout << "iteration" << iteration << "/maxiteration :" << numiteration << " objfunc" << objective_function << " elasped " << (now() - limit.starttime + 1) / (1000 * 60) << " min" << std::endl;
+		std::cout << "iteration" << iteration << "/maxiteration :" << numiteration << " objfunc" << objective_function << " elasped " << (now() - limit.starttime + 1) / (1000 * 60) << " min ";
 #ifdef LOG
 		ofs << " iteration " << iteration << " objfunc" << objective_function << " elasped " << (now() - limit.starttime + 1) / (1000 * 60) << " min" << endl;
 		//ofs << "ˆê’v—¦ " << ((maxmoves- huicchi_moves) * 100 / (maxmoves + 1)) << endl;
 		//cout << "ˆê’v—¦ " << ((maxmoves - huicchi_moves) * 100 / (maxmoves + 1)) <<" %"<< endl;
-		cout << "calcurate ˆê’v—¦" << endl;
+		//cout << "calcurate ˆê’v—¦" << endl;
 		double icchiritu = concordance();
 		ofs << "ˆê’v—¦ " <<icchiritu << " %" << endl;
 		cout << "ˆê’v—¦ " << icchiritu <<" %"<< endl;
@@ -543,8 +544,8 @@ void learnphase1body(int number) {
 			if (is_ok(teacher_move) == false) { cout << "is not ok" << endl; goto ERROR_OCCURED; }
 
 			if (!swapmove(moves, int(num_moves), teacher_move)) {
-				cout << "cant swap" << endl;
-
+				//cout << "cant swap" << endl;
+				//check_move(teacher_move);
 				goto ERROR_OCCURED;
 			}
 			if (pos.is_legal(teacher_move) == false) { cout << "teacher ilegal" << endl; goto ERROR_OCCURED; }
@@ -587,18 +588,36 @@ void learnphase1body(int number) {
 				}
 
 				Value  score = th.think();
-				if (move_i == 0) { record_score = score; }
+				if (move_i == 0) { record_score = score; 
+				
+					if (abs(record_score) > Value_mate_in_maxply) {
+						cout << "teachermate " << ply << " " << thisgame.moves.size();
+						cout << games[g].black_P << " " << games[g].white_P<<" "<< games[g].day;
+						cout << pos << endl;
+						cout << "record_score" << record_score << endl;
+
+						cout <<"teachermove:" <<teacher_move << endl;
+						for (Move m : th.pv) {
+							check_move(m);
+						}
+						goto ERROR_OCCURED;
+					}
+				
+				}
+				
 				//if (m==teacher_move) { teachervalue = score; }
-				if (th.l_alpha<score&&score<th.l_beta) {
+				//teachermove‚ªalpha beta‚É“ü‚ç‚È‚©‚Á‚½Bi‹l‚İ‚Ì’l‚ğ•Ô‚µ‚½ê‡‚Í‚Ç‚¤‚µ‚æ‚¤‚©....‚»‚Ì‚Ü‚ÜŠwK‚Ég‚¤‚Ì‚Í‚Ç‚¤‚©‚Æv‚¤...j
+				if ((th.l_alpha<score&&score<th.l_beta)||move_i==0) {
 					minfo_list.push_back(MoveInfo(m, th.pv));
 				}
+				th.pv.clear();//pv‚ÌƒNƒŠƒA‚ğ–Y‚ê‚Ä‚¢‚½IIIII
 				/*else { 
 					pos.undo_move(); break; 
 				}*/
 				pos.undo_move();
 				//if (score > teachervalue&&huicchi_firsttime == true) { huicchi_firsttime = false;  lock_huicchimoves_inclement(); }
 			}
-
+			ASSERT(minfo_list[0].move == teacher_move);
 			games[g].other_pv.push_back(minfo_list);
 
 			//Ÿ‚Ì‹Ç–Ê‚Ö
@@ -804,12 +823,17 @@ void learnphase2body(int number)
 				‚Ç‚Ì·‚µè‚ğw‚µ‚Ä‚à‚Â‚Ü‚³‚ê‚é‚±‚Æ‚ª•ª‚©‚Á‚½ê‡‚àlistsize==0‚É‚È‚éI
 				*/
 				double sum_diff = Value_Zero;
-				if (minfo_list.size() == 0) {
-					cout << "listsize==0" << endl;
+				if (minfo_list.size() <= 1) {
+					//cout << "listsize<=1" << endl;
 					/*cout << pos << endl;
 					check_move(teacher_move);
 					cout << "aa" << endl;*/
-					goto ERROR_OCCURED;
+					teacher_move = thisgame.moves[ply];
+					//ASSERT(teacher_move == minfo_list[0].move);
+					goto skip_calc;
+					if (minfo_list.size() == 0) {
+						goto ERROR_OCCURED;
+					}
 				}
 				teacher_move = thisgame.moves[ply];
 				ASSERT(teacher_move == minfo_list[0].move);
@@ -828,7 +852,7 @@ void learnphase2body(int number)
 
 					for (Move m : minfo_list[0].pv) {
 						if (j >= 64) { break; }
-						if (pos.is_legal(m) == false) { cout << games[g].black_P << " " << games[g].white_P;  ASSERT(0); }
+						if (pos.is_legal(m) == false) { cout << pos; check_move(m);  ASSERT(0); }
 						if (pos.state()->lastmove == m) { cout << games[g].black_P << " " << games[g].white_P; ASSERT(0); }
 						pos.do_move(m, &si2[j]);
 						j++;
@@ -848,7 +872,7 @@ void learnphase2body(int number)
 					StateInfo si2[64];
 					int j = 0;
 					//‹³tè‚ÆPV‚Å‹Ç–Ê‚ğ‚·‚·‚ß‚é
-					//if (pos.is_legal(minfo_list[i].move) == false) { ASSERT(0); }
+					if (pos.is_legal(minfo_list[i].move) == false) { ASSERT(0); }
 					pos.do_move(minfo_list[i].move, &si[ply]);
 
 					for (Move m : minfo_list[i].pv) {
@@ -919,7 +943,7 @@ void learnphase2body(int number)
 					pos.undo_move();
 				}
 			}//Œù”zŒvZ
-
+		skip_calc:;
 			 //Ÿ‚Ì‹Ç–Ê‚Ö
 			pos.do_move(teacher_move, &si[ply]);
 
