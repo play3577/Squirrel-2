@@ -17,6 +17,9 @@
 #define Probcut
 #endif
 
+
+#define MATEONE
+//#define MATETEST
 //#define PREF2
 SearchLimit limit;
 Signal signal;
@@ -508,14 +511,18 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 
 //mate
 
-//#define MATEONE
+
 
 #ifdef MATEONE
 	if (!RootNode && !incheck) {
-		if (pos.mate1ply()) {
+		Move mate;
+		if ((mate=pos.mate1ply())!=MOVE_NONE) {
+#ifdef MATETEST
+			cout << pos << endl;
+#endif
 			ss->static_eval = bestvalue = mate_in_ply((ss->ply)+1);
 #ifdef USETT
-			tte->save(poskey, value_to_tt(bestvalue, ss->ply), BOUND_EXACT, depth, MOVE_NONE, ss->static_eval, TT.generation());
+			tte->save(poskey, value_to_tt(bestvalue, ss->ply), BOUND_EXACT, depth,mate, ss->static_eval, TT.generation());
 #endif
 			return bestvalue;
 		}
@@ -1349,8 +1356,12 @@ Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
 #endif
 #ifdef MATEONE
 	if (!incheck) {
-
-		if (pos.mate1ply()) {
+		Move mate;
+		if ((mate=pos.mate1ply())!=MOVE_NONE) {
+#ifdef MATETEST
+			cout << pos << endl;
+			cout << "matemove:" << mate;
+#endif
 			return mate_in_ply(ss->ply + 1);
 		}
 

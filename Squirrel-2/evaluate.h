@@ -137,6 +137,21 @@ namespace Eval {
 	public:
 		Bp2Piece() {
 			//先手から見た駒を返す。（後手から見たbpに対して使ってしまわないように注意）
+			(*this)[f_hand_pawn] = B_PAWN;
+			(*this)[e_hand_pawn] = W_PAWN;
+			(*this)[f_hand_lance] = B_LANCE;
+			(*this)[e_hand_lance] = W_LANCE;
+			(*this)[f_hand_knight] = B_KNIGHT;
+			(*this)[e_hand_knight] = W_KNIGHT;
+			(*this)[f_hand_silver] = B_SILVER;
+			(*this)[e_hand_silver] = W_SILVER;
+			(*this)[f_hand_gold] = B_GOLD;
+			(*this)[e_hand_gold] = W_GOLD;
+			(*this)[f_hand_bishop] = B_BISHOP;
+			(*this)[e_hand_bishop] = W_BISHOP;
+			(*this)[f_hand_rook] = B_ROOK;
+			(*this)[e_hand_rook] = W_ROOK;
+
 			(*this)[f_pawn] = B_PAWN;
 			(*this)[f_lance] = B_LANCE;
 			(*this)[f_knight] = B_KNIGHT;
@@ -165,7 +180,7 @@ namespace Eval {
 		}
 
 		Piece bp_to_piece(BonaPiece piece) const {
-			if (is_ok(piece) == false) { return NO_PIECE; }//持ち駒
+			if (is_ok(piece) == false) { return NO_PIECE; }//見つからなかった。
 			return this->find(piece)->second;
 		}
 

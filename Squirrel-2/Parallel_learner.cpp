@@ -25,7 +25,9 @@ using namespace std;
 #define LOG
 
 
-//#define SOFTKIFU
+#define SOFTKIFU
+
+//#define JIGENSAGE
 
 //struct  Parse2data;
 
@@ -71,8 +73,8 @@ PP（p0,p1）=PP絶対(左右対称、手番対称)+PP相対(平行移動、手番対称)＋P絶対（左右対
 struct lowerDimPP
 {
 	double absolute_pp[fe_end2][fe_end2];//絶対PP　
-	double relative_pp[PT_ALL][PC_ALL][17][17];//相対PP
-	double absolute_p[fe_end2];//絶対P 
+	double relative_pp[PT_ALL][PC_ALL][17][17];//相対PP 技巧ではy座標固定相対PPがあったけどよくわからんので省く
+	//double absolute_p[fe_end2];//絶対P 
 };
 lowerDimPP lowdimPP;
 
@@ -217,11 +219,11 @@ double concordance() {
 	std::mt19937 t_mt(rd());*/
 	//std::shuffle(testset.begin(), testset.end(), t_mt);//シャッフルさせてるがしないほうがいい？？
 
-	int num_tests = 1000;//1000棋譜で確認する
-	if (num_tests > testset.size()) { num_tests = testset.size(); }
-	ASSERT(num_tests <= testset.size());
-	/*if (num_tests > games.size()) { num_tests = games.size(); }
-	ASSERT(num_tests <= games.size());*/
+	int num_tests = 500;//500棋譜で確認する
+	//if (num_tests > testset.size()) { num_tests = testset.size(); }
+	//ASSERT(num_tests <= testset.size());
+	if (num_tests > games.size()) { num_tests = games.size(); }
+	ASSERT(num_tests <= games.size());
 
 	//ここで宣言したいのだけれどこれでいいのだろうか？
 	Position pos;
@@ -236,13 +238,13 @@ double concordance() {
 
 	for (int g = 0; g < num_tests; g++) {
 
-		auto thisgame = testset[g];//ここ学習用のデータと区別しておいたほうがいいか？？
-		//auto thisgame = games[g];
+		//auto thisgame = testset[g];//ここ学習用のデータと区別しておいたほうがいいか？？
+		auto thisgame = games[g];
 		pos.set_hirate();
 		th.cleartable();
 		for (int ply = 0; ply < (thisgame.moves.size() - 1); ply++) {
 
-#ifdef SOFTKIFU
+#if 0
 			/*if ((float(ply) / float(thisgame.moves.size())) > 0.9) {
 				cout << "progress:" << (float(ply) / float(thisgame.moves.size())) << " ply:" << ply << " maxply:" << thisgame.moves.size() << " progress over 90%" << endl;
 				goto ERROR_OCCURED;
@@ -335,11 +337,14 @@ void Eval::parallel_learner() {
 	学習の損失の現象が進むに連れてnum_parse2の値を減らしていく
 	*/
 	num_parse2 = 32;
-	//ifstream gamedata(fg2800_2ch);
-	ifstream gamedata(nichkihu);//ソフト棋譜の水平線効果を学習させないために2ch棋譜のみを使用して学習することにする。(技巧やapery(sdt4を除く)もそれで学習していたはずなので大丈夫だと思う)
+	
 #ifdef  SOFTKIFU
 	ifstream gamedata(gamedatabasefile);
-#endif //  SOFTKIFU
+ //  SOFTKIFU
+#else
+	//ifstream gamedata(fg2800_2ch);
+	ifstream gamedata(nichkihu);//ソフト棋譜の水平線効果を学習させないために2ch棋譜のみを使用して学習することにする。(技巧やapery(sdt4を除く)もそれで学習していたはずなので大丈夫だと思う)
+#endif
 	GameDataStream gamedatastream(gamedata);
 	
 
@@ -357,7 +362,7 @@ void Eval::parallel_learner() {
 			games.push_back(game);
 		}
 	}
-	for (int i = 0; i < numtestset; ++i) {
+	/*for (int i = 0; i < numtestset; ++i) {
 		Game game;
 
 		if (gamedatastream.read_onegame(&game)
@@ -366,12 +371,12 @@ void Eval::parallel_learner() {
 		{
 			testset.push_back(game);
 		}
-	}
+	}*/
 	cout <<"teacher games "<< games.size() << endl;
 	cout << "test games " << testset.size() << endl;
 	cout << "read kihu OK!" << endl;
 
-//#define Test_icchiritu
+#define Test_icchiritu
 
 #ifdef Test_icchiritu
 	cout<<concordance()<<endl;
@@ -522,7 +527,7 @@ void learnphase1body(int number) {
 				cout <<"progress:"<< (float(ply) / float(thisgame.moves.size()))<<" ply:"<<ply<<" maxply:"<< thisgame.moves.size() <<  " progress over 90%" << endl;
 				goto ERROR_OCCURED;
 			}*/
-			if (ply >(thisgame.moves.size() - 10)) {
+			if (ply >(thisgame.moves.size() - 20)) {
 				goto ERROR_OCCURED;
 			}
 #endif
@@ -765,6 +770,12 @@ void learnphase2() {
 		}
 		for (auto& th : threads) { th.join(); }
 
+#ifdef JIGENSAGE
+		lower__dimPP(lowdimPP, sum_parse2Datas.gradJ);
+		sum_parse2Datas.clear();
+		weave_lowdim_to_gradj(sum_parse2Datas.gradJ, lowdimPP);
+#endif
+
 		renewal_PP(sum_parse2Datas.gradJ);
 	}
 
@@ -857,7 +868,8 @@ void learnphase2body(int number)
 						pos.do_move(m, &si2[j]);
 						j++;
 					}
-					teachervalue = (rootColor == pos.sidetomove())? Eval::eval_PP(pos) : -eval_PP(pos);
+					//evalPPはコマ割りを考えていなかったしvalueを反転させてなかった！！evalをつかうべきだった
+					teachervalue = (rootColor == pos.sidetomove())? Eval::eval(pos) : -eval(pos);
 					for (int jj = 0; jj < j; jj++) {
 						pos.undo_move();
 					}
@@ -904,7 +916,7 @@ void learnphase2body(int number)
 					https://twitter.com/daruma3940/status/801638488130994177
 					*/
 					//評価値と教師手の差分を取る。
-					const Value score = (rootColor == pos.sidetomove()) ? Eval::eval_PP(pos) : -eval_PP(pos);
+					const Value score = (rootColor == pos.sidetomove()) ? Eval::eval(pos) : -eval(pos);
 					const Value diff = score - teachervalue;
 					double diffsig = dsigmoid(diff);
 					diffsig = (rootColor == BLACK ? diffsig : -diffsig);
@@ -952,13 +964,6 @@ void learnphase2body(int number)
 		//cout << "game number: " << g << "/ maxgamenum: " << numgames << " didmoves " << didmoves << " diddepth " << diddepth << endl;
 		//lock_maxmoves_inclement(diddepth);
 	}
-
-
-
-
-
-
-
 
 
 }
@@ -1012,24 +1017,70 @@ void learnphase2body(int number)
 
 void each_PP(lowerDimPP & lowdim, const dJValue& gradJ, const BonaPiece bp1, const BonaPiece bp2) {
 	if (bp1 == bp2) { return; }//一致する場所はevaluateで見ないのでgradJも0になっている。これは無視していい。
+
+	//iとjの前後によって違う場所を参照してしまうのを防ぐ。
 	BonaPiece i=std::max(bp1,bp2), j=std::min(bp1,bp2);
 
 	//駒iは先手の駒に置き換える。（先手の駒後手の駒どちらの場合も同じindexの組として取り扱う為。手番対称による次元下げ。）
-	//if(bonapiece)
+	Piece pci = bp2piece.bp_to_piece(bpwithoutsq(i));
+	ASSERT(pci != NO_PIECE);
+	if (piece_color(pci) == WHITE) {
+		i = inversebonapiece(i);
+		j = inversebonapiece(j);
+	}
+	ASSERT(piece_color(bp2piece.bp_to_piece(bpwithoutsq(i))) == BLACK);
 
+	//相対PP
+	if (bp2sq(i) != Error_SQ&&bp2sq(j) != Error_SQ) {
+		Piece pti = piece_type(bp2piece.bp_to_piece(bpwithoutsq(i)));//iの駒は先手の駒に変換させられているのでptでいい
+		Piece pcj = bp2piece.bp_to_piece(bpwithoutsq(j));//jにいるのが味方の駒か相手の駒かは重要になってくるので含めなければならない。
+		Square sq1 = bp2sq(i), sq2 = bp2sq(j);//bp1,bp2の駒の位置
+		lowdim.relative_pp[pti][pcj][sqtofile(sq1) - sqtofile(sq2) + 8][sqtorank(sq1) - sqtorank(sq2) + 8] += gradJ.dJ[bp1][bp2];
+	}
+
+
+	//絶対PP
+	lowdim.absolute_pp[i][j] += gradJ.dJ[bp1][bp2];
+	//絶対P
+	/*lowdim.absolute_p[i]+= gradJ.dJ[bp1][bp2];
+	lowdim.absolute_p[j]+=gradJ.dJ[bp1][bp2];*/
 }
 
 void weave_eachPP(dJValue& newgradJ, const lowerDimPP& lowdim, const BonaPiece bp1, const BonaPiece bp2) {
 
+	if (bp1 == bp2) { return; }//一致する場所はevaluateで見ないのでgradJも0になっている。これは無視していい。
 
+							   //iとjの前後によって違う場所を参照してしまうのを防ぐ。
+	BonaPiece i = std::max(bp1, bp2), j = std::min(bp1, bp2);
+
+	//駒iは先手の駒に置き換える。（先手の駒後手の駒どちらの場合も同じindexの組として取り扱う為。手番対称による次元下げ。）
+	Piece pci = bp2piece.bp_to_piece(bpwithoutsq(i));
+	ASSERT(pci != NO_PIECE);
+	if (piece_color(pci) == WHITE) {
+		i = inversebonapiece(i);
+		j = inversebonapiece(j);
+	}
+	ASSERT(piece_color(bp2piece.bp_to_piece(bpwithoutsq(i))) == BLACK);
+
+	//相対PP(平行移動)
+	if (bp2sq(i) != Error_SQ&&bp2sq(j) != Error_SQ) {
+		Piece pti = piece_type(bp2piece.bp_to_piece(bpwithoutsq(i)));//iの駒は先手の駒に変換させられているのでptでいい
+		Piece pcj = bp2piece.bp_to_piece(bpwithoutsq(j));//jにいるのが味方の駒か相手の駒かは重要になってくるので含めなければならない。
+		Square sq1 = bp2sq(i), sq2 = bp2sq(j);//bp1,bp2の駒の位置
+		newgradJ.dJ[bp1][bp2] += lowdim.relative_pp[pti][pcj][sqtofile(sq1) - sqtofile(sq2) + 8][sqtorank(sq1) - sqtorank(sq2) + 8];
+	}
+	//絶対PP
+	newgradJ.dJ[bp1][bp2] += lowdim.absolute_pp[i][j];
+	//絶対P
+	//newgradJ.dJ[bp1][bp2] += lowdim.absolute_p[i];
+	//newgradJ.dJ[bp1][bp2] += lowdim.absolute_p[j];
 }
 
 
 
-void lower__dimPP(lowerDimPP & lowdim, dJValue& gradJ)
+void lower__dimPP(lowerDimPP & lowdim,const dJValue& gradJ)
 {
-	//gradjを左右対称に
-	param_sym_leftright(gradJ);
+	
 
 	for (BonaPiece bp1 = BONA_PIECE_ZERO; bp1 < fe_end2; bp1++) {
 		for (BonaPiece bp2 = BONA_PIECE_ZERO; bp2 < fe_end2; bp2++) {

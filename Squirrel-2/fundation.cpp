@@ -63,6 +63,7 @@ std::ostream & operator<<(std::ostream & os, const Piece pc)
 
 std::ostream & operator<<(std::ostream & os, const Square sq)
 {
+	if (sq == Error_SQ) { os << "errorsq"; return os; }
 	os << sqtofile(sq) << sqtorank(sq);
 	return os;
 }
@@ -78,7 +79,8 @@ std::ostream & operator<<(std::ostream & os, const Move m)
 	//Piece moved;
 	Square from = move_from(m);
 	Square to = move_to(m);
-	if (m == MOVE_NULL) { cout << "nullmove" << endl; }
+	if (m == MOVE_NULL) { cout << "nullmove"; return os; }
+	if (m == MOVE_NONE) { cout << "movenone"; return os; }
 	if (is_drop(m)) {
 
 		Piece moved = moved_piece(m);

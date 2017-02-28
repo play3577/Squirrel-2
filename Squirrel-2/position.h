@@ -644,7 +644,7 @@ public:
 	string	unpack_haffman_sfen(bool *sfen);
 
 	//ˆêŽè‹l
-	bool mate1ply();
+	Move mate1ply();
 	bool cancapture_checkpiece(Square to);
 	void slider_blockers(const Color stm, const Square s, Bitboard& dc_candicate, Bitboard& pinned) const;
 

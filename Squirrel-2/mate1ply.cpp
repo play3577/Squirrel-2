@@ -92,7 +92,7 @@ ksqをoccから取り除くocc2
 相手の持ち駒が存在しないときに考える
 駒を打ったマスと王のあいだ+駒を打った升に移動できる相手の駒があるのでは詰まない。
 */
-bool Position::mate1ply()
+Move Position::mate1ply()
 {
 	const Color us = sidetomove();
 	const Color enemy = opposite(sidetomove());
@@ -185,7 +185,7 @@ bool Position::mate1ply()
 			//goto文で飛ばされなかったということはつまされた。
 			remove_occ256(to);
 			remove_piece(us, ROOK, to);
-			return true;
+			return make_drop(to,ROOK);
 cant_matedrop_rook:;
 			
 		}
@@ -207,17 +207,17 @@ cant_matedrop_rook:;
 		//kingが端っこにいれば後ろには打てないのでerrorSqにしておく
 		if ((us == BLACK&&sqtorank(eksq) == RankA) || (us == WHITE&&sqtorank(eksq) == RankI)) { kingback = Error_SQ; }
 
-//		matecandicateBB = can_dropBB&StepEffect[enemy][GOLD][eksq] & f_effect;
+		matecandicateBB = can_dropBB&StepEffect[enemy][GOLD][eksq] & f_effect;
 		
 		//もし飛車うって詰まないことが確認されていて、玉が端っこにいなければ、後ろから金を打つのをやめる必要がある
 		if (didrookdrop&&kingback != Error_SQ) { andnot(matecandicateBB, SquareBB[kingback]); }
 
 
-		Square to;
+		
 //		cout << "matecandicate" << endl << matecandicateBB << endl;
 		//王手をかけることのできる、一手離れた、味方の効きが存在した場合
 		while (matecandicateBB.isNot()) {
-			to = matecandicateBB.pop();
+			 const Square to = matecandicateBB.pop();
 
 		
 //			cout << to << endl;
@@ -240,10 +240,11 @@ cant_matedrop_rook:;
 					goto cant_matedrop_gold;
 				}//逃げ先に攻撃側の効きがない。  逃げるとこができたので次のtoを考える。
 			}
-			//goto文で飛ばされなかったということはつまされた。
+			//goto文で飛ばされなかったということはつまされた。ここでtoが0になってしまっている！！
 			remove_occ256(to);
 			remove_piece(us, GOLD, to);
-			return true;
+			//cout << "mate GOLD:"<<to<< endl;
+			return make_drop(to,GOLD);
 cant_matedrop_gold:;
 			
 		}
@@ -280,7 +281,8 @@ cant_matedrop_gold:;
 			//goto文で飛ばされなかったということはつまされた。
 			remove_occ256(to);
 			remove_piece(us, BISHOP, to);
-			return true;
+			//cout << "mate BISHOP" << endl;
+			return make_drop(to,BISHOP);
 cant_matedrop_bishop:;
 		}
 		didbishopdrop = true;
@@ -321,7 +323,7 @@ cant_matedrop_bishop:;
 			//goto文で飛ばされなかったということはつまされた。
 			remove_occ256(to);
 			remove_piece(us, SILVER, to);
-			return true;
+			return make_drop(to,SILVER);
 cant_matedrop_silver:;
 		}
 	}
@@ -354,7 +356,7 @@ cant_matedrop_silver:;
 			//goto文で飛ばされなかったということはつまされた。
 			remove_occ256(to);
 			remove_piece(us, LANCE, to);
-			return true;
+			return make_drop(to,LANCE);
 		cant_matedrop_LANCE:;
 		}
 	}
@@ -388,7 +390,7 @@ cant_matedrop_silver:;
 			//goto文で飛ばされなかったということはつまされた。
 			remove_occ256(to);
 			remove_piece(us, KNIGHT, to);
-			return true;
+			return make_drop(to,KNIGHT);
 cant_matedrop_KNIGHT:;
 		}
 
@@ -474,7 +476,7 @@ cant_mate_gold:;
 
 
 
-	return false;
+	return MOVE_NONE;
 }
 /*
 王手をかけている駒をとれるかどうか
