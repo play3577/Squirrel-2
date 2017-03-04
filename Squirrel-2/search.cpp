@@ -241,7 +241,7 @@ Value Thread::think() {
 
 	//cout << limit.endtime << endl;
 #ifdef LEARN
-	maxdepth = 4;//‚±‚Ì’l-1‚ªŽÀÛ‚É’Tõ‚³‚ê‚é[‚³
+	maxdepth = 3;//‚±‚Ì’l-1‚ªŽÀÛ‚É’Tõ‚³‚ê‚é[‚³
 	alpha = this->l_alpha;
 	beta = this->l_beta;
 #endif
