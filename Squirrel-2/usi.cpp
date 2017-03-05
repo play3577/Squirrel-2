@@ -641,6 +641,19 @@ void USI::loop()
 		else if (token == "prog") {
 			cout<<fixed<<Progress::prog_scale*Progress::calc_prog(pos)<<endl;
 		}
+		else if (token == "pl") {
+#ifdef  Prog_LEARN
+			string yn;
+			cout << "do you really wanna learning prog? [y/n]  ";
+			cin >> yn;
+			if (yn != "y") { cout << "OK I do not  learning"; break; }
+			//Eval::learner();
+			Progress::learner();
+#endif
+#ifndef  Prog_LEARN
+			cout << "not learning mode" << endl;
+#endif
+		}
 #endif
 	} while (token != "quit");
 

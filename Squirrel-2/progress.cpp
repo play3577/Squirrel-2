@@ -37,7 +37,7 @@ namespace Progress {
 		if (fp == NULL) { cout << "cannot read progKP.bin" << endl; ASSERT(0); }
 
 		std::fread(&prog_KP, sizeof(prog_KP), 1, fp);
-
+		std::fclose(fp);
 	}
 
 	void Progress::write_KP()
@@ -243,12 +243,4 @@ namespace Progress {
 		return sigmoid(double(bkp + wkp)*double(1.0 / paramscale));
 	}
 
-
-
-	void Progress::learner()
-	{
-
-
-
-	}
 }
