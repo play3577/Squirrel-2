@@ -9,6 +9,7 @@
 #include "makemove.h"
 #include "learner.h"
 #include "book.h"
+#include "progress.h"
 //#include "makemove.h"
 
 #include <iostream>
@@ -636,6 +637,9 @@ void USI::loop()
 		}
 		else if (token == "list") {
 			pos.check_bplist();
+		}
+		else if (token == "prog") {
+			cout<<fixed<<Progress::prog_scale*Progress::calc_prog(pos)<<endl;
 		}
 #endif
 	} while (token != "quit");

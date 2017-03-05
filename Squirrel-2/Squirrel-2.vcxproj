@@ -170,6 +170,7 @@
     <ClInclude Include="occupied.h" />
     <ClInclude Include="occupied_m256.h" />
     <ClInclude Include="position.h" />
+    <ClInclude Include="progress.h" />
     <ClInclude Include="search.h" />
     <ClInclude Include="Thread.h" />
     <ClInclude Include="tpt.h" />
@@ -194,6 +195,7 @@
     <ClCompile Include="Packedsfen.cpp" />
     <ClCompile Include="Parallel_learner.cpp" />
     <ClCompile Include="position.cpp" />
+    <ClCompile Include="progress.cpp" />
     <ClCompile Include="search.cpp" />
     <ClCompile Include="book.cpp" />
     <ClCompile Include="Thread.cpp" />

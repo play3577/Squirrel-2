@@ -3,7 +3,7 @@
 #include "evaluate.h"
 #include "misc.h"
 #include <random>
-
+#include "progress.h"
 //指し手生成速度計測
 //計測方法が他のソフトと違うと比較できないので他のソフトに合わせる。
 void speed_genmove(const Position & pos)
@@ -111,8 +111,10 @@ void randomwalker(Position & pos, int maxdepth)
 		pos.evallist().list_check();
 		pos.undo_move();
 		pos.check_bplist();
+		Progress::calc_diff_prog(pos);
 		//Key hash2 = pos.key();
-
+		ASSERT(pos.evallist().bplist_fb[39] >= Eval::fe_end);
+		ASSERT(pos.evallist().bplist_fb[38] >= Eval::fe_end);
 		//ASSERT(k == hash3);
 		if (k != hash3) {
 

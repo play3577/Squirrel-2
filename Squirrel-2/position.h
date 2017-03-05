@@ -43,6 +43,8 @@ struct StateInfo
 
 	Value material;
 	int32_t bpp=Value_error,wpp=Value_error;
+	
+	int32_t bkp = Value_error, wkp = Value_error;//êiçsìx
 
 	//ìÆÇ¢ÇΩãÓ0 éÊÇÁÇÍÇΩãÓ1
 	Eval::BonaPiece dirtybonap_fb[2];
@@ -51,6 +53,7 @@ struct StateInfo
 
 	void clear_stPP() {
 		bpp = Value_error; wpp = Value_error;
+		bkp = Value_error; wkp = Value_error;
 	}
 
 	

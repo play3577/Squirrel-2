@@ -55,6 +55,10 @@
 #endif
 
 
+//declspec‚Æ‚Í.....????		http://hp.vector.co.jp/authors/VA023539/tips/dll/006.htm
+#define ALIGNED(X) __declspec(align(X))
+
+
 //‹³tè‚Æ‚Ì·‚ª‚±‚Ì”ÍˆÍ“à‚Éû‚Ü‚ç‚È‚©‚Á‚½“Á’¥‚ÍXV‚µ‚È‚¢B
 static const int FV_WINDOW = 256;
 

@@ -4,6 +4,7 @@
 #include "evaluate.h"
 #include <sstream>
 
+#include "progress.h"
 
 #if defined(_MSC_VER)
 #endif
@@ -142,6 +143,7 @@ void Position::set(std::string sfen)
 	//list.print_bplist();
 	//cout << occ256 << endl;
 	ply_from_startpos = 1;
+	Progress::calc_prog(*this);
 #ifdef CHECKPOS
 	
 	//check_eboard();

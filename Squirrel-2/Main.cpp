@@ -10,7 +10,7 @@
 #include "tpt.h"
 #include "book.h"
 #include "occupied_m256.h"
-
+#include "progress.h"
 
 #include <iostream>
 #include <string>
@@ -38,10 +38,10 @@ int main() {
 
 	
 	//cout << ename2 << endl;
+	//Progress::initialize_KP();
 
 
-
-	
+	Progress::read_KP();
 	USI::init_option(Options,ename2);
 	bitboard_init();
 	init_occ256();
