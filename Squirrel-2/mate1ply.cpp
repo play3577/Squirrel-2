@@ -400,7 +400,7 @@ movecheck:;
 
 	//----------------------------------ここから駒の移動による王手
 
-//#define matemove
+#define matemove
 
 #ifdef matemove
 	//dc_candicateとは二重王手候補つまり王への味方の効きを遮っている味方の駒。もしこれで王手をかけることができれば二重王手になりうるし、効きから外れるだけでも間接王手になる。
@@ -434,9 +434,9 @@ movecheck:;
 
 		const Square from = matecandicate_Gold.pop();
 		Bitboard toBB = movetoBB&StepEffect[us][GOLD][from];
-
+		Bitboard cankingescape;
 		//駒を取り除く.......こんなことしたくないんだけれど....
-		const Piece removedpiece = piece_on(from);
+		const Piece removedpiece =piece_type( piece_on(from));
 		ASSERT(removedpiece);
 
 		remove_occ256(from);
@@ -445,14 +445,25 @@ movecheck:;
 		while (toBB.isNot())
 		{
 			const Square to = toBB.pop();
-			if (!attackers_to(us, to, occ256).isNot()) { continue; }//もし移動先に味方の駒の効きが聞いていなければとられてしまうので罪にならない。
-			if (cancapture_checkpiece(to)) { continue; }//王手をかけた駒を捕獲できた。
+
+			//cout << to << endl << attackers_to(us, to, occ256) << endl;
+
+			if (!attackers_to(us, to, occ256).isNot()) { goto cant_mate_gold; }//もし移動先に味方の駒の効きが聞いていなければとられてしまうので罪にならない。
+			if (cancapture_checkpiece(to)) { goto cant_mate_gold; }//王手をかけた駒を捕獲できた。
+
+			set_occ256(to);
+			put_piece(us, GOLD, to);
+
 			//ここからは玉が逃げることができるかどうか確認
-			Bitboard cankingescape = andnot(StepEffect[us][KING][eksq], (occ(enemy) | SquareBB[to] | StepEffect[us][GOLD][to]));
+			cankingescape = andnot(StepEffect[us][KING][eksq], (occ(enemy) | SquareBB[to] | StepEffect[us][GOLD][to]));
 			while (cankingescape.isNot()) {
 
 				const Square escapeto = cankingescape.pop();//逃げ先。
-				if (!attackers_to(us, escapeto, occ256).isNot()) { goto cant_mate_gold; }//逃げ先に攻撃側の効きがない。  逃げるとこができたので次のtoを考える。
+				if (!attackers_to(us, escapeto, occ256).isNot()) { 
+					remove_occ256(to);
+					remove_piece(us, GOLD, to);
+					goto cant_mate_gold;
+				}//逃げ先に攻撃側の効きがない。  逃げるとこができたので次のtoを考える。
 
 			}
 
@@ -460,22 +471,33 @@ movecheck:;
 			//こんな実装方法で大丈夫だろうか.........
 			set_occ256(from);
 			put_piece(us, removedpiece, from);
-			return true;
+			remove_occ256(to);
+			remove_piece(us, GOLD, to);
+			return make_move(from,to,GOLD);
 
 cant_mate_gold:;
 
 		}
-
 		//取り除いた駒を戻す
 		//絶対に戻すのを忘れないようにする！！！！！！！！！！！！
 		set_occ256(from);
 		put_piece(us, removedpiece, from);
+		
 	}
-#endif
+
 	//------------------------------銀（成り、成らずがあるため、かなり複雑そう..............）
 
+	//Bitboard matecandicate_silver = (occ_pt(us,SILVER))&PsuedoGivesCheckBB[us][SILVER][eksq];
+	////pinゴマを動かそうとしてはいけない（まあpinをしている駒をとることで王手できる場合もあるがそれはイレギュラーなので考えないほうがいいだろう）
+	//matecandicate_silver = andnot(matecandicate_silver, pinned[us]);
 
 
+
+
+	
+
+
+#endif
 	return MOVE_NONE;
 }
 /*

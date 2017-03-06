@@ -243,12 +243,14 @@ NEXT_GAME:;
 				‚¤``‚Ş adadelta‚ğg‚¤‚©...
 				*/
 				double gt = data.dJ[sq][bp];
+
+				//nan‚É‚È‚Á‚Ä‚µ‚Ü‚Á‚Ä‚¢‚é
 				/*double gt2 = gt*gt;
 				double Egt=lastEg[sq][bp] = (row)*lastEg[sq][bp] + (1-row)*gt2;
 				double delta_x = -sqrt(lastdelta_x[sq][bp] + epsiron) / sqrt(Egt + epsiron);
-				lastdelta_x[sq][bp] = (row)*lastdelta_x[sq][bp] + (1-row)*delta_x;
+				lastdelta_x[sq][bp] = (row)*lastdelta_x[sq][bp] + (1-row)*delta_x;*/
 
-				prog_KP[sq][bp] += sign(delta_x);*/
+				//prog_KP[sq][bp] += -int(paramscale*gt);
 				prog_KP[sq][bp] += -sign(gt);
 			}
 		}

@@ -143,7 +143,7 @@ void Position::set(std::string sfen)
 	//list.print_bplist();
 	//cout << occ256 << endl;
 	ply_from_startpos = 1;
-	Progress::calc_prog(*this);
+	cout <<"is“x "<< Progress::prog_scale*Progress::calc_prog(*this) << endl;
 #ifdef CHECKPOS
 	
 	//check_eboard();

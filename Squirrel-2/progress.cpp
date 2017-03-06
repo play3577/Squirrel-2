@@ -17,14 +17,14 @@ namespace Progress {
 
 	void Progress::initialize_KP()
 	{
-		std::random_device rd;
+		/*std::random_device rd;
 		std::mt19937 mt(rd());
-
+*/
 		for (Square ksq = SQ_ZERO; ksq < SQ_NUM; ksq++) {
 
 			for (Eval::BonaPiece bp = Eval::BONA_PIECE_ZERO; bp < Eval::fe_end; bp++) {
 
-				prog_KP[ksq][bp] = int32_t(mt() % 10);
+				prog_KP[ksq][bp] = 0;
 
 			}
 		}

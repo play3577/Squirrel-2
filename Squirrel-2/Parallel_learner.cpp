@@ -522,15 +522,15 @@ void learnphase1body(int number) {
 			diddepth = ply;
 			minfo_list.clear();
 
-//#if 1
-//			/*if ((float(ply) / float(thisgame.moves.size())) > 0.9) {
-//				cout <<"progress:"<< (float(ply) / float(thisgame.moves.size()))<<" ply:"<<ply<<" maxply:"<< thisgame.moves.size() <<  " progress over 90%" << endl;
-//				goto ERROR_OCCURED;
-//			}*/
-//			if (ply >(thisgame.moves.size() - 20)) {
-//				goto ERROR_OCCURED;
-//			}
-//#endif
+#if 1
+			if ((float(ply) / float(thisgame.moves.size())) > 0.9) {
+				//cout <<"progress:"<< (float(ply) / float(thisgame.moves.size()))<<" ply:"<<ply<<" maxply:"<< thisgame.moves.size() <<  " progress over 90%" << endl;
+				goto ERROR_OCCURED;
+			}
+			/*if (ply >(thisgame.moves.size() - 10)) {
+				goto ERROR_OCCURED;
+			}*/
+#endif
 
 			const Color rootColor = pos.sidetomove();
 
@@ -597,7 +597,7 @@ void learnphase1body(int number) {
 				
 					if (abs(record_score) > Value_mate_in_maxply) {
 						cout << "teachermate " << ply << " " << thisgame.moves.size();
-						cout << games[g].black_P << " " << games[g].white_P<<" "<< games[g].day;
+						cout << games[g].black_P << " " << games[g].white_P<<" "<< games[g].day<<endl;
 						cout << pos << endl;
 						cout << "record_score" << record_score << endl;
 
