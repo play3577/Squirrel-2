@@ -331,6 +331,8 @@ namespace Eval {
 
 #ifdef  EVAL_KPP
 
+	const int FV_SCALE_KKP = 512;
+
 	extern int16_t kpp[82][fe_end][fe_end];
 	extern int32_t kkp[82][82][fe_end + 1];
 

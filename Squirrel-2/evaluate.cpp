@@ -873,130 +873,6 @@ namespace Eval {
 		
 	}
 
-	//もっと簡単に変換する方法がAperyにあったはずなのでそれを参考にさせてもらおう...
-	/*
-	//bonapieceから駒種とsquareを抜き出してくる関数
-	void  bonap_to_piece_sq(const BonaPiece bp,Square& sq,Piece& pc) {
-
-		//手駒のbpは左右反転なんて出来ないのでそのままの値を返す。
-		if (bp < fe_hand_end) {
-			return ;
-		}
-
-		int sq, symsq;
-		//手駒以外
-
-		//縦型bitboardなのでrank=sq%9,file=sq/9
-		//BonaPiece bprank, bpfile;
-		//盤上の駒
-		if (f_pawn <= bp&&bp < e_pawn) {
-			 sq= Square(bp - f_pawn);
-			 pc = B_PAWN;
-			return B_PAWN;
-		}
-		else if (e_pawn <= bp&&bp < f_lance) {
-			sq = bp - e_pawn;
-			symsq = sym_rl_sq(Square(sq));
-			return BonaPiece(e_pawn + symsq);
-		}
-		else if (f_lance <= bp&&bp < e_lance) {
-			sq = bp - f_lance;
-			symsq = sym_rl_sq(Square(sq));
-			return BonaPiece(f_lance + symsq);
-		}
-		else if (e_lance <= bp&&bp < f_knight) {
-			sq = bp - e_lance;
-			symsq = sym_rl_sq(Square(sq));
-			return BonaPiece(e_lance + symsq);
-		}
-		else if (f_knight <= bp&&bp < e_knight) {
-			sq = bp - f_knight;
-			symsq = sym_rl_sq(Square(sq));
-			return BonaPiece(f_knight + symsq);
-		}
-		else if (e_knight <= bp &&bp< f_silver) {
-			sq = bp - e_knight;
-			symsq = sym_rl_sq(Square(sq));
-			return BonaPiece(e_knight + symsq);
-		}
-		else if (f_silver <= bp&&bp < e_silver) {
-			sq = bp - f_silver;
-			symsq = sym_rl_sq(Square(sq));
-			return BonaPiece(f_silver + symsq);
-		}
-		else if (e_silver <= bp&&bp < f_gold) {
-			sq = bp - e_silver;
-			symsq = sym_rl_sq(Square(sq));
-			return BonaPiece(e_silver + symsq);
-		}
-		else if (f_gold <= bp&&bp < e_gold) {
-			sq = bp - f_gold;
-			symsq = sym_rl_sq(Square(sq));
-			return BonaPiece(f_gold + symsq);
-		}
-		else if (e_gold <= bp&&bp < f_bishop) {
-			sq = bp - e_gold;
-			symsq = sym_rl_sq(Square(sq));
-			return BonaPiece(e_gold + symsq);
-		}
-		else if (bp<e_bishop) {
-			sq = bp - f_bishop;
-			symsq = sym_rl_sq(Square(sq));
-			return BonaPiece(f_bishop + symsq);
-		}
-		else if (bp<f_unicorn) {
-			sq = bp - e_bishop;
-			symsq = sym_rl_sq(Square(sq));
-			return BonaPiece(e_bishop + symsq);
-		}
-		else if (bp < e_unicorn) {
-			sq = bp - f_unicorn;
-			symsq = sym_rl_sq(Square(sq));
-			return BonaPiece(f_unicorn + symsq);
-		}
-		else if (bp < f_rook) {
-			sq = bp - e_unicorn;
-			symsq = sym_rl_sq(Square(sq));
-			return BonaPiece(e_unicorn + symsq);
-		}
-		else if (bp < e_rook) {
-			sq = bp - f_rook;
-			symsq = sym_rl_sq(Square(sq));
-			return BonaPiece(f_rook + symsq);
-		}
-		else if (bp < f_dragon) {
-			sq = bp - e_rook;
-			symsq = sym_rl_sq(Square(sq));
-			return BonaPiece(e_rook + symsq);
-		}
-		else if (bp < e_dragon) {
-			sq = bp - f_dragon;
-			symsq = sym_rl_sq(Square(sq));
-			return BonaPiece(f_dragon + symsq);
-		}
-		else if (bp < f_king) {
-			sq = bp - e_dragon;
-			symsq = sym_rl_sq(Square(sq));
-			return BonaPiece(e_dragon + symsq);
-		}
-		else if (bp < e_king) {
-			sq = bp - f_king;
-			symsq = sym_rl_sq(Square(sq));
-			return BonaPiece(f_king + symsq);
-		}
-		else if (bp < fe_end2) {
-			sq = bp - e_king;
-			symsq = sym_rl_sq(Square(sq));
-			return BonaPiece(e_king + symsq);
-		}
-		else {
-			UNREACHABLE;
-			return BONA_PIECE_ZERO;
-		}
-
-	}
-	*/
-	
 
 
 
@@ -1017,74 +893,74 @@ namespace Eval {
 	https://www.bing.com/search?q=_mm256_load_si256&pc=cosp&ptag=C1AE89FD93123&form=CONBDF&conlogo=CT3210127
 
 	*/
-	Value eval_allPP_AVX2(const Position & pos)
-	{
-		int32_t bPP = 0, wPP = 0;
-		BonaPiece *list_fb = pos.evallist().bplist_fb, *list_fw = pos.evallist().bplist_fw;
+	//Value eval_allPP_AVX2(const Position & pos)
+	//{
+	//	int32_t bPP = 0, wPP = 0;
+	//	BonaPiece *list_fb = pos.evallist().bplist_fb, *list_fw = pos.evallist().bplist_fw;
 
-		__m256i zero = _mm256_setzero_si256();
-		__m256i bPP256 = zero, wPP256 = zero;
+	//	__m256i zero = _mm256_setzero_si256();
+	//	__m256i bPP256 = zero, wPP256 = zero;
 
-		//40要素に対して計算を行う
-		for (int i = 0; i < 40; ++i) {
+	//	//40要素に対して計算を行う
+	//	for (int i = 0; i < 40; ++i) {
 
-			const BonaPiece k0_b = list_fb[i],k0_w=list_fw[i];
+	//		const BonaPiece k0_b = list_fb[i],k0_w=list_fw[i];
 
-			//pointer pp black||white
-			const auto* p_pp_b = PP[k0_b];
-			const auto* p_pp_w = PP[k0_w];
+	//		//pointer pp black||white
+	//		const auto* p_pp_b = PP[k0_b];
+	//		const auto* p_pp_w = PP[k0_w];
 
-			int j = 0;
-			//8要素一気に計算する
-			for (; j + 8 < i; j += 8) {
+	//		int j = 0;
+	//		//8要素一気に計算する
+	//		for (; j + 8 < i; j += 8) {
 
-				//bonapieceのindexを8要素ロードする。
-				__m256i indices_fb = _mm256_load_si256(reinterpret_cast<const __m256i*>(&list_fb[j]));
-				__m256i indices_fw = _mm256_load_si256(reinterpret_cast<const __m256i*>(&list_fw[j]));
+	//			//bonapieceのindexを8要素ロードする。
+	//			__m256i indices_fb = _mm256_load_si256(reinterpret_cast<const __m256i*>(&list_fb[j]));
+	//			__m256i indices_fw = _mm256_load_si256(reinterpret_cast<const __m256i*>(&list_fw[j]));
 
-				//p_pp_bとp_pp_wから8要素をギャザーしてくる。（4というのはi32*4）
-				__m256i b = _mm256_i32gather_epi32(reinterpret_cast<const int*>(p_pp_b), indices_fb, 4);
-				__m256i w = _mm256_i32gather_epi32(reinterpret_cast<const int*>(p_pp_w), indices_fw, 4);
+	//			//p_pp_bとp_pp_wから8要素をギャザーしてくる。（4というのはi32*4）
+	//			__m256i b = _mm256_i32gather_epi32(reinterpret_cast<const int*>(p_pp_b), indices_fb, 4);
+	//			__m256i w = _mm256_i32gather_epi32(reinterpret_cast<const int*>(p_pp_w), indices_fw, 4);
 
-				//下位128bitを16bit変数から32bit整数に変換する
-				__m256i blo = _mm256_cvtepi16_epi32(_mm256_extracti128_si256(b, 0));//0というのは128*0
-				__m256i wlo = _mm256_cvtepi16_epi32(_mm256_extracti128_si256(w, 0));
+	//			//下位128bitを16bit変数から32bit整数に変換する
+	//			__m256i blo = _mm256_cvtepi16_epi32(_mm256_extracti128_si256(b, 0));//0というのは128*0
+	//			__m256i wlo = _mm256_cvtepi16_epi32(_mm256_extracti128_si256(w, 0));
 
-				//bpp256,wpp256に足し合わせる
-				bPP256 = _mm256_add_epi32(bPP256, blo);
-				wPP256 = _mm256_add_epi32(wPP256, wlo);
+	//			//bpp256,wpp256に足し合わせる
+	//			bPP256 = _mm256_add_epi32(bPP256, blo);
+	//			wPP256 = _mm256_add_epi32(wPP256, wlo);
 
-				//上位128bitを16bit変数から32bit整数に変換する
-				//_mm256_extracti128_si256 ：上位or下位128bitをxmmレジスタに格納する
-				//_mm256_cvtepi16_epi32 :16 ビットの符号付き整数から 32 ビットの整数への符号拡張パックド移動操作を実行 : https://www.bing.com/search?q=_mm256_cvtepi16_epi32&pc=cosp&ptag=C1AE89FD93123&form=CONBDF&conlogo=CT3210127
-				__m256i bhi = _mm256_cvtepi16_epi32(_mm256_extracti128_si256(b, 1));//0というのは128*0
-				__m256i whi = _mm256_cvtepi16_epi32(_mm256_extracti128_si256(w, 1));
+	//			//上位128bitを16bit変数から32bit整数に変換する
+	//			//_mm256_extracti128_si256 ：上位or下位128bitをxmmレジスタに格納する
+	//			//_mm256_cvtepi16_epi32 :16 ビットの符号付き整数から 32 ビットの整数への符号拡張パックド移動操作を実行 : https://www.bing.com/search?q=_mm256_cvtepi16_epi32&pc=cosp&ptag=C1AE89FD93123&form=CONBDF&conlogo=CT3210127
+	//			__m256i bhi = _mm256_cvtepi16_epi32(_mm256_extracti128_si256(b, 1));//0というのは128*0
+	//			__m256i whi = _mm256_cvtepi16_epi32(_mm256_extracti128_si256(w, 1));
 
-				//bpp256,wpp256に足し合わせる
-				bPP256 = _mm256_add_epi32(bPP256, bhi);
-				wPP256 = _mm256_add_epi32(wPP256, whi);
-			}
+	//			//bpp256,wpp256に足し合わせる
+	//			bPP256 = _mm256_add_epi32(bPP256, bhi);
+	//			wPP256 = _mm256_add_epi32(wPP256, whi);
+	//		}
 
-		}
-		//上位128bitと下位128bitを独立して8byte(64bit)右シフトしたものを足し合わせる。なんで8byteシフトさせる？？全然わからん.......
-		bPP256 = _mm256_add_epi32(bPP256, _mm256_srli_si256(bPP256, 8));
-		wPP256 = _mm256_add_epi32(wPP256, _mm256_srli_si256(wPP256, 8));
+	//	}
+	//	//上位128bitと下位128bitを独立して8byte(64bit)右シフトしたものを足し合わせる。なんで8byteシフトさせる？？全然わからん.......
+	//	bPP256 = _mm256_add_epi32(bPP256, _mm256_srli_si256(bPP256, 8));
+	//	wPP256 = _mm256_add_epi32(wPP256, _mm256_srli_si256(wPP256, 8));
 
-		//bpp256の上位128bitと下位128bitを足し合わせてbpp128の代入する
-		__m128i bpp128 = _mm_add_epi32(_mm256_extracti128_si256(bPP256,0), _mm256_extracti128_si256(bPP256, 1));
-		__m128i wpp128 = _mm_add_epi32(_mm256_extracti128_si256(wPP256, 0), _mm256_extracti128_si256(wPP256, 1));
-
-
-
-		pos.state()->bpp = (bPP);
-		pos.state()->wpp = wPP;
-		//評価値ホントに16bitで収まるかどうか確認
-		ASSERT(abs(bPP + wPP) / FV_SCALE < INT16_MAX);
-
-		return Value((bPP + wPP) / FV_SCALE);
+	//	//bpp256の上位128bitと下位128bitを足し合わせてbpp128の代入する
+	//	__m128i bpp128 = _mm_add_epi32(_mm256_extracti128_si256(bPP256,0), _mm256_extracti128_si256(bPP256, 1));
+	//	__m128i wpp128 = _mm_add_epi32(_mm256_extracti128_si256(wPP256, 0), _mm256_extracti128_si256(wPP256, 1));
 
 
-	}
+
+	//	pos.state()->bpp = (bPP);
+	//	pos.state()->wpp = wPP;
+	//	//評価値ホントに16bitで収まるかどうか確認
+	//	ASSERT(abs(bPP + wPP) / FV_SCALE < INT16_MAX);
+
+	//	return Value((bPP + wPP) / FV_SCALE);
+
+
+	//}
 
 
 

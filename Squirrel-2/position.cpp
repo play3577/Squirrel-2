@@ -136,7 +136,7 @@ void Position::set(std::string sfen)
 	list.makebonaPlist(*this);
 	//list.print_bplist();
 	Eval::eval(*this);
-
+	Progress::calc_prog(*this);
 	init_hash();
 	//cout << *this << endl;
 	

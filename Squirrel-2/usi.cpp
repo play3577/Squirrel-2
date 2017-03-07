@@ -340,7 +340,7 @@ void USI::loop()
 		//====================
 		//ここから下はデバッグ用コマンド
 		//====================
-#if 0
+#if 1
 		else if (token == "gm") {
 			//指し手生成速度計測
 			speed_genmove(pos);
@@ -602,7 +602,7 @@ void USI::loop()
 
 			for (int i = 0; i < 40; i++) {
 				cout <<" elist"<<endl<< elist.bplist_fb[i] << endl;
-				cout << "sym " <<endl<< Eval::sym_rightleft(elist.bplist_fb[i]) << endl;
+				//cout << "sym " <<endl<< Eval::sym_rightleft(elist.bplist_fb[i]) << endl;
 			}
 		}
 		else if (token == "null") {
