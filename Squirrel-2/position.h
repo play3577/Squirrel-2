@@ -42,8 +42,14 @@ struct StateInfo
 	Bitboard checker = ZeroBB;//将棋では2重王手になることがあるためbitboardでもたねばならない。
 
 	Value material;
+#ifdef EVAL_PP
 	int32_t bpp=Value_error,wpp=Value_error;
-	
+#elif EVAL_KPP 1
+	int sumKKP=Value_error;
+	int sumBKPP=Value_error;
+	int sumWKPP=Value_error;
+
+#endif
 	int32_t bkp = Value_error, wkp = Value_error;//進行度
 
 	//動いた駒0 取られた駒1
@@ -52,7 +58,14 @@ struct StateInfo
 	Eval::UniformNumber dirtyuniform[2] = { Eval::Num_Uniform, Eval::Num_Uniform};
 
 	void clear_stPP() {
+#ifdef EVAL_PP
 		bpp = Value_error; wpp = Value_error;
+#elif EVAL_KPP 1
+		sumKKP = Value_error;
+		sumBKPP = Value_error;
+		sumWKPP = Value_error;
+#endif
+
 		bkp = Value_error; wkp = Value_error;
 	}
 

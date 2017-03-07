@@ -181,6 +181,7 @@
     <ClCompile Include="Bitboard.cpp" />
     <ClCompile Include="bitop.cpp" />
     <ClCompile Include="evaluate.cpp" />
+    <ClCompile Include="evaluate_KPP.cpp" />
     <ClCompile Include="fundation.cpp" />
     <ClCompile Include="game_database.cpp" />
     <ClCompile Include="Hash.cpp" />

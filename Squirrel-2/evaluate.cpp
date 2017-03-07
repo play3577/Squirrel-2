@@ -266,7 +266,7 @@ namespace Eval {
 		}
 		return Value(v);
 	}
-
+#ifdef EVAL_PP
 	Value eval(const Position & pos)
 	{
 		Value pp,value;
@@ -301,12 +301,14 @@ namespace Eval {
 		else if (pos.state()->previous!=nullptr&&pos.state()->previous->bpp != Value_error&&pos.state()->previous->wpp != Value_error) {
 			//差分計算可能
 			ASSERT(pos.state()->previous->wpp != Value_error);
-
 			pp = eval_diff_PP(pos);
+
 		}
 		else {
 			//全計算！
 			pp = eval_PP(pos);
+
+		
 		}
 
 		/*if (pp != eval_PP(pos)) {
@@ -479,7 +481,7 @@ namespace Eval {
 		return Value((bPP + wPP) / FV_SCALE);
 
 	}
-	
+#endif;
 	//差分計算
 
 	void BonaPList::makebonaPlist(const Position & pos)

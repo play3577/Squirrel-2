@@ -307,7 +307,7 @@ namespace Eval {
 
 	//•]‰¿’lŒvŽZ
 	Value eval(const Position& pos);
-
+#ifdef EVAL_PP
 	Value eval_PP(const Position& pos);
 
 	Value eval_diff_PP(const Position& pos);
@@ -327,5 +327,21 @@ namespace Eval {
 
 
 	inline void init() { read_PP(); }
+#endif
+
+#ifdef  EVAL_KPP
+
+	extern int16_t kpp[82][fe_end][fe_end];
+	extern int32_t kkp[82][82][fe_end + 1];
+
+	Value eval_KPP(const Position& pos);
+	Value eval_diff_KPP(const Position& pos);
+
+	void read_KPP();
+	void write_KPP();
+
+	inline void init() { read_KPP(); }
+#endif //  EVAL_KPP
+
 
 };

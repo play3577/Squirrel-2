@@ -135,7 +135,7 @@ void Position::set(std::string sfen)
 
 	list.makebonaPlist(*this);
 	//list.print_bplist();
-	Eval::eval_PP(*this);
+	Eval::eval(*this);
 
 	init_hash();
 	//cout << *this << endl;

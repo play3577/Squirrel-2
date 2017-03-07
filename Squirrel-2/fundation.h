@@ -45,6 +45,11 @@
 
 //#define DIFFTEST
 
+#define EVAL_KPP
+
+#ifndef EVAL_KPP
+#define EVAL_PP
+#endif // !EVAL_KPP
 
 
 #if defined(_MSC_VER)

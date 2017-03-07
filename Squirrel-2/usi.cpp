@@ -111,6 +111,11 @@ void USI::init_option(OptionMap &o,string engine_name)
 	o["randombook"] << USIOption(true);
 	o["use_defined_time"] << USIOption(false);
 	o["defined_time"] << USIOption(100,100,100000);
+	o["KPP"]<< USIOption("c:/yaneeval/kpp16ap.bin");
+	o["KKP"] << USIOption("c:/yaneeval/kkp32ap.bin");
+
+
+
 }
 
 
@@ -151,8 +156,11 @@ void is_ready() {
 	//evalのパスが変更されているかもしれないためもう一回読み直す。
 	//と言うか先にusiに返事してからreadさせたほうがいいか？
 	if (first_ready == true) {
+#ifdef EVAL_PP
 		Eval::read_PP();
-
+#elif EVAL_KPP 1
+		Eval::read_KPP();
+#endif
 		if (bool(Options["usebook"]) == true) {
 			BOOK::init();
 		}
