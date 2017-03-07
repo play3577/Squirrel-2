@@ -28,7 +28,7 @@
 
 //#define CHECKPOS
 //#define LEARN
-#define Prog_LEARN
+//#define Prog_LEARN
 
 #ifndef LEARN
 #define USETT

@@ -239,7 +239,7 @@ void position(Position& pos, istringstream& is) {
 		ply++;
 		pos.ply_from_startpos++;
 	}
-
+	cout << "進行度 " << Progress::prog_scale*Progress::calc_prog(pos) << endl;
 
 	//cout << pos << endl;
 
@@ -332,7 +332,7 @@ void USI::loop()
 		//====================
 		//ここから下はデバッグ用コマンド
 		//====================
-#if 1
+#if 0
 		else if (token == "gm") {
 			//指し手生成速度計測
 			speed_genmove(pos);

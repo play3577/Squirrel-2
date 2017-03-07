@@ -253,36 +253,44 @@ Value Thread::think() {
 //	Eval::eval(rootpos);
 	while (++rootdepth <maxdepth&&!signal.stop) {
 
-		/*if (rootdepth >= 5) {
+		previousScore = RootMoves[0].value;
+
+		if (rootdepth > 5&&abs(previousScore)<10000) {
 			delta = Value(40);
 			alpha = std::max(previousScore - delta, -Value_Infinite);
 			beta = std::min(previousScore + delta, Value_Infinite);
-		}*/
+		}
+		
 research:
 		//‚±‚±‚Å’TõŠÖ”‚ðŒÄ‚Ño‚·B
 		ASSERT(alpha < beta);
 		bestvalue = search<Root>(rootpos, ss, alpha, beta, rootdepth*ONE_PLY,false);
 
-		sort_RootMove();
 
 		if (signal.stop) {
 			//cout << "signal stop" << endl;
 			break;
 		}
 
-		/*if (bestvalue < alpha) {
-			beta = (alpha + beta) / 2;
-			alpha = std::max(bestvalue - delta, -Value_Infinite);
-			delta += delta / 4 + 5;
-			goto research;
+		if (bestvalue <= alpha) {
+		beta = (alpha + beta) / 2;
+		alpha = std::max(bestvalue - delta, -Value_Infinite);
+		delta += delta / 4 + 5;
+		goto research;
 		}
 		else if (bestvalue >= beta)
 		{
-			alpha = (alpha + beta) / 2;
-			beta = std::min(bestvalue + delta, Value_Infinite);
-			delta += delta / 4 + 5;
-			goto research;
-		}*/
+		alpha = (alpha + beta) / 2;
+		beta = std::min(bestvalue + delta, Value_Infinite);
+		delta += delta / 4 + 5;
+		goto research;
+		}
+
+
+		sort_RootMove();
+
+
+		
 
 
 

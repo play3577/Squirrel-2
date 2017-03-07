@@ -53,7 +53,7 @@ int main() {
 		BOOK::init();
 	}*/
 #ifdef USETT
-	TT.resize(30);//30MBで初期化する（やねうら王に倣った）
+	TT.resize(40);//30MBで初期化する（やねうら王に倣った）
 #endif
 	//bitboard_debug();
 
