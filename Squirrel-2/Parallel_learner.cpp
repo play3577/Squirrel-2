@@ -28,13 +28,17 @@ using namespace std;
 #define SOFTKIFU
 
 //次元下げすると弱くなるのなんでだろう
-//#define JIGENSAGE
+#define JIGENSAGE
+
+//#define LOWDIM2
 
 //struct  Parse2data;
 
 struct  dJValue
 {
-	double dJ[fe_end2][fe_end2];
+	double absolute_PP[fe_end2][fe_end2];
+
+	
 
 	void update_dJ(const Position& pos, const double diff) {
 		const auto list1 = pos.evallist();
@@ -42,11 +46,11 @@ struct  dJValue
 		const BonaPiece *list_fb = list1.bplist_fb, *list_fw = list1.bplist_fw;
 		for (int i = 0; i < 40; i++) {
 			for (int j = 0; j < i; j++) {
-				dJ[list_fb[i]][list_fb[j]] += diff;
-				dJ[list_fw[i]][list_fw[j]] -= diff;
+				absolute_PP[list_fb[i]][list_fb[j]] += diff;
+				absolute_PP[list_fw[i]][list_fw[j]] -= diff;
 				//PP対称性を考えて
-				dJ[list_fb[j]][list_fb[i]] += diff;
-				dJ[list_fw[j]][list_fw[i]] -= diff;
+				absolute_PP[list_fb[j]][list_fb[i]] += diff;
+				absolute_PP[list_fw[j]][list_fw[i]] -= diff;
 			}
 		}
 	}
@@ -58,11 +62,69 @@ struct  dJValue
 
 		for (BonaPiece bp1 = BONA_PIECE_ZERO; bp1 < fe_end2; bp1++) {
 			for (BonaPiece bp2 = BONA_PIECE_ZERO; bp2 < fe_end2; bp2++) {
-				dJ[bp1][bp2] += data.dJ[bp1][bp2];
+				absolute_PP[bp1][bp2] += data.absolute_PP[bp1][bp2];
 			}
 		}
+	}
+
+
+#ifdef  LOWDIM2
+	double relative_pp[PT_ALL][PC_ALL][17][17]; //[17][17]は平行移動の相対位置
+
+	void lowdim_eachPP(const BonaPiece bp1, const BonaPiece bp2, const double diff) {
+
+		double diff_ = diff;
+
+		BonaPiece i = std::max(bp1, bp2), j = std::min(bp1, bp2);
+
+		Piece pci = bp2piece.bp_to_piece(bpwithoutsq(i));
+		ASSERT(pci != NO_PIECE);
+		//後手の駒を黒番として扱うためにdiffを反転させる
+		if (piece_color(pci) == WHITE) {
+			diff_ = -diff_;
+			i = inversebonapiece(i);
+			j = inversebonapiece(j);
+		}
+		ASSERT(piece_color(bp2piece.bp_to_piece(bpwithoutsq(i))) == BLACK);
+
+		//相対PP
+		if (bp2sq(i) != Error_SQ&&bp2sq(j) != Error_SQ) {
+			Piece pti = piece_type(bp2piece.bp_to_piece(bpwithoutsq(i)));//iの駒は先手の駒に変換させられているのでptでいい
+			Piece pcj = bp2piece.bp_to_piece(bpwithoutsq(j));//jにいるのが味方の駒か相手の駒かは重要になってくるので含めなければならない。
+			Square sq1 = bp2sq(i), sq2 = bp2sq(j);//bp1,bp2の駒の位置
+			relative_pp[pti][pcj][sqtofile(sq1) - sqtofile(sq2) + 8][sqtorank(sq1) - sqtorank(sq2) + 8] += diff_;
+		}
+		absolute_PP[i][j] += diff_;
+
 
 	}
+
+	void update_lowdim(const Position& pos, const double diff) {
+
+		const auto list1 = pos.evallist();
+
+		const BonaPiece *list_fb = list1.bplist_fb, *list_fw = list1.bplist_fw;
+		for (int i = 0; i < 40; i++) {
+			for (int j = 0; j < i; j++) {
+				lowdim_eachPP(list_fb[i], list_fb[j], diff);
+				lowdim_eachPP(list_fw[i], list_fw[j], -diff);
+			}
+		}
+	}
+
+	void add_lowdim() {
+
+
+
+
+	}
+
+
+
+#endif //  LOWDIM2
+
+	
+
 };
 
 
@@ -74,7 +136,7 @@ PP（p0,p1）=PP絶対(左右対称、手番対称)+PP相対(平行移動、手番対称)＋P絶対（左右対
 struct lowerDimPP
 {
 	double absolute_pp[fe_end2][fe_end2];//絶対PP　
-	double relative_pp[PT_ALL][PC_ALL][17][17];//相対PP 技巧ではy座標固定相対PPがあったけどよくわからんので省く
+	double relative_pp[PC_ALL][PC_ALL][17][17];//相対PP 技巧ではy座標固定相対PPがあったけどよくわからんので省く
 	//double absolute_p[fe_end2];//絶対P 
 	void clear() {
 
@@ -116,7 +178,7 @@ void renewal_PP(dJValue &data) {
 			/*if (PP[i][j]>0) { data.dJ[i][j] -= double(0.2 / double(FV_SCALE)); }
 			else if (PP[i][j]<0) { data.dJ[i][j] += double(0.2 / double(FV_SCALE)); }*/
 #endif
-			int inc = h*sign(data.dJ[i][j]);
+			int inc = h*sign(data.absolute_PP[i][j]);
 			PP[i][j] += inc;
 		}
 	}
@@ -173,7 +235,7 @@ void param_sym_leftright(dJValue &data) {
 			この方法ではcheckを確保することができなかった。（staticにして無理やり解決。）
 			*/
 
-			data.dJ[il][jl] = data.dJ[ir][jr] = (data.dJ[il][jl] + data.dJ[ir][jr]);
+			data.absolute_PP[il][jl] = data.absolute_PP[ir][jr] = (data.absolute_PP[il][jl] + data.absolute_PP[ir][jr]);
 			//check[il*(il + 1) / 2 + jl] = check[ir*(ir + 1) / 2 + jr] = true;
 			check[il][jl] = check[ir][jr] = true;
 
@@ -1029,26 +1091,31 @@ void each_PP(lowerDimPP & lowdim, const dJValue& gradJ, const BonaPiece bp1, con
 	//iとjの前後によって違う場所を参照してしまうのを防ぐ。
 	BonaPiece i=std::max(bp1,bp2), j=std::min(bp1,bp2);
 
+	double grad = gradJ.absolute_PP[bp1][bp2];
+
+
 	//駒iは先手の駒に置き換える。（先手の駒後手の駒どちらの場合も同じindexの組として取り扱う為。手番対称による次元下げ。）
-	Piece pci = bp2piece.bp_to_piece(bpwithoutsq(i));
+	//先手の駒に置き換えるため、もしそれが後手の駒であれば、符号は反転させなければならない。
+	/*Piece pci = bp2piece.bp_to_piece(bpwithoutsq(i));
 	ASSERT(pci != NO_PIECE);
 	if (piece_color(pci) == WHITE) {
+		grad = -grad;
 		i = inversebonapiece(i);
 		j = inversebonapiece(j);
 	}
 	ASSERT(piece_color(bp2piece.bp_to_piece(bpwithoutsq(i))) == BLACK);
-
+*/
 	//相対PP
 	if (bp2sq(i) != Error_SQ&&bp2sq(j) != Error_SQ) {
-		Piece pti = piece_type(bp2piece.bp_to_piece(bpwithoutsq(i)));//iの駒は先手の駒に変換させられているのでptでいい
+		Piece pci = (bp2piece.bp_to_piece(bpwithoutsq(i)));//iの駒は先手の駒に変換させられているのでptでいい
 		Piece pcj = bp2piece.bp_to_piece(bpwithoutsq(j));//jにいるのが味方の駒か相手の駒かは重要になってくるので含めなければならない。
 		Square sq1 = bp2sq(i), sq2 = bp2sq(j);//bp1,bp2の駒の位置
-		lowdim.relative_pp[pti][pcj][sqtofile(sq1) - sqtofile(sq2) + 8][sqtorank(sq1) - sqtorank(sq2) + 8] += gradJ.dJ[bp1][bp2];
+		lowdim.relative_pp[pci][pcj][sqtofile(sq1) - sqtofile(sq2) + 8][sqtorank(sq1) - sqtorank(sq2) + 8] += grad;
 	}
 
 
 	//絶対PP
-	lowdim.absolute_pp[i][j] += gradJ.dJ[bp1][bp2];
+	lowdim.absolute_pp[i][j] += grad;
 	//絶対P
 	/*lowdim.absolute_p[i]+= gradJ.dJ[bp1][bp2];
 	lowdim.absolute_p[j]+=gradJ.dJ[bp1][bp2];*/
@@ -1058,27 +1125,28 @@ void weave_eachPP(dJValue& newgradJ, const lowerDimPP& lowdim, const BonaPiece b
 
 	if (bp1 == bp2) { return; }//一致する場所はevaluateで見ないのでgradJも0になっている。これは無視していい。
 
+	int sign = 1;
 							   //iとjの前後によって違う場所を参照してしまうのを防ぐ。
 	BonaPiece i = std::max(bp1, bp2), j = std::min(bp1, bp2);
 
 	//駒iは先手の駒に置き換える。（先手の駒後手の駒どちらの場合も同じindexの組として取り扱う為。手番対称による次元下げ。）
-	Piece pci = bp2piece.bp_to_piece(bpwithoutsq(i));
+	/*Piece pci = bp2piece.bp_to_piece(bpwithoutsq(i));
 	ASSERT(pci != NO_PIECE);
 	if (piece_color(pci) == WHITE) {
 		i = inversebonapiece(i);
 		j = inversebonapiece(j);
 	}
-	ASSERT(piece_color(bp2piece.bp_to_piece(bpwithoutsq(i))) == BLACK);
+	ASSERT(piece_color(bp2piece.bp_to_piece(bpwithoutsq(i))) == BLACK);*/
 
 	//相対PP(平行移動)
 	if (bp2sq(i) != Error_SQ&&bp2sq(j) != Error_SQ) {
-		Piece pti = piece_type(bp2piece.bp_to_piece(bpwithoutsq(i)));//iの駒は先手の駒に変換させられているのでptでいい
+		Piece pci = (bp2piece.bp_to_piece(bpwithoutsq(i)));//iの駒は先手の駒に変換させられているのでptでいい
 		Piece pcj = bp2piece.bp_to_piece(bpwithoutsq(j));//jにいるのが味方の駒か相手の駒かは重要になってくるので含めなければならない。
 		Square sq1 = bp2sq(i), sq2 = bp2sq(j);//bp1,bp2の駒の位置
-		newgradJ.dJ[bp1][bp2] += lowdim.relative_pp[pti][pcj][sqtofile(sq1) - sqtofile(sq2) + 8][sqtorank(sq1) - sqtorank(sq2) + 8];
+		newgradJ.absolute_PP[bp1][bp2] += lowdim.relative_pp[pci][pcj][sqtofile(sq1) - sqtofile(sq2) + 8][sqtorank(sq1) - sqtorank(sq2) + 8];
 	}
 	//絶対PP
-	newgradJ.dJ[bp1][bp2] += lowdim.absolute_pp[i][j];
+	newgradJ.absolute_PP[bp1][bp2] += lowdim.absolute_pp[i][j];
 	//絶対P
 	//newgradJ.dJ[bp1][bp2] += lowdim.absolute_p[i];
 	//newgradJ.dJ[bp1][bp2] += lowdim.absolute_p[j];
