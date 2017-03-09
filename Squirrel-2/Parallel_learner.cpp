@@ -27,6 +27,7 @@ using namespace std;
 
 #define SOFTKIFU
 
+//ŽŸŒ³‰º‚°‚·‚é‚ÆŽã‚­‚È‚é‚Ì‚È‚ñ‚Å‚¾‚ë‚¤
 //#define JIGENSAGE
 
 //struct  Parse2data;
@@ -75,6 +76,12 @@ struct lowerDimPP
 	double absolute_pp[fe_end2][fe_end2];//â‘ÎPP@
 	double relative_pp[PT_ALL][PC_ALL][17][17];//‘Š‘ÎPP ‹ZI‚Å‚ÍyÀ•WŒÅ’è‘Š‘ÎPP‚ª‚ ‚Á‚½‚¯‚Ç‚æ‚­‚í‚©‚ç‚ñ‚Ì‚ÅÈ‚­
 	//double absolute_p[fe_end2];//â‘ÎP 
+	void clear() {
+
+		memset(absolute_pp, 0, sizeof(absolute_pp));
+		memset(relative_pp, 0, sizeof(relative_pp));
+
+	}
 };
 lowerDimPP lowdimPP;
 
@@ -596,7 +603,7 @@ void learnphase1body(int number) {
 				if (move_i == 0) { record_score = score; 
 				
 					if (abs(record_score) > Value_mate_in_maxply) {
-						cout << "teachermate " << ply << " " << thisgame.moves.size();
+						/*cout << "teachermate " << ply << " " << thisgame.moves.size();
 						cout << games[g].black_P << " " << games[g].white_P<<" "<< games[g].day<<endl;
 						cout << pos << endl;
 						cout << "record_score" << record_score << endl;
@@ -604,7 +611,7 @@ void learnphase1body(int number) {
 						cout <<"teachermove:" <<teacher_move << endl;
 						for (Move m : th.pv) {
 							check_move(m);
-						}
+						}*/
 						goto ERROR_OCCURED;
 					}
 				
@@ -771,6 +778,7 @@ void learnphase2() {
 		for (auto& th : threads) { th.join(); }
 
 #ifdef JIGENSAGE
+		lowdimPP.clear();
 		lower__dimPP(lowdimPP, sum_parse2Datas.gradJ);
 		sum_parse2Datas.clear();
 		weave_lowdim_to_gradj(sum_parse2Datas.gradJ, lowdimPP);

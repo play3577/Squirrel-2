@@ -213,8 +213,8 @@ Value Thread::think() {
 	TT.new_search();
 #endif
 	
-	bestvalue = alpha = Value_Mated;
-	beta = Value_Mate;
+	bestvalue = alpha = -Value_Infinite;
+	beta = Value_Infinite;
 	rootdepth = 0;
 	int maxdepth;
 
@@ -255,14 +255,20 @@ Value Thread::think() {
 
 		previousScore = RootMoves[0].value;
 
-		if (rootdepth > 5&&abs(previousScore)<10000) {
+		/*if (rootdepth >= 5) {
 			delta = Value(40);
 			alpha = std::max(previousScore - delta, -Value_Infinite);
 			beta = std::min(previousScore + delta, Value_Infinite);
 		}
-		
+		if (abs(previousScore) > Value_mated_in_maxply) {
+			alpha = -Value_Infinite;
+			beta = Value_Infinite;
+		}*/
 research:
 		//‚±‚±‚Å’TõŠÖ”‚ðŒÄ‚Ño‚·B
+		//if (alpha >= beta) {
+		//	cout << "alpha" << alpha << " beta " << beta <<" previous value"<<previousScore<< endl;
+		//}
 		ASSERT(alpha < beta);
 		bestvalue = search<Root>(rootpos, ss, alpha, beta, rootdepth*ONE_PLY,false);
 
@@ -272,19 +278,19 @@ research:
 			break;
 		}
 
-		if (bestvalue <= alpha) {
-		beta = (alpha + beta) / 2;
-		alpha = std::max(bestvalue - delta, -Value_Infinite);
-		delta += delta / 4 + 5;
-		goto research;
-		}
-		else if (bestvalue >= beta)
-		{
-		alpha = (alpha + beta) / 2;
-		beta = std::min(bestvalue + delta, Value_Infinite);
-		delta += delta / 4 + 5;
-		goto research;
-		}
+		//if (bestvalue <= alpha) {
+		//beta = (alpha + beta) / 2;
+		//alpha = std::max(bestvalue - delta, -Value_Infinite);
+		//delta += delta / 4 + 5;
+		//goto research;
+		//}
+		//else if (bestvalue >= beta)
+		//{
+		//alpha = (alpha + beta) / 2;
+		//beta = std::min(bestvalue + delta, Value_Infinite);
+		//delta += delta / 4 + 5;
+		//goto research;
+		//}
 
 
 		sort_RootMove();
