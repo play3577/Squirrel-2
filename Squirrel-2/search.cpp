@@ -254,8 +254,8 @@ Value Thread::think() {
 	while (++rootdepth <maxdepth&&!signal.stop) {
 
 		previousScore = RootMoves[0].value;
-
-		/*if (rootdepth >= 5) {
+#ifdef ASP
+		if (rootdepth >= 5) {
 			delta = Value(40);
 			alpha = std::max(previousScore - delta, -Value_Infinite);
 			beta = std::min(previousScore + delta, Value_Infinite);
@@ -263,7 +263,8 @@ Value Thread::think() {
 		if (abs(previousScore) > Value_mated_in_maxply) {
 			alpha = -Value_Infinite;
 			beta = Value_Infinite;
-		}*/
+		}
+#endif
 research:
 		//ここで探索関数を呼び出す。
 		//if (alpha >= beta) {
@@ -277,21 +278,21 @@ research:
 			//cout << "signal stop" << endl;
 			break;
 		}
-
-		//if (bestvalue <= alpha) {
-		//beta = (alpha + beta) / 2;
-		//alpha = std::max(bestvalue - delta, -Value_Infinite);
-		//delta += delta / 4 + 5;
-		//goto research;
-		//}
-		//else if (bestvalue >= beta)
-		//{
-		//alpha = (alpha + beta) / 2;
-		//beta = std::min(bestvalue + delta, Value_Infinite);
-		//delta += delta / 4 + 5;
-		//goto research;
-		//}
-
+#ifdef ASP
+		if (bestvalue <= alpha) {
+		beta = (alpha + beta) / 2;
+		alpha = std::max(bestvalue - delta, -Value_Infinite);
+		delta += delta / 4 + 5;
+		goto research;
+		}
+		else if (bestvalue >= beta)
+		{
+		alpha = (alpha + beta) / 2;
+		beta = std::min(bestvalue + delta, Value_Infinite);
+		delta += delta / 4 + 5;
+		goto research;
+		}
+#endif
 
 		sort_RootMove();
 
@@ -335,6 +336,7 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 	int quiets_count=0;
 	Value value,null_value;
 	StateInfo si;
+	si.clear_stPP();
 	Value staticeval=Value_Zero;
 	int movecount=ss->moveCount = 0;
 	bool incheck = pos.is_incheck();
@@ -1693,3 +1695,13 @@ NonPV,
 //template Value search<NonPV>(Position &pos, Stack* ss, Value alpha, Value beta, Depth depth);
 //template <Nodetype NT>
 //Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth);
+
+#ifdef LEARN
+//学習中に使う枝切りを極力抑えた探索。（テスト）
+
+
+
+
+
+
+#endif

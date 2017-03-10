@@ -638,6 +638,8 @@ void learnphase1body(int number) {
 
 			for (int move_i = 0; move_i < num_moves; move_i++) {
 
+				si[ply].clear();
+
 				Move m = moves[move_i];
 				if (pos.is_legal(m) == false) { continue; }
 				if (pos.state()->lastmove == m) { cout << games[g].black_P << " " << games[g].white_P; ASSERT(0); }
@@ -853,6 +855,7 @@ void learnphase2() {
 #ifndef test_learn
 	write_PP();
 	read_PP();
+	Eval::param_sym_ij();
 #endif
 
 	
@@ -864,6 +867,9 @@ void learnphase2body(int number)
 	//ここで宣言したいのだけれどこれでいいのだろうか？
 	Position pos;
 	StateInfo si[500];
+
+	
+
 	//ExtMove moves[600], *end;
 	vector<MoveInfo> minfo_list;
 	Thread th;
@@ -876,6 +882,9 @@ void learnphase2body(int number)
 	//ここlockingindexincrementにする必要がある！！
 	//=============================================================
 	for (int g = lock_index_inclement(); g < numgames; g = lock_index_inclement()) {
+
+		for (int i = 0; i <500; i++) si[i].clear();
+
 		didmoves = 0;
 		Move teacher_move;
 		auto thisgame = games[g];
@@ -1005,6 +1014,9 @@ void learnphase2body(int number)
 				//教師手を進めた局面でのgradJの更新
 				{
 					StateInfo si2[64];//最大でも深さ３
+
+					for (int i = 0; i < 64; i++) si2[i].clear();
+
 					int j = 0;
 					//教師手に対してdJ/dviを更新
 					if (pos.is_legal(minfo_list[0].move) == false) { cout << games[g].black_P << " " << games[g].white_P; ASSERT(0); }

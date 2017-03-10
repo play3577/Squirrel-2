@@ -319,8 +319,9 @@ namespace Eval {
 	extern int32_t PP[fe_end2][fe_end2];
 
 	void read_PP();
+	void write_PP();
 
-
+	void param_sym_ij();
 	//bonapiece‚Ì¶‰E‚ğ”½“]‚³‚¹‚éŠÖ”
 	 BonaPiece sym_rightleft(const BonaPiece bp);
 

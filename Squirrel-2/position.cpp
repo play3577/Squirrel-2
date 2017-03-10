@@ -158,6 +158,7 @@ void Position::clear()
 	std::memset(this, 0, sizeof(Position));
 	this->st = &initSt;
 	std::memset(this->st, 0, sizeof(StateInfo));
+	this->st->clear_stPP();
 }
 
 //‚±‚±‚àƒoƒO‚ª“`”À‚µ‚â‚·‚¢‚æ‚¤‚Éxor‚É‚µ‚½•û‚ª‚¢‚¢‚©H

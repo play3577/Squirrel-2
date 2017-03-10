@@ -272,13 +272,16 @@ namespace Eval {
 		Value pp,value;
 		Value material= pos.state()->material;
 
-
+#ifndef EVAL_NONDIFF
 		//計算済み
 		if (pos.state()->bpp != Value_error&&pos.state()->wpp != Value_error) {
 			ASSERT(pos.state()->wpp != Value_error);
 			pp=Value((pos.state()->bpp + pos.state()->wpp) / FV_SCALE);
 
 #ifdef DIFFTEST
+		
+
+
 			//計算済みの値が正しいか確認
 			int bPP = pos.state()->bpp, wPP = pos.state()->wpp;
 
@@ -310,7 +313,10 @@ namespace Eval {
 
 		
 		}
-
+#else
+		pp = eval_PP(pos);
+		//ASSERT(material == eval_material(pos));
+#endif
 		/*if (pp != eval_PP(pos)) {
 			cout << " diff " << pp << " evalfull " << eval_PP(pos) << endl;
 			UNREACHABLE;
@@ -459,6 +465,17 @@ namespace Eval {
 		pos.state()->bpp = bPP;
 		pos.state()->wpp = wPP;
 #ifdef DIFFTEST
+
+
+		/*
+		diffの値は全計算と異なってしまうバグが発生した。
+		これは PP[i][j]==PP[j][i]でないため発生してしまったバグであると考えられる。
+		dj[i][j]=dJ[j][i]ではあるため、値としては近い値になっているのでそこまで大きなエラーではない。
+		これは
+		PP[i][j]=PP[j][i]=(PP[i][j]+PP[j][i])/2とすることで対応しようかな....
+		*/
+
+
 
 		//nullmove時に差分計算がおかしくなる！！！
 		eval_PP(pos);
@@ -872,6 +889,40 @@ namespace Eval {
 		}
 		
 	}
+
+
+
+	void Eval::param_sym_ij() {
+
+		
+		
+		bool check[fe_end2][fe_end2] = { false };
+		memset(check, false, sizeof(check));
+
+
+		for (BonaPiece i = BONA_PIECE_ZERO; i < fe_end2; i++) {
+
+			for (BonaPiece j = BONA_PIECE_ZERO; j < fe_end2; j++) {
+
+				if (check[i][j] != true) {
+
+					check[i][j] =check[j][i]= true;
+
+					int32_t a = PP[i][j], b = PP[j][i];
+					PP[i][j] = PP[j][i] = (a + b) / 2;
+
+				}
+
+
+			}
+
+		}
+
+		write_PP();
+		read_PP();
+	}
+
+
 
 
 

@@ -204,7 +204,7 @@ void go(Position& pos, istringstream& is, Thread& th) {
 	cout << limit << endl;
 #endif
 
-
+	Eval::eval_PP(pos);
 	th.set(pos);
 	v = th.think();
 	cout << " •]‰¿’l " << v << endl;
@@ -661,6 +661,9 @@ void USI::loop()
 #ifndef  Prog_LEARN
 			cout << "not learning mode" << endl;
 #endif
+		}
+		else if (token == "ij") {
+			Eval::param_sym_ij();
 		}
 #endif
 	} while (token != "quit");

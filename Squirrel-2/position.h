@@ -26,6 +26,9 @@ wordboardとか理解できるようになったなら持ってもいいかもしれない
 
 struct StateInfo
 {
+	
+
+
 	//zoblist hash
 	Key board_=0;//キーボード（なんてねっ）手番情報もboardに入れておく。
 	Key hands_=0;//持ち駒のZoblist key
@@ -69,7 +72,10 @@ struct StateInfo
 		bkp = Value_error; wkp = Value_error;
 	}
 
-	
+	void clear() {
+		memset(this, 0, sizeof(this));
+		clear_stPP();
+	}
 
 	friend struct Position;
 
