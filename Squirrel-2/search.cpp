@@ -39,6 +39,17 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 template <Nodetype NT>
 Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth);
 
+#ifdef LEARN
+//学習用の枝切りを抑えた探索関数
+
+template <Nodetype NT>Value lsearch(Position &pos, Stack* ss, Value alpha, Value beta, Depth depth, bool cutNode);
+
+template <Nodetype NT>
+Value lqsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth);
+
+#endif
+
+
 
 
 //d手で挽回できる評価値の予測(dは最大でも6)
@@ -244,6 +255,8 @@ Value Thread::think() {
 	maxdepth = 3;//この値-1が実際に探索される深さ
 	alpha = this->l_alpha;
 	beta = this->l_beta;
+	/*alpha = -Value_Infinite;
+	beta = Value_Infinite;*/
 #endif
 #ifndef LEARN
 	maxdepth = MAX_DEPTH;
@@ -271,8 +284,12 @@ research:
 		//	cout << "alpha" << alpha << " beta " << beta <<" previous value"<<previousScore<< endl;
 		//}
 		ASSERT(alpha < beta);
-		bestvalue = search<Root>(rootpos, ss, alpha, beta, rootdepth*ONE_PLY,false);
 
+#ifndef	LEARN
+		bestvalue = search<Root>(rootpos, ss, alpha, beta, rootdepth*ONE_PLY,false);
+#else
+		bestvalue = lsearch<Root>(rootpos, ss, alpha, beta, rootdepth*ONE_PLY, false);
+#endif
 
 		if (signal.stop) {
 			//cout << "signal stop" << endl;
@@ -299,7 +316,7 @@ research:
 
 		
 
-
+		
 
 #ifndef LEARN
 		print_pv(rootdepth,bestvalue);
@@ -1699,7 +1716,326 @@ NonPV,
 #ifdef LEARN
 //学習中に使う枝切りを極力抑えた探索。（テスト）
 
+template <Nodetype NT>Value lsearch(Position &pos, Stack* ss, Value alpha, Value beta, Depth depth, bool cutNode) {
 
+
+	ASSERT(alpha < beta);
+
+
+
+	//初期化
+	const bool PVNode = (NT == PV || NT == Root);
+	const bool RootNode = (NT == Root);
+	bool doFullDepthSearch = false;
+
+	Move pv[MAX_PLY + 1];
+	Move move = MOVE_NONE;
+	Move bestMove = MOVE_NONE;
+	Move excludedmove = MOVE_NONE;
+	Move Quiets_Moves[64];
+	int quiets_count = 0;
+	Value value, null_value;
+	StateInfo si;
+	si.clear_stPP();
+	Value staticeval = Value_Zero;
+	int movecount = ss->moveCount = 0;
+	bool incheck = pos.is_incheck();
+	Thread* thisthread = pos.searcher();
+	ss->ply = (ss - 1)->ply + 1;
+	Value bestvalue = -Value_Infinite;
+	//-----TT関連
+	//読み太ではTTから読み込んでいる途中でTTが破壊された場合のことも考えていたので、それを参考にする
+	//Key poskey;
+	
+	bool CaptureorPropawn;
+	bool givescheck, improve, singler_extension, move_count_pruning;
+	Depth extension, newdepth;
+
+	//seldepthの更新をここで行う
+	if (PVNode && (thisthread->seldepth < ss->ply)) {
+		thisthread->seldepth = ss->ply;
+	}
+
+	if (!RootNode) {
+		//step2
+		if (signal.stop.load(std::memory_order_relaxed)) {
+			return Eval::eval(pos);
+		}
+		alpha = std::max(mated_in_ply(ss->ply), alpha);//alpha=max(-mate+ply,alpha)　alphaの値は現在つまされている値よりも小さくは成れない つまりalphaは最小でも-mate+ply
+		beta = std::min(mate_in_ply(ss->ply + 1), beta);//beta=min(mate-ply,beta)  betaの値は次の指し手で詰む値よりも大きくはなれない　つまりbetaは最大でもmate-(ply+1)
+
+		if (alpha >= beta) {
+			return alpha;
+		}
+	}
+		ss->currentMove = (ss + 1)->excludedMove = bestMove = MOVE_NONE;
+		ss->counterMoves = nullptr;
+		(ss + 1)->skip_early_prunning = false;
+		(ss + 2)->killers[0] = (ss + 2)->killers[1] = MOVE_NONE;
+
+
+		ss->static_eval = staticeval = Eval::eval(pos);
+		if (incheck) {
+			//	cout << "incheck" << endl;
+			
+		}
+		else if ((ss - 1)->currentMove == MOVE_NULL) {
+			staticeval = ss->static_eval = -(ss - 1)->static_eval + 2 * (Value)20;
+		}
+		movepicker mp(pos, ss, MOVE_NONE, depth);
+
+
+		while ((move = mp.return_nextmove()) != MOVE_NONE) {
+			if (move == ss->excludedMove) { continue; }
+
+			if (!RootNode) {
+				if (pos.is_legal(move) == false) { continue; }
+			}
+
+
+			if (NT == Root&&thisthread->find_rootmove(move) == nullptr) { continue; }
+
+			Stage st = mp.ret_stage();
+			if (st == CAP_PRO_PAWN || st == BAD_CAPTURES) {
+				//ASSERT(pos.capture_or_propawn(move) == true); 今のところassertなくても大丈夫そう
+				CaptureorPropawn = true;
+			}
+			else if (st == QUIET) {
+				//ASSERT(pos.capture_or_propawn(move) == false);
+				CaptureorPropawn = false;
+			}
+			else {
+				CaptureorPropawn = pos.capture_or_propawn(move);
+			}
+			ss->moveCount = ++movecount;
+			ss->currentMove = move;
+
+			ss->counterMoves = &thisthread->CounterMoveHistory[moved_piece(move)][move_to(move)];
+
+			givescheck = pos.is_gives_check(move);
+
+
+			pos.do_move(move, &si, givescheck);
+
+			newdepth = depth - ONE_PLY;
+
+
+			
+			if (newdepth >= ONE_PLY) {
+				//null window search
+				value = -lsearch<NonPV>(pos, ss + 1, -(alpha + 1), -alpha, newdepth, !cutNode);
+			}
+			else {
+				//value = Eval::eval(pos);
+				value = -lqsearch<NonPV>(pos, ss + 1, -(alpha + 1), -alpha, DEPTH_ZERO);
+			}
+
+			if (PVNode && (movecount == 1 || (value>alpha && (RootNode || value<beta)))) {
+				//ss->pvmove = move;
+				(ss + 1)->pv = pv;
+				(ss + 1)->pv[0] = MOVE_NONE;
+				if (newdepth >= ONE_PLY) {
+					value = -lsearch<PV>(pos, ss + 1, -beta, -alpha, newdepth, false);
+				}
+				else {
+					//value = Eval::eval(pos);
+					value = -lqsearch<PV>(pos, ss + 1, -beta, -alpha, DEPTH_ZERO);
+				}
+			}
+
+			pos.undo_move();
+			//時間切れなのでbestmoveとPVを汚さないうちに値を返す。
+			if (signal.stop.load(std::memory_order_relaxed)) {
+				return Value_Zero;
+			}
+
+			if (RootNode) {
+				ExtMove* rm = thisthread->find_rootmove(move);
+				if (movecount == 1 || value > alpha) {
+					rm->value = value;//指し手のスコアリング
+					thisthread->pv.clear();
+					thisthread->pv.push_back(move);
+					for (Move* m = (ss + 1)->pv; *m != MOVE_NONE; ++m) {
+						thisthread->pv.push_back(*m);
+					}
+				}
+				else {
+					rm->value = Value_Mated;
+				}
+			}
+
+			if (value > bestvalue) {
+
+				bestvalue = value;
+				if (value > alpha) {
+					bestMove = move;
+					if (PVNode && !RootNode) {
+						update_pv(ss->pv, move, (ss + 1)->pv);
+					}
+					//PVnodeでなければならないのはnonPVではnullwindowsearchだから
+					if (PVNode&&value < beta) {
+						alpha = value;
+					}
+					else {
+						//これはPVでもnonPVでも成り立つ（null window）
+						ASSERT(value >= beta);
+						break;
+					}
+				}
+			}
+		}
+		if (movecount == 0) {
+			bestvalue = excludedmove ? alpha : mated_in_ply(ss->ply);
+		}
+	return bestvalue;
+
+}
+
+template <Nodetype NT>
+Value lqsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
+
+	const bool PvNode = (NT == PV);
+	ASSERT(depth <= DEPTH_ZERO);
+	ASSERT(alpha < beta);
+	ASSERT(pos.state()->lastmove != MOVE_NULL);
+
+	Move pv[MAX_PLY + 1];
+	Move move;
+	Move bestMove = MOVE_NONE;
+	Value bestvalue;
+	Value value;
+	StateInfo si;
+	Value staticeval, oldAlpha;
+	int movecount = 0;
+	bool incheck = pos.is_incheck();
+	Thread* thisthread = pos.searcher();
+	//-----TT関連
+	//読み太ではTTから読み込んでいる途中でTTが破壊された場合のことも考えていたので、それを参考にする
+	//Key poskey;
+	bool TThit;
+	TPTEntry* tte;
+	Move ttMove;
+	Value ttValue;
+	Value ttEval;
+	Bound ttBound;
+	Depth ttdepth;
+	Value futilitybase = -Value_Infinite;
+	Value futilityvalue;
+	bool evasionPrunable;
+	if (PvNode)
+	{
+		// To flag BOUND_EXACT when eval above alpha and no available moves
+		//評価値がalpha超え、かつ合法手がない場合のflagとして用いる。
+		oldAlpha = alpha;
+		(ss + 1)->pv = pv;
+		ss->pv[0] = MOVE_NONE;
+	}
+
+	(ss)->static_eval = bestvalue = staticeval = Eval::eval(pos);
+
+	if (incheck) {
+		ss->static_eval = Value_error;
+		bestvalue = futilitybase = -Value_Infinite;
+	}
+	else {
+		
+
+		if (bestvalue >= beta) {
+
+			return bestvalue;
+
+		}
+
+		if (PvNode&&bestvalue > alpha) {
+			alpha = bestvalue;
+		}
+
+		futilitybase = bestvalue + 128;
+	}
+
+	movepicker mp(pos, move_to(pos.state()->lastmove), MOVE_NONE);
+	while ((move = mp.return_nextmove()) != MOVE_NONE) {
+		//
+		//#ifdef LEARN
+		//		if (is_ok(move) == false) { continue; }
+		//#endif
+
+		if (pos.is_legal(move) == false) { continue; }
+		/*if (pos.check_nihu(move) == true) {
+
+		cout << "nihu " << endl;
+		cout << move << endl;
+		cout << pos << endl;
+		cout << "pbb black" << endl << pos.pawnbb(BLACK) << endl;
+		cout << "pbb white" << endl << pos.pawnbb(WHITE) << endl;
+		UNREACHABLE;
+		}*/
+
+		bool givescheck = pos.is_gives_check(move);
+
+
+		//futility 
+		if (!incheck
+			&& !givescheck  //これ条件として入れるべきだと思うけれど今のdomoveの仕様ではなかなか難しい。
+			&&futilitybase > -Value_known_win
+			) {
+			futilityvalue = futilitybase + Value(Eval::piece_value[pos.piece_on(move_to(move))]);
+			//取り合いなので一手目をとった時にalpha-128を超えられないようであればその指し手を考えない
+			if (futilityvalue <= alpha) {
+				bestvalue = std::max(bestvalue, futilityvalue);
+				continue;
+			}
+			if (futilitybase <= alpha && pos.see(move) <= Value_Zero)
+			{
+				bestvalue = std::max(bestvalue, futilitybase);
+				continue;
+			}
+		}
+
+		movecount++;
+
+		pos.do_move(move, &si, givescheck);
+		value = -qsearch<NT>(pos, ss + 1, -beta, -alpha, depth - ONE_PLY);
+		pos.undo_move();
+
+		if (value > bestvalue) {
+			//取り合いを読んだ分評価値はより正確になった
+			bestvalue = value;
+
+			//alpha値は底上げされた
+			if (value > alpha) {
+
+				if (PvNode) {
+					update_pv(ss->pv, move, (ss + 1)->pv);
+				}
+
+				if (PvNode && value < beta)
+				{
+					//ここでalpha値を超えの処理をする。
+					alpha = value;
+					bestMove = move;
+				}
+				else
+				{
+					//PVnode以外ではnull window searchなのでalpha超えとはbeta超えのことである
+
+					return value;
+				}
+
+
+			}
+		}
+	}
+	//王手をかけられていて合法手がなければそれは詰み
+	if (incheck&&movecount == 0) {
+		return mated_in_ply(ss->ply);
+	}
+
+
+
+	return bestvalue;
+
+}
 
 
 
