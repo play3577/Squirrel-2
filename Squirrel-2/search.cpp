@@ -17,6 +17,8 @@
 #define Probcut
 #endif
 
+//aspiration探索
+//#define ASP
 
 #define MATEONE
 //#define MATETEST
@@ -74,8 +76,8 @@ int FutilityMoveCounts[2][16]; // [improving][depth]
 //これは小さいほうが条件が緩い
 int Reductions[2][2][64][64];  // [(bool)isPV][improving][depth][moveNumber]
 
-template <bool PvNode> Depth reduction(bool i, Depth d, int mn) {
-	return Reductions[PvNode][i][std::min(int(d / ONE_PLY), 63)][std::min(mn, 63)] * ONE_PLY;
+template <bool isPvNode> Depth reduction(bool i, Depth d, int mn) {
+	return Reductions[isPvNode][i][std::min(int(d / ONE_PLY), 63)][std::min(mn, 63)] * ONE_PLY;
 }
 
 //ここ後でマルチスレッドように変える
@@ -102,7 +104,7 @@ void search_init() {
 		for (int d = 1; d < 64; ++d) {
 			for (int mc = 1; mc < 64; ++mc)
 			{
-				double r = log(d) * log(mc) / 2;
+				double r = log(d) * log(mc) / 2.0;
 				//double r = log(d) * log(mc) / 2.5;//少し緩くしてみる。
 				if (r < 0.80) {
 					continue;
@@ -637,8 +639,7 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 		//razormargin[3]が二箇所で使われているので変な値になってしまっている？？
 
 		//stackはss+1でなくssでいいのか？？？（do_moveをしていないので構わない（ss->staticEvalなどの情報を使いまわせる！！！！））
-		if (depth <= ONE_PLY
-			&& staticeval + razor_margin[3 * ONE_PLY] <= alpha) {
+		if (depth <= ONE_PLY) {
 			return qsearch<NonPV>(pos, ss, alpha, beta, DEPTH_ZERO);
 		}
 
@@ -696,9 +697,11 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 
 
 		//Rの値は場合分けをして後で詳しく見る
-		//staticevalに大きな値が付きすぎていてRが大きくなりすぎている！（どどど　どうしよう...）(しかし一致率表示させようとしてる時だけに起こる現象なのでメモリエラーが原因なのかもしれない)
-		Depth R= Depth(((823 + 67 * int(depth / ONE_PLY)) / 256 + std::min(int(staticeval - beta) / Eval::PawnValue, 3)) * ONE_PLY);
-
+		//staticevalに大きな値が付きすぎていてRが大きくなりすぎている!
+		//betaの値が大きいので(staticeval - beta) がint32_tに収まりきっていなかった！！！！！
+		//これどうやって解決しようか.......
+		Depth R= Depth((823 + 67 * int(depth / ONE_PLY)) / 256 + std::min((staticeval - beta) / Eval::PawnValue, 3) * ONE_PLY);
+		ASSERT(R > 0);
 		pos.do_nullmove(&si);
 		(ss + 1)->skip_early_prunning = true;//前向き枝切りはしない。（２回連続パスはよろしくない）
 

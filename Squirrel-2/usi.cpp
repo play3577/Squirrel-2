@@ -165,6 +165,7 @@ void is_ready() {
 			BOOK::init();
 		}
 	}
+	
 	first_ready = false;
 }
 
