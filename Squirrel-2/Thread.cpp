@@ -59,7 +59,7 @@ void Thread::set(Position pos)
 
 void Thread::sort_RootMove()
 {
-	sort(RootMoves, end, [](const ExtMove& m1, const ExtMove& m2) { return m1.value > m2.value; });
+	std::stable_sort(RootMoves, end, [](const ExtMove& m1, const ExtMove& m2) { return m1.value > m2.value; });
 }
 
 

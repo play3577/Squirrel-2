@@ -72,7 +72,7 @@ rootを3にしたほうがメモリの節約になっていいか？？やっぱだめだな
 */
 int FutilityMoveCounts[2][16]; // [improving][depth]
 //これは小さいほうが条件が緩い
-int Reductions[3][2][64][64];  // [pv][improving][depth][moveNumber]
+int Reductions[2][2][64][64];  // [(bool)isPV][improving][depth][moveNumber]
 
 template <bool PvNode> Depth reduction(bool i, Depth d, int mn) {
 	return Reductions[PvNode][i][std::min(int(d / ONE_PLY), 63)][std::min(mn, 63)] * ONE_PLY;
@@ -107,12 +107,13 @@ void search_init() {
 				if (r < 0.80) {
 					continue;
 				}
-				Reductions[NonPV][imp][d][mc] = int(std::round(r));
-				Reductions[PV][imp][d][mc] = std::max(Reductions[NonPV][imp][d][mc] - 1, 0);
+				//0 1　は is_pv
+				Reductions[0][imp][d][mc] = int(std::round(r));
+				Reductions[1][imp][d][mc] = std::max(Reductions[0][imp][d][mc] - 1, 0);
 
 				// Increase reduction for non-PV nodes when eval is not improving
-				if (!imp && Reductions[NonPV][imp][d][mc] >= 2) {
-					Reductions[NonPV][imp][d][mc]++;
+				if (!imp && Reductions[0][imp][d][mc] >= 2) {
+					Reductions[0][imp][d][mc]++;
 				}
 			}
 		}
@@ -177,7 +178,7 @@ void check_time() {
 Value Thread::think() {
 
 	Stack stack[MAX_PLY + 7], *ss = stack + 5;
-	std::memset(stack, 0, (MAX_PLY + 7) * sizeof(Stack));
+	std::memset(ss-5, 0, 8 * sizeof(Stack));//まえ8つだけ初期化する？？
 	Value bestvalue, alpha, beta,delta;
 
 	if (end == RootMoves) {
@@ -224,7 +225,7 @@ Value Thread::think() {
 	TT.new_search();
 #endif
 	
-	bestvalue = alpha = -Value_Infinite;
+	bestvalue = delta=alpha = -Value_Infinite;
 	beta = Value_Infinite;
 	rootdepth = 0;
 	int maxdepth;
@@ -290,7 +291,7 @@ research:
 #else
 		bestvalue = lsearch<Root>(rootpos, ss, alpha, beta, rootdepth*ONE_PLY, false);
 #endif
-
+		sort_RootMove();
 		if (signal.stop) {
 			//cout << "signal stop" << endl;
 			break;
@@ -311,7 +312,7 @@ research:
 		}
 #endif
 
-		sort_RootMove();
+		
 
 
 		
@@ -336,14 +337,23 @@ ID_END:
 
 template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value beta, Depth depth,bool cutNode) {
 
-	ASSERT(alpha < beta);
-
+	ASSERT(-Value_Infinite<=alpha&&alpha < beta&&beta<=Value_Infinite);
 	
+
 
 	//初期化
 	const bool PVNode = (NT == PV || NT == Root);
 	const bool RootNode = (NT == Root);
+
+	ASSERT(PVNode || (alpha == beta - 1));
+	ASSERT(DEPTH_ZERO < depth&&depth < MAX_DEPTH*(int)ONE_PLY);
+	ASSERT(!(PVNode&&cutNode));
+
+
+
 	bool doFullDepthSearch = false;
+
+
 
 	Move pv[MAX_PLY + 1];
 	Move move = MOVE_NONE;
@@ -902,6 +912,7 @@ moves_loop:
 		 &&depth >= 8 * ONE_PLY
 		&&ttMove != MOVE_NONE
 		&&excludedmove != MOVE_NONE
+		&&abs(ttValue)<Value_known_win
 		&& (ttBound&BOUND_LOWER)//LOWER or EXACT
 		 && ttdepth >= depth - 3 * ONE_PLY;
 #endif
@@ -928,7 +939,7 @@ moves_loop:
 
 		if (NT == Root&&thisthread->find_rootmove(move) == nullptr) { continue; }
 
-	
+		if (PVNode) { (ss + 1)->pv = nullptr; }
 
 		/*
 		capture propawnの指し手になりうるのはcappropawnのステージとEVERSIONのステージだけ
@@ -984,18 +995,15 @@ moves_loop:
 				&& !extension) {
 			
 				Value rBeta = ttValue - 2 * depth / ONE_PLY;
-			Depth d = (depth / (2 * int(ONE_PLY)))*int(ONE_PLY);
-			ss->excludedMove = move;
-			ss->skip_early_prunning = true;
-			value = search<NonPV>(pos, ss, rBeta - 1, rBeta, d,cutNode);
-			ss->skip_early_prunning = false;
-			ss->excludedMove = MOVE_NONE;
-			if (value < rBeta) {
-				extension = ONE_PLY;
-				
-			}
+				Depth d = (depth / (2 * int(ONE_PLY)))*int(ONE_PLY);
+				ss->excludedMove = move;
+				ss->skip_early_prunning = true;
+				value = search<NonPV>(pos, ss, rBeta - 1, rBeta, d,cutNode);
+				ss->skip_early_prunning = false;
+				ss->excludedMove = MOVE_NONE;
+				if (value < rBeta) { extension = ONE_PLY;	}
 			
-		}
+			}
 #endif
 		newdepth = depth - ONE_PLY + extension;
 		
@@ -1292,16 +1300,18 @@ template <Nodetype NT>
 Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
 
 	const bool PvNode = (NT == PV);
-	ASSERT(depth <= DEPTH_ZERO);
-	ASSERT(alpha < beta);
+	ASSERT( depth <= DEPTH_ZERO);
+	ASSERT(alpha >= -Value_Infinite&&alpha < beta&&beta<=Value_Infinite);
+	ASSERT(PvNode || (alpha == beta - 1));
 	ASSERT(pos.state()->lastmove != MOVE_NULL);
 
 	Move pv[MAX_PLY + 1];
 	Move move;
-	Move bestMove=MOVE_NONE;
+	Move bestMove;
 	Value bestvalue;
 	Value value;
 	StateInfo si;
+	si.clear_stPP();
 	Value staticeval,oldAlpha;
 	int movecount = 0;
 	bool incheck = pos.is_incheck();
@@ -1319,6 +1329,10 @@ Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
 	Value futilitybase = -Value_Infinite;
 	Value futilityvalue;
 	bool evasionPrunable;
+
+
+
+
 	if (PvNode)
 	{
 		// To flag BOUND_EXACT when eval above alpha and no available moves
@@ -1327,23 +1341,25 @@ Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
 		(ss + 1)->pv = pv;
 		ss->pv[0] = MOVE_NONE;
 	}
+	ss->currentMove = bestMove = MOVE_NONE;
+	ss->ply = (ss - 1)->ply + 1;
 	//時間通りに指し手を指してくれなかったので精子探索でも時間を見る
 	//取り合いの途中で評価を返されると実にまずいのでできるだけしたくないのだが....
 #ifndef LEARN
 	//timer threadを用意せずにここで時間を確認する。
 	//stockfish方式
-	if (thisthread->resetCalls.load(std::memory_order_relaxed)) {
+	//if (thisthread->resetCalls.load(std::memory_order_relaxed)) {
 
-		thisthread->resetCalls = false;
-		thisthread->call_count = 0;
+	//	thisthread->resetCalls = false;
+	//	thisthread->call_count = 0;
 
-	}
-	
-	if (++thisthread->call_count > 4096) {
-		//並列化のときはすべてのスレッドでこの操作を行う。
-		thisthread->resetCalls = true;
-		check_time();
-	}
+	//}
+	//
+	//if (++thisthread->call_count > 4096) {
+	//	//並列化のときはすべてのスレッドでこの操作を行う。
+	//	thisthread->resetCalls = true;
+	//	check_time();
+	//}
 #endif
 	
 #ifdef USETT
@@ -1563,10 +1579,10 @@ Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
 		value = -qsearch<NT>(pos, ss + 1, -beta, -alpha, depth - ONE_PLY);
 		pos.undo_move();
 #ifndef LEARN
-		if (signal.stop.load(std::memory_order_relaxed)) {
-			//時間切れはfail hardにしているがここもfail softにしておくべきか？
-			return alpha;
-		}
+		//if (signal.stop.load(std::memory_order_relaxed)) {
+		//	//時間切れはfail hardにしているがここもfail softにしておくべきか？
+		//	return alpha;
+		//}
 #endif
 		if (value > bestvalue) {
 			//取り合いを読んだ分評価値はより正確になった
