@@ -689,18 +689,21 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 		&&staticeval >= beta
 		&& (staticeval >= beta - 35 * (int(depth / ONE_PLY) - 6) || depth >= 13 * ONE_PLY)
 		) {
+
+
+
 		ss->currentMove = MOVE_NULL;
 		ss->counterMoves = nullptr;
-		ASSERT(staticeval >= beta);
 
-
-
+		
+		//ASSERT((int(staticeval) - int(beta) >= 0));
+		
 
 		//Rの値は場合分けをして後で詳しく見る
 		//staticevalに大きな値が付きすぎていてRが大きくなりすぎている!
-		//betaの値が大きいので(staticeval - beta) がint32_tに収まりきっていなかった！！！！！
-		//これどうやって解決しようか.......
-		Depth R= Depth((823 + 67 * int(depth / ONE_PLY)) / 256 + std::min((staticeval - beta) / Eval::PawnValue, 3) * ONE_PLY);
+		//betaの値が大きいので(staticeval - beta) がint32_tに収まりきっていなかった！！(そんなことはなかった)
+		//
+		Depth R= Depth((823 + 67 * (depth / ONE_PLY)) / 256 + std::min((int(staticeval) - int(beta)) / Eval::PawnValue, 3) * ONE_PLY);
 		ASSERT(R > 0);
 		pos.do_nullmove(&si);
 		(ss + 1)->skip_early_prunning = true;//前向き枝切りはしない。（２回連続パスはよろしくない）

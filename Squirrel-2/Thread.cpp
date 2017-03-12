@@ -14,7 +14,7 @@ const string print_value(Value v) {
 	stringstream ss;
 
 	if (v < Value_mated_in_maxply) {
-		ss << "mated " << int(Value_Mated  - v) ;
+		ss << "mate " << int(Value_Mated  - v) ;
 	}
 	else if (v > Value_mate_in_maxply) {
 		ss << "mate " << int(Value_Mate-v) ;
