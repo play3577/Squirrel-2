@@ -18,7 +18,7 @@
 #endif
 
 //aspiration探索
-//#define ASP
+#define ASP
 
 #define MATEONE
 //#define MATETEST
@@ -1119,10 +1119,10 @@ moves_loop:
 		あんまり条件を緩くしすぎてもレーティング下がってしまった。
 		*/
 		if (depth >= 3 * ONE_PLY
-			&& ((pos.ply_from_startpos + (ss)->ply)<50)
+			//&& ((pos.ply_from_startpos + (ss)->ply)<50)
 			&&movecount > 1
 			&& (!CaptureorPropawn || move_count_pruning)
-			&&mp.ret_stage()!=Killers
+			//&&mp.ret_stage()!=Killers
 			)
 		{
 			//PVではreducationはしない その他ではreducationする

@@ -27,7 +27,7 @@ inline Stage operator++(Stage& d, int) { Stage prev = d; d = Stage(int(d) + 1); 
 class movepicker {
 
 private:
-	ExtMove move_[600], *current_, *end_;
+	ExtMove move_[600], *current_=move_, *end_=move_;
 	ExtMove *end_badcaptures = move_ + 600 - 1;
 	Stage st;
 	const Position& pos_;
@@ -50,6 +50,7 @@ public:
 	//精子探索用コンストラクタ
 	movepicker(const Position& pos, Square recapsq,Move ttm) :pos_(pos) {
 		current_ = end_ = move_;
+		
 
 		if (pos.is_incheck()) {
 			st = START_Eversion;
@@ -77,11 +78,13 @@ public:
 		ASSERT(pos.is_incheck() == false);
 		current_ = end_ = move_;
 		st = Start_Probcut;
+
 		ttMove = (ttm != MOVE_NONE
 			&&pos_.pseudo_legal(ttm)
-			//&& pos_.capture(ttm)
-			&&pos_.capture_or_propawn(ttm)
+			&& pos_.capture(ttm)
+			//&&pos_.capture_or_propawn(ttm)
 			&& pos.see(ttm) > Threshold )? ttm : MOVE_NONE;
+
 		end_ += (ttMove != MOVE_NONE);
 	}
 

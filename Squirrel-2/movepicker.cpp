@@ -279,14 +279,16 @@ void movepicker::eversion_score()
 		const Piece movept = piece_type(moved_piece(m));
 		const Piece capturedpt = piece_type(pos_.piece_on(move_to(m)));
 		//piece_color(pcboard[move_to(m)]) == sidetomove()
+		//ASSERT(piece_color(pos_.piece_on(move_to(m))) != pos_.sidetomove());
+		//if (pos_.piece_on(move_to(m)) != NO_PIECE) {
 
-		if (pos_.piece_on(move_to(m)) != NO_PIECE) {
-			if (piece_color(pos_.piece_on(move_to(m))) == pos_.sidetomove()) {
-				cout << pos_ << endl;
-				check_move(m);
-				ASSERT(0);
-			}
-		}
+		//	/*if (piece_color(pos_.piece_on(move_to(m))) == pos_.sidetomove()) {
+		//		cout << pos_ << endl;
+		//		check_move(m);
+		//		ASSERT(0);
+		//	}*/
+		//	
+		//}
 
 		if ((see = pos_.see_sign(m))<Value_Zero) {
 			i->value = see - HistoryStats::Max;
