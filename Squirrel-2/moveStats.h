@@ -61,7 +61,7 @@ v‚ª324‚Ì’l‚ð’´‚¦‚é‚Ì‚Íd=18
 template<typename T, bool CM = false>
 struct Stats {
 
-	static const Value Max = Value(1 << 14);//Value‚Í16bit®”‚É‚µ‚Ä‚¢‚é‚Ì‚Å‚»‚ê‚ÉŽû‚Ü‚é‚æ‚¤‚É’²®
+	static const Value Max = Value(1 << 28);//Value‚Í16bit®”‚É‚µ‚Ä‚¢‚é‚Ì‚Å‚»‚ê‚ÉŽû‚Ü‚é‚æ‚¤‚É’²®
 
 	const T* operator[](Piece pc) const { return table[pc]; }
 	T* operator[](Piece pc) { return table[pc]; }

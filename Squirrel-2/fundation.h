@@ -182,7 +182,7 @@ const int MAX_PLY = 256;
 
 
 //評価値はTTの16bitで収めなければ成らないため32768から32767まで
-enum Value :int16_t {
+enum Value :int/*16_t*/ {
 
 	Value_Zero = 0,
 	Value_Mate = 32000,
@@ -199,9 +199,7 @@ enum Value :int16_t {
 	Kirin_value = 150,
 	Niwatori_value = 200,
 	Lion_value = 10000,*/
-	//学習で値を変更できるようにするためにあとでここで定義するのをやめる。
-	//後じゃなくていまやめろよ
-	//わかりましたすみません
+	
 };
 
 /*

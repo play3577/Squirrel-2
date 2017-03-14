@@ -18,8 +18,9 @@
 #endif
 
 //aspirationíTçı
+#ifndef LEARN
 #define ASP
-
+#endif
 #define MATEONE
 //#define MATETEST
 //#define PREF2
@@ -288,11 +289,14 @@ research:
 		//}
 		ASSERT(alpha < beta);
 
-#ifndef	LEARN
-		bestvalue = search<Root>(rootpos, ss, alpha, beta, rootdepth*ONE_PLY,false);
-#else
-		bestvalue = lsearch<Root>(rootpos, ss, alpha, beta, rootdepth*ONE_PLY, false);
-#endif
+		bestvalue = search<Root>(rootpos, ss, alpha, beta, rootdepth*ONE_PLY, false);
+
+//
+//#ifndef	LEARN
+//		bestvalue = search<Root>(rootpos, ss, alpha, beta, rootdepth*ONE_PLY,false);
+//#else
+//		bestvalue = lsearch<Root>(rootpos, ss, alpha, beta, rootdepth*ONE_PLY, false);
+//#endif
 		sort_RootMove();
 		if (signal.stop) {
 			//cout << "signal stop" << endl;
