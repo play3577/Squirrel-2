@@ -870,8 +870,11 @@ ExtMove * move_eversion(const Position& pos, ExtMove * movelist) {
 
 
 		//‰¤Žè‚ª‚©‚©‚Á‚Ä‚¢‚È‚¢‚Ì‚Éincheck‚É‚È‚Á‚Ä‚µ‚Ü‚Á‚Ä‚¢‚é
-		if (pos.piece_on(esq) == NO_PIECE) { cout << pos << endl; ASSERT(0); };
-		if(piece_color(pos.piece_on(esq)) != ENEMY) { cout << pos << endl; ASSERT(0); }
+		//if (pos.piece_on(esq) == NO_PIECE) { cout << pos << endl; ASSERT(0); };
+		//if(piece_color(pos.piece_on(esq)) != ENEMY) { cout << pos << endl; ASSERT(0); }
+		ASSERT(pos.piece_on(esq) != NO_PIECE);
+		ASSERT(piece_color(pos.piece_on(esq)) == ENEMY);
+
 
 		++num_checker;
 		enemy_effected |= effectBB(pos, piece_type(pos.piece_on(esq)), ENEMY, esq);

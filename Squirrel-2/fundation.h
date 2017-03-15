@@ -18,8 +18,9 @@
 #endif
 #ifndef _DEBUG
 #define ASSERT(X) { if (!(X)){std::cout << "\nError!!\n" << "info string file:" << __FILE__ << " line:" << __LINE__ <<" "<< #X<< std::endl; *(int*)1 =0;} }
-#endif
 //#define ASSERT(x) ((void)0)//‚·‚×‚Ä‚ð‚©‚È‚®‚èŽÌ‚Ä‚Ä‘¬“x‚ðo‚µ‚½‚¢‚Æ‚«—p
+#endif
+
 #define UNREACHABLE ASSERT(0)
 
 #define HAVE_SSE2

@@ -30,7 +30,7 @@ using namespace std;
 
 #define JIGENSAGE
 
-//#define LOWDIM2
+#define LR
 
 //struct  Parse2data;
 
@@ -51,6 +51,37 @@ struct  dJValue
 				//PP対称性を考えて
 				absolute_PP[list_fb[j]][list_fb[i]] += diff;
 				absolute_PP[list_fw[j]][list_fw[i]] -= diff;
+#ifdef LR
+
+				/*
+				左右対称性を考える　ちょっと怪しい....
+				*/
+				if (bp2sq(list_fb[i]) != Error_SQ&&bp2sq(list_fb[j]) != Error_SQ) {
+					//両方とも盤上
+					absolute_PP[sym_rightleft(list_fb[i])][sym_rightleft(list_fb[j])]+=diff;
+					absolute_PP[sym_rightleft(list_fw[i])][sym_rightleft(list_fw[j])] -= diff;
+
+					absolute_PP[sym_rightleft(list_fb[j])][sym_rightleft(list_fb[i])] += diff;
+					absolute_PP[sym_rightleft(list_fw[j])][sym_rightleft(list_fw[i])] -= diff;
+				}
+				else if (bp2sq(list_fb[i]) != Error_SQ&&bp2sq(list_fb[j]) == Error_SQ) {
+					//iが盤上
+					absolute_PP[sym_rightleft(list_fb[i])][(list_fb[j])] += diff;
+					absolute_PP[sym_rightleft(list_fw[i])][(list_fw[j])] -= diff;
+
+					absolute_PP[(list_fb[j])][sym_rightleft(list_fb[i])] += diff;
+					absolute_PP[(list_fw[j])][sym_rightleft(list_fw[i])] -= diff;
+				}
+				else if (bp2sq(list_fb[i]) == Error_SQ&&bp2sq(list_fb[j]) != Error_SQ) {
+					//jが盤上
+					absolute_PP[(list_fb[i])][sym_rightleft(list_fb[j])] += diff;
+					absolute_PP[(list_fw[i])][sym_rightleft(list_fw[j])] -= diff;
+
+					absolute_PP[sym_rightleft(list_fb[j])][(list_fb[i])] += diff;
+					absolute_PP[sym_rightleft(list_fw[j])][(list_fw[i])] -= diff;
+				}
+
+#endif
 			}
 		}
 	}
@@ -67,61 +98,6 @@ struct  dJValue
 		}
 	}
 
-
-#ifdef  LOWDIM2
-	double relative_pp[PT_ALL][PC_ALL][17][17]; //[17][17]は平行移動の相対位置
-
-	void lowdim_eachPP(const BonaPiece bp1, const BonaPiece bp2, const double diff) {
-
-		double diff_ = diff;
-
-		BonaPiece i = std::max(bp1, bp2), j = std::min(bp1, bp2);
-
-		Piece pci = bp2piece.bp_to_piece(bpwithoutsq(i));
-		ASSERT(pci != NO_PIECE);
-		//後手の駒を黒番として扱うためにdiffを反転させる
-		if (piece_color(pci) == WHITE) {
-			diff_ = -diff_;
-			i = inversebonapiece(i);
-			j = inversebonapiece(j);
-		}
-		ASSERT(piece_color(bp2piece.bp_to_piece(bpwithoutsq(i))) == BLACK);
-
-		//相対PP
-		if (bp2sq(i) != Error_SQ&&bp2sq(j) != Error_SQ) {
-			Piece pti = piece_type(bp2piece.bp_to_piece(bpwithoutsq(i)));//iの駒は先手の駒に変換させられているのでptでいい
-			Piece pcj = bp2piece.bp_to_piece(bpwithoutsq(j));//jにいるのが味方の駒か相手の駒かは重要になってくるので含めなければならない。
-			Square sq1 = bp2sq(i), sq2 = bp2sq(j);//bp1,bp2の駒の位置
-			relative_pp[pti][pcj][sqtofile(sq1) - sqtofile(sq2) + 8][sqtorank(sq1) - sqtorank(sq2) + 8] += diff_;
-		}
-		absolute_PP[i][j] += diff_;
-
-
-	}
-
-	void update_lowdim(const Position& pos, const double diff) {
-
-		const auto list1 = pos.evallist();
-
-		const BonaPiece *list_fb = list1.bplist_fb, *list_fw = list1.bplist_fw;
-		for (int i = 0; i < 40; i++) {
-			for (int j = 0; j < i; j++) {
-				lowdim_eachPP(list_fb[i], list_fb[j], diff);
-				lowdim_eachPP(list_fw[i], list_fw[j], -diff);
-			}
-		}
-	}
-
-	void add_lowdim() {
-
-
-
-
-	}
-
-
-
-#endif //  LOWDIM2
 
 	
 
@@ -958,52 +934,6 @@ void learnphase2body(int number)
 
 }
 
-//gradJは既に左右対称性を持たされているものとする。
-//(bp1,bp2)要素について次元下げを行う
-/*
-次元下げについて全然わからないので直感でコード書いてる（これが一番いけない気がする）
-（まず次元下げの理念ぐらいちゃんと理解しておいたほうがいいのではないか？）
-まず一回どんなものか自分で書いてみたほうがほかの人の書いたコードを見たとき理解するのが早いのでまず一回書いてみる。
-*/
-//
-//void each_PP(lowerDimPP & lowdim, const dJValue& gradJ,const BonaPiece bp1,const BonaPiece bp2) {
-//	if (bp1 == bp2) { return; }//一致する場所はevaluateで見ないのでgradJも0になっている。これは無視していい。
-//	/*Piece pc;
-//	Square sq;*/
-//	//絶対PP
-//	lowdim.absolute_pp[bp1][bp2]=gradJ.dJ[bp1][bp2];
-//
-//	//絶対P
-//	lowdim.absolute_p[bp1] += gradJ.dJ[bp1][bp2];
-//	lowdim.absolute_p[bp2] += gradJ.dJ[bp1][bp2];
-//	
-//	//相対PP（盤上の駒だけ）
-//	if (bp1 >= fe_hand_end&&bp2 >= fe_hand_end) {
-//		Piece pc1 = bp2piece.bp_to_piece(bpwithoutsq(bp1)), pc2 = bp2piece.bp_to_piece(bpwithoutsq(bp2));//bp1,bp2の駒種
-//		Square sq1=bp2sq(bp1), sq2=bp2sq(bp2);//bp1,bp2の駒の位置
-//		lowdim.relative_pp[pc1][pc2][sqtofile(sq1) - sqtofile(sq2) + 8][sqtorank(sq1) - sqtorank(sq2) + 8]+= gradJ.dJ[bp1][bp2];
-//	}
-//}
-//
-//
-////この関数で次元下げされた値をgradJに織り込んでいく。（weave：織り込む）
-//void weave_eachPP(dJValue& newgradJ, const lowerDimPP& lowdim, const BonaPiece bp1, const BonaPiece bp2) {
-//	if (bp1 == bp2) { return; }//一致する場所はevaluateで見ないのでgradJも0でいい。これは無視していい。
-//	//絶対PP
-//	newgradJ.dJ[bp1][bp2] = lowdim.absolute_pp[bp1][bp2];
-//
-//	//絶対P
-//	newgradJ.dJ[bp1][bp2] += lowdim.absolute_p[bp1];
-//	newgradJ.dJ[bp1][bp2] += lowdim.absolute_p[bp2];
-//
-//	//相対PP（盤上の駒だけ）
-//	if (bp1 >= fe_hand_end&&bp2 >= fe_hand_end) {
-//		Piece pc1=bp2piece.bp_to_piece(bpwithoutsq(bp1)), pc2 = bp2piece.bp_to_piece(bpwithoutsq(bp2));//bp1,bp2の駒種
-//		Square sq1=bp2sq(bp1), sq2=bp2sq(bp2);//bp1,bp2の駒の位置
-//		newgradJ.dJ[bp1][bp2]+=lowdim.relative_pp[pc1][pc2][sqtofile(sq1) - sqtofile(sq2) + 8][sqtorank(sq1) - sqtorank(sq2) + 8];//平行移動
-//	}
-//}
-
 
 void each_PP(lowerDimPP & lowdim, const dJValue& gradJ, const BonaPiece bp1, const BonaPiece bp2) {
 	if (bp1 == bp2) { return; }//一致する場所はevaluateで見ないのでgradJも0になっている。これは無視していい。
@@ -1014,17 +944,7 @@ void each_PP(lowerDimPP & lowdim, const dJValue& gradJ, const BonaPiece bp1, con
 	double grad = gradJ.absolute_PP[bp1][bp2];
 
 
-	//駒iは先手の駒に置き換える。（先手の駒後手の駒どちらの場合も同じindexの組として取り扱う為。手番対称による次元下げ。）
-	//先手の駒に置き換えるため、もしそれが後手の駒であれば、符号は反転させなければならない。
-	/*Piece pci = bp2piece.bp_to_piece(bpwithoutsq(i));
-	ASSERT(pci != NO_PIECE);
-	if (piece_color(pci) == WHITE) {
-		grad = -grad;
-		i = inversebonapiece(i);
-		j = inversebonapiece(j);
-	}
-	ASSERT(piece_color(bp2piece.bp_to_piece(bpwithoutsq(i))) == BLACK);
-*/
+	
 	//相対PP
 	if (bp2sq(i) != Error_SQ&&bp2sq(j) != Error_SQ) {
 		Piece pci = (bp2piece.bp_to_piece(bpwithoutsq(i)));//iの駒は先手の駒に変換させられているのでptでいい
@@ -1049,15 +969,7 @@ void weave_eachPP(dJValue& newgradJ, const lowerDimPP& lowdim, const BonaPiece b
 							   //iとjの前後によって違う場所を参照してしまうのを防ぐ。
 	BonaPiece i = std::max(bp1, bp2), j = std::min(bp1, bp2);
 
-	//駒iは先手の駒に置き換える。（先手の駒後手の駒どちらの場合も同じindexの組として取り扱う為。手番対称による次元下げ。）
-	/*Piece pci = bp2piece.bp_to_piece(bpwithoutsq(i));
-	ASSERT(pci != NO_PIECE);
-	if (piece_color(pci) == WHITE) {
-		i = inversebonapiece(i);
-		j = inversebonapiece(j);
-	}
-	ASSERT(piece_color(bp2piece.bp_to_piece(bpwithoutsq(i))) == BLACK);*/
-
+	
 	//相対PP(平行移動)
 	if (bp2sq(i) != Error_SQ&&bp2sq(j) != Error_SQ) {
 		Piece pci = (bp2piece.bp_to_piece(bpwithoutsq(i)));//iの駒は先手の駒に変換させられているのでptでいい

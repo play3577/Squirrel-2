@@ -232,10 +232,11 @@ void Position::do_move(const Move m, StateInfo * newst)
 	Piece movedpiece = moved_piece(m);//移動させる駒
 	Piece capture;
 	//取ろうとしている駒が王であることはありえない
-	if (piece_type(pcboard[to]) == KING) {
+	ASSERT(piece_type(pcboard[to]) != KING);
+	/*if (piece_type(pcboard[to]) == KING) {
 		cout << *this << endl;
 		ASSERT(0);
-	}
+	}*/
 	//undomoveの為の情報を用意
 	st->DirtyPiece[0] = movedpiece;//dirtypieceに動いた駒を入れる
 	st->lastmove = m;//今回指した指して
@@ -259,12 +260,12 @@ void Position::do_move(const Move m, StateInfo * newst)
 		int num = num_pt(hands[sidetomove()], pt);
 		ASSERT(add_color(pt, sidetomove()) == movedpiece);
 		ASSERT(sidetomove() == c);
-		//ASSERT(num != 0);
-		if (num == 0) {
+		ASSERT(num != 0);
+		/*if (num == 0) {
 			cout << *this << endl;
 			check_move(m);
 			ASSERT(0);
-		}
+		}*/
 
 		//dirtybonapの更新(一番枚数の大きい駒から打っていくことにする)
 		st->dirtyuniform[0] = list.hand2Uniform[c][pt][num];
@@ -385,10 +386,11 @@ void Position::do_move(const Move m, StateInfo * newst)
 			Piece pt2 = rowpiece(piece_type(capture));//成り駒を取った場合はなってない駒に戻す（手駒に追加するため）
 			Piece cappt = piece_type(capture);
 			//王を捕獲はできない
-			if (cappt == KING) {
+			ASSERT(cappt != KING);
+			/*if (cappt == KING) {
 				cout << *this << endl;
 				ASSERT(0);
-			}
+			}*/
 			//cは取られたコマの色
 			Color c_cap = piece_color(capture);
 			ASSERT(c_cap != sidetomove());//自分の駒を取ってしまってないか
@@ -448,7 +450,8 @@ void Position::do_move(const Move m, StateInfo * newst)
 		st->inCheck = false;
 		st->checker = ZeroBB;
 	}
-	if (st->inCheck&&st->checker.isNot() == false) { ASSERT(0); }
+	//if (st->inCheck&&st->checker.isNot() == false) { ASSERT(0); }
+	ASSERT(!st->inCheck || st->checker.isNot());
 #ifdef GIVESCHECK
 	if (give_check != st->inCheck) {
 		cout << *this << endl;
@@ -456,10 +459,11 @@ void Position::do_move(const Move m, StateInfo * newst)
 		ASSERT(0);
 	}
 #endif
-	if (pcboard[to] == NO_PIECE) {
+	/*if (pcboard[to] == NO_PIECE) {
 		cout << *this << endl;
 		ASSERT(0);
-	}
+	}*/
+	ASSERT(pcboard[to] != NO_PIECE);
 
 	ASSERT((sidetomove() == BLACK && (st->board_&Zoblist::side) == 0) || (sidetomove() == WHITE && (st->board_&Zoblist::side) == 1));
 }
@@ -510,11 +514,14 @@ void Position::do_move(const Move m, StateInfo * newst, const bool givescheck)
 
 		//駒打ちなので移動先には駒はいないはず（コレがundo_moveでのエラーの原因か!!!!こんちくしょう）
 		//なんで駒打ちなのに移動先に駒がいる？（eversionで王手をかけている駒を取ろうとするときに駒を打って取ろうとしている！！！）
-		if (pcboard[to] != NO_PIECE) {
+		ASSERT(pcboard[to] == NO_PIECE);
+		/*if (pcboard[to] != NO_PIECE) {
 			cout << *this << endl;
 			check_move(m);
 			ASSERT(0);
-		}
+		}*/
+
+
 		//打つ駒の準備
 		Piece pt = piece_type(movedpiece);
 		Color c = piece_color(movedpiece);
@@ -642,10 +649,14 @@ void Position::do_move(const Move m, StateInfo * newst, const bool givescheck)
 			Piece pt2 = rowpiece(piece_type(capture));//成り駒を取った場合はなってない駒に戻す（手駒に追加するため）
 			Piece cappt = piece_type(capture);
 			//王を捕獲はできない
-			if (cappt == KING) {
+
+			ASSERT(cappt != KING);
+			/*if (cappt == KING) {
 				cout << *this << endl;
 				ASSERT(0);
-			}
+			}*/
+
+
 			//cは取られたコマの色
 			Color c_cap = piece_color(capture);
 			ASSERT(c_cap != sidetomove());//自分の駒を取ってしまってないか
@@ -705,7 +716,12 @@ void Position::do_move(const Move m, StateInfo * newst, const bool givescheck)
 		st->inCheck = false;
 		st->checker = ZeroBB;
 	}
-	if (st->inCheck&&st->checker.isNot() == false) { ASSERT(0); }
+
+
+	//if (st->inCheck&&st->checker.isNot() == false) { ASSERT(0); }
+	ASSERT(!st->inCheck||st->checker.isNot());
+
+
 #ifdef GIVESCHECK
 	if (givescheck != is_effect_to(opposite(sidetomove_), ksq(sidetomove_))) {
 		cout << *this << endl;
@@ -713,10 +729,12 @@ void Position::do_move(const Move m, StateInfo * newst, const bool givescheck)
 		ASSERT(0);
 	}
 #endif
-	if (pcboard[to] == NO_PIECE) {
+	/*if (pcboard[to] == NO_PIECE) {
 		cout << *this << endl;
 		ASSERT(0);
-	}
+	}*/
+	ASSERT(pcboard[to] != NO_PIECE);
+
 
 	ASSERT((sidetomove() == BLACK && (st->board_&Zoblist::side) == 0) || (sidetomove() == WHITE && (st->board_&Zoblist::side) == 1));
 
@@ -733,10 +751,14 @@ void Position::undo_move()
 	Square to = move_to(LMove);//前回の移動先
 	Piece movedpiece = st->DirtyPiece[0];//前回移動した駒
 	Piece capture = st->DirtyPiece[1];//捕獲された駒
-	if (pcboard[to] == NO_PIECE) {
+
+	ASSERT(pcboard[to] != NO_PIECE);
+	/*if (pcboard[to] == NO_PIECE) {
 		cout << *this << endl;
 		ASSERT(0);
-	}
+	}*/
+
+
 	//evallistの差分用
 	const Eval::BonaPiece movedbonap_fb = st->dirtybonap_fb[0];
 	const Eval::BonaPiece capturedbonap_fb = st->dirtybonap_fb[1];
@@ -775,10 +797,12 @@ void Position::undo_move()
 		//コマの移動
 		Square from = move_from(LMove);
 		Piece afterpiece = pcboard[to];//移動した駒はなっている場合があるためpcboard[to]を使う
-		if (afterpiece == NO_PIECE) {
+
+		//これすでに上でチェックしている
+		/*if (afterpiece == NO_PIECE) {
 			cout << *this << endl;
 			ASSERT(0);
-		}
+		}*/
 		pcboard[from] = movedpiece;
 		
 		pcboard[to] = capture;
@@ -1071,9 +1095,13 @@ bool Position::is_legal(const Move m) const {
 	}
 
 	//動かす駒は自分の駒
-	if (piece_color(movedpiece) != sidetomove_) { goto Error; }
-	//fromにいる駒と動かそうとしている駒は同じ
-	if (!isDrop) { ASSERT(piece_on(from) == movedpiece); }
+	//if (piece_color(movedpiece) != sidetomove_) { goto Error; }
+	////fromにいる駒と動かそうとしている駒は同じ
+	//if (!isDrop) { ASSERT(piece_on(from) == movedpiece); }
+
+	ASSERT(piece_color(movedpiece) == sidetomove_);
+	ASSERT(isDrop || piece_on(from) == movedpiece);
+
 	//取ろうとしている駒は自分の駒ではない
 #ifdef LEARN
 	if (piece_on(to) != NO_PIECE && piece_color(piece_on(to)) == sidetomove_) { return false; }
@@ -1081,17 +1109,22 @@ bool Position::is_legal(const Move m) const {
 	ASSERT(piece_on(to) == NO_PIECE || piece_color(piece_on(to)) != sidetomove_);
 #endif
 	
-	//取ろうとしている駒は玉ではない
-	if (piece_type(piece_on(to)) == KING) {
-//#ifndef LEARN
-		cout <<endl<< *this << endl;
-		check_move(m);
-		ASSERT(0);
-//#else 
-		//学習中は人間の棋譜で相手の効きのある場所に王を動かしてしまうことが起こってしまうこともあるみたい
-		//return false;
-//#endif
-	}
+
+
+	ASSERT(piece_type(piece_on(to)) != KING);
+//	//取ろうとしている駒は玉ではない
+//	if (piece_type(piece_on(to)) == KING) {
+////#ifndef LEARN
+//		cout <<endl<< *this << endl;
+//		check_move(m);
+//		ASSERT(0);
+////#else 
+//		//学習中は人間の棋譜で相手の効きのある場所に王を動かしてしまうことが起こってしまうこともあるみたい
+//		//return false;
+////#endif
+//	}
+
+
 
 #ifdef LEARN
 	if (is_drop(m) && (num_pt(hand(sidetomove()), piece_type(movedpiece)) == 0)) {
@@ -1609,12 +1642,12 @@ cout <<  << endl;
 //SFはconstついてないけどつけておいたほうがいいよね...
 Value Position::see_sign(const Move m) const
 {
-	//ASSERT(is_ok(m));
-	if (is_ok(m) == false) {
+	ASSERT(is_ok(m));
+	/*if (is_ok(m) == false) {
 		cout << *this << endl;
 		cout << m << endl;
 		ASSERT(0);
-	}
+	}*/
 
 	// Early return if SEE cannot be negative because captured piece value
 	// is not less then capturing one. Note that king moves always return

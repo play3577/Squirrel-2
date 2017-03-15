@@ -277,10 +277,10 @@ Value Thread::think() {
 			alpha = std::max(previousScore - delta, -Value_Infinite);
 			beta = std::min(previousScore + delta, Value_Infinite);
 		}
-		if (abs(previousScore) > Value_mated_in_maxply) {
+		/*if (abs(previousScore) > Value_mate_in_maxply) {
 			alpha = -Value_Infinite;
 			beta = Value_Infinite;
-		}
+		}*/
 #endif
 research:
 		//Ç±Ç±Ç≈íTçıä÷êîÇåƒÇ—èoÇ∑ÅB
@@ -289,14 +289,14 @@ research:
 		//}
 		ASSERT(alpha < beta);
 
-		bestvalue = search<Root>(rootpos, ss, alpha, beta, rootdepth*ONE_PLY, false);
+		//bestvalue = search<Root>(rootpos, ss, alpha, beta, rootdepth*ONE_PLY, false);
 
-//
-//#ifndef	LEARN
-//		bestvalue = search<Root>(rootpos, ss, alpha, beta, rootdepth*ONE_PLY,false);
-//#else
-//		bestvalue = lsearch<Root>(rootpos, ss, alpha, beta, rootdepth*ONE_PLY, false);
-//#endif
+
+#ifndef	LEARN
+		bestvalue = search<Root>(rootpos, ss, alpha, beta, rootdepth*ONE_PLY,false);
+#else
+		bestvalue = lsearch<Root>(rootpos, ss, alpha, beta, rootdepth*ONE_PLY, false);
+#endif
 		sort_RootMove();
 		if (signal.stop) {
 			//cout << "signal stop" << endl;
@@ -307,6 +307,7 @@ research:
 		beta = (alpha + beta) / 2;
 		alpha = std::max(bestvalue - delta, -Value_Infinite);
 		delta += delta / 4 + 5;
+		ASSERT(alpha >= -Value_Infinite&&beta <= Value_Infinite);
 		goto research;
 		}
 		else if (bestvalue >= beta)
@@ -314,6 +315,7 @@ research:
 		alpha = (alpha + beta) / 2;
 		beta = std::min(bestvalue + delta, Value_Infinite);
 		delta += delta / 4 + 5;
+		ASSERT(alpha >= -Value_Infinite&&beta <= Value_Infinite);
 		goto research;
 		}
 #endif
