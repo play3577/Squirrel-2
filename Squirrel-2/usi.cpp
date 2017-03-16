@@ -95,11 +95,9 @@ void USI::init_option(OptionMap &o,string engine_name)
 //#endif
 	o["USI_Ponder"] << USIOption(false);
 	o["Threads"] << USIOption(1, 1, 128);
-#if defined(__unix__) 
-	o["eval"] << USIOption("/home/daruma/fvPP/fv_PP.bin");
-#else
-	o["eval"] << USIOption("c:/book2/fv_PP.bin");
-#endif
+
+	
+
 
 	
 	o["USI_Hash"] << USIOption(1, 1, 256);
@@ -111,8 +109,16 @@ void USI::init_option(OptionMap &o,string engine_name)
 	o["randombook"] << USIOption(true);
 	o["use_defined_time"] << USIOption(false);
 	o["defined_time"] << USIOption(100,100,100000);
-	o["KPP"]<< USIOption("c:/yaneeval/kpp16ap.bin");
+#ifdef  EVAL_KPP
+	o["KPP"] << USIOption("c:/yaneeval/kpp16ap.bin");
 	o["KKP"] << USIOption("c:/yaneeval/kkp32ap.bin");
+#endif //  EVAL_KPP
+#ifdef EVAL_PROG
+	o["eval_o"] << USIOption("c:/book2/Eval_p/fv_PPo.bin");
+	o["eval_f"] << USIOption("c:/book2/fv_PPf.bin");
+#else
+	o["eval"] << USIOption("c:/book2/fv_PP.bin");
+#endif
 
 
 

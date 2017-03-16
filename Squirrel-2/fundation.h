@@ -55,6 +55,9 @@
 #ifndef EVAL_KPP
 #define EVAL_PP
 #endif // !EVAL_KPP
+//#define EVAL_PROG
+
+
 
 
 #if defined(_MSC_VER)

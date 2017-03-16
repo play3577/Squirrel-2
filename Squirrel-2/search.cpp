@@ -21,6 +21,7 @@
 #ifndef LEARN
 #define ASP
 #endif
+
 #define MATEONE
 //#define MATETEST
 //#define PREF2
@@ -284,9 +285,10 @@ Value Thread::think() {
 #endif
 research:
 		//ここで探索関数を呼び出す。
-		//if (alpha >= beta) {
-		//	cout << "alpha" << alpha << " beta " << beta <<" previous value"<<previousScore<< endl;
-		//}
+		if (alpha >= beta) {
+			cout << "alpha:" << alpha << " beta:" << beta <<" previous value:"<<previousScore<<" delta:"<<delta<< endl;
+
+		}
 		ASSERT(alpha < beta);
 
 		//bestvalue = search<Root>(rootpos, ss, alpha, beta, rootdepth*ONE_PLY, false);
@@ -304,26 +306,21 @@ research:
 		}
 #ifdef ASP
 		if (bestvalue <= alpha) {
-		beta = (alpha + beta) / 2;
-		alpha = std::max(bestvalue - delta, -Value_Infinite);
-		delta += delta / 4 + 5;
-		ASSERT(alpha >= -Value_Infinite&&beta <= Value_Infinite);
-		goto research;
+			beta = (alpha + beta) / 2;
+			alpha = std::max(bestvalue - delta, -Value_Infinite);
+			delta += delta / 4 + 5;
+			ASSERT(alpha >= -Value_Infinite&&beta <= Value_Infinite);
+			goto research;
 		}
 		else if (bestvalue >= beta)
 		{
-		alpha = (alpha + beta) / 2;
-		beta = std::min(bestvalue + delta, Value_Infinite);
-		delta += delta / 4 + 5;
-		ASSERT(alpha >= -Value_Infinite&&beta <= Value_Infinite);
-		goto research;
+			alpha = (alpha + beta) / 2;
+			beta = std::min(bestvalue + delta, Value_Infinite);
+			delta += delta / 4 + 5;
+			ASSERT(alpha >= -Value_Infinite&&beta <= Value_Infinite);
+			goto research;
 		}
 #endif
-
-		
-
-
-		
 
 		
 
@@ -958,11 +955,11 @@ moves_loop:
 		*/
 		Stage st = mp.ret_stage();
 		if (st == CAP_PRO_PAWN||st==BAD_CAPTURES) {
-			//ASSERT(pos.capture_or_propawn(move) == true); 今のところassertなくても大丈夫そう
+			ASSERT(pos.capture_or_propawn(move) == true); //今のところassertなくても大丈夫そう
 			CaptureorPropawn = true;
 		}
 		else if (st == QUIET) {
-			//ASSERT(pos.capture_or_propawn(move) == false);
+			ASSERT(pos.capture_or_propawn(move) == false);
 			CaptureorPropawn = false;
 		}
 		else {
@@ -1125,10 +1122,8 @@ moves_loop:
 		あんまり条件を緩くしすぎてもレーティング下がってしまった。
 		*/
 		if (depth >= 3 * ONE_PLY
-			//&& ((pos.ply_from_startpos + (ss)->ply)<50)
 			&&movecount > 1
 			&& (!CaptureorPropawn || move_count_pruning)
-			//&&mp.ret_stage()!=Killers
 			)
 		{
 			//PVではreducationはしない その他ではreducationする

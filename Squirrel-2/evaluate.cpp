@@ -15,6 +15,10 @@ namespace Eval {
 	//三角テーブルにすべきか....??
 	ALIGNED(32) int32_t PP[fe_end2][fe_end2];
 
+#ifdef EVAL_PROG
+	ALIGNED(32) int32_t PP_F[fe_end2][fe_end2];
+#endif
+
 
 
 

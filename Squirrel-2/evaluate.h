@@ -317,6 +317,10 @@ namespace Eval {
 
 	//２駒関係(32bitの精度で持っておいたほうが強くなると思う)
 	extern int32_t PP[fe_end2][fe_end2];
+#ifdef EVAL_PROG
+	extern int32_t PP_F[fe_end2][fe_end2];//終盤用
+#endif
+
 
 	void read_PP();
 	void write_PP();

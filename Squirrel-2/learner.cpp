@@ -48,15 +48,47 @@ bool swapmove(ExtMove* moves, const int num, const Move m) {
 #ifdef EVAL_PP
 void Eval::write_PP()
 {
+#ifdef EVAL_PROG
+	// ファイルへの書き出し（ここパスをusioptionで変更できるようにする。）
+	FILE* fp = std::fopen(Options["eval_o"].str().c_str(), "wb");
+	std::fwrite(&PP, sizeof(PP), 1, fp);
+	std::fclose(fp);
+	// ファイルへの書き出し（ここパスをusioptionで変更できるようにする。）
+	FILE* fp = std::fopen(Options["eval_f"].str().c_str(), "wb");
+	std::fwrite(&PP_F, sizeof(PP_F), 1, fp);
+	std::fclose(fp);
+#else
 	// ファイルへの書き出し（ここパスをusioptionで変更できるようにする。）
 	FILE* fp = std::fopen(Options["eval"].str().c_str(), "wb");
 	std::fwrite(&PP, sizeof(PP), 1, fp);
 	std::fclose(fp);
+#endif
 
 }
 
 void Eval::read_PP() {
 
+#ifdef EVAL_PROG
+	FILE* fp = std::fopen(Options["eval_o"].str().c_str(), "rb");
+	if (fp != NULL) {
+		std::fread(&PP, sizeof(PP), 1, fp);
+	}
+	else {
+		cout << "error reading PP!!!" << endl;
+		ASSERT(0);
+	}
+	std::fclose(fp);
+	FILE* fp = std::fopen(Options["eval_f"].str().c_str(), "rb");
+	if (fp != NULL) {
+		std::fread(&PP_F, sizeof(PP_F), 1, fp);
+	}
+	else {
+		cout << "error reading PP!!!" << endl;
+		ASSERT(0);
+	}
+	std::fclose(fp);
+
+#else 
 	//ここパスをusioptionで変更できるようにする。
 	FILE* fp = std::fopen(Options["eval"].str().c_str(), "rb");
 	if (fp != NULL) {
@@ -66,7 +98,7 @@ void Eval::read_PP() {
 		cout << "error reading PP!!!" << endl;
 	}
 	std::fclose(fp);
-
+#endif
 	return;
 }
 #endif
