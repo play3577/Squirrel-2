@@ -54,7 +54,7 @@ void Eval::write_PP()
 	std::fwrite(&PP, sizeof(PP), 1, fp);
 	std::fclose(fp);
 	// ファイルへの書き出し（ここパスをusioptionで変更できるようにする。）
-	FILE* fp = std::fopen(Options["eval_f"].str().c_str(), "wb");
+	fp = std::fopen(Options["eval_f"].str().c_str(), "wb");
 	std::fwrite(&PP_F, sizeof(PP_F), 1, fp);
 	std::fclose(fp);
 #else
@@ -78,7 +78,7 @@ void Eval::read_PP() {
 		ASSERT(0);
 	}
 	std::fclose(fp);
-	FILE* fp = std::fopen(Options["eval_f"].str().c_str(), "rb");
+	fp = std::fopen(Options["eval_f"].str().c_str(), "rb");
 	if (fp != NULL) {
 		std::fread(&PP_F, sizeof(PP_F), 1, fp);
 	}

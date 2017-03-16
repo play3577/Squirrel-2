@@ -47,12 +47,18 @@ struct StateInfo
 	Value material;
 #ifdef EVAL_PP
 	int32_t bpp=Value_error,wpp=Value_error;
+
+#ifdef EVAL_PROG
+	int32_t bppf = Value_error, wppf = Value_error;
+#endif
+
 #elif EVAL_KPP 1
 	int sumKKP=Value_error;
 	int sumBKPP=Value_error;
 	int sumWKPP=Value_error;
-
 #endif
+
+
 	int32_t bkp = Value_error, wkp = Value_error;//êiçsìx
 
 	//ìÆÇ¢ÇΩãÓ0 éÊÇÁÇÍÇΩãÓ1
@@ -63,6 +69,10 @@ struct StateInfo
 	void clear_stPP() {
 #ifdef EVAL_PP
 		bpp = Value_error; wpp = Value_error;
+#ifdef EVAL_PROG
+		 bppf = Value_error, wppf = Value_error;
+#endif
+
 #elif EVAL_KPP 1
 		sumKKP = Value_error;
 		sumBKPP = Value_error;
@@ -109,6 +119,7 @@ private:
 
 	uint64_t nodes;
 
+	double prog;
 	
 public:
 	void change_stm() { sidetomove_ = opposite(sidetomove_); }
@@ -127,6 +138,8 @@ public:
 
 	void remove_piece(const Color c, const Piece pt, const Square sq);
 	void put_piece(const Color c, const Piece pt, const Square sq);
+
+	double ret_prog() const{ return prog; }
 
 	//void put_rotate(const Square sq) {
 

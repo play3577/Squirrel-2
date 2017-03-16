@@ -98,7 +98,7 @@ namespace Progress {
 
 		auto prev = now->previous;
 
-		if (prev->bkp == Value_error || prev == nullptr) {
+		if ( prev == nullptr|| prev->bkp == Value_error) {
 			//前回計算されていなかった場合は全計算するしかない。
 			return calc_prog(pos);
 		}

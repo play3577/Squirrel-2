@@ -12,7 +12,7 @@ namespace Progress {
 	constexpr  int paramscale = 1 << 8;
 
 	constexpr Value progEG = Value(800);
-	constexpr  int prog_scale = 1024;
+	constexpr  int prog_scale = 4098;
 	void initialize_KP();//—”‚Å‰Šú‰»‚·‚é
 	void read_KP();
 	void write_KP();

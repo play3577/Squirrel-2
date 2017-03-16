@@ -1,6 +1,7 @@
 
 
 #include "evaluate.h"
+#include "progress.h"
 #include "position.h"
 
 #include <utility>
@@ -344,6 +345,189 @@ namespace Eval {
 		return (pos.sidetomove() == BLACK) ? value : -value;*/
 	}
 
+
+#ifdef EVAL_PROG
+
+
+	//進行度付き
+	Value eval_PP(const Position & pos)
+	{
+		int32_t bPP_o = 0, wPP_o = 0, bPP_f = 0, wPP_f = 0;
+
+		const int progress = Progress::prog_scale*Progress::calc_diff_prog(pos);//どこで進行度計算をさせようか
+
+		BonaPiece *list_fb = pos.evallist().bplist_fb, *list_fw = pos.evallist().bplist_fw;
+
+		for (int i = 0; i < 40; i++) {
+			for (int j = 0; j < i; j++) {
+				bPP_o += PP[list_fb[i]][list_fb[j]];
+				wPP_o -= PP[list_fw[i]][list_fw[j]];
+
+				bPP_f += PP_F[list_fb[i]][list_fb[j]];
+				wPP_f -= PP_F[list_fw[i]][list_fw[j]];
+			}
+		}
+		pos.state()->bpp = (bPP_o);
+		pos.state()->wpp = wPP_o;
+		pos.state()->bppf = bPP_f;
+		pos.state()->wppf = wPP_f;
+		//評価値ホントに16bitで収まるかどうか確認
+		ASSERT(abs(bPP_o + wPP_o) / FV_SCALE < INT16_MAX);
+		ASSERT(abs(bPP_f + wPP_f) / FV_SCALE < INT16_MAX);
+
+
+		return Value(((Progress::prog_scale - progress)*(bPP_o + wPP_o) + progress*(bPP_f + wPP_f)) / (FV_SCALE*Progress::prog_scale));
+
+	}
+
+	//差分計算進行度付き
+	Value eval_diff_PP(const Position & pos)
+	{
+		//cout << "evaldiff" << endl;
+		const StateInfo *now = pos.state();
+		const StateInfo *prev = pos.state()->previous;
+		const auto list = pos.evallist();
+
+		const int progress =Progress::prog_scale*Progress::calc_diff_prog(pos);//どこで進行度計算をさせようか
+
+
+		int32_t bPP, wPP,bPPf,wPPf;
+		bPP = prev->bpp;
+		wPP = prev->wpp;
+		bPPf = prev->bppf;
+		wPPf = prev->wppf;
+		ASSERT(bPP != Value_error&&wPP != Value_error);
+		ASSERT(bPPf != Value_error&&wPPf != Value_error);
+
+		//dirtybonaPがゼロになっている！
+		//dirtyuniformもゼロになってる！
+		//dirty uniformがおかしいのでdo_moveでおかしくなってないか確認する。
+		const Eval::BonaPiece oldbp1_fb = now->dirtybonap_fb[0];
+		const Eval::BonaPiece oldbp2_fb = now->dirtybonap_fb[1];
+		const Eval::BonaPiece oldbp1_fw = now->dirtybonap_fw[0];
+		const Eval::BonaPiece oldbp2_fw = now->dirtybonap_fw[1];
+		//swapする可能性があるためここはconstにしない
+		Eval::UniformNumber moveduniform1 = now->dirtyuniform[0];
+		Eval::UniformNumber moveduniform2 = now->dirtyuniform[1];
+
+
+
+
+		const Eval::BonaPiece* now_list_fb = list.bplist_fb;
+		const Eval::BonaPiece* now_list_fw = list.bplist_fw;
+
+		const Eval::BonaPiece newbp1_fb = list.bplist_fb[now->dirtyuniform[0]];
+		const Eval::BonaPiece newbp2_fb = list.bplist_fb[now->dirtyuniform[1]];
+		const Eval::BonaPiece newbp1_fw = list.bplist_fw[now->dirtyuniform[0]];
+		const Eval::BonaPiece newbp2_fw = list.bplist_fw[now->dirtyuniform[1]];
+
+
+#define ADD_PP(oldbp,oldwp,newbp,newwp){ \
+		bPP -= PP[oldbp][now_list_fb[i]];\
+		bPP += PP[newbp][now_list_fb[i]];\
+		wPP += PP[oldwp][now_list_fw[i]];\
+		wPP -= PP[newwp][now_list_fw[i]];\
+		bPPf -= PP_F[oldbp][now_list_fb[i]];\
+		bPPf += PP_F[newbp][now_list_fb[i]];\
+		wPPf += PP_F[oldwp][now_list_fw[i]];\
+		wPPf -= PP_F[newwp][now_list_fw[i]];\
+}
+
+		int i;
+
+
+		if (moveduniform2 == Num_Uniform) {
+			//駒が①つ動いた
+
+			//このようにして②つに分けることでPP[old1][new1]を引いてしまうのを防ぎ,PP[new][new]を足してしまうのを防ぐ。(賢い...さすがはやねうら王...)
+			for (i = 0; i < moveduniform1; ++i) {
+				ADD_PP(oldbp1_fb, oldbp1_fw, newbp1_fb, newbp1_fw);
+			}
+			for (++i; i < 40; ++i) {
+				ADD_PP(oldbp1_fb, oldbp1_fw, newbp1_fb, newbp1_fw);
+			}
+
+		}
+		else {
+			//駒が②つ動いた
+
+			//pawn1<=dirty<dirty2<fe_end2　にしておく
+			if (moveduniform1 > moveduniform2) { std::swap(moveduniform1, moveduniform2); }
+
+			for (i = 0; i < moveduniform1; ++i) {
+				ADD_PP(oldbp1_fb, oldbp1_fw, newbp1_fb, newbp1_fw);//コレで[old1][old2]回避
+				ADD_PP(oldbp2_fb, oldbp2_fw, newbp2_fb, newbp2_fw);
+			}
+			for (++i; i < moveduniform2; ++i) {
+				ADD_PP(oldbp1_fb, oldbp1_fw, newbp1_fb, newbp1_fw);//コレで[old1][old2] [new1][new2]回避
+				ADD_PP(oldbp2_fb, oldbp2_fw, newbp2_fb, newbp2_fw);
+			}
+			for (++i; i < 40; ++i) {
+				ADD_PP(oldbp1_fb, oldbp1_fw, newbp1_fb, newbp1_fw);
+				ADD_PP(oldbp2_fb, oldbp2_fw, newbp2_fb, newbp2_fw);
+			}
+			//ここで回避してしまった[old1][old2] [new1][new2]を補正する。
+			bPP -= PP[oldbp1_fb][oldbp2_fb];
+			bPP += PP[newbp1_fb][newbp2_fb];
+			wPP += PP[oldbp1_fw][oldbp2_fw];
+			wPP -= PP[newbp1_fw][newbp2_fw];
+
+			bPPf -= PP_F[oldbp1_fb][oldbp2_fb];
+			bPPf += PP_F[newbp1_fb][newbp2_fb];
+			wPPf += PP_F[oldbp1_fw][oldbp2_fw];
+			wPPf -= PP_F[newbp1_fw][newbp2_fw];
+		}
+
+
+
+
+
+
+
+		pos.state()->bpp = bPP;
+		pos.state()->wpp = wPP;
+		pos.state()->bppf = bPPf;
+		pos.state()->wppf = wPPf;
+#ifdef DIFFTEST
+
+
+		/*
+		diffの値は全計算と異なってしまうバグが発生した。
+		これは PP[i][j]==PP[j][i]でないため発生してしまったバグであると考えられる。
+		dj[i][j]=dJ[j][i]ではあるため、値としては近い値になっているのでそこまで大きなエラーではない。
+		これは
+		PP[i][j]=PP[j][i]=(PP[i][j]+PP[j][i])/2とすることで対応しようかな....
+		*/
+
+
+
+		//nullmove時に差分計算がおかしくなる！！！
+		eval_PP(pos);
+		//if (Value((bPP + wPP) / FV_SCALE) != eval_PP(pos)) {
+		if (bPP != pos.state()->bpp || wPP != pos.state()->wpp||bPPf!=pos.state()->bppf||wPPf!=pos.state()->wppf) {
+
+			cout << pos << endl;
+			/*cout << "oldlist" << endl;
+			for (int i = 0; i < Num_Uniform; i++) {
+			cout <<"fb:"<< old_list_fb[i];
+			cout << "fw:" << old_list_fw[i] << endl;
+			}*/
+			cout << " diff " << Value((bPP + wPP) / FV_SCALE) << " evalfull " << eval_PP(pos) << endl;
+			cout << "bpp " << bPP << " " << pos.state()->bpp << endl;
+			cout << "wpp " << wPP << " " << pos.state()->wpp << endl;
+			cout << "bppf " << bPPf << " " << pos.state()->bppf << endl;
+			cout << "wppf " << wPPf << " " << pos.state()->wppf << endl;
+			UNREACHABLE;
+		}
+#endif
+		ASSERT(((bPP + wPP) / FV_SCALE) < INT16_MAX);
+		ASSERT(abs(bPPf + wPPf) / FV_SCALE < INT16_MAX);
+
+		return Value(((Progress::prog_scale - progress)*(bPP + wPP) + progress*(bPPf + wPPf)) / (FV_SCALE*Progress::prog_scale));
+	}
+
+
+#else
 	Value eval_PP(const Position & pos)
 	{
 		int32_t bPP=0, wPP=0;
@@ -502,6 +686,9 @@ namespace Eval {
 		return Value((bPP + wPP) / FV_SCALE);
 
 	}
+#endif
+
+
 #endif;
 	//差分計算
 

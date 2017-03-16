@@ -55,7 +55,7 @@
 #ifndef EVAL_KPP
 #define EVAL_PP
 #endif // !EVAL_KPP
-//#define EVAL_PROG
+#define EVAL_PROG
 
 
 

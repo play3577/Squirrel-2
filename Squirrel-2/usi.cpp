@@ -115,7 +115,7 @@ void USI::init_option(OptionMap &o,string engine_name)
 #endif //  EVAL_KPP
 #ifdef EVAL_PROG
 	o["eval_o"] << USIOption("c:/book2/Eval_p/fv_PPo.bin");
-	o["eval_f"] << USIOption("c:/book2/fv_PPf.bin");
+	o["eval_f"] << USIOption("c:/book2/Eval_p/fv_PPf.bin");
 #else
 	o["eval"] << USIOption("c:/book2/fv_PP.bin");
 #endif
