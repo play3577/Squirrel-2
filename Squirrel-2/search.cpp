@@ -258,6 +258,7 @@ Value Thread::think() {
 	//cout << limit.endtime << endl;
 #ifdef LEARN
 	maxdepth = 3;//この値-1が実際に探索される深さ
+	//maxdepth = 4;//一手深くしてみる
 	alpha = this->l_alpha;
 	beta = this->l_beta;
 	/*alpha = -Value_Infinite;
@@ -273,12 +274,23 @@ Value Thread::think() {
 
 		previousScore = RootMoves[0].value;
 #ifdef ASP
+		/*
+<1:info depth 1/2 score cp 2808 time 1 nodes 340 nps 340k pv  G*7f
+<1:info depth 2/4 score cp mate 4 time 1 nodes 562 nps 562k pv  6h8h 9g8h 7g7h+
+<1:alpha:0 beta:0 previous value:31996 delta:-39996
+<1:Error!!
+<1:info string file:search.cpp line:292 alpha < beta
+
+このバグはrootdepth=3で発生している！！！！！！
+rootdepth>=5から反復進化なのでこれは反復進化の問題ではない！ほかのところに原因があるはず！！！
+		*/
 		if (rootdepth >= 5) {
 			delta = Value(40);
 			alpha = std::max(previousScore - delta, -Value_Infinite);
 			beta = std::min(previousScore + delta, Value_Infinite);
 		}
-		/*if (abs(previousScore) > Value_mate_in_maxply) {
+		/*else{
+		これむだだった
 			alpha = -Value_Infinite;
 			beta = Value_Infinite;
 		}*/
@@ -286,12 +298,10 @@ Value Thread::think() {
 research:
 		//ここで探索関数を呼び出す。
 		if (alpha >= beta) {
-			cout << "alpha:" << alpha << " beta:" << beta <<" previous value:"<<previousScore<<" delta:"<<delta<< endl;
-
+			cout << "alpha:" << alpha << " beta:" << beta <<" previous value:"<<previousScore<<" bestvalue:"<<bestvalue<<" delta:"<<delta<< endl;
 		}
 		ASSERT(alpha < beta);
 
-		//bestvalue = search<Root>(rootpos, ss, alpha, beta, rootdepth*ONE_PLY, false);
 
 
 #ifndef	LEARN
@@ -305,11 +315,18 @@ research:
 			break;
 		}
 #ifdef ASP
-		if (bestvalue <= alpha) {
+		if (bestvalue <= alpha) 
+		{
 			beta = (alpha + beta) / 2;
 			alpha = std::max(bestvalue - delta, -Value_Infinite);
 			delta += delta / 4 + 5;
+
+
 			ASSERT(alpha >= -Value_Infinite&&beta <= Value_Infinite);
+			if (delta <= 0) {
+				cout << alpha << " " << beta << " " << delta<<" " <<bestvalue<< endl;
+				ASSERT(0);
+			}
 			goto research;
 		}
 		else if (bestvalue >= beta)
@@ -317,7 +334,15 @@ research:
 			alpha = (alpha + beta) / 2;
 			beta = std::min(bestvalue + delta, Value_Infinite);
 			delta += delta / 4 + 5;
+
+
 			ASSERT(alpha >= -Value_Infinite&&beta <= Value_Infinite);
+			if (delta <= 0) {
+				cout <<alpha<<" "<<beta<<" "<< delta<<" " << bestvalue << endl;
+				ASSERT(0);
+			}
+
+
 			goto research;
 		}
 #endif

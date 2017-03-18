@@ -12,6 +12,7 @@
 #include "position.h"
 #include "game_database.h"
 #include "makemove.h"
+#include "progress.h"
 #include "usi.h"
 #include <omp.h>
 #include <thread>
@@ -28,17 +29,15 @@ using namespace std;
 #define SOFTKIFU
 
 
-#define JIGENSAGE
+#define JIGENSAGE//ok強くなってた
 
-#define LR
+#define LR//ok強くなってた
 
 //struct  Parse2data;
-
+#ifndef EVAL_PROG
 struct  dJValue
 {
 	double absolute_PP[fe_end2][fe_end2];
-
-	
 
 	void update_dJ(const Position& pos, const double diff) {
 		const auto list1 = pos.evallist();
@@ -97,18 +96,120 @@ struct  dJValue
 			}
 		}
 	}
+};
+#else
+struct  dJValue
+{
+	double absolute_PP[fe_end2][fe_end2];
+	double absolute_PPF[fe_end2][fe_end2];
+
+	void update_dJ(const Position& pos, const double diff) {
+
+		double progress = Progress::calc_prog(pos);
+
+		const double diffo = (1.0 - progress)*diff;
+		const double difff = progress*diff;
+
+		const auto list1 = pos.evallist();
+
+		const BonaPiece *list_fb = list1.bplist_fb, *list_fw = list1.bplist_fw;
+		for (int i = 0; i < 40; i++) {
+			for (int j = 0; j < i; j++) {
+				absolute_PP[list_fb[i]][list_fb[j]] += diffo;
+				absolute_PP[list_fw[i]][list_fw[j]] -= diffo;
+				absolute_PPF[list_fb[i]][list_fb[j]] += difff;
+				absolute_PPF[list_fw[i]][list_fw[j]] -= difff;
+				//PP対称性を考えて
+				absolute_PP[list_fb[j]][list_fb[i]] += diffo;
+				absolute_PP[list_fw[j]][list_fw[i]] -= diffo;
+				absolute_PPF[list_fb[j]][list_fb[i]] += difff;
+				absolute_PPF[list_fw[j]][list_fw[i]] -= difff;
 
 
-	
 
+#ifdef LR
+
+				/*
+				左右対称性を考える　ちょっと怪しい....
+				*/
+				if (bp2sq(list_fb[i]) != Error_SQ&&bp2sq(list_fb[j]) != Error_SQ) {
+					//両方とも盤上
+					absolute_PP[sym_rightleft(list_fb[i])][sym_rightleft(list_fb[j])] += diffo;
+					absolute_PP[sym_rightleft(list_fw[i])][sym_rightleft(list_fw[j])] -= diffo;
+
+					absolute_PP[sym_rightleft(list_fb[j])][sym_rightleft(list_fb[i])] += diffo;
+					absolute_PP[sym_rightleft(list_fw[j])][sym_rightleft(list_fw[i])] -= diffo;
+
+					absolute_PPF[sym_rightleft(list_fb[i])][sym_rightleft(list_fb[j])] += difff;
+					absolute_PPF[sym_rightleft(list_fw[i])][sym_rightleft(list_fw[j])] -= difff;
+
+					absolute_PPF[sym_rightleft(list_fb[j])][sym_rightleft(list_fb[i])] += difff;
+					absolute_PPF[sym_rightleft(list_fw[j])][sym_rightleft(list_fw[i])] -= difff;
+
+
+
+				}
+				else if (bp2sq(list_fb[i]) != Error_SQ&&bp2sq(list_fb[j]) == Error_SQ) {
+					//iが盤上
+					absolute_PP[sym_rightleft(list_fb[i])][(list_fb[j])] += diffo;
+					absolute_PP[sym_rightleft(list_fw[i])][(list_fw[j])] -= diffo;
+
+					absolute_PP[(list_fb[j])][sym_rightleft(list_fb[i])] += diffo;
+					absolute_PP[(list_fw[j])][sym_rightleft(list_fw[i])] -= diffo;
+
+
+					absolute_PPF[sym_rightleft(list_fb[i])][(list_fb[j])] += difff;
+					absolute_PPF[sym_rightleft(list_fw[i])][(list_fw[j])] -= difff;
+
+					absolute_PPF[(list_fb[j])][sym_rightleft(list_fb[i])] += difff;
+					absolute_PPF[(list_fw[j])][sym_rightleft(list_fw[i])] -= difff;
+
+				}
+				else if (bp2sq(list_fb[i]) == Error_SQ&&bp2sq(list_fb[j]) != Error_SQ) {
+					//jが盤上
+					absolute_PP[(list_fb[i])][sym_rightleft(list_fb[j])] += diffo;
+					absolute_PP[(list_fw[i])][sym_rightleft(list_fw[j])] -= diffo;
+
+					absolute_PP[sym_rightleft(list_fb[j])][(list_fb[i])] += diffo;
+					absolute_PP[sym_rightleft(list_fw[j])][(list_fw[i])] -= diffo;
+
+
+					absolute_PPF[(list_fb[i])][sym_rightleft(list_fb[j])] += difff;
+					absolute_PPF[(list_fw[i])][sym_rightleft(list_fw[j])] -= difff;
+
+					absolute_PPF[sym_rightleft(list_fb[j])][(list_fb[i])] += difff;
+					absolute_PPF[sym_rightleft(list_fw[j])][(list_fw[i])] -= difff;
+
+				}
+
+#endif
+			}
+		}
+	}
+
+	void clear() { memset(this, 0, sizeof(*this)); }
+
+
+	void add(dJValue& data) {
+
+		for (BonaPiece bp1 = BONA_PIECE_ZERO; bp1 < fe_end2; bp1++) {
+			for (BonaPiece bp2 = BONA_PIECE_ZERO; bp2 < fe_end2; bp2++) {
+				absolute_PP[bp1][bp2] += data.absolute_PP[bp1][bp2];
+				absolute_PPF[bp1][bp2] += data.absolute_PPF[bp1][bp2];
+			}
+		}
+	}
 };
 
+
+#endif
 
 
 /*
 次元下げされた要素。
-PP（p0,p1）=PP絶対(左右対称、手番対称)+PP相対(平行移動、手番対称)＋P絶対（左右対称、手番対象）
+PP（p0,p1）=PP絶対(左右対称、手番対称)+PP相対(平行移動、手番対称)
 */
+#ifndef EVAL_PROG
 struct lowerDimPP
 {
 	double absolute_pp[fe_end2][fe_end2];//絶対PP　
@@ -121,7 +222,24 @@ struct lowerDimPP
 
 	}
 };
+
+#else
+struct lowerDimPP
+{
+	double absolute_pp[fe_end2][fe_end2];//絶対PP　
+	double relative_pp[PC_ALL][PC_ALL][17][17];//相対PP
+	 //double absolute_p[fe_end2];//絶対P 
+	double absolute_ppF[fe_end2][fe_end2];//絶対PP　   終盤用
+	double relative_ppF[PC_ALL][PC_ALL][17][17];//相対PP	終盤用
+
+	void clear() {
+		memset(this, 0, sizeof(*this));
+	}
+};
+#endif
 lowerDimPP lowdimPP;
+
+
 
 void lower__dimPP(lowerDimPP& lowdim,const dJValue& gradJ);
 void weave_lowdim_to_gradj(dJValue& newgradJ, const lowerDimPP& lowdim);
@@ -156,70 +274,14 @@ void renewal_PP(dJValue &data) {
 #endif
 			int inc = h*sign(data.absolute_PP[i][j]);
 			PP[i][j] += inc;
-		}
-	}
-}
-
-void param_sym_leftright(dJValue &data) {
-
-	//l反転前, r反転語
-	BonaPiece il, ir, jl, jr;
-
-	//static bool check[fe_end2*fe_end2 / 2] = {false};
-	//t2.microは耐えてくれるだろうか....
-	static bool check[fe_end2][fe_end2] = { false };
-	memset(check, false, sizeof(check));
-	//PPの一つ目のindexについて
-	for (il = f_hand_pawn; il < fe_end2; il++) {
-
-		//持ち駒の場合はそのままでいい。（左右対称になんて出来ないから）
-		if (il < fe_hand_end) { ir = il; }
-		else {
-			//盤上の駒は左右を反転させる。
-			ir = Eval::sym_rightleft(il);
-		}
-
-		//PPの二つ目のindexについて
-		//for (jl = f_hand_pawn; jl <= il; jl++) {
-		for (jl = f_hand_pawn; jl <fe_end2; jl++) {
-
-			//持ち駒の場合はそのままでいい。（左右対称になんて出来ないから）
-			if (jl < fe_hand_end) { jr = jl; }
-			else {
-				//盤上の駒は左右を反転させる。
-				jr = Eval::sym_rightleft(jl);
-			}
-
-			if ((il == ir) && (jl == jr)) { continue; }//反転させてもおんなじなのでコレは対称性を考える意味はない（両方５筋の駒||両方手駒）
-			if (check[il][jl] == true) { ASSERT(check[ir][jr] == true); continue; }
-			//if(check[il*(il+1)/2+jl]==true){ ASSERT(check[ir*(ir + 1) / 2 + jr] == true); continue; }
-			//同じ関係なので２つ分のdJ/dviを用いることができる！！
-			/*
-			ここで(iljl,irjr)と(irjr,iljl)でdJを２重に計算してしまい、値がおかしくなってしまうことが起こりうる。
-			コレを何とかして防がなければならない。三角テーブル対称性が壊れてしまった
-			*/
-
-			/*
-			for (il = f_hand_pawn; il < fe_end2; il++) なので
-			このままでは
-			dJ[il][jl] = dJ[ir][jr]= (dJ[il][jl] + dJ[ir][jr]);をした後さらに
-			dJ[ir][jr] = dJ[il][jl]= (dJ[il][jl] + dJ[ir][jr]);をしてdJ[][]の値がおかしくなってしまうことが起こりうる。
-
-			これを防ぐためにはsym_rightleft()でsqが盤面の右側であればreturn -1をすれば良いかもしれないが,左右反転させるだけの関数にそのような機能をもたせるのはあんまりしたくない
-
-			bool check[fe_end2][fe_end2]で一度計算した組み合わせかどうか確認するようにさせる。
-			この方法ではcheckを確保することができなかった。（staticにして無理やり解決。）
-			*/
-
-			data.absolute_PP[il][jl] = data.absolute_PP[ir][jr] = (data.absolute_PP[il][jl] + data.absolute_PP[ir][jr]);
-			//check[il*(il + 1) / 2 + jl] = check[ir*(ir + 1) / 2 + jr] = true;
-			check[il][jl] = check[ir][jr] = true;
+#ifdef EVAL_PROG
+			int inc2 = h*sign(data.absolute_PPF[i][j]);
+			PP_F[i][j] += inc2;
+#endif
 
 		}
 	}
 }
-
-
 
 
 
@@ -254,7 +316,7 @@ std::vector<Game> testset;
 一致率計算の関数を用意して最後に一致率を計算する。
 
 どこにバグがある？？？？？？？？？？
-
+一致率計算中だけ差分計算にバグが出る？？？？？？？？
 
 学習用の寄付で一致率を図る。学習を進めると過学習を起こすはずであるのでそれで学習にバグがないかどうか確かめる
 
@@ -288,7 +350,8 @@ double concordance() {
 		pos.set_hirate();
 		th.cleartable();
 		for (int ply = 0; ply < (thisgame.moves.size() - 1); ply++) {
-
+			si[ply].clear();
+			
 #if 0
 			/*if ((float(ply) / float(thisgame.moves.size())) > 0.9) {
 				cout << "progress:" << (float(ply) / float(thisgame.moves.size())) << " ply:" << ply << " maxply:" << thisgame.moves.size() << " progress over 90%" << endl;
@@ -335,12 +398,6 @@ double concordance() {
 	//cout <<"一致率 "<< double(num_concordance_move * 100 / num_all_move)<<" %"<<endl;
 	return double((double)num_concordance_move * 100 / (double)num_all_move);
 }
-
-
-
-
-
-
 
 
 
@@ -633,8 +690,8 @@ void learnphase1body(int number) {
 				探索のalpha betaは後で実装する
 				==================================*/
 				if (move_i == 0) {
-					th.l_alpha = Value_Mated;
-					th.l_beta = Value_Mate;
+					th.l_alpha =-Value_Infinite;
+					th.l_beta = Value_Infinite;
 				}
 				else {
 					th.l_alpha = record_score-(Value)256;
@@ -934,17 +991,18 @@ void learnphase2body(int number)
 
 }
 
+#ifndef  EVAL_PROG
 
 void each_PP(lowerDimPP & lowdim, const dJValue& gradJ, const BonaPiece bp1, const BonaPiece bp2) {
 	if (bp1 == bp2) { return; }//一致する場所はevaluateで見ないのでgradJも0になっている。これは無視していい。
 
-	//iとjの前後によって違う場所を参照してしまうのを防ぐ。
-	BonaPiece i=std::max(bp1,bp2), j=std::min(bp1,bp2);
+							   //iとjの前後によって違う場所を参照してしまうのを防ぐ。
+	BonaPiece i = std::max(bp1, bp2), j = std::min(bp1, bp2);
 
 	double grad = gradJ.absolute_PP[bp1][bp2];
 
 
-	
+
 	//相対PP
 	if (bp2sq(i) != Error_SQ&&bp2sq(j) != Error_SQ) {
 		Piece pci = (bp2piece.bp_to_piece(bpwithoutsq(i)));//iの駒は先手の駒に変換させられているのでptでいい
@@ -966,10 +1024,10 @@ void weave_eachPP(dJValue& newgradJ, const lowerDimPP& lowdim, const BonaPiece b
 	if (bp1 == bp2) { return; }//一致する場所はevaluateで見ないのでgradJも0になっている。これは無視していい。
 
 	int sign = 1;
-							   //iとjの前後によって違う場所を参照してしまうのを防ぐ。
+	//iとjの前後によって違う場所を参照してしまうのを防ぐ。
 	BonaPiece i = std::max(bp1, bp2), j = std::min(bp1, bp2);
 
-	
+
 	//相対PP(平行移動)
 	if (bp2sq(i) != Error_SQ&&bp2sq(j) != Error_SQ) {
 		Piece pci = (bp2piece.bp_to_piece(bpwithoutsq(i)));//iの駒は先手の駒に変換させられているのでptでいい
@@ -983,6 +1041,59 @@ void weave_eachPP(dJValue& newgradJ, const lowerDimPP& lowdim, const BonaPiece b
 	//newgradJ.dJ[bp1][bp2] += lowdim.absolute_p[i];
 	//newgradJ.dJ[bp1][bp2] += lowdim.absolute_p[j];
 }
+#else
+
+void each_PP(lowerDimPP & lowdim, const dJValue& gradJ, const BonaPiece bp1, const BonaPiece bp2) {
+	if (bp1 == bp2) { return; }//一致する場所はevaluateで見ないのでgradJも0になっている。これは無視していい。
+
+							   //iとjの前後によって違う場所を参照してしまうのを防ぐ。
+	BonaPiece i = std::max(bp1, bp2), j = std::min(bp1, bp2);
+
+	const double grado = gradJ.absolute_PP[bp1][bp2];
+	const double gradf = gradJ.absolute_PPF[bp1][bp2];
+
+
+	//相対PP
+	if (bp2sq(i) != Error_SQ&&bp2sq(j) != Error_SQ) {
+		Piece pci = (bp2piece.bp_to_piece(bpwithoutsq(i)));//iの駒は先手の駒に変換させられているのでptでいい
+		Piece pcj = bp2piece.bp_to_piece(bpwithoutsq(j));//jにいるのが味方の駒か相手の駒かは重要になってくるので含めなければならない。
+		Square sq1 = bp2sq(i), sq2 = bp2sq(j);//bp1,bp2の駒の位置
+		lowdim.relative_pp[pci][pcj][sqtofile(sq1) - sqtofile(sq2) + 8][sqtorank(sq1) - sqtorank(sq2) + 8] += grado;
+		lowdim.relative_ppF[pci][pcj][sqtofile(sq1) - sqtofile(sq2) + 8][sqtorank(sq1) - sqtorank(sq2) + 8] += gradf;
+	}
+
+
+	//絶対PP
+	lowdim.absolute_pp[i][j] += grado;
+	lowdim.absolute_ppF[i][j] += gradf;
+
+
+}
+
+void weave_eachPP(dJValue& newgradJ, const lowerDimPP& lowdim, const BonaPiece bp1, const BonaPiece bp2) {
+
+	if (bp1 == bp2) { return; }//一致する場所はevaluateで見ないのでgradJも0になっている。これは無視していい。
+
+	//iとjの前後によって違う場所を参照してしまうのを防ぐ。
+	BonaPiece i = std::max(bp1, bp2), j = std::min(bp1, bp2);
+
+
+	//相対PP(平行移動)
+	if (bp2sq(i) != Error_SQ&&bp2sq(j) != Error_SQ) {
+		Piece pci = (bp2piece.bp_to_piece(bpwithoutsq(i)));//iの駒は先手の駒に変換させられているのでptでいい
+		Piece pcj = bp2piece.bp_to_piece(bpwithoutsq(j));//jにいるのが味方の駒か相手の駒かは重要になってくるので含めなければならない。
+		Square sq1 = bp2sq(i), sq2 = bp2sq(j);//bp1,bp2の駒の位置
+
+		newgradJ.absolute_PP[bp1][bp2] += lowdim.relative_pp[pci][pcj][sqtofile(sq1) - sqtofile(sq2) + 8][sqtorank(sq1) - sqtorank(sq2) + 8];
+		newgradJ.absolute_PPF[bp1][bp2] += lowdim.relative_ppF[pci][pcj][sqtofile(sq1) - sqtofile(sq2) + 8][sqtorank(sq1) - sqtorank(sq2) + 8];
+	}
+
+	//絶対PP
+	newgradJ.absolute_PP[bp1][bp2] += lowdim.absolute_pp[i][j];
+	newgradJ.absolute_PPF[bp1][bp2] += lowdim.absolute_ppF[i][j];
+}
+#endif // ! EVAL_PROG
+
 
 
 

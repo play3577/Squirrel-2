@@ -230,7 +230,8 @@ namespace Progress {
 		pos.state()->bkp = bkp, pos.state()->wkp = wkp;
 
 	CALC_PROG_END:
-
+		
+#ifdef DIFFTEST
 		//差分計算できているかテスト
 		calc_prog(pos);
 
@@ -238,7 +239,7 @@ namespace Progress {
 			cout << bkp << " " << pos.state()->bkp << " " << wkp << " " << pos.state()->wkp << endl;
 			ASSERT(0);
 		}
-
+#endif
 
 		return sigmoid(double(bkp + wkp)*double(1.0 / paramscale));
 	}

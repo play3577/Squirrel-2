@@ -388,7 +388,14 @@ namespace Eval {
 		const StateInfo *prev = pos.state()->previous;
 		const auto list = pos.evallist();
 
-		const int progress =Progress::prog_scale*Progress::calc_diff_prog(pos);//どこで進行度計算をさせようか
+		const int progress = Progress::prog_scale*Progress::calc_diff_prog(pos);//どこで進行度計算をさせようか
+//#ifndef LEARN
+//		const int progress = Progress::prog_scale*Progress::calc_diff_prog(pos);//どこで進行度計算をさせようか
+//#else
+//		const int progress = Progress::prog_scale*Progress::calc_prog(pos);//どこで進行度計算をさせようか
+//#endif // !LEARN
+//
+//		
 
 
 		int32_t bPP, wPP,bPPf,wPPf;
@@ -1102,7 +1109,10 @@ namespace Eval {
 
 					int32_t a = PP[i][j], b = PP[j][i];
 					PP[i][j] = PP[j][i] = (a + b) / 2;
-
+#ifdef EVAL_PROG
+					int32_t c = PP_F[i][j], d = PP_F[j][i];
+					PP_F[i][j] = PP_F[j][i] = (c + d) / 2;
+#endif
 				}
 
 

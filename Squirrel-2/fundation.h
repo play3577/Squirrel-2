@@ -23,18 +23,22 @@
 
 #define UNREACHABLE ASSERT(0)
 
+//-------------------------------AVX関連
+
 #define HAVE_SSE2
 #define HAVE_SSE4 //しかしうちのCPUはSSE4.1までしか持っていない..orz
 //#define HAVE_AVX2
 
 //#define CHECKPOS
 
-//#define LEARN
+
+
+//---------------------------------学習関連
+
+#define LEARN
 
 //#define Prog_LEARN
 
-
-//#define EVAL_NONDIFF
 #ifndef LEARN
 #define USETT
 #endif
@@ -48,14 +52,18 @@
 #pragma warning(disable : 4800)
 #endif
 
-//#define DIFFTEST
 
+//-----------------------------評価関数関連
+
+
+//#define DIFFTEST
+//#define EVAL_NONDIFF
 //#define EVAL_KPP
 
 #ifndef EVAL_KPP
 #define EVAL_PP
 #endif // !EVAL_KPP
-#define EVAL_PROG
+//#define EVAL_PROG
 
 
 
