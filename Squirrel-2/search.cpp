@@ -283,6 +283,10 @@ Value Thread::think() {
 
 このバグはrootdepth=3で発生している！！！！！！
 rootdepth>=5から反復進化なのでこれは反復進化の問題ではない！ほかのところに原因があるはず！！！
+
+rootdepth<5の時に bestvalueがvalueInfinityになってしまっていた！？？？
+どこでそんな値が帰ってきてしまっているのか調べる
+
 		*/
 		if (rootdepth >= 5) {
 			delta = Value(40);
@@ -309,6 +313,9 @@ research:
 #else
 		bestvalue = lsearch<Root>(rootpos, ss, alpha, beta, rootdepth*ONE_PLY, false);
 #endif
+
+		ASSERT(abs(bestvalue) < Value_Infinite);
+
 		sort_RootMove();
 		if (signal.stop) {
 			//cout << "signal stop" << endl;
@@ -500,7 +507,7 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 	}*/
 	//アクセス競合が怖いので先に全部読み出しておく。
 	if (TThit) {
-		ttValue = tte->value();
+		ttValue = value_from_tt(tte->value(),ss->ply);
 		ttdepth = tte->depth();
 		ttEval = tte->eval();
 		ttBound = tte->bound();
@@ -573,7 +580,7 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 
 
 		}
-
+		ASSERT(ttValue > -Value_Infinite&&ttValue < Value_Infinite);
 		return ttValue;
 	}
 
@@ -597,6 +604,7 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 #ifdef USETT
 			tte->save(poskey, value_to_tt(bestvalue, ss->ply), BOUND_EXACT, depth,mate, ss->static_eval, TT.generation());
 #endif
+			ASSERT(bestvalue > -Value_Infinite&&bestvalue < Value_Infinite);
 			return bestvalue;
 		}
 	}
@@ -674,6 +682,7 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 		Value ralpha = alpha - razor_margin[depth / ONE_PLY];
 		Value v = qsearch<NonPV>(pos, ss, ralpha, ralpha + 1, DEPTH_ZERO);
 		if (v <= ralpha) {
+			ASSERT(v > -Value_Infinite&&v < Value_Infinite);
 			return v;
 		}
 	}
@@ -762,6 +771,7 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 			ss->skip_early_prunning = false;
 
 			if (v >= beta) {
+				ASSERT(null_value > -Value_Infinite&&null_value < Value_Infinite);
 				return null_value;
 			}
 		}
@@ -847,7 +857,7 @@ end_multicut:
 				value = -search<NonPV>(pos, (ss + 1), -rbeta, -rbeta + 1, rdepth,!cutNode);
 				pos.undo_move();
 
-				if (value >= rbeta) { return value; }
+				if (value >= rbeta) { ASSERT(value > -Value_Infinite&&value < Value_Infinite);  return value; }
 			}
 
 		}
@@ -1218,6 +1228,9 @@ moves_loop:
 
 		//cout << "undo move " <<move<< endl;
 		pos.undo_move();
+
+		ASSERT(value > -Value_Infinite&&value < Value_Infinite);
+
 		//時間切れなのでbestmoveとPVを汚さないうちに値を返す。
 		if (signal.stop.load(std::memory_order_relaxed)) {
 			return Value_Zero;
@@ -1320,6 +1333,7 @@ moves_loop:
 		PVNode&&bestMove ? BOUND_EXACT : BOUND_UPPER,
 		depth, bestMove, staticeval, TT.generation());
 #endif
+	ASSERT(bestvalue > -Value_Infinite&&bestvalue < Value_Infinite);
 
 	return bestvalue;
 
@@ -1399,7 +1413,7 @@ Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
 	ASSERT((posKey & uint64_t(1)) == pos.sidetomove());
 	tte = TT.probe(posKey, TThit);
 	if (TThit) {
-		ttValue = tte->value();
+		ttValue = value_from_tt(tte->value(), ss->ply);
 		ttdepth = tte->depth();
 		ttEval = tte->eval();
 		ttBound = tte->bound();
@@ -1432,6 +1446,7 @@ Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
 		&& (ttValue >= beta ? (ttBound&BOUND_LOWER) : (ttBound&BOUND_UPPER))//BOUND_EXACT = BOUND_UPPER | BOUND_LOWERであるのでどちらの&も満たす
 		) {
 		ss->currentMove = ttMove;
+		ASSERT(ttValue > -Value_Infinite&&ttValue < Value_Infinite);
 		return ttValue;
 	}
 #endif
@@ -1477,6 +1492,8 @@ Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
 				tte->save(posKey, value_to_tt(bestvalue, ss->ply), BOUND_LOWER, DEPTH_NONE, MOVE_NONE, staticeval, TT.generation());
 			}
 #endif
+			ASSERT(bestvalue > -Value_Infinite&&bestvalue < Value_Infinite);
+
 			return bestvalue;
 
 		}
@@ -1610,6 +1627,9 @@ Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
 		pos.do_move(move, &si, givescheck);
 		value = -qsearch<NT>(pos, ss + 1, -beta, -alpha, depth - ONE_PLY);
 		pos.undo_move();
+
+		ASSERT(value > -Value_Infinite&&value < Value_Infinite);
+
 #ifndef LEARN
 		//if (signal.stop.load(std::memory_order_relaxed)) {
 		//	//時間切れはfail hardにしているがここもfail softにしておくべきか？
@@ -1661,7 +1681,7 @@ Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
 		PvNode && bestvalue > oldAlpha ? BOUND_EXACT : BOUND_UPPER,
 		depth, bestMove, staticeval, TT.generation());
 #endif
-
+	ASSERT(bestvalue > -Value_Infinite&&bestvalue < Value_Infinite);
 	return bestvalue;
 }
 

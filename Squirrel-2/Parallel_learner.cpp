@@ -483,7 +483,7 @@ void Eval::parallel_learner() {
 #define Test_icchiritu
 
 #ifdef Test_icchiritu
-	cout<<concordance()<<endl;
+	//cout<<concordance()<<endl;
 #endif
 
 
@@ -555,9 +555,6 @@ void Eval::parallel_learner() {
 #endif
 
 	}
-
-
-
 }
 
 

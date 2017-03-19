@@ -35,7 +35,7 @@
 
 //---------------------------------ŠwKŠÖ˜A
 
-#define LEARN
+//#define LEARN
 
 //#define Prog_LEARN
 
@@ -56,7 +56,7 @@
 //-----------------------------•]‰¿ŠÖ”ŠÖ˜A
 
 
-//#define DIFFTEST
+#define DIFFTEST
 //#define EVAL_NONDIFF
 //#define EVAL_KPP
 
