@@ -270,6 +270,9 @@ Value Thread::think() {
 
 
 //	Eval::eval(rootpos);
+
+
+	
 	while (++rootdepth <maxdepth&&!signal.stop) {
 
 		previousScore = RootMoves[0].value;
@@ -317,6 +320,18 @@ research:
 		ASSERT(abs(bestvalue) < Value_Infinite);
 
 		sort_RootMove();
+
+		/*
+		mateを発見した時63回ループを回ろうとして制限時間を超えてしまうことが起こりうる
+		（この前の大会でそれで負けてしまった。）
+		のでここはmateを見つけたらすぐに返す実装にする
+
+		しかし誤mateかもしれないので20までは探索させる
+
+		*/
+		if (rootdepth > 20 && abs(bestvalue) > Value_mate_in_maxply) { goto ID_END;}
+
+
 		if (signal.stop) {
 			//cout << "signal stop" << endl;
 			break;
@@ -355,6 +370,9 @@ research:
 #endif
 
 		
+
+
+
 
 #ifndef LEARN
 		print_pv(rootdepth,bestvalue);

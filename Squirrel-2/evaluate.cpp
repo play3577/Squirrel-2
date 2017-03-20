@@ -289,8 +289,22 @@ namespace Eval {
 
 			//計算済みの値が正しいか確認
 			int bPP = pos.state()->bpp, wPP = pos.state()->wpp;
+#ifdef EVAL_PROG
+			int bPPf = pos.state()->bppf, wPPf = pos.state()->wppf;
+#endif // EVAL_PROG
 
-			if (pp != eval_PP(pos)) {
+			
+
+			eval_PP(pos);
+
+			if (/*pp != eval_PP(pos)*/
+				bPP!= pos.state()->bpp||
+				wPP!= pos.state()->wpp
+#ifdef EVAL_PROG
+				||bPPf!= pos.state()->bppf||
+				wPPf!= pos.state()->wppf
+#endif
+				) {
 				cout << " diff " << pp << " evalfull " << eval_PP(pos) << endl;
 
 				cout << pos << endl;
@@ -302,6 +316,10 @@ namespace Eval {
 				cout << " diff " << Value((bPP + wPP) / FV_SCALE) << " evalfull " << eval_PP(pos) << endl;;
 				cout << "bpp " << bPP << " " << pos.state()->bpp << endl;;
 				cout << "wpp " << wPP << " " << pos.state()->wpp << endl;;
+#ifdef EVAL_PROG
+				cout << "bpp " << bPPf << " " << pos.state()->bppf << endl;;
+				cout << "wpp " << wPPf << " " << pos.state()->wppf << endl;;
+#endif
 				UNREACHABLE;;
 			}
 #endif
@@ -337,6 +355,8 @@ namespace Eval {
 		//	cout << pos << endl;
 		//	ASSERT(0);
 		//}
+
+		ASSERT(material == eval_material(pos));
 
 
 		return (pos.sidetomove() == BLACK) ? value : -value;

@@ -351,17 +351,7 @@ double concordance() {
 		th.cleartable();
 		for (int ply = 0; ply < (thisgame.moves.size() - 1); ply++) {
 			si[ply].clear();
-			
-#if 0
-			/*if ((float(ply) / float(thisgame.moves.size())) > 0.9) {
-				cout << "progress:" << (float(ply) / float(thisgame.moves.size())) << " ply:" << ply << " maxply:" << thisgame.moves.size() << " progress over 90%" << endl;
-				goto ERROR_OCCURED;
-			}*/
-			//さすがにELO2800以上のソフトであれば最後の20手は王手の連続だろう...
-			if (ply > (thisgame.moves.size() - 20)) {
-				goto ERROR_OCCURED;
-			}
-#endif
+	
 
 			const Color rootColor = pos.sidetomove();
 
@@ -483,7 +473,7 @@ void Eval::parallel_learner() {
 #define Test_icchiritu
 
 #ifdef Test_icchiritu
-	//cout<<concordance()<<endl;
+	cout<<concordance()<<endl;
 #endif
 
 
@@ -623,8 +613,8 @@ void learnphase1body(int number) {
 			diddepth = ply;
 			minfo_list.clear();
 
-#if 0
-			if ((float(ply) / float(thisgame.moves.size())) > 0.9) {
+#if 1
+			if ((float(ply) / float(thisgame.moves.size())) > 0.8) {
 				//cout <<"progress:"<< (float(ply) / float(thisgame.moves.size()))<<" ply:"<<ply<<" maxply:"<< thisgame.moves.size() <<  " progress over 90%" << endl;
 				goto ERROR_OCCURED;
 			}

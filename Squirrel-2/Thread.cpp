@@ -14,10 +14,11 @@ const string print_value(Value v) {
 	stringstream ss;
 
 	if (v < Value_mated_in_maxply) {
-		ss << "mate " << int(Value_Mated  - v) ;
+		//しかし修正としてこれでいいのかは不安　本質的なバグかもしれないしこれがおかしいとmatedistanceがおかしくなるので...
+		ss << "mate " << int(Value_Mated  - v+1) ;
 	}
 	else if (v > Value_mate_in_maxply) {
-		ss << "mate " << int(Value_Mate-v) ;
+		ss << "mate " << int(Value_Mate-v-1) ;
 	}
 	else {
 		ss << int(v)*int(100)/int(Eval::PawnValue);
