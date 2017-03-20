@@ -565,21 +565,16 @@ namespace Eval {
 				//listの内容の順番はどうでもいいと思うのだけれど...
 
 				//この方法では見てはいけないメモリを見てしまっているのでセグフォが起こる！　
-#if defined(_MSC_VER)
+
 				bPP += PP[list_fb[i]][list_fb[j]];
 				wPP -= PP[list_fw[i]][list_fw[j]];
-#endif
-#if defined(__GNUC__) 
-				bPP += PP[pos.evallist().bplist_fb[i]][pos.evallist().bplist_fb[j]];
-				wPP -= PP[pos.evallist().bplist_fw[i]][pos.evallist().bplist_fw[j]];
-#endif
 
-				
 			}
 		}
 		pos.state()->bpp = (bPP);
 		pos.state()->wpp = wPP;
 		//評価値ホントに16bitで収まるかどうか確認
+		ASSERT(bPP != Value_error&&wPP != Value_error);
 		ASSERT(abs(bPP + wPP) / FV_SCALE < INT16_MAX);
 
 		return Value((bPP+wPP) / FV_SCALE);

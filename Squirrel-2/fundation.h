@@ -35,7 +35,7 @@
 
 //---------------------------------学習関連
 
-//#define LEARN
+#define LEARN
 
 //#define Prog_LEARN
 
@@ -194,17 +194,22 @@ const int MAX_PLY = 256;
 
 
 //評価値はTTの16bitで収めなければ成らないため32768から32767まで
-enum Value :int/*16_t*/ {
+/*
+表現の幅を大きくするために最大値を大きくするべきか,
+PCにとって取り扱いやすい値にするべきか
+*/
+enum Value :int{
 
 	Value_Zero = 0,
-	Value_Mate = 32000,
-	Value_Mated = -32000,
+	Value_Mate = 32760,
+	Value_Mated = -32760,
 	Value_mate_in_maxply = int(Value_Mate) - MAX_PLY,
 	Value_mated_in_maxply = int(Value_Mated) + MAX_PLY,
 
 	Value_known_win = 10000,//8000程度でもいいはずだけど
-	Value_Infinite = 32001,
-	Value_error = -32011,
+	Value_Infinite = 32761,
+	Value_error = INT_MIN,
+	
 	//駒の価値
 	/*Hiyoko_value = 100,
 	Zou_value = 150,

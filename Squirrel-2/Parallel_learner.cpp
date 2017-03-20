@@ -26,6 +26,8 @@ using namespace std;
 #define LOG
 
 
+//#define Test_icchiritu
+
 #define SOFTKIFU
 
 
@@ -315,10 +317,10 @@ std::vector<Game> testset;
 学習中に一致率を計算させていたがなんかバグってcpu使用率が０になってしまうことが頻発したので
 一致率計算の関数を用意して最後に一致率を計算する。
 
-どこにバグがある？？？？？？？？？？
-一致率計算中だけ差分計算にバグが出る？？？？？？？？
-
 学習用の寄付で一致率を図る。学習を進めると過学習を起こすはずであるのでそれで学習にバグがないかどうか確かめる
+
+一致率測定中に差分計算にバグが出ることが発覚した。
+どこが悪い？？
 
 */
 double concordance() {
@@ -332,11 +334,9 @@ double concordance() {
 	if (num_tests > games.size()) { num_tests = games.size(); }
 	ASSERT(num_tests <= games.size());
 
-	//ここで宣言したいのだけれどこれでいいのだろうか？
 	Position pos;
 	StateInfo si[500];
 	ExtMove moves[600], *end;
-	vector<MoveInfo> minfo_list;
 	Thread th;
 	end = moves;
 
@@ -349,12 +349,10 @@ double concordance() {
 		auto thisgame = games[g];
 		pos.set_hirate();
 		th.cleartable();
+
 		for (int ply = 0; ply < (thisgame.moves.size() - 1); ply++) {
 			si[ply].clear();
-	
-
-			const Color rootColor = pos.sidetomove();
-
+			
 			//この局面の差し手を生成する
 			memset(moves, 0, sizeof(moves));//初期化
 			end = test_move_generation(pos, moves);
@@ -369,15 +367,16 @@ double concordance() {
 				cout << "cant swap" << endl;
 				goto ERROR_OCCURED;
 			}
-			if (pos.is_legal(teacher_move) == false) { cout << "teacher ilegal" << endl; goto ERROR_OCCURED; }
+			if (pos.is_legal(teacher_move) == false||!pos.pseudo_legal(teacher_move)) { cout << "teacher ilegal" << endl; goto ERROR_OCCURED; }
 			//探索を行ってpv[0]がteachermoveか確認する。
 			
 			th.set(pos);
-			th.l_alpha = Value_Mated;
-			th.l_beta = Value_Mate;
+			th.l_alpha = -Value_Infinite;
+			th.l_beta = Value_Infinite;
 			
 			Value  score = th.think();
 			if (th.pv[0] == teacher_move) { num_concordance_move++; }
+			th.pv.clear();
 
 			pos.do_move(teacher_move, &si[ply]);
 			num_all_move++;
@@ -470,7 +469,7 @@ void Eval::parallel_learner() {
 	cout << "test games " << testset.size() << endl;
 	cout << "read kihu OK!" << endl;
 
-#define Test_icchiritu
+
 
 #ifdef Test_icchiritu
 	cout<<concordance()<<endl;
