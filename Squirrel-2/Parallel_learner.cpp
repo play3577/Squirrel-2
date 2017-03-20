@@ -26,7 +26,7 @@ using namespace std;
 #define LOG
 
 
-//#define Test_icchiritu
+
 
 #define SOFTKIFU
 
@@ -313,6 +313,9 @@ std::vector<Game> games;
 std::vector<Game> testset;
 
 
+#define Test_icchiritu
+
+
 /*
 学習中に一致率を計算させていたがなんかバグってcpu使用率が０になってしまうことが頻発したので
 一致率計算の関数を用意して最後に一致率を計算する。
@@ -329,6 +332,7 @@ double concordance() {
 	//std::shuffle(testset.begin(), testset.end(), t_mt);//シャッフルさせてるがしないほうがいい？？
 
 	int num_tests = 500;//500棋譜で確認する
+
 	//if (num_tests > testset.size()) { num_tests = testset.size(); }
 	//ASSERT(num_tests <= testset.size());
 	if (num_tests > games.size()) { num_tests = games.size(); }
@@ -373,7 +377,11 @@ double concordance() {
 			th.set(pos);
 			th.l_alpha = -Value_Infinite;
 			th.l_beta = Value_Infinite;
-			
+			//差分計算でバグらないようにするため
+#ifdef EVAL_PROG
+			Progress::calc_prog(pos);
+#endif
+			eval_PP(pos);
 			Value  score = th.think();
 			if (th.pv[0] == teacher_move) { num_concordance_move++; }
 			th.pv.clear();
@@ -666,7 +674,12 @@ void learnphase1body(int number) {
 				if (pos.state()->lastmove == m) { cout << games[g].black_P << " " << games[g].white_P; ASSERT(0); }
 				didmoves++;
 				pos.do_move(m, &si[ply]);
-				
+				//差分計算のためにここでもevalを呼んで置いたほうがいいか？？？まあvalue_errorになっているのでこのままでもバグはないとは思うが　早くpharse1おわるか？？
+#ifdef EVAL_PROG
+				Progress::calc_prog(pos);
+#endif
+				eval_PP(pos);
+
 				th.set(pos);
 				/*---------------------------------------------------------------------------------------------------------
 				ここではPVの作成だけを行ってscoreはPVで末端まで移動させてeval()呼んで、その値を使用したほうがいい？？？
