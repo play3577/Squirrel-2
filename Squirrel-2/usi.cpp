@@ -104,6 +104,7 @@ void USI::init_option(OptionMap &o,string engine_name)
 	o["EngineName"] << USIOption(name.c_str());
 	//o["is_0.1s"] << USIOption(false);
 	//o["bookpath"] << USIOption("c:/book2/book2016928fg2800_40.db");
+
 	o["bookpath"] << USIOption("c:/book2/standard_book.db");
 	o["usebook"] << USIOption(true);
 	o["randombook"] << USIOption(true);
@@ -672,6 +673,16 @@ void USI::loop()
 		else if (token == "ij") {
 			Eval::param_sym_ij();
 		}
+		else if (token == "makebook") {
+
+			string yn;
+			cout << "do you really wanna makebook? [y/n]  ";
+			cin >> yn;
+			if (yn != "y") { cout << "OK I do not makebook"; break; }
+			BOOK::makebook();
+		}
+
+
 #endif
 	} while (token != "quit");
 

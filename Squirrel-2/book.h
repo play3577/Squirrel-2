@@ -69,9 +69,6 @@ public:
 	//datastream‚©‚çbook‚Ìì¬‚ğs‚¤B
 	bool preparebook();
 
-	bool makebook();
-
-	bool write_book(string filename);
 
 };
 
@@ -79,4 +76,6 @@ public:
 
 namespace BOOK {
 	void init();
+	bool makebook();
+	bool write_book(string filename);
 }

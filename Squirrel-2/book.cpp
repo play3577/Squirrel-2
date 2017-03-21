@@ -133,7 +133,7 @@ sfen ln1gk1snl/1r1s2gb1/p1pppppp1/1p6p/7P1/2P3P2/PP1PPP2P/1B5R1/LNSGKGSNL b - 9
 */
 #include "game_database.h"
 
-bool BookDataStream::makebook() {
+bool BOOK::makebook() {
 
 
 	std::vector<Game> games;
@@ -149,7 +149,8 @@ bool BookDataStream::makebook() {
 	
 	GameDataStream gamedatastream(gamedata);
 
-	cout << "readgames " << readgames << endl;
+	cout << "readgames ";
+	cin >> readgames;
 
 	//棋譜を読み込む
 	Game g;
@@ -176,13 +177,7 @@ bool BookDataStream::makebook() {
 	StateInfo si[500];
 	//定跡を作成する。
 	//並列に作成したいが出現回数がおかしくなってしまうのを防ぐため並列にしない。
-	/*
 	
-	
-	
-	
-	
-	*/
 	for (int64_t num = 0; num < games.size(); num++) {
 
 		auto game = games[num];
@@ -206,7 +201,7 @@ bool BookDataStream::makebook() {
 			//const Value score = th.think();
 			//if (score < -100) { goto NEXTGAME; }
 
-
+			pos.ply_from_startpos = ply + 1;
 			const string sfen = pos.make_sfen();
 			//move ponder value depth frequency
 			BookEntry be(m, ponderm, Value(0), Depth(0), 1);
@@ -246,20 +241,20 @@ NEXTGAME:;
 
 
 	//ここでbookを書き出す
-	write_book("C:/book2/testbook.db");
+	write_book("C:/book2/newbook.db");
 
 
 	return true;
 }
 
-bool BookDataStream::write_book(string filename)
+bool BOOK::write_book(string filename)
 {
 	ofstream of(filename);
 
 	auto i = book.begin();
 
 	//ここi++でいけるかな????
-	for (; i != book.end; i++) {
+	for (; i != book.end(); i++) {
 
 		/*
 sfen ln1gk1snl/1r1s2gb1/p1pppppp1/1p6p/7P1/2P3P2/PP1PPP2P/1B5R1/LNSGKGSNL b - 9
