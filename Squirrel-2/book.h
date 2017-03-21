@@ -16,7 +16,7 @@ using namespace std;
 http://yaneuraou.yaneu.com/2016/02/05/%E5%B0%86%E6%A3%8B%E3%82%BD%E3%83%95%E3%83%88%E7%94%A8%E3%81%AE%E6%A8%99%E6%BA%96%E5%AE%9A%E8%B7%A1%E3%83%95%E3%82%A1%E3%82%A4%E3%83%AB%E3%83%95%E3%82%A9%E3%83%BC%E3%83%9E%E3%83%83%E3%83%88%E3%81%AE/
 （上のリンクに乗っているのは拡張前のフォーマット）
 
-（しかしもしかしたら今のSquirrelのsfen()では　持ち駒の出力が違って定跡を使えないかもしれないので、もしそうであればsfen()を修正してやる必要がある）
+（しかしもしかしたら今のSquirrelのsfen()では　持ち駒の出力の順番が違って定跡を使えないかもしれないので、もしそうであればsfen()を修正してやる必要がある）
 
 
 やねうら王フォーマット
@@ -48,6 +48,9 @@ struct BookEntry {
 		depth = d;
 		frequency = f;
 	}
+
+	//ソートのための演算子
+	bool operator < (const BookEntry a) { return (this->frequency > a.frequency); }
 };
 
 //一つの局面に対してbookentryは多数ありうるのでvectorにしておく。
@@ -65,6 +68,11 @@ public:
 
 	//datastreamからbookの作成を行う。
 	bool preparebook();
+
+	bool makebook();
+
+	bool write_book(string filename);
+
 };
 
 

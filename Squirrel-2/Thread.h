@@ -26,7 +26,7 @@ public:
 	//•À—ñŠwK’†‚É‚±‚±‚ªN‚³‚ê‚Ä‚µ‚Ü‚¤‚Ì‚ğ–h‚®
 	CounterMoveHistoryStats CounterMoveHistory;
 
-#ifdef LEARN
+#if defined(LEARN) || defined(MAKEBOOK)
 	Value l_alpha;
 	Value l_beta;
 #endif

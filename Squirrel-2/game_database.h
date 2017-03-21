@@ -59,6 +59,6 @@ private:
 public:
 	GameDataStream(istream& is) : input_stream_(is) {}
 	bool read_onegame(Game* game);//一局分のデータを読みだす。（まだ残りがあればtrue）
-
+	
 
 };

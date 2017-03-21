@@ -256,15 +256,12 @@ Value Thread::think() {
 	
 
 	//cout << limit.endtime << endl;
-#ifdef LEARN
+#if defined(LEARN) || defined(MAKEBOOK)
 	maxdepth = 3;//‚±‚Ì’l-1‚ªŽÀÛ‚É’Tõ‚³‚ê‚é[‚³
-	//maxdepth = 4;//ˆêŽè[‚­‚µ‚Ä‚Ý‚é
 	alpha = this->l_alpha;
 	beta = this->l_beta;
-	/*alpha = -Value_Infinite;
-	beta = Value_Infinite;*/
-#endif
-#ifndef LEARN
+	
+#else
 	maxdepth = MAX_DEPTH;
 #endif // !LEARN
 

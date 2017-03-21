@@ -13,8 +13,10 @@ NO_PIECE, PAWN, LANCE, KNIGHT, SILVER, BISHOP, ROOK, GOLD, KING,
 PRO_PAWN, PRO_LANCE, PRO_NIGHT, PRO_SILVER, UNICORN, DRAGON,
 */
 const int LVA_[PT_ALL] = {
-	0,1,2,3,4,6,7,5,100,
-	5,5,5,5,10,13
+	/*0,1,2,3,4,6,7,5,100,
+	5,5,5,5,10,13*/
+	0,1,2,3,4,8,9,7,100,
+	4,5,5,6,10,11
 };
 
 inline Value LVA(const Piece pt) {
