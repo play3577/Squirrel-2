@@ -66,7 +66,7 @@
 //#define EVAL_PROG
 
 //--------------------------------’èÕì¬ƒ‚[ƒh‚ğƒIƒ“‚É‚·‚é‚©
-#define MAKEBOOK
+//#define MAKEBOOK
 
 
 

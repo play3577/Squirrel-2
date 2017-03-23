@@ -377,6 +377,8 @@ double concordance() {
 			th.set(pos);
 			th.l_alpha = -Value_Infinite;
 			th.l_beta = Value_Infinite;
+			th.l_depth = 3;
+
 			//差分計算でバグらないようにするため
 #ifdef EVAL_PROG
 			Progress::calc_prog(pos);
@@ -696,6 +698,17 @@ void learnphase1body(int number) {
 					th.l_alpha = record_score-(Value)256;
 					th.l_beta = record_score +(Value)256;
 				}
+
+				//th.l_depth = 3;
+
+				//Aperyや技巧のように探索深さを乱数によって変更してみる。
+				//大槻将棋のページでBonanzaが学習中の探索深さを1深くしたら強くなったということが書かれていたので乱数によって深くしてみる。
+				//私の手元の実験データでは深くしても強くならなかったのだけれど...
+				std::random_device seed_gen;
+				std::default_random_engine engine(seed_gen());
+				std::uniform_int_distribution<int> dis(3, 4);
+				th.l_depth = dis(engine);
+
 
 				Value  score = th.think();
 				if (move_i == 0) { record_score = score; 

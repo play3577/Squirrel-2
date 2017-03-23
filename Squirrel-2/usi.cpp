@@ -93,13 +93,9 @@ void USI::init_option(OptionMap &o,string engine_name)
 //#ifndef _DEBUG
 //	name+="releaseTT ";
 //#endif
+
 	o["USI_Ponder"] << USIOption(false);
 	o["Threads"] << USIOption(1, 1, 128);
-
-	
-
-
-	
 	o["USI_Hash"] << USIOption(1, 1, 256);
 	o["EngineName"] << USIOption(name.c_str());
 	//o["is_0.1s"] << USIOption(false);
@@ -673,6 +669,7 @@ void USI::loop()
 		else if (token == "ij") {
 			Eval::param_sym_ij();
 		}
+#if defined(MAKEBOOK)
 		else if (token == "makebook") {
 
 			string yn;
@@ -681,7 +678,7 @@ void USI::loop()
 			if (yn != "y") { cout << "OK I do not makebook"; break; }
 			BOOK::makebook();
 		}
-
+#endif
 
 #endif
 	} while (token != "quit");

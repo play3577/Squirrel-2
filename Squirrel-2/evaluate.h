@@ -350,5 +350,5 @@ namespace Eval {
 	inline void init() { read_KPP(); }
 #endif //  EVAL_KPP
 
-
+	constexpr Value tempo = Value(40);
 };

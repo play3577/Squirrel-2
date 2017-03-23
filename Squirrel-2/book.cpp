@@ -131,8 +131,9 @@ sfen ln1gk1snl/1r1s2gb1/p1pppppp1/1p6p/7P1/2P3P2/PP1PPP2P/1B5R1/LNSGKGSNL b - 9
 (その局面での指し手) (予想される応手（なければ"none"）) (その指し手で進めたときの評価値) (評価値を出したときの探索深さ)　（出現頻度）
 
 */
+#if defined(MAKEBOOK)
 #include "game_database.h"
-
+#include "evaluate.h"
 bool BOOK::makebook() {
 
 
@@ -185,7 +186,7 @@ bool BOOK::makebook() {
 		th.cleartable();
 
 		for (int ply = 0; ply <maxply; ply++) {
-
+			cout << "." << endl;
 			si[ply].clear();
 			const Move m = game.moves[ply];
 			const Move ponderm = game.moves[ply + 1];
@@ -195,11 +196,13 @@ bool BOOK::makebook() {
 			pos.undo_move();
 
 
-			//th.set(pos);
-			//これでSquirrelに向いてない定跡は省きたいのだけれどSquirrelの評価関数は安定してないから厳しいだろうなぁ...
-			//しゃーないので合法手は全部定跡に入れるか....
-			//const Value score = th.think();
-			//if (score < -100) { goto NEXTGAME; }
+			th.set(pos);
+			th.l_alpha = -Value_Infinite;
+			th.l_beta = Value_Infinite;
+			th.l_depth = 10;
+			Eval::eval(pos);
+			const Value score = th.think();
+			if (score < -200) { goto NEXTGAME; }
 
 			pos.ply_from_startpos = ply + 1;
 			const string sfen = pos.make_sfen();
@@ -233,6 +236,7 @@ bool BOOK::makebook() {
 
 
 			pos.do_move(m, &si[ply]);
+			
 		}//while ply
 NEXTGAME:;
 
@@ -243,7 +247,7 @@ NEXTGAME:;
 	//ここでbookを書き出す
 	write_book("C:/book2/newbook.db");
 
-
+	cout << "finish" << endl;
 	return true;
 }
 
@@ -273,3 +277,4 @@ sfen ln1gk1snl/1r1s2gb1/p1pppppp1/1p6p/7P1/2P3P2/PP1PPP2P/1B5R1/LNSGKGSNL b - 9
 	of.close();
 	return true;
 }
+#endif

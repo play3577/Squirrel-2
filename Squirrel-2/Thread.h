@@ -29,6 +29,7 @@ public:
 #if defined(LEARN) || defined(MAKEBOOK)
 	Value l_alpha;
 	Value l_beta;
+	int l_depth;
 #endif
 
 

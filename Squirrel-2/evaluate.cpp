@@ -359,7 +359,7 @@ namespace Eval {
 		ASSERT(material == eval_material(pos));
 
 
-		return (pos.sidetomove() == BLACK) ? value : -value;
+		return (pos.sidetomove() == BLACK) ? value+tempo: -value+tempo;
 
 		/*Value value = eval_material(pos);
 		return (pos.sidetomove() == BLACK) ? value : -value;*/

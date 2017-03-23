@@ -184,6 +184,9 @@ Value Thread::think() {
 	Stack stack[MAX_PLY + 7], *ss = stack + 5;
 	std::memset(ss-5, 0, 8 * sizeof(Stack));//Ç‹Ç¶8Ç¬ÇæÇØèâä˙âªÇ∑ÇÈÅHÅH
 	Value bestvalue, alpha, beta,delta;
+	pv.clear();
+
+	bool findbook = false;
 
 	if (end == RootMoves) {
 #ifndef LEARN
@@ -201,6 +204,7 @@ Value Thread::think() {
 		auto bookentry = book.find(sfen);
 
 		if (bookentry != book.end()) {
+			findbook = true;
 			std::vector<BookEntry> entrys = bookentry->second;
 
 			if (Options["randombook"]) {
@@ -217,7 +221,7 @@ Value Thread::think() {
 			if (limit.is_ponder == false) {
 				signal.stop = true;
 			}
-			cout << "book move" << endl;
+			cout << "info book move" << endl;
 			goto ID_END;
 
 		}//bookÇå©Ç¬ÇØÇΩèÍçá
@@ -257,7 +261,7 @@ Value Thread::think() {
 
 	//cout << limit.endtime << endl;
 #if defined(LEARN) || defined(MAKEBOOK)
-	maxdepth = 3;//Ç±ÇÃíl-1Ç™é¿ç€Ç…íTçıÇ≥ÇÍÇÈê[Ç≥
+	maxdepth = l_depth;//Ç±ÇÃíl-1Ç™é¿ç€Ç…íTçıÇ≥ÇÍÇÈê[Ç≥
 	alpha = this->l_alpha;
 	beta = this->l_beta;
 	
@@ -371,17 +375,26 @@ research:
 
 
 
-#ifndef LEARN
+#if !defined(LEARN) || !defined(MAKEBOOK)
 		print_pv(rootdepth,bestvalue);
-		//cout <<"ï]âøíl"<< int(bestvalue)*100/int(Eval::PawnValue) << endl;
+		
 #endif
 	}//end of îΩïúê[âª
 	sort_RootMove();
 ID_END:
 
-#ifndef LEARN
-	//print_pv(rootdepth, bestvalue);
-	cout << "bestmove " << RootMoves[0] << endl;
+#if !defined(LEARN) || !defined(MAKEBOOK)
+	cout << "bestmove " << RootMoves[0];
+	if (Options["USI_Ponder"] != false) {
+		if (findbook == false) {
+			pondermove =pv[1];
+		}
+		if (pondermove != MOVE_NONE) {
+			cout << " ponder " << pondermove;
+		}
+
+	}
+	cout << endl;
 #endif // !LEARN
 	previousScore = RootMoves[0].value;
 	return bestvalue;
@@ -659,9 +672,9 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 		//	cout << "incheck" << endl;
 		goto moves_loop;
 	}
-	else if ((ss - 1)->currentMove == MOVE_NULL) {
+	/*else if ((ss - 1)->currentMove == MOVE_NULL) {
 		staticeval = ss->static_eval = -(ss - 1)->static_eval + 2 * (Value)20;
-	}
+	}*/
 #endif
 
 
