@@ -48,6 +48,9 @@ int main() {
 	Eval::init();
 	Zoblist::init();
 	search_init();
+#if 1
+	Threadpool.init();
+#endif
 	//Eval::initialize_PP();
 	/*if (Options["usebook"] == true) {
 		BOOK::init();

@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <sstream>
 #include "evaluate.h"
+#include "tpt.h"
 using namespace std;
 
 
@@ -79,3 +80,34 @@ void Thread::sort_RootMove()
 	std::cout << endl;
 
 }
+
+ /*
+ この関数は探索を終了するときにpondermoveが見つからなかった場合に呼び出される
+ 例えばrootでfail highが起こった時などである　
+ */
+ bool Thread::extract_ponder_from_tt(Position& pos) {
+
+	 StateInfo st;
+	 bool tthit;
+
+	 ASSERT(pv.size() == 1);
+
+	 //pvで一手進めてその局面でttmoveを探す
+	 pos.do_move(pv[0], &st);
+	 TPTEntry* tte = TT.probe(pos.key(), tthit);
+
+	 if (tthit) {
+
+		 Move m = tte->move();
+		 if (pos.is_legal(m) && pos.pseudo_legal(m)) {
+			 pv.push_back(m);
+		 }
+	 }
+	 pos.undo_move();
+
+	 return pv.size() > 1;
+ }
+
+
+
+

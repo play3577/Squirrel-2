@@ -491,12 +491,6 @@ cant_mate_gold:;
 	////pinゴマを動かそうとしてはいけない（まあpinをしている駒をとることで王手できる場合もあるがそれはイレギュラーなので考えないほうがいいだろう）
 	//matecandicate_silver = andnot(matecandicate_silver, pinned[us]);
 
-
-
-
-	
-
-
 #endif
 	return MOVE_NONE;
 }

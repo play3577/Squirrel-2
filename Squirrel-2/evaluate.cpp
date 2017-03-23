@@ -333,8 +333,6 @@ namespace Eval {
 		else {
 			//ëSåvéZÅI
 			pp = eval_PP(pos);
-
-		
 		}
 #else
 		pp = eval_PP(pos);
@@ -356,7 +354,7 @@ namespace Eval {
 		//	ASSERT(0);
 		//}
 
-		ASSERT(material == eval_material(pos));
+		//ASSERT(material == eval_material(pos));
 
 
 		return (pos.sidetomove() == BLACK) ? value+tempo: -value+tempo;

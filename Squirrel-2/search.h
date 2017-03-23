@@ -15,7 +15,7 @@ enum Nodetype {
 
 struct Signal {
 
-	std::atomic_bool stop;
+	std::atomic_bool stop,stopOnPonderHit;
 
 };
 
@@ -45,7 +45,7 @@ struct SearchLimit {
 	TimePoint byoyomi;//秒読み時間
 	TimePoint inc_time;//フィッシャールール用
 	TimePoint endtime;
-	bool is_ponder = false;
+	bool is_inponder = false;
 };
 
 //デバッグ用関数　こんなの実装しなくてもいいかもしれないが無いよりあったほうがいいだろう
@@ -64,7 +64,7 @@ inline std::ostream& operator<<(std::ostream& os, const SearchLimit& sl) {
 }
 
 extern SearchLimit limit;
-
+extern Signal signal;
 void search_init();
 
 inline Value mated_in_ply(int ply) { return Value(Value_Mated + ply); }

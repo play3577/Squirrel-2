@@ -94,8 +94,8 @@ void USI::init_option(OptionMap &o,string engine_name)
 //	name+="releaseTT ";
 //#endif
 
-	o["USI_Ponder"] << USIOption(false);
-	o["Threads"] << USIOption(1, 1, 128);
+	o["USI_Ponder"] << USIOption(true);
+	o["Threads"] << USIOption(2, 1, 128);
 	o["USI_Hash"] << USIOption(1, 1, 256);
 	o["EngineName"] << USIOption(name.c_str());
 	//o["is_0.1s"] << USIOption(false);
@@ -168,7 +168,7 @@ void is_ready() {
 			BOOK::init();
 		}
 	}
-	
+	Threadpool.init();
 	first_ready = false;
 }
 
@@ -202,6 +202,7 @@ void go(Position& pos, istringstream& is, Thread& th) {
 			is >> buffer;
 			limit.inc_time = stoi(buffer);
 		}
+		else if (token == "ponder") { limit.is_inponder = true; }
 	}
 
 #ifdef TEST
@@ -209,10 +210,14 @@ void go(Position& pos, istringstream& is, Thread& th) {
 #endif
 
 	Eval::eval_PP(pos);
+
+
+	Threadpool.start_thinking(pos);
+
+#if 0
 	th.set(pos);
 	v = th.think();
-	cout << " 評価値 " << v << endl;
-
+#endif
 }
 
 
@@ -325,6 +330,13 @@ void USI::loop()
 			else {
 				UNREACHABLE;
 			}
+			
+			
+
+		}
+		else if (token == "ponderhit") {
+
+			limit.is_inponder = false;
 		}
 		//学習用コマンド”アイ”ではなく"エル"
 		else if (token == "l") {

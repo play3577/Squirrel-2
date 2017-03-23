@@ -167,6 +167,7 @@ void update_pv(Move* pv, Move move, Move* childPv) {
 }
 
 void check_time() {
+	if (limit.is_inponder) { return; }
 	TimePoint now_ = now();
 	if (now_  > limit.endtime -20) {
 		signal.stop = true;
@@ -174,20 +175,173 @@ void check_time() {
 }
 
 
-
-
-
-
+#if 1
 
 Value Thread::think() {
 
+
+
 	Stack stack[MAX_PLY + 7], *ss = stack + 5;
-	std::memset(ss-5, 0, 8 * sizeof(Stack));//まえ8つだけ初期化する？？
-	Value bestvalue, alpha, beta,delta;
+	std::memset(ss - 5, 0, 8 * sizeof(Stack));//まえ8つだけ初期化する？？
+	Value bestvalue, alpha, beta, delta;
 	pv.clear();
 
 	bool findbook = false;
 
+
+	bestvalue = delta = alpha = -Value_Infinite;
+	beta = Value_Infinite;
+	rootdepth = 0;
+	int maxdepth;
+
+	seldepth = 0;
+
+	//時間制御
+	
+
+
+
+	//cout << limit.endtime << endl;
+#if defined(LEARN) || defined(MAKEBOOK)
+	maxdepth = l_depth;//この値-1が実際に探索される深さ
+	alpha = this->l_alpha;
+	beta = this->l_beta;
+
+#else
+	maxdepth = MAX_DEPTH;
+#endif // !LEARN
+
+
+	//	Eval::eval(rootpos);
+
+
+
+	while (++rootdepth <maxdepth && !signal.stop) {
+
+		previousScore = RootMoves[0].value;
+#ifdef ASP
+		/*
+		<1:info depth 1/2 score cp 2808 time 1 nodes 340 nps 340k pv  G*7f
+		<1:info depth 2/4 score cp mate 4 time 1 nodes 562 nps 562k pv  6h8h 9g8h 7g7h+
+		<1:alpha:0 beta:0 previous value:31996 delta:-39996
+		<1:Error!!
+		<1:info string file:search.cpp line:292 alpha < beta
+
+		このバグはrootdepth=3で発生している！！！！！！
+		rootdepth>=5から反復進化なのでこれは反復進化の問題ではない！ほかのところに原因があるはず！！！
+
+		rootdepth<5の時に bestvalueがvalueInfinityになってしまっていた！？？？
+		どこでそんな値が帰ってきてしまっているのか調べる
+
+		*/
+		if (rootdepth >= 5) {
+			delta = Value(40);
+			alpha = std::max(previousScore - delta, -Value_Infinite);
+			beta = std::min(previousScore + delta, Value_Infinite);
+		}
+		/*else{
+		これむだだった
+		alpha = -Value_Infinite;
+		beta = Value_Infinite;
+		}*/
+#endif
+	research:
+		//ここで探索関数を呼び出す。
+		if (alpha >= beta) {
+			cout << "alpha:" << alpha << " beta:" << beta << " previous value:" << previousScore << " bestvalue:" << bestvalue << " delta:" << delta << endl;
+		}
+		ASSERT(alpha < beta);
+
+
+
+#ifndef	LEARN
+		bestvalue = search<Root>(rootpos, ss, alpha, beta, rootdepth*ONE_PLY, false);
+#else
+		bestvalue = lsearch<Root>(rootpos, ss, alpha, beta, rootdepth*ONE_PLY, false);
+#endif
+
+		ASSERT(abs(bestvalue) < Value_Infinite);
+
+		sort_RootMove();
+
+		/*
+		mateを発見した時63回ループを回ろうとして制限時間を超えてしまうことが起こりうる
+		（この前の大会でそれで負けてしまった。）
+		のでここはmateを見つけたらすぐに返す実装にする
+
+		しかし誤mateかもしれないので20までは探索させる
+
+		*/
+		if (rootdepth > 20 && abs(bestvalue) > Value_mate_in_maxply) { goto ID_END; }
+
+
+		if (signal.stop) {
+			//cout << "signal stop" << endl;
+			break;
+		}
+#ifdef ASP
+		if (bestvalue <= alpha)
+		{
+			beta = (alpha + beta) / 2;
+			alpha = std::max(bestvalue - delta, -Value_Infinite);
+			delta += delta / 4 + 5;
+
+
+			ASSERT(alpha >= -Value_Infinite&&beta <= Value_Infinite);
+			if (delta <= 0) {
+				cout << alpha << " " << beta << " " << delta << " " << bestvalue << endl;
+				ASSERT(0);
+			}
+			goto research;
+		}
+		else if (bestvalue >= beta)
+		{
+			alpha = (alpha + beta) / 2;
+			beta = std::min(bestvalue + delta, Value_Infinite);
+			delta += delta / 4 + 5;
+
+
+			ASSERT(alpha >= -Value_Infinite&&beta <= Value_Infinite);
+			if (delta <= 0) {
+				cout << alpha << " " << beta << " " << delta << " " << bestvalue << endl;
+				ASSERT(0);
+			}
+
+
+			goto research;
+		}
+#endif
+
+
+
+
+
+
+#if !defined(LEARN) || !defined(MAKEBOOK)
+		if (idx == 0) { print_pv(rootdepth, bestvalue); }
+
+#endif
+	}//end of 反復深化
+	sort_RootMove();
+ID_END:
+
+	previousScore = RootMoves[0].value;
+	return bestvalue;
+
+}
+
+
+//===========
+//探索のとりまとめ関数
+//===========
+Value MainThread::think() {
+
+	Move pondermove;
+
+	bool findbook = false;
+	pv.clear();
+
+	//詰んでるときは何もしないで帰る
 	if (end == RootMoves) {
 #ifndef LEARN
 		cout << "bestmove resign" << endl;
@@ -195,10 +349,9 @@ Value Thread::think() {
 		return Value_Mated;
 	}
 
-	Move pondermove;
 
 	//ここにbookを探すコードを入れる
-	if (Options["usebook"]==true) {
+	if (Options["usebook"] == true && limit.is_inponder == false) {
 
 		const string sfen = rootpos.make_sfen();
 		auto bookentry = book.find(sfen);
@@ -218,22 +371,112 @@ Value Thread::think() {
 				pondermove = entrys[0].counter;
 			}
 
-			if (limit.is_ponder == false) {
-				signal.stop = true;
+
+			cout << "info book move" << endl;
+			goto S_END;
+
+		}//bookを見つけた場合
+
+	}//end book
+
+	//===============
+	//探索開始
+	//==============
+	signal.stop = false;
+	this->resetCalls = false;
+	this->call_count = 0;
+#ifndef  LEARN
+	if ((bool)Options["use_defined_time"] == true) {
+		limit.endtime = Options["defined_time"] + limit.starttime;
+	}
+	//超テキトーな時間制御のコードあとで何とかする
+	else if (limit.remain_time[rootpos.sidetomove()] / 40 < limit.byoyomi) {
+		limit.endtime = limit.byoyomi + limit.starttime;
+	}
+	else {
+		limit.endtime = limit.remain_time[rootpos.sidetomove()] / 40 + limit.starttime;
+	}
+#endif // ! LEARN
+
+#ifdef USETT
+	TT.new_search();
+#endif
+
+	for (Thread* th : Threadpool) {
+		if (th != this) { th->start_searching();}
+	}
+	Thread::think(); // Let's start searching!
+
+	signal.stop = true;
+	for (Thread* th : Threadpool) {
+		if (th != this) {
+			th->wait_for_search_finished();
+		}
+	}
+	S_END:;
+	cout << "bestmove " << RootMoves[0];
+
+
+	cout << endl;
+	return Value(0);
+}
+
+#else
+
+
+Value Thread::think() {
+
+	Stack stack[MAX_PLY + 7], *ss = stack + 5;
+	std::memset(ss - 5, 0, 8 * sizeof(Stack));//まえ8つだけ初期化する？？
+	Value bestvalue, alpha, beta, delta;
+	pv.clear();
+
+	bool findbook = false;
+
+	if (end == RootMoves) {
+#ifndef LEARN
+		cout << "bestmove resign" << endl;
+#endif // !LEARN
+		return Value_Mated;
+	}
+
+	Move pondermove;
+
+	//ここにbookを探すコードを入れる
+	if (Options["usebook"] == true && limit.is_inponder == false) {
+
+		const string sfen = rootpos.make_sfen();
+		auto bookentry = book.find(sfen);
+
+		if (bookentry != book.end()) {
+			findbook = true;
+			std::vector<BookEntry> entrys = bookentry->second;
+
+			if (Options["randombook"]) {
+				std::random_device rd;
+				std::mt19937 mt(rd());
+				RootMoves[0].move = entrys[mt() % entrys.size()].move;
+				pondermove = entrys[mt() % entrys.size()].counter;
 			}
+			else {
+				RootMoves[0].move = entrys[0].move;
+				pondermove = entrys[0].counter;
+			}
+
+
 			cout << "info book move" << endl;
 			goto ID_END;
 
 		}//bookを見つけた場合
 
-		
+
 	}//end book
 
 #ifdef USETT
 	TT.new_search();
 #endif
-	
-	bestvalue = delta=alpha = -Value_Infinite;
+
+	bestvalue = delta = alpha = -Value_Infinite;
 	beta = Value_Infinite;
 	rootdepth = 0;
 	int maxdepth;
@@ -257,39 +500,39 @@ Value Thread::think() {
 	}
 #endif // ! LEARN
 
-	
+
 
 	//cout << limit.endtime << endl;
 #if defined(LEARN) || defined(MAKEBOOK)
 	maxdepth = l_depth;//この値-1が実際に探索される深さ
 	alpha = this->l_alpha;
 	beta = this->l_beta;
-	
+
 #else
 	maxdepth = MAX_DEPTH;
 #endif // !LEARN
 
 
-//	Eval::eval(rootpos);
+	//	Eval::eval(rootpos);
 
 
-	
-	while (++rootdepth <maxdepth&&!signal.stop) {
+
+	while (++rootdepth <maxdepth && !signal.stop) {
 
 		previousScore = RootMoves[0].value;
 #ifdef ASP
 		/*
-<1:info depth 1/2 score cp 2808 time 1 nodes 340 nps 340k pv  G*7f
-<1:info depth 2/4 score cp mate 4 time 1 nodes 562 nps 562k pv  6h8h 9g8h 7g7h+
-<1:alpha:0 beta:0 previous value:31996 delta:-39996
-<1:Error!!
-<1:info string file:search.cpp line:292 alpha < beta
+		<1:info depth 1/2 score cp 2808 time 1 nodes 340 nps 340k pv  G*7f
+		<1:info depth 2/4 score cp mate 4 time 1 nodes 562 nps 562k pv  6h8h 9g8h 7g7h+
+		<1:alpha:0 beta:0 previous value:31996 delta:-39996
+		<1:Error!!
+		<1:info string file:search.cpp line:292 alpha < beta
 
-このバグはrootdepth=3で発生している！！！！！！
-rootdepth>=5から反復進化なのでこれは反復進化の問題ではない！ほかのところに原因があるはず！！！
+		このバグはrootdepth=3で発生している！！！！！！
+		rootdepth>=5から反復進化なのでこれは反復進化の問題ではない！ほかのところに原因があるはず！！！
 
-rootdepth<5の時に bestvalueがvalueInfinityになってしまっていた！？？？
-どこでそんな値が帰ってきてしまっているのか調べる
+		rootdepth<5の時に bestvalueがvalueInfinityになってしまっていた！？？？
+		どこでそんな値が帰ってきてしまっているのか調べる
 
 		*/
 		if (rootdepth >= 5) {
@@ -299,21 +542,21 @@ rootdepth<5の時に bestvalueがvalueInfinityになってしまっていた！？？？
 		}
 		/*else{
 		これむだだった
-			alpha = -Value_Infinite;
-			beta = Value_Infinite;
+		alpha = -Value_Infinite;
+		beta = Value_Infinite;
 		}*/
 #endif
-research:
+	research:
 		//ここで探索関数を呼び出す。
 		if (alpha >= beta) {
-			cout << "alpha:" << alpha << " beta:" << beta <<" previous value:"<<previousScore<<" bestvalue:"<<bestvalue<<" delta:"<<delta<< endl;
+			cout << "alpha:" << alpha << " beta:" << beta << " previous value:" << previousScore << " bestvalue:" << bestvalue << " delta:" << delta << endl;
 		}
 		ASSERT(alpha < beta);
 
 
 
 #ifndef	LEARN
-		bestvalue = search<Root>(rootpos, ss, alpha, beta, rootdepth*ONE_PLY,false);
+		bestvalue = search<Root>(rootpos, ss, alpha, beta, rootdepth*ONE_PLY, false);
 #else
 		bestvalue = lsearch<Root>(rootpos, ss, alpha, beta, rootdepth*ONE_PLY, false);
 #endif
@@ -330,7 +573,7 @@ research:
 		しかし誤mateかもしれないので20までは探索させる
 
 		*/
-		if (rootdepth > 20 && abs(bestvalue) > Value_mate_in_maxply) { goto ID_END;}
+		if (rootdepth > 20 && abs(bestvalue) > Value_mate_in_maxply) { goto ID_END; }
 
 
 		if (signal.stop) {
@@ -338,7 +581,7 @@ research:
 			break;
 		}
 #ifdef ASP
-		if (bestvalue <= alpha) 
+		if (bestvalue <= alpha)
 		{
 			beta = (alpha + beta) / 2;
 			alpha = std::max(bestvalue - delta, -Value_Infinite);
@@ -347,7 +590,7 @@ research:
 
 			ASSERT(alpha >= -Value_Infinite&&beta <= Value_Infinite);
 			if (delta <= 0) {
-				cout << alpha << " " << beta << " " << delta<<" " <<bestvalue<< endl;
+				cout << alpha << " " << beta << " " << delta << " " << bestvalue << endl;
 				ASSERT(0);
 			}
 			goto research;
@@ -361,7 +604,7 @@ research:
 
 			ASSERT(alpha >= -Value_Infinite&&beta <= Value_Infinite);
 			if (delta <= 0) {
-				cout <<alpha<<" "<<beta<<" "<< delta<<" " << bestvalue << endl;
+				cout << alpha << " " << beta << " " << delta << " " << bestvalue << endl;
 				ASSERT(0);
 			}
 
@@ -370,14 +613,14 @@ research:
 		}
 #endif
 
-		
+
 
 
 
 
 #if !defined(LEARN) || !defined(MAKEBOOK)
-		print_pv(rootdepth,bestvalue);
-		
+		print_pv(rootdepth, bestvalue);
+
 #endif
 	}//end of 反復深化
 	sort_RootMove();
@@ -385,9 +628,9 @@ ID_END:
 
 #if !defined(LEARN) || !defined(MAKEBOOK)
 	cout << "bestmove " << RootMoves[0];
-	if (Options["USI_Ponder"] != false) {
+	if (Options["USI_Ponder"] == true) {
 		if (findbook == false) {
-			pondermove =pv[1];
+			if (pv.size() > 1 || extract_ponder_from_tt(rootpos)) { pondermove = pv[1]; }
 		}
 		if (pondermove != MOVE_NONE) {
 			cout << " ponder " << pondermove;
@@ -399,6 +642,11 @@ ID_END:
 	previousScore = RootMoves[0].value;
 	return bestvalue;
 }
+
+#endif
+
+
+
 
 template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value beta, Depth depth,bool cutNode) {
 
