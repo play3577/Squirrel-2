@@ -29,9 +29,37 @@ SearchLimit limit;
 Signal signal;
 
 
+typedef std::vector<int> Row;
+/*
+[スレッドid][深さ]。
+razy smpで反復進化の探索を１スキップするときに使う。
 
+値の決め方はよくわからん......
+*/
+const Row HalfDensity[] = {
+	{ 0, 1 },
+	{ 1, 0 },
+	{ 0, 0, 1, 1 },
+	{ 0, 1, 1, 0 },
+	{ 1, 1, 0, 0 },
+	{ 1, 0, 0, 1 },
+	{ 0, 0, 0, 1, 1, 1 },
+	{ 0, 0, 1, 1, 1, 0 },
+	{ 0, 1, 1, 1, 0, 0 },
+	{ 1, 1, 1, 0, 0, 0 },
+	{ 1, 1, 0, 0, 0, 1 },
+	{ 1, 0, 0, 0, 1, 1 },
+	{ 0, 0, 0, 0, 1, 1, 1, 1 },
+	{ 0, 0, 0, 1, 1, 1, 1, 0 },
+	{ 0, 0, 1, 1, 1, 1, 0 ,0 },
+	{ 0, 1, 1, 1, 1, 0, 0 ,0 },
+	{ 1, 1, 1, 1, 0, 0, 0 ,0 },
+	{ 1, 1, 1, 0, 0, 0, 0 ,1 },
+	{ 1, 1, 0, 0, 0, 0, 1 ,1 },
+	{ 1, 0, 0, 0, 0, 1, 1 ,1 },
+};
 
-
+const size_t HalfDensitySize = std::extent<decltype(HalfDensity)>::value;
 
 inline Value bonus(const Depth d1) { int d = d1 / ONE_PLY; return Value(d*d + 2 * d - 2); }
 void update_cm_stats(Stack* ss, Piece pc, Square s, Value bonus);
@@ -176,10 +204,10 @@ void check_time() {
 
 
 #if 1
-
+//---------------------------探索下請け
 Value Thread::think() {
 
-
+	MainThread* mainThread = (this == Threadpool.main() ? Threadpool.main() : nullptr);
 
 	Stack stack[MAX_PLY + 7], *ss = stack + 5;
 	std::memset(ss - 5, 0, 8 * sizeof(Stack));//まえ8つだけ初期化する？？
@@ -218,6 +246,14 @@ Value Thread::think() {
 
 	while (++rootdepth <maxdepth && !signal.stop) {
 
+		if (!mainThread)
+		{
+			const Row& row = HalfDensity[(idx - 1) % HalfDensitySize];
+			if (row[(rootdepth + rootpos.ply_from_startpos) % row.size()])
+				continue;
+		}
+
+
 		previousScore = RootMoves[0].value;
 #ifdef ASP
 		/*
@@ -239,11 +275,7 @@ Value Thread::think() {
 			alpha = std::max(previousScore - delta, -Value_Infinite);
 			beta = std::min(previousScore + delta, Value_Infinite);
 		}
-		/*else{
-		これむだだった
-		alpha = -Value_Infinite;
-		beta = Value_Infinite;
-		}*/
+		
 #endif
 	research:
 		//ここで探索関数を呼び出す。
@@ -413,11 +445,19 @@ Value MainThread::think() {
 			th->wait_for_search_finished();
 		}
 	}
+
+
+#if !defined(LEARN) || !defined(MAKEBOOK)
+	{ print_pv(0,Value(0)); }
+
+#endif
+
 	S_END:;
 	cout << "bestmove " << RootMoves[0];
-
+	
 
 	cout << endl;
+	cout << "node all  " << Threadpool.nodes_searched();
 	return Value(0);
 }
 

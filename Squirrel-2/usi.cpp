@@ -95,7 +95,7 @@ void USI::init_option(OptionMap &o,string engine_name)
 //#endif
 
 	o["USI_Ponder"] << USIOption(true);
-	o["Threads"] << USIOption(2, 1, 128);
+	o["Threads"] << USIOption(1, 1, 128);
 	o["USI_Hash"] << USIOption(1, 1, 256);
 	o["EngineName"] << USIOption(name.c_str());
 	//o["is_0.1s"] << USIOption(false);
@@ -172,10 +172,10 @@ void is_ready() {
 	first_ready = false;
 }
 
-void go(Position& pos, istringstream& is, Thread& th) {
+void go(Position& pos, istringstream& is/*, Thread& th*/) {
 
 	limit.starttime = now();
-	Value v;
+	/*Value v;*/
 	string token,buffer;
 	
 	limit.byoyomi = 1000;
@@ -267,8 +267,8 @@ void position(Position& pos, istringstream& is) {
 void USI::loop()
 {
 	Position pos;
-	Thread th;
-	th.cleartable();
+	/*Thread th;
+	th.cleartable();*/
 	string token, cmd;
 
 	//pos.set_hirate();
@@ -289,9 +289,9 @@ void USI::loop()
 			cout << Options << endl;
 			cout << "usiok" << endl;
 		}
-		else if (token == "isready") { is_ready(); search_clear(th);  cout << "readyok" << endl; }
+		else if (token == "isready") { is_ready(); /*search_clear(th);*/  cout << "readyok" << endl; }
 		else if (token == "position") { position(pos, is); }
-		else if (token == "go") { go(pos, is, th); }
+		else if (token == "go") { go(pos, is/*, th*/); }
 		else if (token == "setoption") {
 /*
 >C:setoption name Threads value 2
