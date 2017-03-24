@@ -171,7 +171,8 @@ void is_ready() {
 	Threadpool.init();
 #endif // !LEARN
 
-	
+	limit.is_inponder = false;
+	signal.stop = signal.stopOnPonderHit = false;
 	first_ready = false;
 }
 

@@ -380,6 +380,10 @@ Value MainThread::think() {
 	//‹l‚ñ‚Å‚é‚Æ‚«‚Í‰½‚à‚µ‚È‚¢‚Å‹A‚é
 	if (end == RootMoves) {
 #ifndef LEARN
+		if (!signal.stop&&limit.is_inponder) {
+			signal.stopOnPonderHit = true;
+			wait(signal.stop);
+		}
 		cout << "bestmove resign" << endl;
 #endif // !LEARN
 		return Value_Mated;

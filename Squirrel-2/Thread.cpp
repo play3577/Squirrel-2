@@ -102,7 +102,7 @@ void Thread::sort_RootMove()
 
 		 Move m = tte->move();
 		 if (!is_ok(m)) { return 0; }
-		 if (pos.is_legal(m) && pos.pseudo_legal(m)) {
+		 if ( pos.pseudo_legal(m)&&pos.is_legal(m)) {
 			 pv.push_back(m);
 		 }
 	 }
