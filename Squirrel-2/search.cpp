@@ -481,7 +481,7 @@ Value MainThread::think() {
 		if (findbook == false) {
 			if (pv.size() > 1 || extract_ponder_from_tt(rootpos)) { pondermove = pv[1]; }
 		}
-		if (pondermove != MOVE_NONE) {
+		if (pondermove != MOVE_NONE&&is_ok(pondermove)) {
 			cout << " ponder " << pondermove;
 		}
 

@@ -92,6 +92,7 @@ void Thread::sort_RootMove()
 	 bool tthit;
 
 	 ASSERT(pv.size() == 1);
+	 if (!is_ok(pv[0])||pv[0]==MOVE_NONE) { return 0; }
 
 	 //pv‚ÅˆêŽèi‚ß‚Ä‚»‚Ì‹Ç–Ê‚Åttmove‚ð’T‚·
 	 pos.do_move(pv[0], &st);
@@ -100,6 +101,7 @@ void Thread::sort_RootMove()
 	 if (tthit) {
 
 		 Move m = tte->move();
+		 if (!is_ok(m)) { return 0; }
 		 if (pos.is_legal(m) && pos.pseudo_legal(m)) {
 			 pv.push_back(m);
 		 }
