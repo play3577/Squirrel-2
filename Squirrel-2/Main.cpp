@@ -48,7 +48,7 @@ int main() {
 	Eval::init();
 	Zoblist::init();
 	search_init();
-#if 1
+#ifndef LEARN
 	Threadpool.init();
 #endif
 	//Eval::initialize_PP();

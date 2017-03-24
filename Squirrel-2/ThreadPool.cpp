@@ -3,9 +3,10 @@
 #include "usi.h"
 #include "Thread.h"
 
-
+#ifndef LEARN
 /*
 この辺全然わからん....
+http://www.pixiv.net/member_illust.php?mode=medium&illust_id=61441523
 */
 
 
@@ -143,6 +144,7 @@ int64_t ThreadPool::nodes_searched() {
 
 	for (Thread* th : *this) {
 		sum += th->searchednodes();
+		
 	}
 
 	return sum;
@@ -159,6 +161,7 @@ void ThreadPool::start_thinking(Position pos) {
 	
 	//毎回全スレッド差し手生成させるのは無駄だよな...
 	//posも参照渡しできないし...
+	//main()->set(pos);
 	for (Thread*th : Threadpool) {
 		th->set(pos);
 	}
@@ -169,3 +172,4 @@ void ThreadPool::start_thinking(Position pos) {
 
 
 
+#endif

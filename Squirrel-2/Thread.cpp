@@ -85,6 +85,7 @@ void Thread::sort_RootMove()
  この関数は探索を終了するときにpondermoveが見つからなかった場合に呼び出される
  例えばrootでfail highが起こった時などである　
  */
+#ifdef USETT
  bool Thread::extract_ponder_from_tt(Position& pos) {
 
 	 StateInfo st;
@@ -107,7 +108,7 @@ void Thread::sort_RootMove()
 
 	 return pv.size() > 1;
  }
-
+#endif
 
 
 

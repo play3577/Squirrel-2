@@ -117,8 +117,6 @@ void USI::init_option(OptionMap &o,string engine_name)
 	o["eval"] << USIOption("c:/book2/fv_PP.bin");
 #endif
 
-
-
 }
 
 
@@ -168,7 +166,12 @@ void is_ready() {
 			BOOK::init();
 		}
 	}
+
+#ifndef LEARN
 	Threadpool.init();
+#endif // !LEARN
+
+	
 	first_ready = false;
 }
 
@@ -211,8 +214,11 @@ void go(Position& pos, istringstream& is/*, Thread& th*/) {
 
 	Eval::eval_PP(pos);
 
-
+#ifndef LEARN
 	Threadpool.start_thinking(pos);
+#endif // !LEARN
+
+	
 
 #if 0
 	th.set(pos);
@@ -337,6 +343,15 @@ void USI::loop()
 		else if (token == "ponderhit") {
 
 			limit.is_inponder = false;
+			if (signal.stopOnPonderHit) {
+				signal.stop = true;
+				Threadpool.main()->start_searching(true);
+			}
+		}
+		else if (token == "stop") {
+			signal.stop = true;
+			limit.is_inponder = false;
+			Threadpool.main()->start_searching(true);
 		}
 		//学習用コマンド”アイ”ではなく"エル"
 		else if (token == "l") {

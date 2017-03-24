@@ -203,7 +203,7 @@ void check_time() {
 }
 
 
-#if 1
+#ifndef LEARN
 //---------------------------íTçıâ∫êøÇØ
 Value Thread::think() {
 
@@ -216,6 +216,13 @@ Value Thread::think() {
 
 	bool findbook = false;
 
+	if (mainThread) {
+
+		TT.new_search();
+		mainThread->easyMovePlayed = mainThread->failedLow = false;
+		mainThread->bestMoveChanges = 0;
+	}
+
 
 	bestvalue = delta = alpha = -Value_Infinite;
 	beta = Value_Infinite;
@@ -224,20 +231,7 @@ Value Thread::think() {
 
 	seldepth = 0;
 
-	//éûä‘êßå‰
-	
-
-
-
-	//cout << limit.endtime << endl;
-#if defined(LEARN) || defined(MAKEBOOK)
-	maxdepth = l_depth;//Ç±ÇÃíl-1Ç™é¿ç€Ç…íTçıÇ≥ÇÍÇÈê[Ç≥
-	alpha = this->l_alpha;
-	beta = this->l_beta;
-
-#else
 	maxdepth = MAX_DEPTH;
-#endif // !LEARN
 
 
 	//	Eval::eval(rootpos);
@@ -318,6 +312,11 @@ Value Thread::think() {
 			alpha = std::max(bestvalue - delta, -Value_Infinite);
 			delta += delta / 4 + 5;
 
+			if (mainThread) {
+				mainThread->failedLow = true;
+				signal.stopOnPonderHit = false;
+			}
+
 
 			ASSERT(alpha >= -Value_Infinite&&beta <= Value_Infinite);
 			if (delta <= 0) {
@@ -344,7 +343,7 @@ Value Thread::think() {
 		}
 #endif
 
-
+		if (!signal.stop) completedDepth = rootdepth;
 
 
 
@@ -353,6 +352,9 @@ Value Thread::think() {
 		if (idx == 0) { print_pv(rootdepth, bestvalue); }
 
 #endif
+
+
+
 	}//end of îΩïúê[âª
 	sort_RootMove();
 ID_END:
@@ -372,6 +374,8 @@ Value MainThread::think() {
 
 	bool findbook = false;
 	pv.clear();
+	Thread* bestthread = this;
+
 
 	//ãlÇÒÇ≈ÇÈÇ∆Ç´ÇÕâΩÇ‡ÇµÇ»Ç¢Ç≈ãAÇÈ
 	if (end == RootMoves) {
@@ -430,14 +434,19 @@ Value MainThread::think() {
 	}
 #endif // ! LEARN
 
-#ifdef USETT
-	TT.new_search();
-#endif
 
 	for (Thread* th : Threadpool) {
 		if (th != this) { th->start_searching();}
 	}
 	Thread::think(); // Let's start searching!
+
+
+	//ponderíÜÇ…ãlÇ›Çå©Ç¬ÇØÇΩèÍçáÇ…ç∑ÇµéËÇï‘ÇµÇƒÇµÇ‹ÇÌÇ»Ç¢ÇÊÇ§Ç…Ç±Ç±Ç≈ë“ÇΩÇπÇÈ
+	if (!signal.stop&&limit.is_inponder) {
+		signal.stopOnPonderHit = true;
+		wait(signal.stop);
+	}
+
 
 	signal.stop = true;
 	for (Thread* th : Threadpool) {
@@ -447,17 +456,39 @@ Value MainThread::think() {
 	}
 
 
-#if !defined(LEARN) || !defined(MAKEBOOK)
-	{ print_pv(0,Value(0)); }
+	
+	//bestThreadè‹ÇëIÇ‘
+	if (pv[0] != MOVE_NONE) {
 
-#endif
+		for (Thread* th : Threadpool) {
+			if (th->completedDepth > bestthread->completedDepth
+				&&th->RootMoves[0].value > bestthread->RootMoves[0].value) {
+				bestthread = th;
+			}
+		}
+
+	}
+
+
+
+	bestthread->print_pv(bestthread->completedDepth, bestthread->RootMoves[0].value);
+
 
 	S_END:;
-	cout << "bestmove " << RootMoves[0];
+	cout << "bestmove " << bestthread->RootMoves[0];
 	
+	if (Options["USI_Ponder"] == true) {
+		if (findbook == false) {
+			if (pv.size() > 1 || extract_ponder_from_tt(rootpos)) { pondermove = pv[1]; }
+		}
+		if (pondermove != MOVE_NONE) {
+			cout << " ponder " << pondermove;
+		}
+
+	}
 
 	cout << endl;
-	cout << "node all  " << Threadpool.nodes_searched();
+	cout << "node all  " << Threadpool.nodes_searched() << endl;;
 	return Value(0);
 }
 
@@ -658,7 +689,7 @@ Value Thread::think() {
 
 
 
-#if !defined(LEARN) || !defined(MAKEBOOK)
+#ifndef LEARN
 		print_pv(rootdepth, bestvalue);
 
 #endif
@@ -666,7 +697,7 @@ Value Thread::think() {
 	sort_RootMove();
 ID_END:
 
-#if !defined(LEARN) || !defined(MAKEBOOK)
+#ifndef LEARN
 	cout << "bestmove " << RootMoves[0];
 	if (Options["USI_Ponder"] == true) {
 		if (findbook == false) {

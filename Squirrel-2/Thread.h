@@ -13,6 +13,8 @@ using namespace std;
 typedef std::mutex Mutex;
 typedef std::condition_variable ConditionVariable;
 
+
+#ifndef LEARN
 struct Thread {
 
 private:
@@ -24,12 +26,15 @@ private:
 	bool exit, searching;
 
 
-	Position rootpos;//rootposはスレッド毎に保つ必要があるので参照渡しではいけない。
+	
 	int rootdepth;
 	//rootmovesに非合法手が入ってくるのを防がなければならない
 	
 public:
-	
+	Position rootpos;//rootposはスレッド毎に保つ必要があるので参照渡しではいけない。(これpublicにするの危険だよなぁ..)
+
+	int completedDepth;
+
 	size_t idx, PVIdx;
 
 	ExtMove RootMoves[600], *end;
@@ -91,7 +96,7 @@ struct MainThread :public Thread
 	bool easyMovePlayed, failedLow;
 	double bestMoveChanges;
 	Value previousScore;
-	Position rootpos;
+	
 };
 
 
@@ -122,7 +127,7 @@ struct ThreadPool :public std::vector<Thread*> {
 extern ThreadPool Threadpool;
 
 
-#if 0
+#else
 struct Thread {
 
 private:
