@@ -1327,12 +1327,14 @@ moves_loop:
 
 		if (move == ss->excludedMove) {continue;}
 	
-		if (!RootNode) {
+		/*if (!RootNode) {
 			if (pos.is_legal(move) == false) { continue; }
 		}
-
+		*/
 
 		if (NT == Root&&thisthread->find_rootmove(move) == nullptr) { continue; }
+		
+		ss->moveCount = ++movecount;
 
 		if (PVNode) { (ss + 1)->pv = nullptr; }
 
@@ -1352,7 +1354,7 @@ moves_loop:
 			CaptureorPropawn = pos.capture_or_propawn(move);
 		}
 
-		ss->moveCount=++movecount;
+		//ss->moveCount=++movecount;
 		extension = DEPTH_ZERO;
 		givescheck = pos.is_gives_check(move);
 
@@ -1387,7 +1389,8 @@ moves_loop:
 			*/
 			if (singler_extension
 				 &&move == ttMove
-				&& !extension) {
+				&& !extension
+				&&pos.is_legal(move)) {
 			
 				Value rBeta = ttValue - 2 * depth / ONE_PLY;
 				Depth d = (depth / (2 * int(ONE_PLY)))*int(ONE_PLY);
@@ -1446,6 +1449,17 @@ moves_loop:
 #ifdef PREFETCH
 		TT.prefetch(pos.key_after_move(move));
 #endif
+		/*
+		domoveの直前でlegalチェック
+		legalで除くよりLMRなどで刈ったほうが早くて効率的ということか？？？
+		しかし非合法手でSEEをしたりするのでエラーが起きないか心配だな...
+		それにis_legalもSFと完全に同じではないし...
+
+		LMRでcontinueが起こってしまうとmovecountは--されないのでmovecountが不正に大きくなってしまうだけだと思うのだけれど....
+		*/
+		if (!RootNode) {
+			if (pos.is_legal(move) == false) { ss->moveCount = --movecount; continue; }
+		}
 
 		ss->currentMove = move;
 
@@ -1918,7 +1932,10 @@ Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
 //		if (is_ok(move) == false) { continue; }
 //#endif
 
-		if (pos.is_legal(move) == false) { continue; }
+		//if (pos.is_legal(move) == false) { continue; }
+
+
+
 		/*if (pos.check_nihu(move) == true) {
 
 			cout << "nihu " << endl;
@@ -1969,12 +1986,13 @@ Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
 #endif
 
 
-		movecount++;
 		//pos.do_move(move, &si);
 #ifdef PREF2
 		TT.prefetch(pos.key());
 #endif
-		
+		//domoveの直前でlegalcheck
+		if (pos.is_legal(move) == false) { continue; }
+		movecount++;
 		pos.do_move(move, &si, givescheck);
 		value = -qsearch<NT>(pos, ss + 1, -beta, -alpha, depth - ONE_PLY);
 		pos.undo_move();
