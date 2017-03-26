@@ -7,6 +7,7 @@
 #include <random>
 
 
+
 #if defined(_MSC_VER)
 #endif
 #if defined(__GNUC__) 
@@ -23,7 +24,11 @@
 #endif
 
 #define MATEONE
-//#define MATETEST
+#define MATETEST
+
+#ifdef MATETEST
+#include "makemove.h"
+#endif
 //#define PREF2
 SearchLimit limit;
 Signal signal;
@@ -370,7 +375,7 @@ ID_END:
 //===========
 Value MainThread::think() {
 
-	Move pondermove;
+	Move pondermove=MOVE_NONE;
 
 	bool findbook = false;
 	pv.clear();
@@ -949,10 +954,40 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 		Move mate;
 		if ((mate=pos.mate1ply())!=MOVE_NONE) {
 #ifdef MATETEST
-			cout << pos << endl;
+			
+			//ss->skip_early_prunning = true;
+			//ss->unmate1ply = true;
+			//Value v=search<NT>(pos, ss, alpha, beta, 3*ONE_PLY, cutNode);
+			////if (v != mate_in_ply((ss->ply) + 1)) {
+			//if (v <Value_mate_in_maxply) {
+			//	cout << pos << endl;
+			//	check_move(mate);
+			//	cout << "value "<<print_value(v)<<"  "<<print_value(mate_in_ply((ss->ply) + 1))<<endl;
+			//	ASSERT(0);
+			//}
+			//ss->unmate1ply = false;
+			//ss->skip_early_prunning = false;
+			pos.do_move(mate, &si);
+			ExtMove moves_[600], *end;
+			end = moves_;
+			end = test_move_generation(pos, moves_);
+			for (ExtMove* i = moves_; i < end; i++) {
+				if (pos.is_legal(i->move)) {
+					pos.undo_move();
+					cout << pos << endl;
+					cout << "checkmove" << endl;
+					check_move(mate);
+					cout << "recovermove" << endl;
+					check_move(i->move);
+					ASSERT(0);
+				}
+			}
+			pos.undo_move();
 #endif
+
 			ss->static_eval = bestvalue = mate_in_ply((ss->ply)+1);
 #ifdef USETT
+			//‚¤`‚ñ‚±‚±‚Åmove‚ðŠi”[‚µ‚Ä‚àŒ‹‹Çmateoneply‚ÅŽ}‚ðØ‚é‚Ì‚Åttmove‚Í•K—v‚È‚¢‚µ–³‘Ê‚©HHH
 			tte->save(poskey, value_to_tt(bestvalue, ss->ply), BOUND_EXACT, depth,mate, ss->static_eval, TT.generation());
 #endif
 			ASSERT(bestvalue > -Value_Infinite&&bestvalue < Value_Infinite);
@@ -1820,8 +1855,24 @@ Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
 		Move mate;
 		if ((mate=pos.mate1ply())!=MOVE_NONE) {
 #ifdef MATETEST
-			cout << pos << endl;
-			cout << "matemove:" << mate;
+			pos.do_move(mate, &si);
+			ExtMove moves_[600], *end;
+			end = moves_;
+			end = test_move_generation(pos, moves_);
+			for (ExtMove* i = moves_; i < end; i++) {
+				if (pos.is_legal(i->move)) {
+					pos.undo_move();
+					cout << pos << endl;
+					cout << "checkmove" << endl;
+					check_move(mate);
+					cout << "recovermove" << endl;
+					check_move(i->move);
+					ASSERT(0);
+				}
+			}
+			pos.undo_move();
+
+			
 #endif
 			return mate_in_ply(ss->ply + 1);
 		}

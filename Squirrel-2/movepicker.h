@@ -15,7 +15,7 @@ enum Stage {
 	BAD_CAPTURES,
 	START_Eversion,
 	EVERSION,
-	START_Qsearch,
+	START_Q_RECAPTURE,
 	RECAPTURE,
 	STOP,
 
@@ -58,7 +58,7 @@ public:
 			end_ += (ttMove != MOVE_NONE);
 		}
 		else {
-			st = START_Qsearch;
+			st = START_Q_RECAPTURE;
 			recapsq_ = recapsq;
 			ttMove = MOVE_NONE;
 		}

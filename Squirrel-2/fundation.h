@@ -55,7 +55,7 @@
 
 //-----------------------------•]‰¿ŠÖ”ŠÖ˜A
 
-
+#define  USETMP
 //#define DIFFTEST
 //#define EVAL_NONDIFF
 //#define EVAL_KPP

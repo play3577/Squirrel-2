@@ -356,9 +356,11 @@ namespace Eval {
 
 		//ASSERT(material == eval_material(pos));
 
-
+#ifdef USETMP
 		return (pos.sidetomove() == BLACK) ? value+tempo: -value+tempo;
-
+#else
+		return (pos.sidetomove() == BLACK) ? value : -value ;
+#endif
 		/*Value value = eval_material(pos);
 		return (pos.sidetomove() == BLACK) ? value : -value;*/
 	}

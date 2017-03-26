@@ -185,7 +185,8 @@ Move Position::mate1ply()
 			//goto文で飛ばされなかったということはつまされた。
 			remove_occ256(to);
 			remove_piece(us, ROOK, to);
-			return make_drop(to,ROOK);
+			
+			return make_drop(to,add_color(ROOK,us));
 cant_matedrop_rook:;
 			
 		}
@@ -244,7 +245,7 @@ cant_matedrop_rook:;
 			remove_occ256(to);
 			remove_piece(us, GOLD, to);
 			//cout << "mate GOLD:"<<to<< endl;
-			return make_drop(to,GOLD);
+			return make_drop(to, add_color(GOLD,us));
 cant_matedrop_gold:;
 			
 		}
@@ -282,7 +283,7 @@ cant_matedrop_gold:;
 			remove_occ256(to);
 			remove_piece(us, BISHOP, to);
 			//cout << "mate BISHOP" << endl;
-			return make_drop(to,BISHOP);
+			return make_drop(to, add_color(BISHOP,us));
 cant_matedrop_bishop:;
 		}
 		didbishopdrop = true;
@@ -323,7 +324,7 @@ cant_matedrop_bishop:;
 			//goto文で飛ばされなかったということはつまされた。
 			remove_occ256(to);
 			remove_piece(us, SILVER, to);
-			return make_drop(to,SILVER);
+			return make_drop(to, add_color(SILVER,us));
 cant_matedrop_silver:;
 		}
 	}
@@ -356,7 +357,7 @@ cant_matedrop_silver:;
 			//goto文で飛ばされなかったということはつまされた。
 			remove_occ256(to);
 			remove_piece(us, LANCE, to);
-			return make_drop(to,LANCE);
+			return make_drop(to, add_color(LANCE,us));
 		cant_matedrop_LANCE:;
 		}
 	}
@@ -390,7 +391,7 @@ cant_matedrop_silver:;
 			//goto文で飛ばされなかったということはつまされた。
 			remove_occ256(to);
 			remove_piece(us, KNIGHT, to);
-			return make_drop(to,KNIGHT);
+			return make_drop(to, add_color(KNIGHT,us));
 cant_matedrop_KNIGHT:;
 		}
 
@@ -400,7 +401,7 @@ movecheck:;
 
 	//----------------------------------ここから駒の移動による王手
 
-//#define matemove
+#define matemove
 
 #ifdef matemove
 	//dc_candicateとは二重王手候補つまり王への味方の効きを遮っている味方の駒。もしこれで王手をかけることができれば二重王手になりうるし、効きから外れるだけでも間接王手になる。
@@ -473,7 +474,7 @@ movecheck:;
 			put_piece(us, removedpiece, from);
 			remove_occ256(to);
 			remove_piece(us, GOLD, to);
-			return make_move(from,to,GOLD);
+			return make_move(from,to, add_color(removedpiece,us));
 
 cant_mate_gold:;
 

@@ -14,6 +14,8 @@ typedef std::mutex Mutex;
 typedef std::condition_variable ConditionVariable;
 
 
+const string print_value(Value v);
+
 #ifndef LEARN
 struct Thread {
 

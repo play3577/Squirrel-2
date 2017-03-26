@@ -96,7 +96,7 @@ void movepicker::generatemove()
 			eversion_score();
 		}
 		break;
-	case START_Qsearch:
+	case START_Q_RECAPTURE:
 		current_ = end_;
 		st = STOP;
 		break;
@@ -195,7 +195,7 @@ Move movepicker::return_nextmove()
 				return m;
 			}
 			break;
-		case START_Qsearch:
+		case START_Q_RECAPTURE:
 			break;
 		case RECAPTURE:
 			m = current_++->move;
