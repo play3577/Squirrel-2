@@ -24,7 +24,7 @@
 #endif
 
 #define MATEONE
-#define MATETEST
+//#define MATETEST
 
 #ifdef MATETEST
 #include "makemove.h"
@@ -955,18 +955,7 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 		if ((mate=pos.mate1ply())!=MOVE_NONE) {
 #ifdef MATETEST
 			
-			//ss->skip_early_prunning = true;
-			//ss->unmate1ply = true;
-			//Value v=search<NT>(pos, ss, alpha, beta, 3*ONE_PLY, cutNode);
-			////if (v != mate_in_ply((ss->ply) + 1)) {
-			//if (v <Value_mate_in_maxply) {
-			//	cout << pos << endl;
-			//	check_move(mate);
-			//	cout << "value "<<print_value(v)<<"  "<<print_value(mate_in_ply((ss->ply) + 1))<<endl;
-			//	ASSERT(0);
-			//}
-			//ss->unmate1ply = false;
-			//ss->skip_early_prunning = false;
+			
 			pos.do_move(mate, &si);
 			ExtMove moves_[600], *end;
 			end = moves_;
@@ -1856,11 +1845,12 @@ Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
 		if ((mate=pos.mate1ply())!=MOVE_NONE) {
 #ifdef MATETEST
 			pos.do_move(mate, &si);
+			
 			ExtMove moves_[600], *end;
 			end = moves_;
 			end = test_move_generation(pos, moves_);
 			for (ExtMove* i = moves_; i < end; i++) {
-				if (pos.is_legal(i->move)) {
+				if (pos.is_legal(i->move)||!pos.is_incheck()) {
 					pos.undo_move();
 					cout << pos << endl;
 					cout << "checkmove" << endl;

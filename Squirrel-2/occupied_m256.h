@@ -152,6 +152,26 @@ inline Occ_256& operator^(const Occ_256& b1,const Occ_256& b2) {
 	
 }
 
+
+inline Occ_256& operator|(const Occ_256& b1, const Occ_256& b2) {
+	static Occ_256 occ_;//Ç‡Ç¡Ç∆Ç¢Ç¢âåàçÙÇÕÇ»Ç¢Ç©ÅHÅH
+
+#if defined(_MSC_VER)
+
+	occ_.b256.m256i_u64[0] = b2.b256.m256i_u64[0] | b1.b256.m256i_u64[0];
+	occ_.b256.m256i_u64[1] = b2.b256.m256i_u64[1] | b1.b256.m256i_u64[1];
+	occ_.b256.m256i_u64[2] = b2.b256.m256i_u64[2] | b1.b256.m256i_u64[2];
+	occ_.b256.m256i_u64[3] = b2.b256.m256i_u64[3] | b1.b256.m256i_u64[3];
+#endif
+#if defined(__GNUC__) 
+
+	occ_.b256 = _mm256_set_epi64x((b2.b64(3) | b1.b64(3)), (b2.b64(2) | b1.b64(2)), (b2.b64(1) | b1.b64(1)), (b2.b64(0) | b1.b64(0)));
+#endif
+
+	return occ_;
+
+}
+
 std::ostream& operator<<(std::ostream& os, const Occ_256& board);
 
 

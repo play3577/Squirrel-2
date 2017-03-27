@@ -1420,7 +1420,7 @@ std::ostream & operator<<(std::ostream & os, const Position & pos)
 		os << " lastlastmove "; check_move(pos.state()->previous->lastmove);
 	}
 	os << "hash " << (pos.state()->board_ + pos.state()->hands_) << endl;
-	os <<"sfen "<< pos.make_sfen() << endl;
+	os <<"position "<< pos.make_sfen() << endl;
 	return os;
 }
 

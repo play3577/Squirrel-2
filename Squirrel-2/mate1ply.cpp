@@ -1,5 +1,8 @@
 #include "position.h"
 
+
+//#define matedrop
+#define matemove
 /*
 王手一手詰めテスト局面
 
@@ -110,12 +113,6 @@ Move Position::mate1ply()
 	//---------今のところ駒うちだけ見る
 	if (h == (Hand)0) { goto movecheck; }
 
-
-	
-	
-
-	
-	
 	/*
 	641
 	7k2
@@ -144,6 +141,7 @@ Move Position::mate1ply()
 	//-----------------------------------------------------------------駒うち
 	bool didrookdrop = false;
 	//----------------------------------------------飛車
+#ifdef matedrop
 	if (num_pt(h, ROOK) != 0) {
 		//近接王手の駒を打てる味方の効きの聞いている場所のみを考える(飛車のstepeffectなんて作ってもしゃーないと思っていたけれどこんなところで役に立つとはなぁ(´･ω･｀))
 		matecandicateBB = can_dropBB&StepEffect[enemy][ROOK][eksq]&f_effect;
@@ -396,12 +394,12 @@ cant_matedrop_KNIGHT:;
 		}
 
 	}
-
+#endif
 movecheck:;
 
 	//----------------------------------ここから駒の移動による王手
 
-#define matemove
+
 
 #ifdef matemove
 	//dc_candicateとは二重王手候補つまり王への味方の効きを遮っている味方の駒。もしこれで王手をかけることができれば二重王手になりうるし、効きから外れるだけでも間接王手になる。
@@ -411,10 +409,10 @@ movecheck:;
 	Bitboard dc_candicate[ColorALL],pinned[ColorALL];
 
 	//slider_blockers(us, eksq, dc_candicate[us], pinned[enemy]);//攻め
-	slider_blockers(enemy, ksq(us), dc_candicate[enemy], pinned[us]);//受け
+	slider_blockers(enemy, ksq(us), dc_candicate[enemy], pinned[us]);//受け ほしいのは自分のpinゴマの位置
 
-	//駒の移動先。近接王手のみを考えるので王の周辺8マスかつ、自分の駒のいない場所でなければならない
-	const Bitboard movetoBB = andnot(StepEffect[us][KING][eksq], occ(us));
+	//駒の移動先。近接王手のみを考えるのでesqに味方のgoldを置いた時の危機がある場所、自分の駒のいない場所でなければならない
+	const Bitboard movetoBB_GOLD = andnot(StepEffect[enemy][GOLD][eksq], occ(us));
 	/*------------------------------------------------------------------------------------------
 	王手できる範囲にいる駒を王手をかけることができるマスかつ味方の効きのあるマスに動かしたとき、
 		その駒をほかの駒で取れないまたは王の逃げ先にほかの味方の効きがあれば詰み。
@@ -431,10 +429,12 @@ movecheck:;
 	//pinゴマを動かそうとしてはいけない（まあpinをしている駒をとることで王手できる場合もあるがそれはイレギュラーなので考えないほうがいいだろう）
 	matecandicate_Gold = andnot(matecandicate_Gold, pinned[us]);
 
+	//std::cout << matecandicate_Gold << std::endl;
+
 	while (matecandicate_Gold.isNot()) {
 
 		const Square from = matecandicate_Gold.pop();
-		Bitboard toBB = movetoBB&StepEffect[us][GOLD][from];
+		Bitboard toBB = movetoBB_GOLD&StepEffect[us][GOLD][from];
 		Bitboard cankingescape;
 		//駒を取り除く.......こんなことしたくないんだけれど....
 		const Piece removedpiece =piece_type( piece_on(from));
@@ -443,25 +443,34 @@ movecheck:;
 		remove_occ256(from);
 		remove_piece(us, removedpiece, from);
 
+		//std::cout << toBB << endl;
+
 		while (toBB.isNot())
 		{
 			const Square to = toBB.pop();
-
-			//cout << to << endl << attackers_to(us, to, occ256) << endl;
+			const bool is_capture = (piece_on(to) != NO_PIECE);
+			//std::cout << to << endl << attackers_to(us, to, occ256) << endl;
 
 			if (!attackers_to(us, to, occ256).isNot()) { goto cant_mate_gold; }//もし移動先に味方の駒の効きが聞いていなければとられてしまうので罪にならない。
 			if (cancapture_checkpiece(to)) { goto cant_mate_gold; }//王手をかけた駒を捕獲できた。
 
-			set_occ256(to);
+			//set()は^=なので,駒を捕獲しながらの王手だった場合にバグが発生してしまう！！！！！！あれっ？？そうなるとdo_moveでもおかしいことが起こってるのでは???
+			//修正した
+			if (!is_capture) { set_occ256(to); }
+
 			put_piece(us, GOLD, to);
 
 			//ここからは玉が逃げることができるかどうか確認
 			cankingescape = andnot(StepEffect[us][KING][eksq], (occ(enemy) | SquareBB[to] | StepEffect[us][GOLD][to]));
+			//std::cout << cankingescape << endl;
 			while (cankingescape.isNot()) {
 
 				const Square escapeto = cankingescape.pop();//逃げ先。
+				//std::cout << "escapeto " << escapeto << endl;
+				//cout << "attackers" << endl << attackers_to(us, escapeto, occ256) << endl;
+
 				if (!attackers_to(us, escapeto, occ256).isNot()) { 
-					remove_occ256(to);
+					if (!is_capture) { remove_occ256(to); }
 					remove_piece(us, GOLD, to);
 					goto cant_mate_gold;
 				}//逃げ先に攻撃側の効きがない。  逃げるとこができたので次のtoを考える。
@@ -472,7 +481,9 @@ movecheck:;
 			//こんな実装方法で大丈夫だろうか.........
 			set_occ256(from);
 			put_piece(us, removedpiece, from);
-			remove_occ256(to);
+
+			if (!is_capture) { remove_occ256(to); }//捕獲だった場合はここで取り除いてはいけない！！！
+
 			remove_piece(us, GOLD, to);
 			return make_move(from,to, add_color(removedpiece,us));
 
@@ -501,8 +512,8 @@ cant_mate_gold:;
 */
 bool Position::cancapture_checkpiece(Square to) {
 
-	const Color us = sidetomove();
-	const Color enemy = opposite(sidetomove());
+	const Color us = sidetomove();//攻め側
+	const Color enemy = opposite(sidetomove());//受け側
 	const Square eksq = ksq(enemy);//詰ませたい相手玉の位置。
 
 	//受け側の王手駒へ危機のある駒の位置
@@ -512,7 +523,7 @@ bool Position::cancapture_checkpiece(Square to) {
 
 	while (enemygurder.isNot()) {
 		Square from = enemygurder.pop();
-		Occ_256 occ_movedgurad = occ256^SquareBB256[to] ^ SquareBB256[from];
+		Occ_256 occ_movedgurad = occ256|SquareBB256[to] ^ SquareBB256[from];//ここも捕獲の移動だった場合は^Squarebb256じゃだめ。
 		//駒を動かした後,王に効きがかからなかったのでこれは王を守れた
 		if (attackers_to(us, eksq, occ_movedgurad).isNot()==false) {
 			return true;
