@@ -18,6 +18,7 @@
 #include <thread>
 #include <mutex>
 #include <cstdio>
+#include "Bitboard.h"
 using namespace Eval;
 using namespace std;
 
@@ -210,18 +211,34 @@ struct  dJValue
 /*
 次元下げされた要素。
 PP（p0,p1）=PP絶対(左右対称、手番対称)+PP相対(平行移動、手番対称)
+
+次元下げとは例えばPPでは
+一つ目のbonapieceをx,もう一つのbonapieceをyとしたときに
+その(x,y)に対応する値を
+(x,y)だけでなく(x-y)のように引数が減った次元の低い配列の値も用いることである。
+相対位置のことを考えるとx-yというのがどういうことかわかりやすい。
+
+まだ試していない次元下げ
+p
+ypp
+xpp
+KPE次元下げ 
+効きを与えている駒が何であろうがその効きのあるsquareと駒のcolorが同じならばそこにも値を与える。
 */
 #ifndef EVAL_PROG
 struct lowerDimPP
 {
 	double absolute_pp[fe_end2][fe_end2];//絶対PP　
-	double relative_pp[PC_ALL][PC_ALL][17][17];//相対PP 技巧ではy座標固定相対PPがあったけどよくわからんので省く
-	//double absolute_p[fe_end2];//絶対P 
+	double relative_pp[PC_ALL][PC_ALL][17][17];//PP平行移動（x,y座標固定の寄与を大きくしてrelativePPのほうは寄与を小さくすべきか？）
+	double relative_ypp[PC_ALL][PC_ALL][17][17][Rank_Num];//y座標固定PP平行移動　rankにはiのrankが格納される
+	//double relative_xpp[PC_ALL][PC_ALL][17][17][File_Num];//x座標固定
+	//double absolute_p[fe_end2];//絶対P これはたぶんダメ
+
+	//どれだけ小さい値でも値が付いていればPPを動かすのでペナルティが重要になってくるか....
+	double absolute_pe[fe_end2][ColorALL][SQ_NUM];//[bonap][効きのあるマス][効きの原因となった駒の色]  ppeだとなんの次元下げにもならないのでpe
+
 	void clear() {
-
-		memset(absolute_pp, 0, sizeof(absolute_pp));
-		memset(relative_pp, 0, sizeof(relative_pp));
-
+		memset(this, 0, sizeof(*this));
 	}
 };
 
@@ -699,16 +716,16 @@ void learnphase1body(int number) {
 					th.l_beta = record_score +(Value)256;
 				}
 
-				//th.l_depth = 3;
+				th.l_depth = 3;
 
 				//Aperyや技巧のように探索深さを乱数によって変更してみる。
 				//大槻将棋のページでBonanzaが学習中の探索深さを1深くしたら強くなったということが書かれていたので乱数によって深くしてみる。
 				//私の手元の実験データでは深くしても強くならなかったのだけれど...
-				std::random_device seed_gen;
+				//深くすると時間がかかりすぎるので2,3でやってみたら弱くなった。
+				/*std::random_device seed_gen;
 				std::default_random_engine engine(seed_gen());
 				std::uniform_int_distribution<int> dis(3, 4);
-				th.l_depth = dis(engine);
-
+				th.l_depth = dis(engine);*/
 
 				Value  score = th.think();
 				if (move_i == 0) { record_score = score; 
@@ -1005,24 +1022,58 @@ void learnphase2body(int number)
 
 #ifndef  EVAL_PROG
 
-void each_PP(lowerDimPP & lowdim, const dJValue& gradJ, const BonaPiece bp1, const BonaPiece bp2) {
+void lowdim_each_PP(lowerDimPP & lowdim, const dJValue& gradJ, const BonaPiece bp1, const BonaPiece bp2) {
 	if (bp1 == bp2) { return; }//一致する場所はevaluateで見ないのでgradJも0になっている。これは無視していい。
 
 							   //iとjの前後によって違う場所を参照してしまうのを防ぐ。
 	BonaPiece i = std::max(bp1, bp2), j = std::min(bp1, bp2);
 
-	double grad = gradJ.absolute_PP[bp1][bp2];
+	const double grad = gradJ.absolute_PP[bp1][bp2];
 
 
 
-	//相対PP
+	//相対PPは盤上の駒に対してのみ行う
 	if (bp2sq(i) != Error_SQ&&bp2sq(j) != Error_SQ) {
 		Piece pci = (bp2piece.bp_to_piece(bpwithoutsq(i)));//iの駒は先手の駒に変換させられているのでptでいい
 		Piece pcj = bp2piece.bp_to_piece(bpwithoutsq(j));//jにいるのが味方の駒か相手の駒かは重要になってくるので含めなければならない。
 		Square sq1 = bp2sq(i), sq2 = bp2sq(j);//bp1,bp2の駒の位置
 		lowdim.relative_pp[pci][pcj][sqtofile(sq1) - sqtofile(sq2) + 8][sqtorank(sq1) - sqtorank(sq2) + 8] += grad;
-	}
 
+
+		lowdim.relative_ypp[pci][pcj][sqtofile(sq1) - sqtofile(sq2) + 8][sqtorank(sq1) - sqtorank(sq2) + 8][sqtorank(sq1)] += grad;
+		//lowdim.relative_xpp[pci][pcj][sqtofile(sq1) - sqtofile(sq2) + 8][sqtorank(sq1) - sqtorank(sq2) + 8][sqtofile(sq1)] += grad;
+
+	}
+	//ここから効きを含めた次元下げ
+	//まずはiの効きのある場所
+	/*
+	ここで効きのあるマスにgradをまき散らしておいてweaveで拾い集める
+	これによる寄与は小さくしておく
+	*/
+	if (f_pawn <= i) {
+		const Piece pci =  (bp2piece.bp_to_piece(bpwithoutsq(i)));
+		const Piece pti = piece_type(pci);
+		const Square sqi = bp2sq(i);
+		const Color ci = piece_color(pci);
+		Bitboard ebb=effectBB(SquareBB256[sqi],pti,ci,sqi);//occupiedがおかしいことになっているのでやはりposを与えなければならないか??...厳しい..
+		while (ebb.isNot()) {
+			const Square esq = ebb.pop();
+
+			lowdim.absolute_pe[j][ci][esq] += grad*double(1.0 / (1 << (3)));
+		}
+	}
+	if (f_pawn <= j) {
+		const Piece pcj = (bp2piece.bp_to_piece(bpwithoutsq(j)));
+		const Piece ptj = piece_type(pcj);
+		const Square sqj = bp2sq(j);
+		const Color cj = piece_color(pcj);
+		Bitboard ebb = effectBB(SquareBB256[sqj], ptj, cj, sqj);//occupiedがおかしいことになっているのでやはりposを与えなければならないか??...厳しい..
+		while (ebb.isNot()) {
+			const Square esq = ebb.pop();
+
+			lowdim.absolute_pe[i][cj][esq] += grad*double(1.0 / (1 << (3)));
+		}
+	}
 
 	//絶対PP
 	lowdim.absolute_pp[i][j] += grad;
@@ -1035,7 +1086,6 @@ void weave_eachPP(dJValue& newgradJ, const lowerDimPP& lowdim, const BonaPiece b
 
 	if (bp1 == bp2) { return; }//一致する場所はevaluateで見ないのでgradJも0になっている。これは無視していい。
 
-	int sign = 1;
 	//iとjの前後によって違う場所を参照してしまうのを防ぐ。
 	BonaPiece i = std::max(bp1, bp2), j = std::min(bp1, bp2);
 
@@ -1046,7 +1096,41 @@ void weave_eachPP(dJValue& newgradJ, const lowerDimPP& lowdim, const BonaPiece b
 		Piece pcj = bp2piece.bp_to_piece(bpwithoutsq(j));//jにいるのが味方の駒か相手の駒かは重要になってくるので含めなければならない。
 		Square sq1 = bp2sq(i), sq2 = bp2sq(j);//bp1,bp2の駒の位置
 		newgradJ.absolute_PP[bp1][bp2] += lowdim.relative_pp[pci][pcj][sqtofile(sq1) - sqtofile(sq2) + 8][sqtorank(sq1) - sqtorank(sq2) + 8];
+
+		newgradJ.absolute_PP[bp1][bp2] += lowdim.relative_ypp[pci][pcj][sqtofile(sq1) - sqtofile(sq2) + 8][sqtorank(sq1) - sqtorank(sq2) + 8][sqtorank(sq1)];
+		//newgradJ.absolute_PP[bp1][bp2] += lowdim.relative_xpp[pci][pcj][sqtofile(sq1) - sqtofile(sq2) + 8][sqtorank(sq1) - sqtorank(sq2) + 8][sqtofile(sq1)];
+
 	}
+
+	/*
+	ばらまいたgradをかき集めてくる
+	*/
+	if (f_pawn <= i) {
+		const Piece pci = (bp2piece.bp_to_piece(bpwithoutsq(i)));
+		const Piece pti = piece_type(pci);
+		const Square sqi = bp2sq(i);
+		const Color ci = piece_color(pci);
+		Bitboard ebb = effectBB(SquareBB256[sqi], pti, ci, sqi);
+		while (ebb.isNot()) {
+			const Square effsq = ebb.pop();
+
+			newgradJ.absolute_PP[i][j]+=lowdim.absolute_pe[j][ci][effsq];
+		}
+	}
+	if (f_pawn <= j) {
+		const Piece pcj = (bp2piece.bp_to_piece(bpwithoutsq(j)));
+		const Piece ptj = piece_type(pcj);
+		const Square sqj = bp2sq(j);
+		const Color cj = piece_color(pcj);
+		Bitboard ebb = effectBB(SquareBB256[sqj], ptj, cj, sqj);
+		while (ebb.isNot()) {
+			const Square effsq = ebb.pop();
+
+			newgradJ.absolute_PP[i][j] += lowdim.absolute_pe[i][cj][effsq];
+		}
+	}
+
+
 	//絶対PP
 	newgradJ.absolute_PP[bp1][bp2] += lowdim.absolute_pp[i][j];
 	//絶対P
@@ -1055,7 +1139,7 @@ void weave_eachPP(dJValue& newgradJ, const lowerDimPP& lowdim, const BonaPiece b
 }
 #else
 
-void each_PP(lowerDimPP & lowdim, const dJValue& gradJ, const BonaPiece bp1, const BonaPiece bp2) {
+void lowdim_each_PP(lowerDimPP & lowdim, const dJValue& gradJ, const BonaPiece bp1, const BonaPiece bp2) {
 	if (bp1 == bp2) { return; }//一致する場所はevaluateで見ないのでgradJも0になっている。これは無視していい。
 
 							   //iとjの前後によって違う場所を参照してしまうのを防ぐ。
@@ -1115,7 +1199,7 @@ void lower__dimPP(lowerDimPP & lowdim,const dJValue& gradJ)
 
 	for (BonaPiece bp1 = BONA_PIECE_ZERO; bp1 < fe_end2; bp1++) {
 		for (BonaPiece bp2 = BONA_PIECE_ZERO; bp2 < fe_end2; bp2++) {
-			each_PP(lowdim, gradJ, bp1, bp2);
+			lowdim_each_PP(lowdim, gradJ, bp1, bp2);
 		}
 	}
 }

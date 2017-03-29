@@ -1,7 +1,7 @@
 #include "position.h"
 
 
-//#define matedrop
+#define matedrop
 #define matemove
 /*
 ‰¤ŽèˆêŽè‹l‚ßƒeƒXƒg‹Ç–Ê
@@ -563,8 +563,6 @@ void Position::slider_blockers(const Color stm, const Square s,Bitboard& dc_cand
 		if (!more_than_one(betweenattack)) {dc_candicate |= betweenattack;}
 		if (!more_than_one(betweengurad)) { pinned |= betweengurad; }
 	}
-
-		
 
 	return;
 }

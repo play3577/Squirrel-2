@@ -126,7 +126,7 @@ extern Bitboard BetweenBB[SQ_NUM][SQ_NUM];//OK
 void bitboard_debug();
 void bitboard_init();
 Bitboard effectBB(const Position &pos, const Piece pt, const Color c, const Square sq);
-
+Bitboard effectBB(const Occ_256& occ, const Piece pt, const Color c, const Square sq);
 int change_indian(int i);
 
 void check_directtable();

@@ -341,6 +341,7 @@ void USI::loop()
 			
 
 		}
+#ifndef LEARN
 		else if (token == "ponderhit") {
 
 			limit.is_inponder = false;
@@ -354,6 +355,7 @@ void USI::loop()
 			limit.is_inponder = false;
 			Threadpool.main()->start_searching(true);
 		}
+#endif
 		//学習用コマンド”アイ”ではなく"エル"
 		else if (token == "l") {
 

@@ -913,6 +913,64 @@ Bitboard effectBB(const Position &pos,const Piece pt, const Color c, const Squar
 
 }
 
+Bitboard effectBB(const Occ_256 & occ, const Piece pt, const Color c, const Square sq)
+{
+	uint8_t obstacle_tate;
+	uint8_t obstacle_yoko;
+	uint8_t obstacle_plus45;
+	uint8_t obstacle_Minus45;
+
+
+	switch (pt)
+	{
+	case PAWN:
+		return StepEffect[c][pt][sq];
+		break;
+	case KNIGHT:
+		return StepEffect[c][pt][sq];
+		break;
+	case SILVER:
+		return StepEffect[c][pt][sq];
+		break;
+	case GOLD:case PRO_PAWN:case PRO_LANCE:case PRO_NIGHT:case PRO_SILVER:
+		return StepEffect[c][GOLD][sq];
+		break;
+	case KING:
+		return StepEffect[c][KING][sq];
+		break;
+	case LANCE:
+		obstacle_tate = (occ.b64(0) >> occ256_shift_table_tate[sq])&effectmask;
+		return LanceEffect[c][sq][obstacle_tate];
+		break;
+	case BISHOP:
+		obstacle_plus45 = (occ.b64(2) >> occ256_shift_table_p45[sq])&effectmask;
+		obstacle_Minus45 = (occ.b64(3) >> occ256_shift_table_m45[sq])&effectmask;
+		return LongBishopEffect_plus45[sq][obstacle_plus45] | LongBishopEffect_minus45[sq][obstacle_Minus45];
+		break;
+	case ROOK:
+		obstacle_tate = (occ.b64(0) >> occ256_shift_table_tate[sq])&effectmask;
+		obstacle_yoko = (occ.b64(1) >> occ256_shift_table_yoko[sq])&effectmask;
+		return LongRookEffect_tate[sq][obstacle_tate] | LongRookEffect_yoko[sq][obstacle_yoko];
+		break;
+	case UNICORN:
+		obstacle_plus45 = (occ.b64(2) >> occ256_shift_table_p45[sq])&effectmask;
+		obstacle_Minus45 = (occ.b64(3) >> occ256_shift_table_m45[sq])&effectmask;
+		return LongBishopEffect_plus45[sq][obstacle_plus45] | LongBishopEffect_minus45[sq][obstacle_Minus45] | StepEffect[BLACK][KING][sq];
+		break;
+	case DRAGON:
+		obstacle_tate = (occ.b64(0) >> occ256_shift_table_tate[sq])&effectmask;
+		obstacle_yoko = (occ.b64(1) >> occ256_shift_table_yoko[sq])&effectmask;
+		return LongRookEffect_tate[sq][obstacle_tate] | LongRookEffect_yoko[sq][obstacle_yoko] | StepEffect[BLACK][KING][sq];
+		break;
+	default:
+		//cout << pos << endl;
+		ASSERT(0);
+		return ALLBB;
+		break;
+	}
+
+}
+
 //‹ßÚ—˜‚«—p‚Å•ª‚¯‚Ä‚Ý‚½B
 Bitboard step_effect(const Color c, const Piece pt, const Square sq) {
 
