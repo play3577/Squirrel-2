@@ -287,6 +287,8 @@ void renewal_PP(dJValue &data) {
 		for (BonaPiece j = f_hand_pawn; j < fe_end2; j++) {
 
 			//bonanzaは4万局程に対してこの値なのでmin batchをつかうときはこれではだめ！！！！！
+
+			//効きを含めた次元下げをしたらpenaltyは必須になると考えられるがどれぐらいの値を使うべきなのか.....
 #if 0
 			/*if (PP[i][j]>0) { data.dJ[i][j] -= double(0.2 / double(FV_SCALE)); }
 			else if (PP[i][j]<0) { data.dJ[i][j] += double(0.2 / double(FV_SCALE)); }*/
@@ -1059,7 +1061,7 @@ void lowdim_each_PP(lowerDimPP & lowdim, const dJValue& gradJ, const BonaPiece b
 		while (ebb.isNot()) {
 			const Square esq = ebb.pop();
 
-			lowdim.absolute_pe[j][ci][esq] += grad*double(1.0 / (1 << (3)));
+			lowdim.absolute_pe[j][ci][esq] += grad*double(1.0 / (1 << (3+distance_table[sqi][esq])));
 		}
 	}
 	if (f_pawn <= j) {
@@ -1071,7 +1073,7 @@ void lowdim_each_PP(lowerDimPP & lowdim, const dJValue& gradJ, const BonaPiece b
 		while (ebb.isNot()) {
 			const Square esq = ebb.pop();
 
-			lowdim.absolute_pe[i][cj][esq] += grad*double(1.0 / (1 << (3)));
+			lowdim.absolute_pe[i][cj][esq] += grad*double(1.0 / (1 << (3 + distance_table[esq][sqj])));
 		}
 	}
 

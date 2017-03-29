@@ -121,6 +121,12 @@ extern Bitboard CantGo_PAWNLANCE[ColorALL];
 extern Bitboard CantGo_KNIGHT[ColorALL];
 
 extern Direction direct_table[SQ_NUM][SQ_NUM];
+
+
+//2マスの距離　
+//ちぇびシェフ距離を使う。　https://ja.wikipedia.org/wiki/%E3%83%81%E3%82%A7%E3%83%93%E3%82%B7%E3%82%A7%E3%83%95%E8%B7%9D%E9%9B%A2
+//縦横斜めの関係にないところは2になるがまあ桂馬だしいいか
+extern int distance_table[SQ_NUM][SQ_NUM];
 extern Bitboard BetweenBB[SQ_NUM][SQ_NUM];//OK
 
 void bitboard_debug();
@@ -185,8 +191,8 @@ inline bool more_than_one(const Bitboard& b) {
 	return false;
 }
 
-
-
+//距離テーブルの初期化
+void init_distancetable();
 
 
 

@@ -47,6 +47,7 @@ Bitboard CantGo_KNIGHT[ColorALL];
 //from‚©‚çŒ©‚½to‚ÌˆÊ’uŠÖŒWB
 Direction direct_table[SQ_NUM][SQ_NUM];
 
+int distance_table[SQ_NUM][SQ_NUM];
 
 Bitboard PsuedoGivesCheckBB[ColorALL][PT_ALL][SQ_NUM];
 //Bitboard GivesCheckRookBB[ColorALL][SQ_NUM][128];
@@ -769,7 +770,7 @@ void bitboard_init()
 		}
 	}
 
-
+	init_distancetable();
 	//check_between();
 	//check_directtable();
 	//bitboard_debug();
@@ -1110,6 +1111,7 @@ Bitboard unicorn_effect(const Occ_256 & occ, const Square sq)
 }
 
 
+
 /*
 Bitboard ‚ğ—p‚¢‚½’·‚¢Œø‚«
 */
@@ -1191,6 +1193,21 @@ void check_between()
 			cout << "from "<<from << " to "<<to<< endl;
 			cout << BetweenBB[from][to] << endl;
 
+
+		}
+	}
+
+
+}
+
+
+
+void init_distancetable()
+{
+	for (Square i = SQ_ZERO; i < SQ_NUM; i++) {
+		for (Square j = SQ_ZERO; j < SQ_NUM; j++) {
+
+			distance_table[i][j] = max(abs(int(sqtofile(i) - sqtofile(j))), int(abs(sqtorank(i) - sqtorank(j))));
 
 		}
 	}
