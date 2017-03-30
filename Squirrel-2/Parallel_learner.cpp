@@ -289,9 +289,13 @@ void renewal_PP(dJValue &data) {
 			//bonanzaは4万局程に対してこの値なのでmin batchをつかうときはこれではだめ！！！！！
 
 			//効きを含めた次元下げをしたらpenaltyは必須になると考えられるがどれぐらいの値を使うべきなのか.....
-#if 0
+#if 1
 			/*if (PP[i][j]>0) { data.dJ[i][j] -= double(0.2 / double(FV_SCALE)); }
 			else if (PP[i][j]<0) { data.dJ[i][j] += double(0.2 / double(FV_SCALE)); }*/
+			//PE次元下げでおかしなところにも値がついてしまっている可能性があるため
+			if (abs(data.absolute_PP[i][j])<double(1.0/(1<<8))) {
+				continue;
+			}
 #endif
 			int inc = h*sign(data.absolute_PP[i][j]);
 			PP[i][j] += inc;
@@ -781,6 +785,7 @@ void learnphase1body(int number) {
 
 }
 
+//この値の更新の方法だとパラメーターを移動させてる間にPVが変わってしまったときに対応できないので他の方法で値の更新をしたいのだが...
 void learnphase2() {
 	
 	vector<std::thread> threads(maxthreadnum - 1);//maxthreadnum-1だけstd::threadをたてる。

@@ -2,6 +2,17 @@
 #include "fundation.h"
 #include "Hash.h"
 #include <xmmintrin.h>//for prefetch(と言うかうちの環境でxmmintrinを使えるのか？？)
+
+/*
+tptでこのノードに詰みが見つからなかったまたは見つかったことが確認されれば
+mate1plyを回避する。
+*/
+enum Mate1plyFlag :int8_t {
+	unknown=0,
+	findmate=0b11,//１をマスクすることで確認できるようにbit１は立てておく。
+	findunmate=0b1//mateを見つけた場合でもmatemoveはttmoveに格納されているのでmate1plyを呼び出す必要はない
+};
+
 /*
 トランスポジションテーブルの一つのエントリー
 shogi686ではBitboardに保存すべき内容を格納していた。
@@ -17,22 +28,25 @@ struct TPTEntry {
 private:
 	friend class TranspositionTable;
 	uint32_t key32;//4byte
-	int16_t eval16;//2byte
+	int16_t eval16;//2byte (将棋ソフトでは評価値差分計算のために毎回評価関数を呼び出すので正直これはいらない気がするがどうなのだろう)
 	int16_t value16;//2byte
 	uint32_t move32;//4byte       これは実際には24bit（3byte）あれば十分である。
 	uint8_t genbound8;//1byte (下2bitはbound情報)
 	uint8_t depth8;//深さは256までなので8bitに収まる
-	uint8_t padding[2];//tpentryはまだ空きがあるので他の情報も格納できますよ。（と言うかもっと内容を削るべきか？）
+	uint8_t padding;//tpentryはまだ空きがあるので他の情報も格納できますよ。（と言うかもっと内容を削るべきか？）
+	int8_t f8;//mateを見つけたかどうか
+
 	//今のところかくのうする情報を思いつかないのでhashを長くしてそれを格納するか？
 public:
 	Move  move()  const { return (Move)move32; }
 	Value value() const { return (Value)value16; }
-	Value eval()  const { return (Value)eval16; }
+	//Value eval()  const { return (Value)eval16; }
 	Depth depth() const { return (Depth)(depth8 * int(ONE_PLY)); }
 	Bound bound() const { return (Bound)(genbound8 & 0x3); }
 	Key key()const { return (Key)key32; }
+	Mate1plyFlag mateflag() { return (Mate1plyFlag)f8; }
 	//未実装
-	void save(Key k, Value v, Bound b, Depth d, Move m, Value ev, uint8_t g){
+	void save(Key k, Value v, Bound b, Depth d, Move m/*, Value ev*/, uint8_t g,Mate1plyFlag f){
 	
 		//ASSERT(d / int(ONE_PLY) * int(ONE_PLY) == d);//0.5手延長もあるので
 
@@ -61,9 +75,10 @@ public:
 		{
 			key32 = (uint32_t)(k >> 32);
 			value16 = (int16_t)v;
-			eval16 = (int16_t)ev;
+			//eval16 = (int16_t)ev;
 			genbound8 = (uint8_t)(g | b);
 			depth8 = (int8_t)(d / ONE_PLY);
+			f8 = (int8_t)f;
 		}
 	}//end of save()
 };
