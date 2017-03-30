@@ -21,10 +21,9 @@
 //aspiration探索
 #ifndef LEARN
 #define ASP
-#define MATEONE
 #endif
 
-
+#define MATEONE
 //#define MATETEST
 
 #ifdef MATETEST
@@ -648,10 +647,9 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 	TPTEntry* tte;
 	Move ttMove;
 	Value ttValue;
-	//Value ttEval;
+	Value ttEval;
 	Bound ttBound;
 	Depth ttdepth;
-	Mate1plyFlag mateflag;
 	bool CaptureorPropawn;
 	bool givescheck, improve, singler_extension, move_count_pruning;
 	Depth extension, newdepth;
@@ -744,17 +742,15 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 	if (TThit) {
 		ttValue = value_from_tt(tte->value(),ss->ply);
 		ttdepth = tte->depth();
-		//ttEval = tte->eval();
+		ttEval = tte->eval();
 		ttBound = tte->bound();
-		mateflag = tte->mateflag();
 		//ttMove = tte->move();
 	}
 	else {
 		ttValue = Value_error;
 		ttdepth = DEPTH_NONE;
-		//ttEval = Value_error;
+		ttEval = Value_error;
 		ttBound = BOUND_NONE;
-		mateflag = Mate1plyFlag::unknown;
 		//ttMove = MOVE_NONE;
 	}
 	//Rootのときは違う処理を入れなければならない
@@ -831,7 +827,7 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 
 
 #ifdef MATEONE
-	if (!RootNode && !incheck&&mateflag!=findunmate) {
+	if (!RootNode && !incheck) {
 		Move mate;
 		if ((mate=pos.mate1ply())!=MOVE_NONE) {
 #ifdef MATETEST
@@ -858,7 +854,7 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 			ss->static_eval = bestvalue = mate_in_ply((ss->ply)+1);
 #ifdef USETT
 			//う～んここでmoveを格納しても結局mateoneplyで枝を切るのでttmoveは必要ないし無駄か？？？
-			tte->save(poskey, value_to_tt(bestvalue, ss->ply), BOUND_EXACT, depth,mate/*, ss->static_eval*/, TT.generation(),Mate1plyFlag::findmate);
+			tte->save(poskey, value_to_tt(bestvalue, ss->ply), BOUND_EXACT, depth,mate, ss->static_eval, TT.generation());
 #endif
 			ASSERT(bestvalue > -Value_Infinite&&bestvalue < Value_Infinite);
 			return bestvalue;
@@ -884,17 +880,15 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 	}
 	else if (TThit) {
 
-
-
 		if (ttValue != Value_error) {
 			if (ttBound&(ttValue > staticeval ? BOUND_LOWER : BOUND_UPPER)) { staticeval = ttValue; }
 		}
 
 	}
 	else {
-		//if ((ss - 1)->currentMove == MOVE_NULL) { staticeval = ss->static_eval = -(ss - 1)->static_eval + 2 * (Value)20;}
+		if ((ss - 1)->currentMove == MOVE_NULL) { staticeval = ss->static_eval = -(ss - 1)->static_eval + 2 * (Value)20;}
 #ifdef USETT
-		tte->save(poskey, Value_error, BOUND_NONE, DEPTH_NONE, MOVE_NONE/*, ss->static_eval*/, TT.generation(),unknown);
+		tte->save(poskey, Value_error, BOUND_NONE, DEPTH_NONE, MOVE_NONE, ss->static_eval, TT.generation());
 #endif
 	}
 #else
@@ -1161,14 +1155,14 @@ end_multicut:
 		if (TThit) {
 			ttValue = tte->value();
 			ttdepth = tte->depth();
-			//ttEval = tte->eval();
+			ttEval = tte->eval();
 			ttBound = tte->bound();
 			ttMove = tte->move();
 		}
 		else {
 			ttValue = Value_error;
 			ttdepth = DEPTH_NONE;
-			//ttEval = Value_error;
+			ttEval = Value_error;
 			ttBound = BOUND_NONE;
 			ttMove = MOVE_NONE;
 		}
@@ -1603,7 +1597,7 @@ moves_loop:
 	tte->save(poskey, value_to_tt(bestvalue, ss->ply),
 		bestvalue >= beta ? BOUND_LOWER :
 		PVNode&&bestMove ? BOUND_EXACT : BOUND_UPPER,
-		depth, bestMove/*, staticeval*/, TT.generation(),Mate1plyFlag::findunmate);
+		depth, bestMove, staticeval, TT.generation());
 #endif
 	ASSERT(bestvalue > -Value_Infinite&&bestvalue < Value_Infinite);
 
@@ -1641,13 +1635,13 @@ Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
 	TPTEntry* tte;
 	Move ttMove;
 	Value ttValue;
-	//Value ttEval;
+	Value ttEval;
 	Bound ttBound;
 	Depth ttdepth;
 	Value futilitybase = -Value_Infinite;
 	Value futilityvalue;
 	bool evasionPrunable;
-	Mate1plyFlag mateflag;
+
 
 
 
@@ -1687,18 +1681,16 @@ Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
 	if (TThit) {
 		ttValue = value_from_tt(tte->value(), ss->ply);
 		ttdepth = tte->depth();
-	//	ttEval = tte->eval();
+		ttEval = tte->eval();
 		ttBound = tte->bound();
 		ttMove = tte->move();
-		mateflag = tte->mateflag();
 	}
 	else {
 		ttValue = Value_error;
 		ttdepth = DEPTH_NONE;
-	//	ttEval = Value_error;
+		ttEval = Value_error;
 		ttBound = BOUND_NONE;
 		ttMove = MOVE_NONE;
-		mateflag = unknown;
 	}
 	
 	
@@ -1725,7 +1717,7 @@ Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
 	}
 #endif
 #ifdef MATEONE
-	if (!incheck&&mateflag!=findunmate) {
+	if (!incheck) {
 		Move mate;
 		if ((mate=pos.mate1ply())!=MOVE_NONE) {
 #ifdef MATETEST
@@ -1767,20 +1759,20 @@ Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
 		bestvalue = futilitybase = -Value_Infinite;
 	}
 	else {
-		
-		/*if (TThit) {
+		/*
+		if (TThit) {
 			if (ttValue != Value_error) {
 				if (ttBound&(ttValue > bestvalue ? BOUND_LOWER : BOUND_UPPER)) { bestvalue = ttValue; }
 			}
+		}
+		else {
+			if ((ss - 1)->currentMove == MOVE_NULL){staticeval=bestvalue=  -(ss - 1)->static_eval + 2 * Value(20);}
 		}*/
-		//else {
-		//	//if ((ss - 1)->currentMove == MOVE_NULL){staticeval=bestvalue=  -(ss - 1)->static_eval + 2 * Value(20);}
-		//}
 
 		if (bestvalue >= beta) {
 #ifdef USETT
 			if (!TThit) {
-				tte->save(posKey, value_to_tt(bestvalue, ss->ply), BOUND_LOWER, DEPTH_NONE, MOVE_NONE/*, staticeval*/, TT.generation(),unknown);
+				tte->save(posKey, value_to_tt(bestvalue, ss->ply), BOUND_LOWER, DEPTH_NONE, MOVE_NONE, staticeval, TT.generation());
 			}
 #endif
 			ASSERT(bestvalue > -Value_Infinite&&bestvalue < Value_Infinite);
@@ -1954,7 +1946,7 @@ Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
 #ifdef USETT
 					//valueがbetaを超えたということはこの点数以上の指し手がまだあるかもしれないということなのでBOUND_LOWER
 					tte->save(posKey, value_to_tt(value, ss->ply), BOUND_LOWER,
-						depth, move/*, staticeval*/, TT.generation(),findunmate);
+						depth, move, staticeval, TT.generation());
 #endif
 					return value;
 				}
@@ -1974,7 +1966,7 @@ Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
 	//PVnodeではないということはβ超えは起こらなかったnullwindowのアルファ値を超えられなかったつまりUPPERである
 	tte->save(posKey, value_to_tt(bestvalue, ss->ply),
 		PvNode && bestvalue > oldAlpha ? BOUND_EXACT : BOUND_UPPER,
-		depth, bestMove/*, staticeval*/, TT.generation(),findunmate);
+		depth, bestMove, staticeval, TT.generation());
 #endif
 	ASSERT(bestvalue > -Value_Infinite&&bestvalue < Value_Infinite);
 	return bestvalue;
