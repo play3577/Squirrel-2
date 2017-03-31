@@ -231,11 +231,11 @@ struct lowerDimPP
 	double absolute_pp[fe_end2][fe_end2];//絶対PP　
 	double relative_pp[PC_ALL][PC_ALL][17][17];//PP平行移動（x,y座標固定の寄与を大きくしてrelativePPのほうは寄与を小さくすべきか？）
 	double relative_ypp[PC_ALL][PC_ALL][17][17][Rank_Num];//y座標固定PP平行移動　rankにはiのrankが格納される
-	//double relative_xpp[PC_ALL][PC_ALL][17][17][File_Num];//x座標固定
+	double relative_xpp[PC_ALL][PC_ALL][17][17][File_Num];//x座標固定
 	//double absolute_p[fe_end2];//絶対P これはたぶんダメ
 
 	//どれだけ小さい値でも値が付いていればPPを動かすのでペナルティが重要になってくるか....
-	double absolute_pe[fe_end2][ColorALL][SQ_NUM];//[bonap][効きのあるマス][効きの原因となった駒の色]  ppeだとなんの次元下げにもならないのでpe
+	double absolute_pe[fe_end2][ColorALL][SQ_NUM][SQ_NUM];//[bonap][効きの原因となった駒の色][効きのあるマス][効きの原因となる駒の位置]  ppeだとなんの次元下げにもならないのでpe　駒の位置も追加する
 
 	void clear() {
 		memset(this, 0, sizeof(*this));
@@ -1048,7 +1048,7 @@ void lowdim_each_PP(lowerDimPP & lowdim, const dJValue& gradJ, const BonaPiece b
 
 
 		lowdim.relative_ypp[pci][pcj][sqtofile(sq1) - sqtofile(sq2) + 8][sqtorank(sq1) - sqtorank(sq2) + 8][sqtorank(sq1)] += grad;
-		//lowdim.relative_xpp[pci][pcj][sqtofile(sq1) - sqtofile(sq2) + 8][sqtorank(sq1) - sqtorank(sq2) + 8][sqtofile(sq1)] += grad;
+		lowdim.relative_xpp[pci][pcj][sqtofile(sq1) - sqtofile(sq2) + 8][sqtorank(sq1) - sqtorank(sq2) + 8][sqtofile(sq1)] += grad;
 
 	}
 	//ここから効きを含めた次元下げ
@@ -1066,7 +1066,7 @@ void lowdim_each_PP(lowerDimPP & lowdim, const dJValue& gradJ, const BonaPiece b
 		while (ebb.isNot()) {
 			const Square esq = ebb.pop();
 
-			lowdim.absolute_pe[j][ci][esq] += grad*double(1.0 / (1 << (3+distance_table[sqi][esq])));
+			lowdim.absolute_pe[j][ci][esq][sqi] += grad*double(1.0 / (1 << (3+distance_table[sqi][esq])));
 		}
 	}
 	if (f_pawn <= j) {
@@ -1078,7 +1078,7 @@ void lowdim_each_PP(lowerDimPP & lowdim, const dJValue& gradJ, const BonaPiece b
 		while (ebb.isNot()) {
 			const Square esq = ebb.pop();
 
-			lowdim.absolute_pe[i][cj][esq] += grad*double(1.0 / (1 << (3 + distance_table[esq][sqj])));
+			lowdim.absolute_pe[i][cj][esq][sqj] += grad*double(1.0 / (1 << (3 + distance_table[esq][sqj])));
 		}
 	}
 
@@ -1105,7 +1105,7 @@ void weave_eachPP(dJValue& newgradJ, const lowerDimPP& lowdim, const BonaPiece b
 		newgradJ.absolute_PP[bp1][bp2] += lowdim.relative_pp[pci][pcj][sqtofile(sq1) - sqtofile(sq2) + 8][sqtorank(sq1) - sqtorank(sq2) + 8];
 
 		newgradJ.absolute_PP[bp1][bp2] += lowdim.relative_ypp[pci][pcj][sqtofile(sq1) - sqtofile(sq2) + 8][sqtorank(sq1) - sqtorank(sq2) + 8][sqtorank(sq1)];
-		//newgradJ.absolute_PP[bp1][bp2] += lowdim.relative_xpp[pci][pcj][sqtofile(sq1) - sqtofile(sq2) + 8][sqtorank(sq1) - sqtorank(sq2) + 8][sqtofile(sq1)];
+		newgradJ.absolute_PP[bp1][bp2] += lowdim.relative_xpp[pci][pcj][sqtofile(sq1) - sqtofile(sq2) + 8][sqtorank(sq1) - sqtorank(sq2) + 8][sqtofile(sq1)];
 
 	}
 
@@ -1121,7 +1121,7 @@ void weave_eachPP(dJValue& newgradJ, const lowerDimPP& lowdim, const BonaPiece b
 		while (ebb.isNot()) {
 			const Square effsq = ebb.pop();
 
-			newgradJ.absolute_PP[i][j]+=lowdim.absolute_pe[j][ci][effsq];
+			newgradJ.absolute_PP[bp1][bp2]+=lowdim.absolute_pe[j][ci][effsq][sqi];
 		}
 	}
 	if (f_pawn <= j) {
@@ -1133,7 +1133,7 @@ void weave_eachPP(dJValue& newgradJ, const lowerDimPP& lowdim, const BonaPiece b
 		while (ebb.isNot()) {
 			const Square effsq = ebb.pop();
 
-			newgradJ.absolute_PP[i][j] += lowdim.absolute_pe[i][cj][effsq];
+			newgradJ.absolute_PP[bp1][bp2] += lowdim.absolute_pe[i][cj][effsq][sqj];
 		}
 	}
 
