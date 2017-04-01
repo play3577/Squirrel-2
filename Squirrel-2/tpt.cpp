@@ -29,7 +29,7 @@ void TranspositionTable::resize(const size_t mbSize)
 	/*＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝
 	SFではCacheLineSize - 1　だけ余分に確保していたがウチではalignes(64)を指定してるから揃えてくれると思う（適当）
 	＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝*/
-	mem = calloc(cluster_count * sizeof(Cluster), 1);
+	mem = calloc(cluster_count * sizeof(Cluster) + CacheLineSize - 1, 1);
 
 
 	if (!mem)
@@ -40,7 +40,7 @@ void TranspositionTable::resize(const size_t mbSize)
 		exit(EXIT_FAILURE);
 	}
 	//tableの先頭ポインタをmemに
-	table = (Cluster*)(uintptr_t(mem));
+	table = (Cluster*)((uintptr_t(mem) + CacheLineSize - 1) & ~(CacheLineSize - 1));
 	generation_u8 = 0;
 	mask = cluster_count - 1;
 	clear();
@@ -65,20 +65,20 @@ TPTEntry * TranspositionTable::probe(const Key key, bool & found) const
 	//keyは64bitでありTPTEntryに格納されているkeyは上位32bit
 	//keyの下位数ビットを用いてclusterをさがす。
 	TPTEntry* const tte = first_entry(key);
-	const uint32_t key32 = key >> 32;  // Use the high 32 bits as key inside the cluster　上位32bitでクラスタ内のエントリを求める
+	const uint16_t key16 = key >> 48;  // Use the high 32 bits as key inside the cluster　上位32bitでクラスタ内のエントリを求める
 	//見つかったエントリは上位32bitと下位数ビットはhashが一致したentryといえるので十分信頼性がある。
 
 	//ここでクラスタ内からエントリを探す
 	for (int i = 0; i < ClusterSize; ++i) {
 		//keyの存在しない空きentryを見つけた||keyの一致を確認
-		if (!tte[i].key32 || tte[i].key32 == key32)
+		if (!tte[i].key16 || tte[i].key16 == key16)
 		{
 			//keyが一致してgenerationがいまのジェネレーションとは違った場合ジェネレーションを更新。
-			if ((tte[i].genbound8 & 0xFC) != generation_u8 && tte[i].key32)
+			if ((tte[i].genbound8 & 0xFC) != generation_u8 && tte[i].key16)
 				tte[i].genbound8 = uint8_t(generation_u8 | tte[i].bound()); // Refresh
 
 			 //一致キーならtrue　不一致ならfalseして　ポインタを返す。
-			return found = (bool)tte[i].key32, &tte[i];
+			return found = (bool)tte[i].key16, &tte[i];
 		}
 	}
 

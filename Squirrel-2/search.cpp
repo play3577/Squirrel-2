@@ -647,7 +647,7 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 	TPTEntry* tte;
 	Move ttMove;
 	Value ttValue;
-	Value ttEval;
+	//Value ttEval;
 	Bound ttBound;
 	Depth ttdepth;
 	bool CaptureorPropawn;
@@ -742,14 +742,14 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 	if (TThit) {
 		ttValue = value_from_tt(tte->value(),ss->ply);
 		ttdepth = tte->depth();
-		ttEval = tte->eval();
+	//	ttEval = tte->eval();
 		ttBound = tte->bound();
 		//ttMove = tte->move();
 	}
 	else {
 		ttValue = Value_error;
 		ttdepth = DEPTH_NONE;
-		ttEval = Value_error;
+	//	ttEval = Value_error;
 		ttBound = BOUND_NONE;
 		//ttMove = MOVE_NONE;
 	}
@@ -854,7 +854,7 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 			ss->static_eval = bestvalue = mate_in_ply((ss->ply)+1);
 #ifdef USETT
 			//う～んここでmoveを格納しても結局mateoneplyで枝を切るのでttmoveは必要ないし無駄か？？？
-			tte->save(poskey, value_to_tt(bestvalue, ss->ply), BOUND_EXACT, depth,mate, ss->static_eval, TT.generation());
+			tte->save(poskey, value_to_tt(bestvalue, ss->ply), BOUND_EXACT, depth,mate/*, ss->static_eval*/, TT.generation());
 #endif
 			ASSERT(bestvalue > -Value_Infinite&&bestvalue < Value_Infinite);
 			return bestvalue;
@@ -1155,14 +1155,14 @@ end_multicut:
 		if (TThit) {
 			ttValue = tte->value();
 			ttdepth = tte->depth();
-			ttEval = tte->eval();
+			//ttEval = tte->eval();
 			ttBound = tte->bound();
 			ttMove = tte->move();
 		}
 		else {
 			ttValue = Value_error;
 			ttdepth = DEPTH_NONE;
-			ttEval = Value_error;
+			//ttEval = Value_error;
 			ttBound = BOUND_NONE;
 			ttMove = MOVE_NONE;
 		}
@@ -1597,7 +1597,7 @@ moves_loop:
 	tte->save(poskey, value_to_tt(bestvalue, ss->ply),
 		bestvalue >= beta ? BOUND_LOWER :
 		PVNode&&bestMove ? BOUND_EXACT : BOUND_UPPER,
-		depth, bestMove, staticeval, TT.generation());
+		depth, bestMove/*, staticeval*/, TT.generation());
 #endif
 	ASSERT(bestvalue > -Value_Infinite&&bestvalue < Value_Infinite);
 
@@ -1635,7 +1635,7 @@ Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
 	TPTEntry* tte;
 	Move ttMove;
 	Value ttValue;
-	Value ttEval;
+	//Value ttEval;
 	Bound ttBound;
 	Depth ttdepth;
 	Value futilitybase = -Value_Infinite;
@@ -1681,14 +1681,14 @@ Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
 	if (TThit) {
 		ttValue = value_from_tt(tte->value(), ss->ply);
 		ttdepth = tte->depth();
-		ttEval = tte->eval();
+		//ttEval = tte->eval();
 		ttBound = tte->bound();
 		ttMove = tte->move();
 	}
 	else {
 		ttValue = Value_error;
 		ttdepth = DEPTH_NONE;
-		ttEval = Value_error;
+		//ttEval = Value_error;
 		ttBound = BOUND_NONE;
 		ttMove = MOVE_NONE;
 	}
@@ -1772,7 +1772,7 @@ Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
 		if (bestvalue >= beta) {
 #ifdef USETT
 			if (!TThit) {
-				tte->save(posKey, value_to_tt(bestvalue, ss->ply), BOUND_LOWER, DEPTH_NONE, MOVE_NONE, staticeval, TT.generation());
+				tte->save(posKey, value_to_tt(bestvalue, ss->ply), BOUND_LOWER, DEPTH_NONE, MOVE_NONE/*, staticeval*/, TT.generation());
 			}
 #endif
 			ASSERT(bestvalue > -Value_Infinite&&bestvalue < Value_Infinite);
@@ -1946,7 +1946,7 @@ Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
 #ifdef USETT
 					//valueがbetaを超えたということはこの点数以上の指し手がまだあるかもしれないということなのでBOUND_LOWER
 					tte->save(posKey, value_to_tt(value, ss->ply), BOUND_LOWER,
-						depth, move, staticeval, TT.generation());
+						depth, move/*, staticeval*/, TT.generation());
 #endif
 					return value;
 				}
@@ -1966,7 +1966,7 @@ Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
 	//PVnodeではないということはβ超えは起こらなかったnullwindowのアルファ値を超えられなかったつまりUPPERである
 	tte->save(posKey, value_to_tt(bestvalue, ss->ply),
 		PvNode && bestvalue > oldAlpha ? BOUND_EXACT : BOUND_UPPER,
-		depth, bestMove, staticeval, TT.generation());
+		depth, bestMove/*, staticeval*/, TT.generation());
 #endif
 	ASSERT(bestvalue > -Value_Infinite&&bestvalue < Value_Infinite);
 	return bestvalue;

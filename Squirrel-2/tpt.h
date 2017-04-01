@@ -12,27 +12,33 @@ int8_t使っても実際には4bitしか使わなくてもったいなくなるということが起こらないの
 やはりmeromさんすごく賢い人だ...
 
 */
+
+#pragma pack(push, 1)
 struct TPTEntry {
 
 private:
 	friend class TranspositionTable;
-	uint32_t key32;//4byte
-	int16_t eval16;//2byte  評価関数を毎回呼び出すのでeval16は必要ないと思うのだけれど....
+	uint16_t key16;//2byte
 	int16_t value16;//2byte
 	uint32_t move32;//4byte       これは実際には24bit（3byte）あれば十分である。
 	uint8_t genbound8;//1byte (下2bitはbound情報)
-	uint8_t depth8;//深さは256までなので8bitに収まる
-	uint8_t padding[2];//tpentryはまだ空きがあるので他の情報も格納できますよ。（と言うかもっと内容を削るべきか？）
+	int8_t depth8;//深さは256までなので8bitに収まる
+	/*uint16_t key16;
+	int16_t  value16;
+	int16_t  eval16;
+	uint8_t  genbound8;
+	int8_t   depth8; 
+	int32_t move32;*/
 	//今のところかくのうする情報を思いつかないのでhashを長くしてそれを格納するか？
 public:
 	Move  move()  const { return (Move)move32; }
 	Value value() const { return (Value)value16; }
-	Value eval()  const { return (Value)eval16; }
+	//Value eval()  const { return (Value)eval16; }
 	Depth depth() const { return (Depth)(depth8 * int(ONE_PLY)); }
 	Bound bound() const { return (Bound)(genbound8 & 0x3); }
-	Key key()const { return (Key)key32; }
+	//Key key()const { return (Key)key32; }
 	//未実装
-	void save(Key k, Value v, Bound b, Depth d, Move m, Value ev, uint8_t g){
+	void save(Key k, Value v, Bound b, Depth d, Move m/*, Value ev*/, uint8_t g){
 	
 		//ASSERT(d / int(ONE_PLY) * int(ONE_PLY) == d);//0.5手延長もあるので
 
@@ -45,7 +51,7 @@ public:
 		違う局面に対して指してを更新する（m!=MOVENONE,key!=key16） 下のifには必ず引っかかる。
 		違う局面に対してMOVE_NONEを突っ込む（movenoneを突っ込んで嬉しいことがあるのか？？？）下のifには必ず引っかかる。
 		*/
-		if (m || (k >> 32) != key32) {
+		if (m || (k >> 48) != key16) {
 			move32 = (uint32_t)m;
 		}
 		// Don't overwrite more valuable entries
@@ -54,21 +60,23 @@ public:
 		|| 残り探索深さが大きければ（深い探索から返ってきた結果だということ）（また反復深化であるので浅い層の情報のほうが優先して格納されるべきである。）
 		||	BOUND＿EXACTはPVNodeの探索結果であるので上書き
 		*/
-		if ((k >> 32) != key32
+		if ((k >> 48) != key16
 			|| d / ONE_PLY > depth8 - 4
 			/* || g != (genBound8 & 0xFC) // Matching non-zero keys are already refreshed by probe() *///　genbound8は　TT.probeでリフレッシュされている
 			|| b == BOUND_EXACT)
 		{
-			key32 = (uint32_t)(k >> 32);
+			key16 = (uint16_t)(k >> 48);
 			value16 = (int16_t)v;
-			eval16 = (int16_t)ev;
+			//eval16 = (int16_t)ev;
 			genbound8 = (uint8_t)(g | b);
 			depth8 = (int8_t)(d / ONE_PLY);
 		}
 	}//end of save()
 };
+#pragma pack(pop)
 //コンパイル時エラーチェックTPEntryが16byteであることを保証する。
-static_assert(sizeof(TPTEntry) == 16, "");
+static_assert(sizeof(TPTEntry) == 10,"10" );
+
 
 /*
 TPTには2のべき乗のクラスターを含み、それぞれのクラスタにClusterSize個のTPTEntryを持つ。
@@ -91,14 +99,15 @@ class TranspositionTable {
 
 public:
 	static constexpr int CacheLineSize = 64;
-	static constexpr int ClusterSize = 4;
+	static constexpr int ClusterSize = 3;
 
 	//これでアライメントされたのでキャッシュラインにまたがることは無いと考えられる。
-	struct alignas(64) Cluster {
+	struct  Cluster {
 		TPTEntry entry[ClusterSize];
+		uint8_t padding[2];
 	};
 	//クラスターは64byteで固定
-	static_assert(sizeof(Cluster) == 64, "");
+	static_assert(CacheLineSize % sizeof(Cluster) == 0,"claster");
 
 private:
 	size_t cluster_count;
