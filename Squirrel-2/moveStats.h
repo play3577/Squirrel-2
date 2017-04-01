@@ -102,10 +102,13 @@ typedef Stats<CounterMoveStats> CounterMoveHistoryStats;
 
 /*
 上のstatsはtoとpcしか考慮していなかったがこちらはfromとtoを考慮するstats.
+
+よく考えたらdropの時のことを考えてなかったな補正しなきゃな
+
 */
 struct FromToStats {
 
-	Value get(Color c, Move m) const { return table[c][move_from(m)][move_to(m)]; }
+	Value get(Color c, Move m) const { return (is_drop(m)) ? table[c][81][move_to(m)] :table[c][move_from(m)][move_to(m)]; }
 	void clear() { std::memset(table, 0, sizeof(table)); }
 
 	void update(Color c, Move m, Value v)
@@ -113,14 +116,21 @@ struct FromToStats {
 		if (abs(int(v)) >= 324)
 			return;
 
-		Square f = move_from(m);
-		Square t = move_to(m);
+		
+		const Square t = move_to(m);
+		if (is_drop(m)) {
+			table[c][81][t] -= table[c][81][t] * abs(int(v)) / 324;
+			table[c][81][t] += (v) * 32;
+		}
+		else {
+			const Square f = move_from(m);
 
-		table[c][f][t] -= table[c][f][t] * abs(int(v)) / 324;
-		table[c][f][t] += (v) * 32;
+			table[c][f][t] -= table[c][f][t] * abs(int(v)) / 324;
+			table[c][f][t] += (v) * 32;
+		}
 	}
 
 private:
-	Value table[ColorALL][SQ_NUM][SQ_NUM];
+	Value table[ColorALL][82][SQ_NUM];//dropの場合を81を使いたい
 };
 
