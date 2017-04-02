@@ -27,29 +27,67 @@
 //__m256iÇégÇ¶ÇÈÇÃÇÕVC++ÇæÇØÇæÇ¡ÇΩÇÃÇ©(ÅL•É÷•ÅM)
 struct Occ_256 {
 
-	__m256i b256;
+	//__m256i b256;
+	__m128i b128[2];
 
 	uint64_t b64(const int i)const{
 
+//
+//#if defined(_MSC_VER)
+//		return b256.m256i_u64[i];
+//#endif
+//#if defined(__GNUC__) 
+//		return uint64_t(_mm256_extract_epi64(b256, i));
+//#endif
+		switch (i)
+		{
+		case 0:
+			return b128[0].m128i_i64[0];
+			break;
+		case 1:
+			return b128[0].m128i_i64[1];
+			break;
+		case 2:
+			return b128[1].m128i_i64[0];
+			break;
+		case 3:
+			return b128[1].m128i_i64[1];
+			break;
+		default:
+			UNREACHABLE;
+			break;
+		}
 
-#if defined(_MSC_VER)
-		return b256.m256i_u64[i];
-#endif
-#if defined(__GNUC__) 
-		return uint64_t(_mm256_extract_epi64(b256, i));
-#endif
+
 	}
 
 	void set(const uint64_t value, const int index) {
-
-#if defined(_MSC_VER)
-		b256.m256i_u64[index]=value;
-#endif
-#if defined(__GNUC__) 
-		//_mm256_insert_epi64(b256, value, index);
-		UNREACHABLE;
-#endif
-		
+//
+//#if defined(_MSC_VER)
+//		b256.m256i_u64[index]=value;
+//#endif
+//#if defined(__GNUC__) 
+//		//_mm256_insert_epi64(b256, value, index);
+//		UNREACHABLE;
+//#endif
+		switch (index)
+		{
+		case 0:
+			 b128[0].m128i_i64[0]=value;
+			break;
+		case 1:
+			 b128[0].m128i_i64[1]=value;
+			break;
+		case 2:
+			 b128[1].m128i_i64[0]=value;
+			break;
+		case 3:
+			 b128[1].m128i_i64[1]=value;
+			break;
+		default:
+			UNREACHABLE;
+			break;
+		}
 	}
 /*
 Integer 256-bit vector logical operations.
@@ -76,49 +114,52 @@ Occ_256& andnot(const Occ_256& b1) { b256 = _mm256_andnot_si256(b256, b1.b256); 
 //4âÒ operationÇÇµÇ»ÇØÇÍÇŒÇ»ÇÁÇ»Ç¢ÇÃÇ≈ëÅÇ≠Ç»ÇÁÇ»Ç¢....
 //ÇµÇ©Çµattacker_toÇ»Ç«Ç≈occÇàÍÇ¬ÇæÇØìnÇπÇŒÇ¢Ç¢ÇÃÇ≈ìnÇ∑Ç∆Ç±ÇÎÇæÇØëÅÇ≠Ç»ÇÈÅHÅH
 	Occ_256& operator^=(Occ_256& b1) { 
-
-#if defined(_MSC_VER)
-		b256.m256i_u64[0] = b256.m256i_u64[0] ^ b1.b256.m256i_u64[0];
-		b256.m256i_u64[1] = b256.m256i_u64[1] ^ b1.b256.m256i_u64[1];
-		b256.m256i_u64[2] = b256.m256i_u64[2] ^ b1.b256.m256i_u64[2];
-		b256.m256i_u64[3] = b256.m256i_u64[3] ^ b1.b256.m256i_u64[3];
-#endif
-#if defined(__GNUC__) 
-		
-		b256 = _mm256_set_epi64x((b64(3) ^ b1.b64(3)), (b64(2) ^ b1.b64(2)), (b64(1) ^ b1.b64(1)), (b64(0) ^ b1.b64(0)));
-#endif
-	
+//
+//#if defined(_MSC_VER)
+//		b256.m256i_u64[0] = b256.m256i_u64[0] ^ b1.b256.m256i_u64[0];
+//		b256.m256i_u64[1] = b256.m256i_u64[1] ^ b1.b256.m256i_u64[1];
+//		b256.m256i_u64[2] = b256.m256i_u64[2] ^ b1.b256.m256i_u64[2];
+//		b256.m256i_u64[3] = b256.m256i_u64[3] ^ b1.b256.m256i_u64[3];
+//#endif
+//#if defined(__GNUC__) 
+//		
+//		b256 = _mm256_set_epi64x((b64(3) ^ b1.b64(3)), (b64(2) ^ b1.b64(2)), (b64(1) ^ b1.b64(1)), (b64(0) ^ b1.b64(0)));
+//#endif
+		b128[0] = _mm_xor_si128(b128[0], b1.b128[0]);
+		b128[1] = _mm_xor_si128(b128[1], b1.b128[1]);
 		return *this; 
 	}
 	Occ_256& operator|=(const Occ_256& b1) { 
-
-#if defined(_MSC_VER)
-		b256.m256i_u64[0] = b256.m256i_u64[0] | b1.b256.m256i_u64[0];
-		b256.m256i_u64[1] = b256.m256i_u64[1] | b1.b256.m256i_u64[1];
-		b256.m256i_u64[2] = b256.m256i_u64[2] | b1.b256.m256i_u64[2];
-		b256.m256i_u64[3] = b256.m256i_u64[3] | b1.b256.m256i_u64[3];
-#endif
-#if defined(__GNUC__) 
-	
-		b256 = _mm256_set_epi64x((b64(3) | b1.b64(3)), (b64(2) | b1.b64(2)), (b64(1) | b1.b64(1)), (b64(0) | b1.b64(0)));
-#endif
-	
+//
+//#if defined(_MSC_VER)
+//		b256.m256i_u64[0] = b256.m256i_u64[0] | b1.b256.m256i_u64[0];
+//		b256.m256i_u64[1] = b256.m256i_u64[1] | b1.b256.m256i_u64[1];
+//		b256.m256i_u64[2] = b256.m256i_u64[2] | b1.b256.m256i_u64[2];
+//		b256.m256i_u64[3] = b256.m256i_u64[3] | b1.b256.m256i_u64[3];
+//#endif
+//#if defined(__GNUC__) 
+//	
+//		b256 = _mm256_set_epi64x((b64(3) | b1.b64(3)), (b64(2) | b1.b64(2)), (b64(1) | b1.b64(1)), (b64(0) | b1.b64(0)));
+//#endif
+		b128[0] = _mm_or_si128(b128[0], b1.b128[0]);
+		b128[1] = _mm_or_si128(b128[1], b1.b128[1]);
 
 		return *this;
 	}
 	Occ_256& operator&=(const Occ_256& b1){ 
-
-#if defined(_MSC_VER)
-		b256.m256i_u64[0] = b256.m256i_u64[0] & b1.b256.m256i_u64[0];
-		b256.m256i_u64[1] = b256.m256i_u64[1] & b1.b256.m256i_u64[1];
-		b256.m256i_u64[2] = b256.m256i_u64[2] & b1.b256.m256i_u64[2];
-		b256.m256i_u64[3] = b256.m256i_u64[3] & b1.b256.m256i_u64[3];
-#endif
-#if defined(__GNUC__) 
-	
-		b256 = _mm256_set_epi64x((b64(3) & b1.b64(3)), (b64(2) & b1.b64(2)), (b64(1) & b1.b64(1)), (b64(0) & b1.b64(0)));
-#endif
-	
+//
+//#if defined(_MSC_VER)
+//		b256.m256i_u64[0] = b256.m256i_u64[0] & b1.b256.m256i_u64[0];
+//		b256.m256i_u64[1] = b256.m256i_u64[1] & b1.b256.m256i_u64[1];
+//		b256.m256i_u64[2] = b256.m256i_u64[2] & b1.b256.m256i_u64[2];
+//		b256.m256i_u64[3] = b256.m256i_u64[3] & b1.b256.m256i_u64[3];
+//#endif
+//#if defined(__GNUC__) 
+//	
+//		b256 = _mm256_set_epi64x((b64(3) & b1.b64(3)), (b64(2) & b1.b64(2)), (b64(1) & b1.b64(1)), (b64(0) & b1.b64(0)));
+//#endif
+		b128[0] = _mm_and_si128(b128[0], b1.b128[0]);
+		b128[1] = _mm_and_si128(b128[1], b1.b128[1]);
 
 		return *this; 
 	}
@@ -135,19 +176,20 @@ Occ_256& andnot(const Occ_256& b1) { b256 = _mm256_andnot_si256(b256, b1.b256); 
 
 inline Occ_256& operator^(const Occ_256& b1,const Occ_256& b2) {
 	static Occ_256 occ_;//Ç‡Ç¡Ç∆Ç¢Ç¢âåàçÙÇÕÇ»Ç¢Ç©ÅHÅH
-
-#if defined(_MSC_VER)
-	
-	occ_.b256.m256i_u64[0] = b2.b256.m256i_u64[0] ^ b1.b256.m256i_u64[0];
-	occ_.b256.m256i_u64[1] = b2.b256.m256i_u64[1] ^ b1.b256.m256i_u64[1];
-	occ_.b256.m256i_u64[2] = b2.b256.m256i_u64[2] ^ b1.b256.m256i_u64[2];
-	occ_.b256.m256i_u64[3] = b2.b256.m256i_u64[3] ^ b1.b256.m256i_u64[3];
-#endif
-#if defined(__GNUC__) 
-	
-	occ_.b256 = _mm256_set_epi64x((b2.b64(3) ^ b1.b64(3)), (b2.b64(2) ^ b1.b64(2)), (b2.b64(1) ^ b1.b64(1)), (b2.b64(0) ^ b1.b64(0)));
-#endif
-	
+//
+//#if defined(_MSC_VER)
+//	
+//	occ_.b256.m256i_u64[0] = b2.b256.m256i_u64[0] ^ b1.b256.m256i_u64[0];
+//	occ_.b256.m256i_u64[1] = b2.b256.m256i_u64[1] ^ b1.b256.m256i_u64[1];
+//	occ_.b256.m256i_u64[2] = b2.b256.m256i_u64[2] ^ b1.b256.m256i_u64[2];
+//	occ_.b256.m256i_u64[3] = b2.b256.m256i_u64[3] ^ b1.b256.m256i_u64[3];
+//#endif
+//#if defined(__GNUC__) 
+//	
+//	occ_.b256 = _mm256_set_epi64x((b2.b64(3) ^ b1.b64(3)), (b2.b64(2) ^ b1.b64(2)), (b2.b64(1) ^ b1.b64(1)), (b2.b64(0) ^ b1.b64(0)));
+//#endif
+	occ_.b128[0] = _mm_xor_si128(b1.b128[0], b2.b128[0]);
+	occ_.b128[1] = _mm_xor_si128(b1.b128[1], b2.b128[1]);
 	return occ_;
 	
 }
@@ -155,7 +197,7 @@ inline Occ_256& operator^(const Occ_256& b1,const Occ_256& b2) {
 
 inline Occ_256& operator|(const Occ_256& b1, const Occ_256& b2) {
 	static Occ_256 occ_;//Ç‡Ç¡Ç∆Ç¢Ç¢âåàçÙÇÕÇ»Ç¢Ç©ÅHÅH
-
+/*
 #if defined(_MSC_VER)
 
 	occ_.b256.m256i_u64[0] = b2.b256.m256i_u64[0] | b1.b256.m256i_u64[0];
@@ -167,7 +209,9 @@ inline Occ_256& operator|(const Occ_256& b1, const Occ_256& b2) {
 
 	occ_.b256 = _mm256_set_epi64x((b2.b64(3) | b1.b64(3)), (b2.b64(2) | b1.b64(2)), (b2.b64(1) | b1.b64(1)), (b2.b64(0) | b1.b64(0)));
 #endif
-
+*/
+	occ_.b128[0] = _mm_or_si128(b1.b128[0], b2.b128[0]);
+	occ_.b128[1] = _mm_or_si128(b1.b128[1], b2.b128[1]);
 	return occ_;
 
 }

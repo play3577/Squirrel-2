@@ -221,7 +221,10 @@ void make_occ256_shiftm45() {
 // [0] 縦 [1] 90　　[2] plus45　　[3] minus45
 void init_occ256()
 {
-	ZeroBB256.b256 = _mm256_setzero_si256();
+	//ZeroBB256.b256 = _mm256_setzero_si256();
+	ZeroBB256.b128[0] = _mm_setzero_si128();
+	ZeroBB256.b128[1] = _mm_setzero_si128();
+
 
 	make_sq2sq_256();
 	make_sq2sq90_256();
