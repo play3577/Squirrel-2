@@ -11,6 +11,7 @@
 #include "book.h"
 #include "progress.h"
 //#include "makemove.h"
+#include "reinforce_learner.h"
 
 #include <iostream>
 #include <string>
@@ -384,6 +385,10 @@ void USI::loop()
 		}
 		else if (token == "max") {
 			pos.set(max_pos);
+		}
+		else if (token == "rsp") {
+			//pos.random_startpos();
+			make_startpos_detabase();
 		}
 		else if (token == "hirate") { pos.set_hirate(); }
 		else if (token == "dp") { std::cout << pos << std::endl; }//debug position

@@ -683,6 +683,8 @@ public:
 	bool cancapture_checkpiece(Square to);
 	void slider_blockers(const Color stm, const Square s, Bitboard& dc_candicate, Bitboard& pinned) const;
 
+
+	string random_startpos();
 };
 
 std::ostream& operator<<(std::ostream& os, const Position& pos);

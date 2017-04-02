@@ -78,6 +78,9 @@
     <ClInclude Include="progress.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="reinforce_learner.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="fundation.cpp">
@@ -159,6 +162,9 @@
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="ThreadPool.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="reinforce_learner.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
   </ItemGroup>

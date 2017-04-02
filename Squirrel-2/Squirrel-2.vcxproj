@@ -171,6 +171,7 @@
     <ClInclude Include="occupied_m256.h" />
     <ClInclude Include="position.h" />
     <ClInclude Include="progress.h" />
+    <ClInclude Include="reinforce_learner.h" />
     <ClInclude Include="search.h" />
     <ClInclude Include="Thread.h" />
     <ClInclude Include="tpt.h" />
@@ -198,6 +199,7 @@
     <ClCompile Include="position.cpp" />
     <ClCompile Include="ProgLearner.cpp" />
     <ClCompile Include="progress.cpp" />
+    <ClCompile Include="reinforce_learner.cpp" />
     <ClCompile Include="search.cpp" />
     <ClCompile Include="book.cpp" />
     <ClCompile Include="Thread.cpp" />
