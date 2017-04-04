@@ -380,16 +380,21 @@ void USI::loop()
 			//éwÇµéËê∂ê¨ë¨ìxåvë™
 			speed_genmove(pos);
 		}
+		else if (token == "mt") {
+			make_teacher();
+		}
 		else if (token == "maturi") {
 			pos.set(maturi);
 		}
 		else if (token == "max") {
 			pos.set(max_pos);
 		}
+#ifdef  LEARN
 		else if (token == "rsp") {
 			//pos.random_startpos();
 			make_startpos_detabase();
 		}
+#endif //  LEARN
 		else if (token == "hirate") { pos.set_hirate(); }
 		else if (token == "dp") { std::cout << pos << std::endl; }//debug position
 		else if (token == "ebb") { pos.check_effecttoBB(); }

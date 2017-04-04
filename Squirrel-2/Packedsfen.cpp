@@ -159,7 +159,7 @@ string Position::pack_haffman_sfen(){
 	//packed_sfen[2] = stoi(psfen.substr(64, 127), nullptr, 2);
 	//packed_sfen[1] = stoi(psfen.substr(128, 191), nullptr, 2);
 	//packed_sfen[0] = stoi(psfen.substr(192), nullptr, 2);
-	bool packed_sfen[256];
+	
 
 	for (size_t i = 0; i < 256; i++) {
 
@@ -172,7 +172,7 @@ string Position::pack_haffman_sfen(){
 
 	}
 
-	unpack_haffman_sfen(packed_sfen);
+	//unpack_haffman_sfen(packed_sfen);
 
 	return psfen;
 }

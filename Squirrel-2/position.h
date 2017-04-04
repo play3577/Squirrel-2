@@ -122,6 +122,8 @@ private:
 	double prog;
 	
 public:
+	bool packed_sfen[256];
+
 	void change_stm() { sidetomove_ = opposite(sidetomove_); }
 
 	int ply_from_startpos;
