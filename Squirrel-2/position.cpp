@@ -1531,6 +1531,44 @@ Bitboard Position::attackers_to(Color stm, Square to, Occ_256& occ) const
 		;
 }
 
+
+Bitboard Position::attackers_to_all(const Square to,const Occ_256& occ) const
+{
+	//手番側の攻撃ごま
+	//HDK(SquirrelはUDK）一つにまとめたほうがいいか？あとPROMOTE小駒も
+	//う～むこれだとだいぶ重いだろうな....
+	
+
+	return (step_effect(BLACK, PAWN, to)&occ_pt(WHITE, PAWN))
+		| (step_effect(WHITE, PAWN, to)&occ_pt(BLACK, PAWN))
+
+		| (lance_effect(occ, BLACK, to)&occ_pt(WHITE, LANCE))
+		| (lance_effect(occ, WHITE, to)&occ_pt(BLACK, LANCE))
+
+		| (step_effect(BLACK, KNIGHT, to)&occ_pt(WHITE, KNIGHT))
+		| (step_effect(WHITE, KNIGHT, to)&occ_pt(BLACK, KNIGHT))
+
+		| (step_effect(BLACK, SILVER, to)&occ_pt(WHITE, SILVER))
+		| (step_effect(WHITE, SILVER, to)&occ_pt(BLACK, SILVER))
+
+		| (step_effect(BLACK, GOLD, to)&(occ_pt(WHITE, GOLD) | occ_pt(WHITE, PRO_PAWN) | occ_pt(WHITE, PRO_LANCE) | occ_pt(WHITE, PRO_NIGHT) | occ_pt(WHITE, PRO_SILVER)))
+		| (step_effect(WHITE, GOLD, to)&(occ_pt(BLACK, GOLD) | occ_pt(BLACK, PRO_PAWN) | occ_pt(BLACK, PRO_LANCE) | occ_pt(BLACK, PRO_NIGHT) | occ_pt(BLACK, PRO_SILVER)))
+
+		| (step_effect(BLACK, KING, to)&(occ_pt(WHITE, KING) | occ_pt(WHITE, DRAGON) | occ_pt(WHITE, UNICORN)))//王が最後に残る場合もあるので王も含めておく
+		| (step_effect(WHITE, KING, to)&(occ_pt(BLACK, KING) | occ_pt(BLACK, DRAGON) | occ_pt(BLACK, UNICORN)))//王が最後に残る場合もあるので王も含めておく
+
+		| (rook_effect(occ, to)&(occ_pt(BLACK, ROOK) | occ_pt(WHITE, DRAGON)))
+		| (rook_effect(occ, to)&(occ_pt(WHITE, ROOK) | occ_pt(BLACK, DRAGON)))
+
+		| (bishop_effect(occ, to)&(occ_pt(BLACK, BISHOP) | occ_pt(WHITE, UNICORN)))
+		| (bishop_effect(occ, to)&(occ_pt(WHITE, BISHOP) | occ_pt(BLACK, UNICORN)))
+
+		;
+}
+
+
+
+
 /*
 stockfishの実装はenumでkingより大きい駒があるSquirrelでは使えないので屋根裏王参考
 */
@@ -1618,10 +1656,10 @@ found:
 			break;
 		}
 	}
-	else {
-		//桂馬
+	//else {
+	//	//桂馬
 
-	}
+	//}
 
 	//ここでallttackersからsqは消される。
 	allattackers =allattackers & occupied_;
@@ -1672,17 +1710,85 @@ Value Position::see_sign(const Move m) const
 
 	return see(m);
 }
-//
-//bool Position::see_ge(const Move m, const Value v) const
-//{
-//	ASSERT(is_ok(m));
-//
-//
-//
-//
-//
-//
-//}
+
+
+bool Position::see_ge(const Move m, const Value v) const
+{
+	ASSERT(is_ok(m));
+
+	Square to = move_to(m);
+	Piece nextVictim = piece_type(moved_piece(m));//動かす駒は取られてしまう
+
+	Color stm =  opposite( piece_color(moved_piece(m)));
+	ASSERT(stm == opposite(sidetomove_));//最初に動かす駒の色が現在の手番に一致するかどうか確認
+	Value balance;
+	Bitboard occupied, stmAttackers;
+	Occ_256 occ_256;
+
+	balance = (Value)Eval::capture_value[(piece_on(to))];
+
+	//最初に捕獲した駒の価値がｖを超えなかったので
+	if (balance < v) return false;
+
+	//ーーーーーーーーーーーーーーー最初に動かした駒がkingであればtrue？？kingが捕獲されてしまうのでfalseではないのか？？
+	//王を取られないものとしているのか...???う～んseeだし取られるものとしたほうがいいような気がするんだけど
+	if (nextVictim == KING) return true;
+
+	balance -= (Value)Eval::capture_value[nextVictim];//動かした駒はやられる
+
+	if (balance >= v) return true;//自分の駒がとられてもbalance>vであるのでここで取り合いをやめればこちらの勝ち
+
+	Square from = move_from(m);
+
+	//fromのこまもtoの駒も取られている
+	occupied = is_drop(m) ? occ_all() ^ SquareBB[to]: occ_all() ^ SquareBB[to]^SquareBB[from];
+	occ_256 = is_drop(m) ? ret_occ_256() ^ SquareBB256[to] : ret_occ_256() ^ SquareBB256[to] ^ SquareBB256[from];
+
+	//すべてのtoに危機のある駒
+	Bitboard attackers = attackers_to_all(to, occ_256)&occupied;
+	//pinnerとblockerの作成(sfみたいにdo_moveするときに作るのがベストか？)
+	Bitboard pinner[ColorALL], blocker[ColorALL];
+	slider_blockers(BLACK, ksq(WHITE), pinner[BLACK], blocker[WHITE]);
+	slider_blockers(WHITE, ksq(BLACK), pinner[WHITE], blocker[BLACK]);
+
+	bool relativeStm = true; // True if the opponent is to move　相手が動こうとしている予定ならtrueになる？？　(相対side to move)(相手番の時はtrueになる)
+
+	while (true)
+	{
+		stmAttackers = attackers&occ(stm);
+
+		// Don't allow pinned pieces to attack pieces except the king as long all
+		// pinners are on their original square.
+		/*
+		ピンされている駒(blocker)はpinゴマが元の場所にある限り攻撃に参加してはいけない
+		*/
+		if (!(pinner[opposite(stm)] & ~occupied).isNot()) { stmAttackers.andnot(blocker[stm]); }//pinnerとblockerのcolorはこれでいいのか？？？
+
+		if (!stmAttackers.isNot()) { return relativeStm; }
+
+		nextVictim = min_attacker_pt(stm, to, stmAttackers, attackers, occ_256, occupied);
+		
+
+		if (nextVictim == KING) { return relativeStm == (bool)(attackers&occ(opposite(stm))).isNot();}
+
+		balance += relativeStm ? (Value)Eval::capture_value[nextVictim] : -(Value)Eval::capture_value[nextVictim];
+
+		relativeStm = !relativeStm;
+
+		/*
+		relativestm==true&&balance>=v ||
+		relativestm==false&&balance<=v
+		であればrelativestm　側が有利なのでそちらのboolを返す
+		*/
+		if (relativeStm == (balance >= v)) {
+			return relativeStm;
+		}
+		stm = opposite(stm);
+	}
+
+
+
+}
 
 Value Position::see(const Move m) const
 {
