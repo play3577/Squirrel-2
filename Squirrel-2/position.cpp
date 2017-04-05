@@ -1672,6 +1672,17 @@ Value Position::see_sign(const Move m) const
 
 	return see(m);
 }
+//
+//bool Position::see_ge(const Move m, const Value v) const
+//{
+//	ASSERT(is_ok(m));
+//
+//
+//
+//
+//
+//
+//}
 
 Value Position::see(const Move m) const
 {
@@ -1687,17 +1698,30 @@ Value Position::see(const Move m) const
 	Color stm;
 	Occ_256 occ_256;
 	
-	from = move_from(m);
+	//from = move_from(m);//これdropだった時におかしくなる！！！
 	to = move_to(m);
 
 	//list[0]は一手目で捕獲した駒の価値が格納される
 	swaplist[0] = Eval::capture_value[piece_on(to)];
 	
+
+
+
 	//動いたコマをoccupiedから除く。
-	occ_256 = ret_occ_256() ^ SquareBB256[from];
-	oc = occ_all()^SquareBB[from];
+	//occ_256 = ret_occ_256() ^ SquareBB256[from];
+	//oc = occ_all()^SquareBB[from];
 
-
+	if (!is_drop(m)) {
+		//駒移動
+		from = move_from(m);
+		occ_256 = ret_occ_256() ^ SquareBB256[from];
+		oc = occ_all()^SquareBB[from];
+	}
+	else {
+		//駒うち
+		occ_256 = ret_occ_256();
+		oc = occ_all();
+	}
 
 	//mを動かした手番の相手の色
 	stm = opposite(sidetomove());
@@ -1729,8 +1753,8 @@ Value Position::see(const Move m) const
 	駒が動くたびに新しく発生したききを調べる。
 	================================================================================*/
 	//capturedは最初の差し手で移動させた駒。移動させたこまは必ず取られてしまう
-	captured_pt = piece_type(piece_on(from));
-
+	//captured_pt = piece_type(piece_on(from));
+	captured_pt = piece_type(moved_piece(m));
 	do {
 		ASSERT(index < 40);
 		//list[0]は一手目で捕獲した駒の価値が格納される

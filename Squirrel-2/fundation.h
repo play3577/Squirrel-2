@@ -35,7 +35,7 @@
 
 //---------------------------------äwèKä÷òA
 
-#define LEARN
+//#define LEARN
 
 //#define Prog_LEARN
 

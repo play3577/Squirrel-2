@@ -553,6 +553,8 @@ public:
 	//see
 	Value see(const Move m) const;
 	Value see_sign(const Move m) const;
+	bool see_ge(const Move m, const Value v)const;
+
 
 	//Bitboard attackers_to(Color stm, Square to, Bitboard& occupied, Bitboard& oc90, Bitboard& ocm45, Bitboard& ocp45)const;
 	Bitboard attackers_to(Color stm, Square to, Occ_256& occ)const;

@@ -380,9 +380,7 @@ void USI::loop()
 			//w‚µè¶¬‘¬“xŒv‘ª
 			speed_genmove(pos);
 		}
-		else if (token == "mt") {
-			make_teacher();
-		}
+		
 		else if (token == "maturi") {
 			pos.set(maturi);
 		}
@@ -393,6 +391,9 @@ void USI::loop()
 		else if (token == "rsp") {
 			//pos.random_startpos();
 			make_startpos_detabase();
+		}
+		else if (token == "mt") {
+			make_teacher();
 		}
 #endif //  LEARN
 		else if (token == "hirate") { pos.set_hirate(); }

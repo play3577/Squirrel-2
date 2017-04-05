@@ -346,7 +346,7 @@ void make_startpos_detabase()
 	of.close();
 	cout << "finish make database!" << endl;
 }
-#endif //  LEARN
+
 
 struct teacher_data {
 
@@ -504,6 +504,6 @@ void make_teacher_body(const int number) {
 }
 
 
-
+#endif //  LEARN
 
 
