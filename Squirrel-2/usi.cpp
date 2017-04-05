@@ -677,8 +677,8 @@ void USI::loop()
 			Move m = make_movepromote(SQ3D, SQ3C, PAWN);
 			cout << pos << endl;
 			check_move(m);
-			cout << "see sign" << pos.see_sign(m) << endl;
-			cout << "see "<<pos.see(m) << endl;
+			/*cout << "see sign" << pos.see_sign(m) << endl;
+			cout << "see "<<pos.see(m) << endl;*/
 			cout << "seege:" << pos.see_ge(m, Value(0)) << endl;
 		}
 		else if (token == "occ") {

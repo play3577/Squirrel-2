@@ -551,8 +551,8 @@ public:
 	
 
 	//see
-	Value see(const Move m) const;
-	Value see_sign(const Move m) const;
+	//Value see(const Move m) const;
+	//Value see_sign(const Move m) const;
 	bool see_ge(const Move m, const Value v)const;
 
 

@@ -144,7 +144,7 @@ Move movepicker::return_nextmove()
 			break;
 		case Gen_Probcut:
 			m = pick_best(current_++, end_);
-			if (m != ttMove&&pos_.see(m)>Threshold) { return m; }
+			if (m != ttMove&&pos_.see_ge(m,Threshold)) { return m; }
 			break;
 		case START_Normal:
 			current_++;
@@ -154,7 +154,7 @@ Move movepicker::return_nextmove()
 			m = pick_best(current_++, end_);
 			if (m != ttMove) {
 
-				if (pos_.see_sign(m) >= Value_Zero) {
+				if (pos_.see_ge(m,Value_Zero)) {
 					return m;
 				}
 				(end_badcaptures--)->move = m;
@@ -292,11 +292,11 @@ void movepicker::eversion_score()
 		//	
 		//}
 
-		if ((see = pos_.see_sign(m))<Value_Zero) {
+		/*if ((see = pos_.see_ge(m,Value_Zero))<Value_Zero) {
 			i->value = see - HistoryStats::Max;
-		}
+		}*/
 		//‚±‚±‚Å‚à‚µ‚©‚µ‚½‚çƒoƒO‚ª‚ ‚é‚Ì‚©‚à‚µ‚ê‚È‚¢
-		else if (pos_.capture_or_propawn(m)) {
+		if (pos_.capture_or_propawn(m)) {
 			i->value = Value(Eval::piece_value[capturedpt]) - LVA(movept) + HistoryStats::Max;
 			if (is_promote(m)) {
 				ASSERT(movept <= GOLD);

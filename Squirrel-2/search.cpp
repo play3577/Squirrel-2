@@ -1281,7 +1281,7 @@ moves_loop:
 			
 			if (givescheck
 				 && !move_count_pruning) {
-				if (pos.see_sign(move) >= Value_Zero) { extension = ONE_PLY; }
+				if (pos.see_ge(move,Value_Zero)) { extension = ONE_PLY; }
 				else { extension = HALF_PLY; }
 			}
 			//singler extension
@@ -1336,12 +1336,12 @@ moves_loop:
 				if (predicted_depth < 8 * ONE_PLY) {
 					Value see_v = predicted_depth < 4 * ONE_PLY ? Value_Zero :
 						Value(-Eval::PawnValue * 2 * int(predicted_depth - 3 * ONE_PLY) / ONE_PLY);
-					if (pos.see_sign(move)<see_v) { continue; }
+					if (!pos.see_ge(move,see_v)) { continue; }
 				}
 
 			}
 			else if (depth < 3 * ONE_PLY
-				&& (mp.see_sign() < 0 || (!mp.see_sign() && pos.see_sign(move) < Value_Zero))) {
+				&& (mp.see_sign() < 0 || (!mp.see_sign() && !pos.see_ge(move,Value_Zero)))) {
 				continue;
 			}
 
@@ -1438,7 +1438,8 @@ moves_loop:
 				// Increase reduction for cut nodes
 				if (cutNode) {r += 2*ONE_PLY;}
 				//•ßŠl‚©‚ç“¦‚ê‚éŽw‚µŽè‚Ìê‡‚Íreducation‚ðŒ¸‚ç‚·
-				if (pos.see(make_move(move_to(move), move_from(move), PAWN))<Value_Zero) {
+				//‚±‚±PAWN‚¶‚áƒ_ƒI‹î‚ÌF‚Å‚Ç‚¿‚ç‚Ìturn‚©”»’f‚·‚é‚Ì‚Å
+				if (!pos.see_ge(make_move(move_to(move), move_from(move), add_color(PAWN,opposite(pos.sidetomove()))),Value_Zero)) {
 					r -= 2 * ONE_PLY;
 				}
 
@@ -1878,7 +1879,7 @@ Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
 				bestvalue = std::max(bestvalue, futilityvalue);
 				continue;
 			}
-			if (futilitybase <= alpha && pos.see(move) <= Value_Zero)
+			if (futilitybase <= alpha && !pos.see_ge(move,Value_Zero+1))
 			{
 				bestvalue = std::max(bestvalue, futilitybase);
 				continue;
@@ -1892,7 +1893,7 @@ Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
 		// Don't search moves with negative SEE values
 		if ((!incheck || evasionPrunable)
 			&& !is_promote(move)
-			&& pos.see_sign(move) < Value_Zero) {
+			&& !pos.see_ge(move,Value_Zero)) {
 			continue;
 		}
 #endif

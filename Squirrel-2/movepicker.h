@@ -63,14 +63,14 @@ public:
 			ttMove = MOVE_NONE;
 		}
 	}
-	//multicut用コンストラクタ
-	movepicker(const Position& pos, Value v) :pos_(pos) {
+	////multicut用コンストラクタ
+	//movepicker(const Position& pos, Value v) :pos_(pos) {
 
-		ASSERT(pos.is_incheck() == false);
-		current_ = end_ = move_;
-		Threshold = v;//まだ使わない
-		st = Start_Multicut;
-	}
+	//	ASSERT(pos.is_incheck() == false);
+	//	current_ = end_ = move_;
+	//	Threshold = v;//まだ使わない
+	//	st = Start_Multicut;
+	//}
 
 	movepicker(const Position& pos, Move ttm, Value th) :pos_(pos), Threshold(th) {
 
@@ -83,7 +83,7 @@ public:
 			&&pos_.pseudo_legal(ttm)
 			&& pos_.capture(ttm)
 			//&&pos_.capture_or_propawn(ttm)
-			&& pos.see(ttm) > Threshold )? ttm : MOVE_NONE;
+			&& pos.see_ge(ttm,Threshold))? ttm : MOVE_NONE;
 
 		end_ += (ttMove != MOVE_NONE);
 	}

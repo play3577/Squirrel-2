@@ -125,11 +125,11 @@ void randomwalker(Position & pos, int maxdepth)
 			ASSERT(0);
 
 		}
-		Value v = pos.see_sign(m);
+		//Value v = pos.see_sign(m);
 		bool v_ge = pos.see_ge(m,Value(0));
 
-		if (v >= 0) { if (!v_ge) { cout << pos << endl; cout << m << endl; }; }
-		else { if (v_ge) { cout << pos << endl; cout << m << endl; }; }
+		/*if (v >= 0) { if (!v_ge) { cout << pos << endl; cout << m << endl; }; }
+		else { if (v_ge) { cout << pos << endl; cout << m << endl; }; }*/
 
 		pos.do_move(m, &si[depth]);
 		depth++;
