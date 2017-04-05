@@ -111,7 +111,7 @@ void randomwalker(Position & pos, int maxdepth)
 		pos.evallist().list_check();
 		pos.undo_move();
 		pos.check_bplist();
-		Progress::calc_diff_prog(pos);
+//		Progress::calc_diff_prog(pos);
 		pos.mate1ply();
 		//Key hash2 = pos.key();
 		ASSERT(pos.evallist().bplist_fb[39] >= Eval::fe_end);

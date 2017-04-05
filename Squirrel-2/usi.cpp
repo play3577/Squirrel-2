@@ -95,7 +95,7 @@ void USI::init_option(OptionMap &o,string engine_name)
 //	name+="releaseTT ";
 //#endif
 
-	o["USI_Ponder"] << USIOption(true);
+	o["USI_Ponder"] << USIOption(false);
 	o["Threads"] << USIOption(1, 1, 128);
 	o["USI_Hash"] << USIOption(1, 1, 256);
 	o["EngineName"] << USIOption(name.c_str());
@@ -264,7 +264,7 @@ void position(Position& pos, istringstream& is) {
 		ply++;
 		pos.ply_from_startpos++;
 	}
-	cout << "進行度 " << Progress::prog_scale*Progress::calc_prog(pos) << endl;
+//	cout << "進行度 " << Progress::prog_scale*Progress::calc_prog(pos) << endl;
 
 	//cout << pos << endl;
 
@@ -701,7 +701,7 @@ void USI::loop()
 			pos.check_bplist();
 		}
 		else if (token == "prog") {
-			cout<<fixed<<Progress::prog_scale*Progress::calc_prog(pos)<<endl;
+//			cout<<fixed<<Progress::prog_scale*Progress::calc_prog(pos)<<endl;
 		}
 		else if (token == "pl") {
 #ifdef  Prog_LEARN

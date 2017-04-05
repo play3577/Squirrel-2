@@ -41,7 +41,7 @@ int main() {
 	//Progress::initialize_KP();
 
 
-	Progress::read_KP();
+//	Progress::read_KP();
 	USI::init_option(Options,ename2);
 	bitboard_init();
 	init_occ256();

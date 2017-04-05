@@ -139,11 +139,15 @@ void search_init() {
 		for (int d = 1; d < 64; ++d) {
 			for (int mc = 1; mc < 64; ++mc)
 			{
-				double r = log(d) * log(mc) / 2.0;
-				//double r = log(d) * log(mc) / 2.5;//少し緩くしてみる。
-				if (r < 0.80) {
-					continue;
-				}
+				//double r = log(d) * log(mc) / 2.0;
+				////double r = log(d) * log(mc) / 2.5;//少し緩くしてみる。
+				//if (r < 0.80) {
+				//	continue;
+				//}
+
+				double r = log(d) * log(mc) / 1.95;
+
+
 				//0 1　は is_pv
 				Reductions[0][imp][d][mc] = int(std::round(r));
 				Reductions[1][imp][d][mc] = std::max(Reductions[0][imp][d][mc] - 1, 0);
@@ -786,8 +790,9 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 		&&ttdepth >= depth
 		&&ttValue != Value_error//これ今のところいらない(ここもっと詳しく読む必要がある)
 		&& (ttValue >= beta ? (ttBound&BOUND_LOWER) : (ttBound&BOUND_UPPER))//BOUND_EXACT = BOUND_UPPER | BOUND_LOWERであるのでどちらの&も満たす
-		//&& (pos.piece_on(move_to(ttMove)) == NO_PIECE || piece_color(pos.piece_on(move_to(ttMove))) != pos.sidetomove())//ここでこの局面で非合法手だったら省く
+		//この局面でttmoveが非合法手だったら省くなどしたほうがいいのでは？？
 		) {
+
 		ss->currentMove = ttMove; // Can be MOVE_NONE
 		//ttMoveがquietでttvalue>=betaであればhistoryを更新することができる。
 		if (ttValue >= beta&&ttMove != MOVE_NONE) {
@@ -797,18 +802,18 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 
 				ASSERT(0);
 			}*/
-			if (pos.capture_or_propawn(ttMove)==false) {
+			if (pos.capture_or_propawn(ttMove) == false) {
 				update_stats(pos, ss, ttMove, nullptr, 0, bonus(depth));
 			}
 			// Extra penalty for a quiet TT move in previous ply when it gets refuted
 			//やり返されてしまった以前のquietなTTmoveに対してペナルティーをかける
 			//※(ss-1)->moveCount == 1 なのでTTmoveとは限らないのではないか？？
-			if ((ss - 1)->moveCount == 1 && pos.state()->DirtyPiece[1]==NO_PIECE&& (ss - 1)->currentMove!=MOVE_NULL)
+			if ((ss - 1)->moveCount == 1 && pos.state()->DirtyPiece[1] == NO_PIECE && (ss - 1)->currentMove != MOVE_NULL)
 			{
 				int d = depth / ONE_PLY;
 				Value penalty = Value(d * d + 4 * d + 1);
 				Square prevSq = move_to((ss - 1)->currentMove);
-				update_cm_stats(ss - 1, moved_piece((ss-1)->currentMove), prevSq, -penalty);
+				update_cm_stats(ss - 1, moved_piece((ss - 1)->currentMove), prevSq, -penalty);
 			}
 
 

@@ -10,7 +10,7 @@
 #include <fstream>
 #include <omp.h>
 
-
+#if 0
 namespace Progress {
 
 	ALIGNED(32) int32_t prog_KP[SQ_NUM][Eval::fe_end];
@@ -245,3 +245,4 @@ namespace Progress {
 	}
 
 }
+#endif

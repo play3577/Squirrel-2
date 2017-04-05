@@ -136,7 +136,7 @@ void Position::set(std::string sfen)
 	list.makebonaPlist(*this);
 	//list.print_bplist();
 	Eval::eval(*this);
-	Progress::calc_prog(*this);
+//	Progress::calc_prog(*this);
 	init_hash();
 	//cout << *this << endl;
 	
@@ -1678,7 +1678,7 @@ bool Position::see_ge(const Move m, const Value v) const
 
 	Color stm =  opposite( piece_color(moved_piece(m)));
 	Value balance;
-	Bitboard occupied, stmAttackers;
+	Bitboard oc, stmAttackers;
 	Occ_256 occ_256;
 
 	balance = (Value)Eval::capture_value[(piece_on(to))];
@@ -1697,11 +1697,11 @@ bool Position::see_ge(const Move m, const Value v) const
 	Square from = move_from(m);
 
 	//fromのこまもtoの駒も取られている
-	occupied = is_drop(m) ? occ_all() ^ SquareBB[to]: occ_all() ^ SquareBB[to]^SquareBB[from];
+	oc = is_drop(m) ? occ_all() ^ SquareBB[to]: occ_all() ^ SquareBB[to]^SquareBB[from];
 	occ_256 = is_drop(m) ? ret_occ_256() ^ SquareBB256[to] : ret_occ_256() ^ SquareBB256[to] ^ SquareBB256[from];
 
 	//すべてのtoに危機のある駒
-	Bitboard attackers = attackers_to_all(to, occ_256)&occupied;
+	Bitboard attackers = attackers_to_all(to, occ_256)&oc;
 	//pinnerとblockerの作成(sfみたいにdo_moveするときに作るのがベストか？)
 	Bitboard pinner[ColorALL], blocker[ColorALL];
 	slider_blockers(BLACK, ksq(WHITE), pinner[BLACK], blocker[WHITE]);
@@ -1718,11 +1718,11 @@ bool Position::see_ge(const Move m, const Value v) const
 		/*
 		ピンされている駒(blocker)はpinゴマが元の場所にある限り攻撃に参加してはいけない
 		*/
-		if (!(pinner[opposite(stm)] & ~occupied).isNot()) { stmAttackers.andnot(blocker[stm]); }//pinnerとblockerのcolorはこれでいいのか？？？
+		if (!(pinner[opposite(stm)] & ~oc).isNot()) { stmAttackers.andnot(blocker[stm]); }//pinnerとblockerのcolorはこれでいいのか？？？
 
 		if (!stmAttackers.isNot()) { return relativeStm; }
 
-		nextVictim = min_attacker_pt(stm, to, stmAttackers, attackers, occ_256, occupied);
+		nextVictim = min_attacker_pt(stm, to, stmAttackers, attackers, occ_256, oc);
 		
 
 		if (nextVictim == KING) { return relativeStm == (attackers&occ(opposite(stm))).isNot();}

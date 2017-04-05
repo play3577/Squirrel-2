@@ -2,6 +2,7 @@
 
 #include "position.h"
 #include "evaluate.h"
+#if 0
 namespace Progress {
 
 	/*
@@ -23,3 +24,4 @@ namespace Progress {
 	double calc_diff_prog(const Position& pos);
 }
 
+#endif
