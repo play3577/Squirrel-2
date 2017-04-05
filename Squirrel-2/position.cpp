@@ -1769,7 +1769,7 @@ bool Position::see_ge(const Move m, const Value v) const
 		nextVictim = min_attacker_pt(stm, to, stmAttackers, attackers, occ_256, occupied);
 		
 
-		if (nextVictim == KING) { return relativeStm == (bool)(attackers&occ(opposite(stm))).isNot();}
+		if (nextVictim == KING) { return relativeStm == (attackers&occ(opposite(stm))).isNot();}
 
 		balance += relativeStm ? (Value)Eval::capture_value[nextVictim] : -(Value)Eval::capture_value[nextVictim];
 
@@ -1880,6 +1880,13 @@ Value Position::see(const Move m) const
 		cout << "index " << index << "captured_pt " << captured_pt << "allattackers " <<endl<< allattackers << endl;
 #endif
 		//王を取ろうとしてしまったら--indexをしてdo{}から抜ける
+
+		/*
+		kingが絡むseeにバグがある！！！！！！！！
+		indexを--しているのでswaplistのさかのぼりがなされていない！
+		まあ今後see_ge使っていくつもりなので問題ないっちゃないが.....
+		*/
+
 	} while (stm_attackers.isNot() && (captured_pt != KING || (--index, false)));
 
 	//ゲーム木的に後ろから一番いいノードを選択していく。

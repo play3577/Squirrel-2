@@ -666,10 +666,17 @@ void USI::loop()
 			pos.check_longeffect256();
 		}
 		else if(token=="see"){
-			pos.set("sfen lnsgkg1nl/1r4sb1/ppppppppp/7P1/9/2P6/PP1PPPP1P/1B5R1/LNSGKGSNL b - 1");
-			const Move m = make_move(SQ2D, SQ2C, PAWN);
+			/*pos.set("sfen lnsgkg1nl/1r4sb1/ppppppppp/7P1/9/2P6/PP1PPPP1P/1B5R1/LNSGKGSNL b - 1");
+			const Move m = make_move(SQ2D, SQ2C, PAWN);*/
 			/*pos.set("sfen lnsgkg1nl/1r4sb1/ppppppppp/6P2/7N1/2P4P1/PP1PPP2P/1B4R2/LNSGKGS1L b - 1");
 			const Move m = make_move(SQ3D, SQ3C, PAWN);*/
+			/*pos.set("sfen 3k4r/2b3+N2/4p1Ss1/2PN4G/lP1p1Ppp1/L3GbPPP/p+pNPG1N2/2LRS4/PgSK2+p1L w 3p 1");
+			Move m = make_move(SQ8I, SQ7I, W_GOLD);*/
+
+			pos.set("sfen pn1r2+S+N1/2r+N1k1Gs/l1g4p1/Ppps1pP1l/6pPP/lP2P2bp/2P3+bG1/+p2P1P1+l1/+pN3K1g1 b s 1");
+			Move m = make_movepromote(SQ3D, SQ3C, PAWN);
+			cout << pos << endl;
+			check_move(m);
 			cout << "see sign" << pos.see_sign(m) << endl;
 			cout << "see "<<pos.see(m) << endl;
 			cout << "seege:" << pos.see_ge(m, Value(0)) << endl;

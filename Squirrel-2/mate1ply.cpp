@@ -542,6 +542,8 @@ stmには攻撃側の色　、sに受け側の玉の位置が格納される。
 */
 void Position::slider_blockers(const Color stm, const Square s,Bitboard& dc_candicate,Bitboard& pinned) const
 {
+	dc_candicate = ZeroBB;
+	pinned = ZeroBB;
 	Bitboard betweengurad,betweenattack, pinners;
 
 	//sから飛び効きビームを放って攻撃側のとびゴマに当たればその升はその駒によって攻撃を受けている可能性がある。
