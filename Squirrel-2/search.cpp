@@ -681,7 +681,7 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 
 	if (!RootNode) {
 		//step2
-		if (signal.stop.load(std::memory_order_relaxed)) {
+		if (signal.stop.load(std::memory_order_relaxed)||ss->ply>=(MAX_PLY-3)) {
 			return Eval::eval(pos);
 		}
 
@@ -720,6 +720,10 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 
 	}
 
+	//正直128手まで読んでしまうなんて信じられないのだが...そういう結果が出た上に変更点はそこしかないので信じるしかないか
+	//どうやってextentionのし過ぎを解消しよう...??
+	ASSERT(0<=ss->ply&&ss->ply<MAX_PLY)
+
 	//ssは過去の情報を消しておく必要がある
 	ss->currentMove = (ss + 1)->excludedMove=bestMove = MOVE_NONE;
 	ss->counterMoves = nullptr;
@@ -736,7 +740,7 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 #ifdef USETT
 	excludedmove = ss->excludedMove;
 	const Key poskey = pos.key() ^ Key(excludedmove);
-	ASSERT((poskey & uint64_t(1)) == pos.sidetomove());
+	//ASSERT((poskey & uint64_t(1)) == pos.sidetomove());
 	//cout << (poskey>>32) << endl;
 	tte = TT.probe(poskey, TThit);
 	/*if (TThit) {
@@ -967,7 +971,7 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 		//nonpawnmaterialという条件は将棋には関係ないはず
 		)
 	{
-		return staticeval - futility_margin(depth);
+		return staticeval;
 	}
 
 	// Step 8. Null move search with verification search
@@ -1212,7 +1216,7 @@ moves_loop:
 	singler_extension = !RootNode
 		 &&depth >= 8 * ONE_PLY
 		&&ttMove != MOVE_NONE
-		&&excludedmove != MOVE_NONE
+		&&excludedmove == MOVE_NONE
 		&&abs(ttValue)<Value_known_win
 		&& (ttBound&BOUND_LOWER)//LOWER or EXACT
 		 && ttdepth >= depth - 3 * ONE_PLY;
@@ -1292,14 +1296,17 @@ moves_loop:
 			//singler extension
 			/*
 			この局面でttmove以外の差し手以外に良い差し手がなければttmoveを延長する
+			延々とdepthが延長されてしまって128手目まで到達してしまっているバグが発生している
 			*/
 			if (singler_extension
 				 &&move == ttMove
 				&& !extension
 				&&pos.is_legal(move)) {
-			
-				Value rBeta = ttValue - 2 * depth / ONE_PLY;
-				Depth d = (depth / (2 * int(ONE_PLY)))*int(ONE_PLY);
+				ASSERT(ttValue!=Value_error)
+				//Value rBeta = std::max(ttValue - 2 * depth / ONE_PLY,Value_Mated);
+				Value rBeta = std::max(ttValue - 8*(ss->ply), Value_Mated);
+				//Depth d = (depth / (2 * int(ONE_PLY)))*int(ONE_PLY);
+				Depth d = depth / 2;
 				ss->excludedMove = move;
 				ss->skip_early_prunning = true;
 				value = search<NonPV>(pos, ss, rBeta - 1, rBeta, d,cutNode);
@@ -1308,8 +1315,13 @@ moves_loop:
 				if (value < rBeta) { extension = ONE_PLY;	}
 			
 			}
+			/*else if (givescheck
+				&& !move_count_pruning) {
+				if (pos.see_ge(move, Value_Zero)) { extension = ONE_PLY; }
+				else { extension = HALF_PLY; }
+			}*/
 #endif
-		newdepth = depth - ONE_PLY + extension;
+		newdepth = depth - ONE_PLY + extension;//ここで-ONE_PLY+ONE_PLYがくりかえされてしまって無限に探索している！！
 		
 
 		//前向き枝切り
@@ -1600,6 +1612,14 @@ moves_loop:
 	// その値以下であるから、BOUND_UPPER、また、αを上回る値が返ってきたら、このnodeの真の値は、
 	// その値以上であろうから、BOUND_LOWERである。
 	// このように、non PVにおいては、BOUND_UPPER、BOUND_LOWERしか存在しない。(aki.さん)
+
+	//if (excludedmove == MOVE_NONE) {
+	//	tte->save(poskey, value_to_tt(bestvalue, ss->ply),
+	//		bestvalue >= beta ? BOUND_LOWER :
+	//		PVNode&&bestMove ? BOUND_EXACT : BOUND_UPPER,
+	//		depth, bestMove/*, staticeval*/, TT.generation());
+	//}
+
 	tte->save(poskey, value_to_tt(bestvalue, ss->ply),
 		bestvalue >= beta ? BOUND_LOWER :
 		PVNode&&bestMove ? BOUND_EXACT : BOUND_UPPER,
