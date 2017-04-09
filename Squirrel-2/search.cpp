@@ -1288,11 +1288,11 @@ moves_loop:
 					技巧では王手をかけられた局面に許される合法手の数は少ないのでseeが負の局面でも王手をHALF_PLY延長するらしいそれに習う。
 					==========================================================================================================*/
 			
-			if (givescheck
+			/*if (givescheck
 				 && !move_count_pruning) {
 				if (pos.see_ge(move,Value_Zero)) { extension = ONE_PLY; }
 				else { extension = HALF_PLY; }
-			}
+			}*/
 			//singler extension
 			/*
 			この局面でttmove以外の差し手以外に良い差し手がなければttmoveを延長する
@@ -1300,10 +1300,10 @@ moves_loop:
 			*/
 			if (singler_extension
 				 &&move == ttMove
-				&& !extension
+				//&& !extension
 				&&pos.is_legal(move)) {
 				ASSERT(ttValue!=Value_error)
-				//Value rBeta = std::max(ttValue - 2 * depth / ONE_PLY,Value_Mated);
+				//Value rBeta = std::max(ttValue - 4 * depth,Value_Mated);
 				Value rBeta = std::max(ttValue - 8*(ss->ply), Value_Mated);
 				//Depth d = (depth / (2 * int(ONE_PLY)))*int(ONE_PLY);
 				Depth d = depth / 2;
@@ -1315,11 +1315,11 @@ moves_loop:
 				if (value < rBeta) { extension = ONE_PLY;	}
 			
 			}
-			/*else if (givescheck
+			else if (givescheck
 				&& !move_count_pruning) {
 				if (pos.see_ge(move, Value_Zero)) { extension = ONE_PLY; }
 				else { extension = HALF_PLY; }
-			}*/
+			}
 #endif
 		newdepth = depth - ONE_PLY + extension;//ここで-ONE_PLY+ONE_PLYがくりかえされてしまって無限に探索している！！
 		
@@ -1613,17 +1613,17 @@ moves_loop:
 	// その値以上であろうから、BOUND_LOWERである。
 	// このように、non PVにおいては、BOUND_UPPER、BOUND_LOWERしか存在しない。(aki.さん)
 
-	//if (excludedmove == MOVE_NONE) {
-	//	tte->save(poskey, value_to_tt(bestvalue, ss->ply),
-	//		bestvalue >= beta ? BOUND_LOWER :
-	//		PVNode&&bestMove ? BOUND_EXACT : BOUND_UPPER,
-	//		depth, bestMove/*, staticeval*/, TT.generation());
-	//}
+	if (excludedmove == MOVE_NONE) {
+		tte->save(poskey, value_to_tt(bestvalue, ss->ply),
+			bestvalue >= beta ? BOUND_LOWER :
+			PVNode&&bestMove ? BOUND_EXACT : BOUND_UPPER,
+			depth, bestMove/*, staticeval*/, TT.generation());
+	}
 
-	tte->save(poskey, value_to_tt(bestvalue, ss->ply),
-		bestvalue >= beta ? BOUND_LOWER :
-		PVNode&&bestMove ? BOUND_EXACT : BOUND_UPPER,
-		depth, bestMove/*, staticeval*/, TT.generation());
+	//tte->save(poskey, value_to_tt(bestvalue, ss->ply),
+	//	bestvalue >= beta ? BOUND_LOWER :
+	//	PVNode&&bestMove ? BOUND_EXACT : BOUND_UPPER,
+	//	depth, bestMove/*, staticeval*/, TT.generation());
 #endif
 	ASSERT(bestvalue > -Value_Infinite&&bestvalue < Value_Infinite);
 
