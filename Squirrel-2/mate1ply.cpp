@@ -406,10 +406,10 @@ movecheck:;
 
 	//pinedとはpinされている駒この駒を効きを作っている駒の方向以外へ動かしての王手はできないし、もしその方向で王手をできたとしてもpinしてる駒をとれなかった場合は取り返される。
 	//つまりpinゴマによる王手はかなり複雑で詰ませることのできる可能性は少ないので,pinゴマによる王手は考えないほうがいいのかもしれない
-	Bitboard dc_candicate[ColorALL],pinned[ColorALL];
+	//Bitboard dc_candicate[ColorALL],pinned[ColorALL];
 
-	//slider_blockers(us, eksq, dc_candicate[us], pinned[enemy]);//攻め
-	slider_blockers(enemy, ksq(us), dc_candicate[enemy], pinned[us]);//受け ほしいのは自分のpinゴマの位置
+	////slider_blockers(us, eksq, dc_candicate[us], pinned[enemy]);//攻め
+	//slider_blockers(enemy, ksq(us), dc_candicate[enemy], pinned[us]);//受け ほしいのは自分のpinゴマの位置
 
 	//駒の移動先。近接王手のみを考えるのでesqに味方のgoldを置いた時の危機がある場所、自分の駒のいない場所でなければならない
 	const Bitboard movetoBB_GOLD = andnot(StepEffect[enemy][GOLD][eksq], occ(us));
@@ -427,7 +427,7 @@ movecheck:;
 	//ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーまずは詰ませる可能性の高い金から　OKワンパスは通った。
 	Bitboard matecandicate_Gold = (occ_pt(us, GOLD)|occ_pt(us,PRO_PAWN)|occ_pt(us,PRO_LANCE)|occ_pt(us,PRO_NIGHT)|occ_pt(us,PRO_SILVER))&PsuedoGivesCheckBB[us][GOLD][eksq];
 	//pinゴマを動かそうとしてはいけない（まあpinをしている駒をとることで王手できる場合もあるがそれはイレギュラーなので考えないほうがいいだろう）
-	matecandicate_Gold = andnot(matecandicate_Gold, pinned[us]);
+	matecandicate_Gold = andnot(matecandicate_Gold, st->blocker[us]);
 
 	//std::cout << matecandicate_Gold << std::endl;
 

@@ -149,6 +149,7 @@ void Position::set(std::string sfen)
 	//check_eboard();
 	//check_occbitboard();
 #endif
+	set_check_info(st);
 }
 
 
@@ -466,6 +467,7 @@ void Position::do_move(const Move m, StateInfo * newst)
 	ASSERT(pcboard[to] != NO_PIECE);
 
 	ASSERT((sidetomove() == BLACK && (st->board_&Zoblist::side) == 0) || (sidetomove() == WHITE && (st->board_&Zoblist::side) == 1));
+	set_check_info(st);
 }
 
 void Position::do_move(const Move m, StateInfo * newst, const bool givescheck)
@@ -737,7 +739,7 @@ void Position::do_move(const Move m, StateInfo * newst, const bool givescheck)
 
 
 	ASSERT((sidetomove() == BLACK && (st->board_&Zoblist::side) == 0) || (sidetomove() == WHITE && (st->board_&Zoblist::side) == 1));
-
+	set_check_info(st);
 }
 
 /*
@@ -1703,9 +1705,9 @@ bool Position::see_ge(const Move m, const Value v) const
 	//すべてのtoに危機のある駒
 	Bitboard attackers = attackers_to_all(to, occ_256)&oc;
 	//pinnerとblockerの作成(sfみたいにdo_moveするときに作るのがベストか？)
-	Bitboard pinner[ColorALL], blocker[ColorALL];
-	slider_blockers(BLACK, ksq(WHITE), pinner[BLACK], blocker[WHITE]);
-	slider_blockers(WHITE, ksq(BLACK), pinner[WHITE], blocker[BLACK]);
+	//Bitboard pinner[ColorALL], blocker[ColorALL];
+	//slider_blockers(BLACK, ksq(WHITE), pinner[BLACK], blocker[WHITE]);
+	//slider_blockers(WHITE, ksq(BLACK), pinner[WHITE], blocker[BLACK]);
 
 	bool relativeStm = true; // True if the opponent is to move　相手が動こうとしている予定ならtrueになる？？　(相対side to move)(相手番の時はtrueになる)
 
@@ -1718,7 +1720,7 @@ bool Position::see_ge(const Move m, const Value v) const
 		/*
 		ピンされている駒(blocker)はpinゴマが元の場所にある限り攻撃に参加してはいけない
 		*/
-		if (!(pinner[opposite(stm)] & ~oc).isNot()) { stmAttackers.andnot(blocker[stm]); }//pinnerとblockerのcolorはこれでいいのか？？？
+		if (!(st->pinner[opposite(stm)] & ~oc).isNot()) { stmAttackers.andnot(st->blocker[stm]); }//pinnerとblockerのcolorはこれでいいのか？？？
 
 		if (!stmAttackers.isNot()) { return relativeStm; }
 

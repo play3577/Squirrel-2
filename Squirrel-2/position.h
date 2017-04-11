@@ -87,6 +87,10 @@ struct StateInfo
 		clear_stPP();
 	}
 
+	Bitboard pinner[ColorALL], blocker[ColorALL];
+
+
+
 	friend struct Position;
 
 	StateInfo* previous = nullptr;//undo_moveで以前の局面に戻る為の単方向リスト
@@ -677,6 +681,10 @@ public:
 	Key key_after_move(const Move m);
 
 
+	void set_check_info(StateInfo* si)const {
+		slider_blockers(BLACK, ksq(WHITE), si->pinner[BLACK], si->blocker[WHITE]);
+		slider_blockers(WHITE, ksq(BLACK), si->pinner[WHITE], si->blocker[BLACK]);
+	}
 
 	//ハフマン符号化
 	string pack_haffman_sfen();
