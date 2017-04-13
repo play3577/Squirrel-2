@@ -387,7 +387,7 @@ Value MainThread::think() {
 
 
 	//‹l‚ñ‚Å‚é‚Æ‚«‚Í‰½‚à‚µ‚È‚¢‚Å‹A‚é
-	if (end == RootMoves) {
+	if (end == RootMoves&& limit.is_inponder == false) {
 #ifndef LEARN
 		if (!signal.stop&&limit.is_inponder) {
 			signal.stopOnPonderHit = true;
@@ -397,7 +397,11 @@ Value MainThread::think() {
 #endif // !LEARN
 		return Value_Mated;
 	}
-
+	//“ü‹ÊéŒ¾Ÿ‚¿
+	if (rootpos.ply_from_startpos>200&&limit.is_inponder == false&&rootpos.is_nyugyoku() ) {
+		cout << "bestmove win" << endl;
+		return Value_Mate;
+	}
 
 	//‚±‚±‚Ébook‚ð’T‚·ƒR[ƒh‚ð“ü‚ê‚é
 	if (Options["usebook"] == true && limit.is_inponder == false) {
@@ -828,11 +832,14 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 
 #endif
 
+	//“ü‹ÊéŒ¾
+	if (pos.ply_from_startpos > 200&&!RootNode) {
+		if (pos.is_nyugyoku()) {
+			return mate_in_ply((ss->ply));
+		}
+	}
 
 //mate
-
-
-
 #ifdef MATEONE
 	if (!RootNode && !incheck) {
 		Move mate;
@@ -868,6 +875,7 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 		}
 	}
 #endif //mateone
+
 
 	
 

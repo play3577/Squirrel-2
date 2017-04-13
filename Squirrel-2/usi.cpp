@@ -488,6 +488,14 @@ void USI::loop()
 		else if (token == "random") {
 			wrap_randomwalker();
 		}
+		else if (token=="nyugyoku") {
+			/*
+			position sfen l1sgkg2l/7K1/+S+NP1+B+Rppp/1pp6/p8/9/PP1PPPPPP/9/LNSG1GSNL b RBN3P 1
+			position sfen K3kg2+L/1+S+N4+RG/+S+N+P3+Bp+L/1pp6/p8/9/PP1PPPPPP/9/LNSG1GSNL b RB5P 1
+			position sfen K3k3+L/1+S+N4+RG/+S+N+P+B3p+L/1pp6/p8/9/PP1PPPPPP/9/LNSG1GSNL b RBG5P 201
+			*/
+			cout << pos.is_nyugyoku() << endl;
+		}
 		else if (token == "smove") {
 
 			string move;

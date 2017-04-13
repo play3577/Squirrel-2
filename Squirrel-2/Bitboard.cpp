@@ -79,6 +79,11 @@ Square Bitboard::pop_fromb1()
 	return Square(pop_lsb(b[1]) + 45);
 }
 
+int Bitboard::popcount() const
+{
+	return popcount64(b[0]) + popcount64(b[1]);
+}
+
 std::ostream & operator<<(std::ostream & os, const Bitboard & board)
 {
 	for (Rank r = RankA; r < Rank_Num; r++) {

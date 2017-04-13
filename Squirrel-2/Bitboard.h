@@ -64,6 +64,7 @@ struct Bitboard
 	Square pop();
 	Square pop_fromb0();
 	Square pop_fromb1();
+	int popcount()const ;
 	Bitboard& operator=(const Bitboard& b1) { b[0] = b1.b[0];b[1]=b1.b[1]; return *this; }
 
 	//https://msdn.microsoft.com/en-us/library/1beaceh8(v=vs.100).aspx

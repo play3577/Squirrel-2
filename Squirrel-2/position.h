@@ -695,6 +695,8 @@ public:
 	bool cancapture_checkpiece(Square to);
 	void slider_blockers(const Color stm, const Square s, Bitboard& dc_candicate, Bitboard& pinned) const;
 
+	//“ü‹ÊéŒ¾
+	bool is_nyugyoku()const;
 
 	string random_startpos();
 };

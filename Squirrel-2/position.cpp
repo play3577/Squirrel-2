@@ -28,15 +28,16 @@ void Position::set(std::string sfen)
 
 	string dummy;
 	ss >> dummy;//sfenを読み飛ばす
-	std::string s_sfen, s_teban, s_hands, token;
+	std::string s_sfen, s_teban, s_hands,s_ply, token;
 	ss >> s_sfen;
 	ss >> s_teban;
 	ss >> s_hands;
+	ss >> s_ply;
 	/*if (token[0] != '-') {
 		s_hands = token;
 	}*/
 
-	//最後の１は無視してもいい
+	//最後の１は無視してもいい(あれは今何手目なのかを表しているので無視しちゃダメ！)
 	int index = 0;
 	bool promote = false;
 	char s;
@@ -142,7 +143,7 @@ void Position::set(std::string sfen)
 	
 	//list.print_bplist();
 	//cout << occ256 << endl;
-	ply_from_startpos = 1;
+	ply_from_startpos = stoi(s_ply);
 	
 #ifdef CHECKPOS
 	
@@ -1904,3 +1905,56 @@ bool Position::see_ge(const Move m, const Value v) const
 //
 //	return (Value)swaplist[0];
 //}
+
+
+
+bool Position::is_nyugyoku() const{
+
+	/*
+//(a) 宣言側の手番である。(調べる必要はない)
+//(b) 宣言側の玉が敵陣三段目以内に入っている。
+(c) 宣言側が(大駒5点小駒1点の計算で) (大駒は飛角竜馬)
+・先手の場合28点以上の持点がある。
+・後手の場合27点以上の持点がある。
+・点数の対象となるのは、宣言側の持駒と敵陣三段目
+以内に存在する玉を除く宣言側の駒のみである。
+//(d) 宣言側の敵陣三段目以内の駒は、玉を除いて10枚以上存在する。
+//(e) 宣言側の玉に王手がかかっていない。(詰めろや必死であることは関係ない)
+//(f) 宣言側の持ち時間が残っている。(切れ負けの場合)（調べる必要はない）
+	*/
+	const Color stm = sidetomove();
+	const Bitboard field = canPromoteBB[stm];
+	//(e)宣言側の玉に王手がかかっていない。
+	if (is_incheck()) { return false; }
+	//(b) 宣言側の玉が敵陣三段目以内に入っている。
+	if (!(SquareBB[ksq(stm)] & field).isNot()) { return false; }
+
+	
+	const Bitboard nyuugyokuBB = field&occ(stm);
+	const int threshold = (stm == BLACK) ? 28 : 27;
+
+	//(d) 宣言側の敵陣三段目以内の駒は、玉を除いて10枚以上存在する。
+	//王を含めて11枚以上であればいい
+	if (nyuugyokuBB.popcount() < 11) { return false; }
+
+	Bitboard nyuugyokuBig = nyuugyokuBB&(occ_pt(stm, ROOK) | occ_pt(stm, BISHOP) | occ_pt(stm, DRAGON) | occ_pt(stm, UNICORN));
+	Bitboard nyuugyokuSmall = andnot(nyuugyokuBB,nyuugyokuBig);//ここにはkingも含まれている
+	ASSERT(!(nyuugyokuBig | nyuugyokuSmall).andnot(nyuugyokuBB).isNot());
+	int score=0;
+
+	score += nyuugyokuBig.popcount() * 5;
+	score += nyuugyokuSmall.popcount()-1;//kingの分１を引く
+
+	//これを呼び出すのは終盤なので終盤なので手ごまは持ってるだろう
+	Piece p = GOLD;
+	for (Piece p = GOLD; p > NO_PIECE;p--) {
+		int num = num_pt(hand(stm), p);
+		if (p == ROOK || p == BISHOP) { score += 5 * num; }
+		else { score += num; }
+		if (score >= threshold) { goto WIN_NYUUGYOKU; }
+	}
+	
+	return false;
+WIN_NYUUGYOKU:
+	return true;
+}
