@@ -1,5 +1,8 @@
 #include "position.h"
 #include "misc.h"
+#include <sstream>
+
+
 /*
 no_piece,B_PAWN=1, B_LANCE, B_KNIGHT, B_SILVER, B_BISHOP, B_ROOK, B_GOLD, B_KING,
 B_PRO_PAWN, B_PRO_LANCE, B_PRO_NIGHT, B_PRO_SILVER, B_UNICORN, B_DRAGON,
@@ -200,6 +203,16 @@ string hand_unhaffman_str[KING] = {
 	"1110",//GOLD
 };
 
+
+string itos_bool(bool number)
+{
+	/*stringstream ss;
+	ss << number;
+	return ss.str();*/
+	return (number == true) ? "1" : "0";
+}
+
+
 void	Position::unpack_haffman_sfen(bool *psfen_){
 
 
@@ -218,22 +231,24 @@ void	Position::unpack_haffman_sfen(bool *psfen_){
 
 	//王の位置
 	string sbksq, swksq;
-	for (; index < 8; index++) { sbksq += itos(psfen[index]); }
-	for (; index <15 ; index++) { swksq += itos(psfen[index]); }
+	for (; index < 8; index++) { sbksq += itos_bool(psfen[index]); }
+	for (; index <15 ; index++) { swksq += itos_bool(psfen[index]); }
 	Square bksq =(Square)decimal(stoi(sbksq));
 	Square wksq = (Square)decimal(stoi(swksq));
 
-
+	ASSERT(is_ok(bksq));
+	ASSERT(is_ok(wksq));
 	pcboard[bksq] = B_KING;
 	occupied[BLACK] |= SquareBB[bksq];
 	occupiedPt[BLACK][KING] |= SquareBB[bksq];
 	set_occ256(bksq);
+	st->ksq_[BLACK] = bksq;
 
 	pcboard[wksq] = W_KING;
 	occupied[WHITE] |= SquareBB[wksq];
 	occupiedPt[WHITE][KING] |= SquareBB[wksq];
 	set_occ256(wksq);
-
+	st->ksq_[WHITE] = wksq;
 
 	int sq = 0;
 	//index = 16;
@@ -245,12 +260,14 @@ void	Position::unpack_haffman_sfen(bool *psfen_){
 		Piece pc;
 		while (true) {
 			if (sq >= SQ_NUM) { break; }
-			if (sq == bksq || sq == wksq) { sq++; }
-			
+			if (sq == bksq ) { sq++; }//この方法ではBLACKKとWHITEKが連続していた時におかしくなってしまう！！！！！！！（修正した.かなりのレアケースだったな..）
+			if (sq == wksq) { sq++; }
+			if (sq >= SQ_NUM) { break; }//spieceに一文字残ってしまって、shandがおかしくなってしまうことが起こった
 			if (index > 256) {
 				cout << *this << endl;
+				ASSERT(0);
 			}
-			spiece += itos(psfen[index++]);
+			spiece += itos_bool(psfen[index++]);
 			
 			for (Piece  i = NO_PIECE; i < KING; i++) {
 

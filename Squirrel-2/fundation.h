@@ -37,8 +37,9 @@
 
 #define LEARN
 //#define MAKESTARTPOS
-#define MAKETEACHER
+//#define MAKETEACHER
 //#define Prog_LEARN
+
 
 #ifndef LEARN
 #define USETT

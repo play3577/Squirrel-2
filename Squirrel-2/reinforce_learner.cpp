@@ -3,6 +3,7 @@
 #include "Thread.h"
 #include "progress.h"
 #include "makemove.h"
+#include "learner.h"
 #include <random>
 #include <sstream>
 #include <fstream>
@@ -348,7 +349,7 @@ void make_startpos_detabase()
 }
 
 #endif
-#if defined(LEARN) && defined(MAKETEACHER)
+
 
 struct teacher_data {
 
@@ -371,14 +372,17 @@ int index__ = 0;
 
 int lock_index_inclement__() {
 	std::unique_lock<std::mutex> lock(mutex__);
-	if (index__ > startpos_db.size()) { cout << "o" << endl; }
-	else { printf("."); }
+	//if (index__ > startpos_db.size()) { cout << "o" << endl; }
+	if (index__ > sum_teachers.size()) { cout << "o" << endl; }
+	else { cout << index__; }
 
 	return index__++;
 }
 
 
 int maxthreadnum__;
+
+#if defined(LEARN) && defined(MAKETEACHER)
 /*
 3手先の評価値と局面の組をセットにした教師データを作成する。
 */
@@ -506,7 +510,9 @@ void make_teacher_body(const int number) {
 	}
 
 }
+#endif
 
+#if defined(LEARN)
 //ok
 //参考　http://gurigumi.s349.xrea.com/programming/binary.html
 void read_teacherdata() {
@@ -528,12 +534,90 @@ void read_teacherdata() {
 	pos.unpack_haffman_sfen(sum_teachers[0].haffman);
 	cout << pos << endl;
 	cout << pos.occ_all() << endl;*/
+}
 
 
+dJValue sum_gradJ;
+vector<dJValue> gradJs;
+
+void reinforce_learn_pharse1(const int index);
+
+void reinforce_learn() {
+
+	int num_iteration=100;
+
+	cout << "num_iteration?:"; cin >> num_iteration;
+
+
+	read_teacherdata();//ここで教師データを読み込む
+
+	
+	std::random_device rd;
+	std::mt19937 g_mt(rd());
+
+
+	//gradJ格納庫用意
+	maxthreadnum__ = omp_get_max_threads();
+	for (size_t i = 0; i < maxthreadnum__; i++) {
+		gradJs.emplace_back();
+	}
+	//スレッド作成
+	vector<std::thread> threads(maxthreadnum__ - 1);
+
+	for (int iter = 0; iter < num_iteration; iter++) {
+
+		//初期化
+		sum_gradJ.clear();
+		for(dJValue& dJ : gradJs){ dJ.clear();}
+
+		//teacherの作成
+		index__ = 0;
+		/*for (int i = 0; i < maxthreadnum__ - 1; ++i) {
+			threads[i] = std::thread([i] {reinforce_learn_pharse1(i); });
+		}*/
+		reinforce_learn_pharse1(maxthreadnum__ - 1);
+
+		for(dJValue& dJ : gradJs) { sum_gradJ.add(dJ); }
+		for (auto& th : threads) { th.join(); }
+
+		renewal_PP(sum_gradJ);
+	}
 
 }
 
 
-#endif //  LEARN
+/*
+
+*/
+void reinforce_learn_pharse1(const int index) {
+
+	Position pos;
+	
+	/*StateInfo si[300];
+	ExtMove moves[600], *end;
+	end = moves;*/
+
+	for (int g = lock_index_inclement__(); g < sum_teachers.size(); g = lock_index_inclement__()) {
+
+
+		const Value teacher = sum_teachers[g].teacher_value;
+		const Color rootColor = pos.sidetomove();
+		pos.unpack_haffman_sfen(sum_teachers[g].haffman);
+		
+
+		const Value shallow_v = Eval::eval(pos);
+		Value diff=shallow_v-teacher;
+		double diffsig = dsigmoid(diff);
+		diffsig = (rootColor == BLACK ? diffsig : -diffsig);
+
+		gradJs[index].update_dJ(pos, -diffsig);
+
+	}
+
+
+}
+
+#endif
+
 
 

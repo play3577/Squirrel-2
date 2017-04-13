@@ -388,6 +388,7 @@ void USI::loop()
 			pos.set(max_pos);
 		}
 #ifdef  LEARN
+#ifdef MAKETEACHER
 		else if (token == "rsp") {
 			//pos.random_startpos();
 			make_startpos_detabase();
@@ -395,8 +396,16 @@ void USI::loop()
 		else if (token == "mt") {
 			make_teacher();
 		}
+#endif
 		else if (token == "readt") {
 			read_teacherdata();
+		}
+		else if (token == "rein") {
+			string yn;
+			cout << "do you really wanna learning fv? [y/n]  ";
+			cin >> yn;
+			if (yn != "y") { cout << "OK I do not  learning"; break; }
+			reinforce_learn();
 		}
 #endif //  LEARN
 		else if (token == "hirate") { pos.set_hirate(); }

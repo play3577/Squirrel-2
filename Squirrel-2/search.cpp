@@ -2373,7 +2373,7 @@ Value lqsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
 				bestvalue = std::max(bestvalue, futilityvalue);
 				continue;
 			}
-			if (futilitybase <= alpha && pos.see(move) <= Value_Zero)
+			if (futilitybase <= alpha && /*pos.see(move) <= Value_Zero*/pos.see_ge(move,Value_Zero+1))
 			{
 				bestvalue = std::max(bestvalue, futilitybase);
 				continue;

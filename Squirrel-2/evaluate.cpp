@@ -793,6 +793,8 @@ namespace Eval {
 				uniform[KING]++;
 				break;
 			default:
+				cout <<endl<< pos << endl;
+				cout << pos.occ_all() << endl;
 				UNREACHABLE;
 				break;
 			}
