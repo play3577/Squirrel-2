@@ -797,31 +797,29 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 		//この局面でttmoveが非合法手だったら省くなどしたほうがいいのでは？？
 		) {
 
-		ss->currentMove = ttMove; // Can be MOVE_NONE
-		//ttMoveがquietでttvalue>=betaであればhistoryを更新することができる。
-		if (ttValue >= beta&&ttMove != MOVE_NONE) {
-			//hashの偶然一致でここでバグって落ちることが起こったが、レアケースであるため無視をすることにする
+		if (ttMove != MOVE_NONE) {
 
-			/*if (pos.piece_on(move_to(ttMove)) != NO_PIECE && piece_color(pos.piece_on(move_to(ttMove))) == pos.sidetomove()) {
+			if (ttValue >= beta) {
+				if (!pos.capture_or_propawn(ttMove)) { update_stats(pos, ss, ttMove, nullptr, 0, bonus(depth)); }
 
-				ASSERT(0);
-			}*/
-			if (pos.capture_or_propawn(ttMove) == false) {
-				update_stats(pos, ss, ttMove, nullptr, 0, bonus(depth));
+				if ((ss - 1)->moveCount == 1 && pos.state()->DirtyPiece[1] == NO_PIECE && (ss - 1)->currentMove != MOVE_NULL)
+				{
+					Square prevSq = move_to((ss - 1)->currentMove);
+					update_cm_stats(ss - 1, moved_piece((ss - 1)->currentMove), prevSq, -bonus(depth + ONE_PLY));
+				}
+
 			}
-			// Extra penalty for a quiet TT move in previous ply when it gets refuted
-			//やり返されてしまった以前のquietなTTmoveに対してペナルティーをかける
-			//※(ss-1)->moveCount == 1 なのでTTmoveとは限らないのではないか？？
-			if ((ss - 1)->moveCount == 1 && pos.state()->DirtyPiece[1] == NO_PIECE && (ss - 1)->currentMove != MOVE_NULL)
-			{
-				int d = depth / ONE_PLY;
-				Value penalty = Value(d * d + 4 * d + 1);
-				Square prevSq = move_to((ss - 1)->currentMove);
-				update_cm_stats(ss - 1, moved_piece((ss - 1)->currentMove), prevSq, -penalty);
+			else if (!pos.capture_or_propawn(ttMove)) {
+				Value penalty = -bonus(depth + ONE_PLY);
+				Piece pc = moved_piece(ttMove);
+				Square sq = move_to(ttMove);
+				thisthread->history.update(pc, sq, penalty);
+				thisthread->fromTo.update(pos.sidetomove(), ttMove, penalty);
+				update_cm_stats(ss, pc, sq, penalty);
+
 			}
-
-
 		}
+
 		ASSERT(ttValue > -Value_Infinite&&ttValue < Value_Infinite);
 		return ttValue;
 	}
