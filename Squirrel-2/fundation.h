@@ -35,8 +35,9 @@
 
 //---------------------------------äwèKä÷òA
 
-//#define LEARN
-
+#define LEARN
+//#define MAKESTARTPOS
+#define MAKETEACHER
 //#define Prog_LEARN
 
 #ifndef LEARN

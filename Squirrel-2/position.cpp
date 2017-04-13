@@ -1946,7 +1946,6 @@ bool Position::is_nyugyoku() const{
 	score += nyuugyokuSmall.popcount()-1;//king‚Ì•ª‚P‚ðˆø‚­
 
 	//‚±‚ê‚ðŒÄ‚Ño‚·‚Ì‚ÍI”Õ‚È‚Ì‚ÅI”Õ‚È‚Ì‚ÅŽè‚²‚Ü‚ÍŽ‚Á‚Ä‚é‚¾‚ë‚¤
-	Piece p = GOLD;
 	for (Piece p = GOLD; p > NO_PIECE;p--) {
 		int num = num_pt(hand(stm), p);
 		if (p == ROOK || p == BISHOP) { score += 5 * num; }

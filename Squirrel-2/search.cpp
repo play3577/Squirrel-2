@@ -572,11 +572,12 @@ Value Thread::think() {
 
 
 
-#ifndef	LEARN
+#ifdef MAKETEACHER
 		bestvalue = search<Root>(rootpos, ss, alpha, beta, rootdepth*ONE_PLY, false);
 #else
 		bestvalue = lsearch<Root>(rootpos, ss, alpha, beta, rootdepth*ONE_PLY, false);
 #endif
+
 
 		ASSERT(abs(bestvalue) < Value_Infinite);
 

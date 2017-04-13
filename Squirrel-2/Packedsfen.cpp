@@ -104,7 +104,7 @@ int64_t decimal(int64_t binary) {
 }
 
 //バイナリデータとして書き込むのかなぁ？？
-string Position::pack_haffman_sfen(){
+void Position::pack_haffman_sfen(){
 
 	//stringで確保して後でintに変換するか(´･ω･｀)
 	string psfen;
@@ -150,7 +150,7 @@ string Position::pack_haffman_sfen(){
 			}
 		}
 	}
-	cout << psfen << endl;
+	//cout << psfen << endl;
 	ASSERT(psfen.size() == 256);
 	//ここからintに直す。
 	//int64_t packed_sfen[4];
@@ -174,7 +174,7 @@ string Position::pack_haffman_sfen(){
 
 	//unpack_haffman_sfen(packed_sfen);
 
-	return psfen;
+	//return psfen;
 }
 
 string board_unhaffman_str[KING] = {
@@ -200,7 +200,7 @@ string hand_unhaffman_str[KING] = {
 	"1110",//GOLD
 };
 
-string	Position::unpack_haffman_sfen(bool *psfen_){
+void	Position::unpack_haffman_sfen(bool *psfen_){
 
 
 	clear();
@@ -222,8 +222,19 @@ string	Position::unpack_haffman_sfen(bool *psfen_){
 	for (; index <15 ; index++) { swksq += itos(psfen[index]); }
 	Square bksq =(Square)decimal(stoi(sbksq));
 	Square wksq = (Square)decimal(stoi(swksq));
+
+
 	pcboard[bksq] = B_KING;
+	occupied[BLACK] |= SquareBB[bksq];
+	occupiedPt[BLACK][KING] |= SquareBB[bksq];
+	set_occ256(bksq);
+
 	pcboard[wksq] = W_KING;
+	occupied[WHITE] |= SquareBB[wksq];
+	occupiedPt[WHITE][KING] |= SquareBB[wksq];
+	set_occ256(wksq);
+
+
 	int sq = 0;
 	//index = 16;
 	//盤上
@@ -246,7 +257,12 @@ string	Position::unpack_haffman_sfen(bool *psfen_){
 				if (spiece == board_unhaffman_str[(int)i]) {
 					if (i == GOLD) {
 						c = (Color)psfen[index++];
+
 						pcboard[sq] = add_color(i, c);
+						occupied[c] |= SquareBB[sq];
+						occupiedPt[c][i] |= SquareBB[sq];
+						set_occ256((Square)sq);
+
 						spiece.clear();
 						sq++;
 						break;
@@ -261,7 +277,14 @@ string	Position::unpack_haffman_sfen(bool *psfen_){
 					else {
 						promote = psfen[index++];
 						c= (Color)psfen[index++];
-					    promote? pcboard[sq] = promotepiece(add_color(i, c)): pcboard[sq] = add_color(i, c);
+						Piece pc= promote ? promotepiece(add_color(i, c)) : pcboard[sq] = add_color(i, c);
+						Piece pt = piece_type(pc);
+						pcboard[sq] = pc;
+						occupied[c] |= SquareBB[sq];
+						occupiedPt[c][pt] |= SquareBB[sq];
+						set_occ256((Square)sq);
+
+
 						spiece.clear();
 						sq++;
 						break;
@@ -272,7 +295,7 @@ string	Position::unpack_haffman_sfen(bool *psfen_){
 	
 	//indexが256であれば持ち駒が存在しない
 	//if (index == 256) { goto FINISH; }
-		cout << *this << endl;
+		//cout << *this << endl;
 	//手駒
 	string shand;
 	//Color c;
@@ -289,13 +312,40 @@ string	Position::unpack_haffman_sfen(bool *psfen_){
 		}
 	}
 
-	cout << make_sfen() << endl;
+	//cout << make_sfen() << endl;
 
 
 
 FINISH:;
 
+	init_existpawnBB();
 
 
-	return nsfen;
+	//手番側に王手がかかっているかどうかだけ初期化すればいい。（相手側に王手がかかっていたら一手で試合が終わるしそんなんUSIで入ってこやんやろ）
+	if (is_effect_to(opposite(sidetomove_), ksq(sidetomove_))) {
+		st->inCheck = true;
+		st->checker = effect_toBB(opposite(sidetomove_), ksq(sidetomove_));
+
+	}
+
+	st->material = Eval::eval_material(*this);
+
+	list.makebonaPlist(*this);
+	Eval::eval(*this);
+	init_hash();
+	//cout << *this << endl;
+
+	//list.print_bplist();
+	//cout << occ256 << endl;
+	ply_from_startpos = 1;
+
+#ifdef CHECKPOS
+
+	//check_eboard();
+	//check_occbitboard();
+#endif
+	set_check_info(st);
+
+
+	//return nsfen;
 }

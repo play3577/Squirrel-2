@@ -395,6 +395,9 @@ void USI::loop()
 		else if (token == "mt") {
 			make_teacher();
 		}
+		else if (token == "readt") {
+			read_teacherdata();
+		}
 #endif //  LEARN
 		else if (token == "hirate") { pos.set_hirate(); }
 		else if (token == "dp") { std::cout << pos << std::endl; }//debug position

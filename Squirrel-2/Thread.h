@@ -50,7 +50,7 @@ public:
 	//•À—ñŠwK’†‚É‚±‚±‚ªN‚³‚ê‚Ä‚µ‚Ü‚¤‚Ì‚ğ–h‚®
 	CounterMoveHistoryStats CounterMoveHistory;
 
-#if defined(LEARN) || defined(MAKEBOOK)
+#if defined(LEARN) || defined(MAKEBOOK) || defined(MAKESTARTPOS)
 	Value l_alpha;
 	Value l_beta;
 	int l_depth;

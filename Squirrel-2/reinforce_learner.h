@@ -28,3 +28,4 @@ void make_startpos_detabase();
 
 void make_teacher();
 void make_teacher_body(const int number);
+void read_teacherdata();

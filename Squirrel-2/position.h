@@ -687,8 +687,8 @@ public:
 	}
 
 	//ƒnƒtƒ}ƒ“•„†‰»
-	string pack_haffman_sfen();
-	string	unpack_haffman_sfen(bool *sfen);
+	void pack_haffman_sfen();
+	void	unpack_haffman_sfen(bool *sfen);
 
 	//ˆêè‹l
 	Move mate1ply();

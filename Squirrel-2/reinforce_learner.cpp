@@ -35,9 +35,9 @@ packedsfenのほうがいいかもしれないがまずはsfenで作成する
 評価関数がよくないからか,あんまり質のいい開始局面は生成できなかった。
 depth2では評価値100以内だが他では1000超えてしまうみたいな...
 */
-#ifdef  LEARN
 
 
+#ifdef MAKETEACHER
 string Position::random_startpos()
 {
 	clear();
@@ -285,7 +285,7 @@ string Position::random_startpos()
 	set(sfen);
 	
 	th.set(*this);
-	th.l_depth = 3;
+	th.l_depth = 10;
 	th.l_beta = (Value)101;
 	th.l_alpha = (Value)-101;
 	Value v = th.think();
@@ -347,6 +347,8 @@ void make_startpos_detabase()
 	cout << "finish make database!" << endl;
 }
 
+#endif
+#if defined(LEARN) && defined(MAKETEACHER)
 
 struct teacher_data {
 
@@ -357,25 +359,26 @@ struct teacher_data {
 		memcpy(haffman, haff, sizeof(haffman));
 		teacher_value = teachervalue;
 	}
+	teacher_data(){}
 };
 vector<string> startpos_db;
 vector<vector<teacher_data>> teachers;
 vector<teacher_data> sum_teachers;
 
 
-std::mutex mutex_;
-int index_ = 0;
+std::mutex mutex__;
+int index__ = 0;
 
-int lock_index_inclement() {
-	std::unique_lock<std::mutex> lock(mutex_);
-	if (index_ > startpos_db.size()) { cout << "o" << endl; }
+int lock_index_inclement__() {
+	std::unique_lock<std::mutex> lock(mutex__);
+	if (index__ > startpos_db.size()) { cout << "o" << endl; }
 	else { printf("."); }
 
-	return index_++;
+	return index__++;
 }
 
 
-int maxthreadnum;
+int maxthreadnum__;
 /*
 3手先の評価値と局面の組をセットにした教師データを作成する。
 */
@@ -396,8 +399,8 @@ void make_teacher()
 
 
 	//教師データ格納庫用意
-	maxthreadnum = omp_get_max_threads();
-	for (size_t i = 0; i < maxthreadnum; i++) {
+	maxthreadnum__ = omp_get_max_threads();
+	for (size_t i = 0; i < maxthreadnum__; i++) {
 		teachers.emplace_back();
 	}
 
@@ -405,14 +408,14 @@ void make_teacher()
 	std::random_device rd;
 	std::mt19937 g_mt(rd());
 	//スレッド作成
-	vector<std::thread> threads(maxthreadnum - 1);
+	vector<std::thread> threads(maxthreadnum__ - 1);
 	
-	for (int i = 0; i < (maxnum / startpos_db.size()); i++) {
+	for (int i = 0; i < (maxnum / startpos_db.size())+1; i++) {
 
 
 
 		sum_teachers.clear();
-		for (size_t i = 0; i < maxthreadnum; i++) {
+		for (size_t i = 0; i < maxthreadnum__; i++) {
 			teachers[i].clear();
 		}
 
@@ -421,11 +424,11 @@ void make_teacher()
 
 
 		//teacherの作成
-		index_ = 0;
-		for (int i = 0; i < maxthreadnum - 1; ++i) {
+		index__ = 0;
+		for (int i = 0; i < maxthreadnum__ - 1; ++i) {
 			threads[i] = std::thread([i] {make_teacher_body(i); });
 		}
-		make_teacher_body(maxthreadnum - 1);
+		make_teacher_body(maxthreadnum__ - 1);
 
 
 		//thread毎のteacherをmerge
@@ -461,8 +464,9 @@ void make_teacher_body(const int number) {
 	Thread th;
 	end = moves;
 
-	for (int g = lock_index_inclement(); g < startpos_db.size(); g = lock_index_inclement()) {
+	for (int g = lock_index_inclement__(); g < startpos_db.size(); g = lock_index_inclement__()) {
 		string startpos = startpos_db[g];
+		if (startpos.size() < 10) { continue; }//10は適当
 		pos.set(startpos);
 		th.cleartable();
 
@@ -500,6 +504,32 @@ void make_teacher_body(const int number) {
 		}
 	NEXT_STARTPOS:;
 	}
+
+}
+
+//ok
+//参考　http://gurigumi.s349.xrea.com/programming/binary.html
+void read_teacherdata() {
+
+	ifstream f("C:/teacher/teacherd2.bin", ios::in | ios::binary);
+	teacher_data t;
+	int i = 0;
+	while (!f.eof()) {
+		f.seekg(i * sizeof(teacher_data));
+		f.read((char*)&t, sizeof(teacher_data));
+
+		sum_teachers.push_back(t);
+		i++;
+	}
+	f.close();
+
+	/*Position pos;
+
+	pos.unpack_haffman_sfen(sum_teachers[0].haffman);
+	cout << pos << endl;
+	cout << pos.occ_all() << endl;*/
+
+
 
 }
 
