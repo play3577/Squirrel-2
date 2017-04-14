@@ -354,11 +354,11 @@ void make_startpos_detabase()
 struct teacher_data {
 
 	bool haffman[256];
-	Value teacher_value;
+	int16_t teacher_value;
 	//teacher_data() {};
 	teacher_data(const bool *haff, Value teachervalue) {
 		memcpy(haffman, haff, sizeof(haffman));
-		teacher_value = teachervalue;
+		teacher_value = (int16_t)teachervalue;
 	}
 	teacher_data(){}
 };
@@ -392,7 +392,7 @@ int maxthreadnum__;
 void make_teacher()
 {
 	int maxnum;
-	cout << "maxnum:" << endl;
+	cout << "maxnum:";
 	cin >> maxnum;
 
 	//開始局面データベース読み込み
@@ -523,21 +523,30 @@ void make_teacher_body(const int number) {
 分割して読み込ませなければならない。
 カウンターをglobalに配置し、それを用いて続きから教師データを読み込ませるようにする。
 一回につき10000教師データを読み込むことはできるはずだ。
-*/
-void read_teacherdata() {
 
+
+読み込むことには成功したが読み込んだデータがぶっ壊れてしまっていた...ちょっと前までうまくいってたのに.....そんなに大きく変更を施したつもりはないんだが
+上書きした場合壊れるのかと思ったけど上書きしなくても壊れてしまっているのでなんでなんだろ..
+*/
+int read_teacher_counter = 0;
+
+bool read_teacherdata() {
+	sum_teachers.clear();
 	ifstream f("C:/teacher/teacherd2.bin", ios::in | ios::binary);
 	teacher_data t;
 	int i = 0;
-	while (!f.eof()) {
-		f.seekg(i * sizeof(teacher_data));
+	if (f.eof()) { return false; }
+	while (!f.eof()&&i<10000) {
+		f.seekg(read_teacher_counter * sizeof(teacher_data));
 		f.read((char*)&t, sizeof(teacher_data));
 
 		sum_teachers.push_back(t);
+		read_teacher_counter++;
 		i++;
 	}
+	bool is_eof = f.eof();
 	f.close();
-
+	return (is_eof == false);
 	/*Position pos;
 
 	pos.unpack_haffman_sfen(sum_teachers[0].haffman);
@@ -558,7 +567,7 @@ void reinforce_learn() {
 	cout << "num_iteration?:"; cin >> num_iteration;
 
 
-	read_teacherdata();//ここで教師データを読み込む
+	//read_teacherdata();//ここで教師データを読み込む
 
 	
 	std::random_device rd;
@@ -579,15 +588,18 @@ void reinforce_learn() {
 		sum_gradJ.clear();
 		for(dJValue& dJ : gradJs){ dJ.clear();}
 
-		//teacherの作成
-		index__ = 0;
-		for (int i = 0; i < maxthreadnum__ - 1; ++i) {
-			threads[i] = std::thread([i] {reinforce_learn_pharse1(i); });
-		}
-		reinforce_learn_pharse1(maxthreadnum__ - 1);
+		//学習開始
+		while (read_teacherdata()) {
+			index__ = 0;
+			for (int i = 0; i < maxthreadnum__ - 1; ++i) {
+				threads[i] = std::thread([i] {reinforce_learn_pharse1(i); });
+			}
+			reinforce_learn_pharse1(maxthreadnum__ - 1);
 
-		for(dJValue& dJ : gradJs) { sum_gradJ.add(dJ); }
-		for (auto& th : threads) { th.join(); }
+			for (dJValue& dJ : gradJs) { sum_gradJ.add(dJ); }
+			for (auto& th : threads) { th.join(); }
+		}
+
 
 		renewal_PP(sum_gradJ);
 
@@ -614,7 +626,7 @@ void reinforce_learn_pharse1(const int index) {
 	for (int g = lock_index_inclement__(); g < sum_teachers.size(); g = lock_index_inclement__()) {
 
 
-		const Value teacher = sum_teachers[g].teacher_value;
+		const Value teacher = (Value)sum_teachers[g].teacher_value;
 		const Color rootColor = pos.sidetomove();
 		pos.unpack_haffman_sfen(sum_teachers[g].haffman);
 		
