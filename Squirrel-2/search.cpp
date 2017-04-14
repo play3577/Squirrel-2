@@ -572,7 +572,7 @@ Value Thread::think() {
 
 
 
-#ifdef MAKETEACHER
+#if  defined(MAKETEACHER) || defined(MAKESTARTPOS)
 		bestvalue = search<Root>(rootpos, ss, alpha, beta, rootdepth*ONE_PLY, false);
 #else
 		bestvalue = lsearch<Root>(rootpos, ss, alpha, beta, rootdepth*ONE_PLY, false);

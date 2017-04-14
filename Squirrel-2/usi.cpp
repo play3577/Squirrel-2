@@ -101,7 +101,8 @@ void USI::init_option(OptionMap &o,string engine_name)
 	o["EngineName"] << USIOption(name.c_str());
 	//o["is_0.1s"] << USIOption(false);
 	//o["bookpath"] << USIOption("c:/book2/book2016928fg2800_40.db");
-
+	o["Move Overhead"] << USIOption(100, 0, 3000);
+	o["Minimum Thinking Time"] << USIOption(100, 50, 10000);
 	o["bookpath"] << USIOption("c:/book2/standard_book.db");
 	o["usebook"] << USIOption(true);
 	o["randombook"] << USIOption(true);
@@ -388,11 +389,15 @@ void USI::loop()
 			pos.set(max_pos);
 		}
 #ifdef  LEARN
-#ifdef MAKETEACHER
+
+
+#ifdef MAKESTARTPOS
 		else if (token == "rsp") {
 			//pos.random_startpos();
 			make_startpos_detabase();
 		}
+#endif
+#ifdef MAKETEACHER
 		else if (token == "mt") {
 			make_teacher();
 		}

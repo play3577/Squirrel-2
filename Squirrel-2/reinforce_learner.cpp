@@ -38,7 +38,7 @@ depth2では評価値100以内だが他では1000超えてしまうみたいな...
 */
 
 
-#ifdef MAKETEACHER
+#ifdef MAKESTARTPOS
 string Position::random_startpos()
 {
 	clear();
@@ -321,8 +321,8 @@ void make_startpos_detabase()
 			db.push_back(str);
 			i++;
 		}
-		if (i % 1000 == 0) { cout << i << endl; }
-		if (i % 2000 == 0) { 
+		if (i % 100 == 0) { cout << i << endl; }
+		if (i % 100 == 0) { 
 			
 			ofstream of1("C:/sp_db/startpos.db");
 			for (int j = 0; j < db.size(); j++) {
@@ -372,9 +372,12 @@ int index__ = 0;
 
 int lock_index_inclement__() {
 	std::unique_lock<std::mutex> lock(mutex__);
-	//if (index__ > startpos_db.size()) { cout << "o" << endl; }
+#ifdef MAKETEACHER
+	if (index__ > startpos_db.size()) { cout << "o" << endl; }
+#else
 	if (index__ > sum_teachers.size()) { cout << "o" << endl; }
-	else { cout << index__; }
+#endif //  MAKETEACHER
+	else if(index__%1000==0){ cout << "."; }
 
 	return index__++;
 }
@@ -419,8 +422,8 @@ void make_teacher()
 
 
 		sum_teachers.clear();
-		for (size_t i = 0; i < maxthreadnum__; i++) {
-			teachers[i].clear();
+		for (size_t h = 0; h < maxthreadnum__; h++) {
+			teachers[h].clear();
 		}
 
 
@@ -429,31 +432,31 @@ void make_teacher()
 
 		//teacherの作成
 		index__ = 0;
-		for (int i = 0; i < maxthreadnum__ - 1; ++i) {
-			threads[i] = std::thread([i] {make_teacher_body(i); });
+		for (int k = 0; k < maxthreadnum__ - 1; ++k) {
+			threads[k] = std::thread([k] {make_teacher_body(k); });
 		}
 		make_teacher_body(maxthreadnum__ - 1);
-
+		for (auto& th : threads) { th.join(); }
 
 		//thread毎のteacherをmerge
 		for each (vector<teacher_data> tdv in teachers)
 		{
 			std::copy(tdv.begin(), tdv.end(), std::back_inserter(sum_teachers));
 		}
-
+		
 
 		//ふぁいるに書き出し（上書き）
 		/*
 		読み込むときはvector一つ分とってきて、それをpushbackしていけばいいと考えられるのだが
 		*/
-		ofstream of("C:/teacher/teacherd2.bin", ios::out | ios::binary|ios::app);
+		ofstream of("C:/teacher/teacherd3.bin", ios::out | ios::binary|ios::app);
 		if (!of) { UNREACHABLE; }
 		of.write(reinterpret_cast<const char*>(&sum_teachers[0]), sum_teachers.size() * sizeof(teacher_data));
 
 		of.close();
 	}
 
-	for (auto& th : threads) { th.join(); }
+	
 	cout << "finish!" << endl;
 }
 
@@ -478,11 +481,11 @@ void make_teacher_body(const int number) {
 
 
 			th.set(pos);
-			th.l_depth = 3;
-			th.l_beta = (Value)2001;
-			th.l_alpha = (Value)-2001;
+			th.l_depth = 4;
+			th.l_beta = (Value)3001;
+			th.l_alpha = (Value)-3001;
 			Value v = th.think();
-			if (abs(v) > 2000) { goto NEXT_STARTPOS; }
+			if (abs(v) > 3000) { goto NEXT_STARTPOS; }
 			pos.pack_haffman_sfen();
 			teacher_data td(pos.packed_sfen, v);
 			teachers[number].push_back(td);
@@ -515,6 +518,12 @@ void make_teacher_body(const int number) {
 #if defined(LEARN)
 //ok
 //参考　http://gurigumi.s349.xrea.com/programming/binary.html
+/*
+ここで大量の教師データを読み込ませようとしてメモリエラーを起こしてしまったっぽい。
+分割して読み込ませなければならない。
+カウンターをglobalに配置し、それを用いて続きから教師データを読み込ませるようにする。
+一回につき10000教師データを読み込むことはできるはずだ。
+*/
 void read_teacherdata() {
 
 	ifstream f("C:/teacher/teacherd2.bin", ios::in | ios::binary);
@@ -572,15 +581,20 @@ void reinforce_learn() {
 
 		//teacherの作成
 		index__ = 0;
-		/*for (int i = 0; i < maxthreadnum__ - 1; ++i) {
+		for (int i = 0; i < maxthreadnum__ - 1; ++i) {
 			threads[i] = std::thread([i] {reinforce_learn_pharse1(i); });
-		}*/
+		}
 		reinforce_learn_pharse1(maxthreadnum__ - 1);
 
 		for(dJValue& dJ : gradJs) { sum_gradJ.add(dJ); }
 		for (auto& th : threads) { th.join(); }
 
 		renewal_PP(sum_gradJ);
+
+		Eval::param_sym_ij();
+		write_PP();
+		read_PP();
+		cout << "itereation:" << iter << endl;
 	}
 
 }
