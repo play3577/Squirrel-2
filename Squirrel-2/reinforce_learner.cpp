@@ -36,7 +36,7 @@ packedsfenのほうがいいかもしれないがまずはsfenで作成する
 評価関数がよくないからか,あんまり質のいい開始局面は生成できなかった。
 depth2では評価値100以内だが他では1000超えてしまうみたいな...
 */
-
+#define TEACHERPATH "C:/teacher/teacherd3.bin"
 
 #ifdef MAKESTARTPOS
 string Position::random_startpos()
@@ -354,10 +354,12 @@ void make_startpos_detabase()
 struct teacher_data {
 
 	bool haffman[256];
+	//string sfen;
 	int16_t teacher_value;
 	//teacher_data() {};
-	teacher_data(const bool *haff, Value teachervalue) {
+	teacher_data(const bool *haff/*string sfen_*/, Value teachervalue) {
 		memcpy(haffman, haff, sizeof(haffman));
+		/*sfen = sfen_;*/
 		teacher_value = (int16_t)teachervalue;
 	}
 	teacher_data(){}
@@ -449,7 +451,7 @@ void make_teacher()
 		/*
 		読み込むときはvector一つ分とってきて、それをpushbackしていけばいいと考えられるのだが
 		*/
-		ofstream of("C:/teacher/teacherd3.bin", ios::out | ios::binary|ios::app);
+		ofstream of(TEACHERPATH, ios::out | ios::binary|ios::app);
 		if (!of) { UNREACHABLE; }
 		of.write(reinterpret_cast<const char*>(&sum_teachers[0]), sum_teachers.size() * sizeof(teacher_data));
 
@@ -488,6 +490,7 @@ void make_teacher_body(const int number) {
 			if (abs(v) > 3000) { goto NEXT_STARTPOS; }
 			pos.pack_haffman_sfen();
 			teacher_data td(pos.packed_sfen, v);
+			//teacher_data td(pos.make_sfen(), v);
 			teachers[number].push_back(td);
 
 			//次の差し手を選別。(合法手が選ばれるまでなんども繰り返す必要がある)
@@ -532,7 +535,7 @@ int read_teacher_counter = 0;
 
 bool read_teacherdata() {
 	sum_teachers.clear();
-	ifstream f("C:/teacher/teacherd2.bin", ios::in | ios::binary);
+	ifstream f(TEACHERPATH, ios::in | ios::binary);
 	teacher_data t;
 	int i = 0;
 	if (f.eof()) { return false; }
