@@ -5,7 +5,7 @@
 #include "tpt.h"
 #include "book.h"
 #include <random>
-
+#include "TimeManeger.h"
 
 
 #if defined(_MSC_VER)
@@ -32,7 +32,7 @@
 //#define PREF2
 SearchLimit limit;
 Signal signal;
-
+TimeManeger TimeMan;
 
 typedef std::vector<int> Row;
 /*
@@ -86,6 +86,51 @@ Value lqsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth);
 
 #endif
 
+
+/*
+// EasyMoveManager structure is used to detect an 'easy move'. When the PV is
+// stable across multiple search iterations, we can quickly return the best move.
+差し手が固まったらそれ以上は探索せずに差し手を返してしまうために必要となる。
+*/
+struct EasyMoveManager {
+
+	int stableCnt;
+	Key expectedPosKey;
+	Move pv[3];
+
+	void clear() {
+		stableCnt = 0;
+		expectedPosKey = 0;
+		pv[0] = pv[1] = pv[2] = MOVE_NONE;
+	}
+
+	Move get(Key key)const {
+		return expectedPosKey == key ? pv[2] : MOVE_NONE;
+	}
+
+	void update(Position &pos, const std::vector<Move>& newPv) {
+		ASSERT(newPv.size() >= 3);
+		
+		//pv[2]が安定である回数を記録する
+		//しかしなんでpv[0]が一致してるのか見ないんだ？普通pv[0]だろ　後でここ修正する
+		stableCnt = (newPv[2] == pv[2]) ? stableCnt + 1 : 0;
+
+		//newPv０～３がPVと一致していなければ新しいpvとexpectedposkeyを格納
+		if (!std::equal(newPv.begin(), newPv.begin() + 3, pv))
+		{
+			std::copy(newPv.begin(), newPv.begin() + 3, pv);
+
+			StateInfo st[2];
+			pos.do_move(newPv[0], &st[0]);
+			pos.do_move(newPv[1], &st[1]);
+			expectedPosKey = pos.key();
+			pos.undo_move();
+			pos.undo_move();
+		}
+
+	}
+
+};
 
 
 
@@ -443,12 +488,16 @@ Value MainThread::think() {
 		limit.endtime = Options["defined_time"] + limit.starttime;
 	}
 	//超テキトーな時間制御のコードあとで何とかする
-	else if (limit.remain_time[rootpos.sidetomove()] / 40 < limit.byoyomi) {
-		limit.endtime = limit.byoyomi + limit.starttime;
+	else{
+		TimeMan.init(limit, rootpos.sidetomove(), rootpos.ply_from_startpos);
+		if (TimeMan.maximum()< limit.byoyomi) {
+			limit.endtime = limit.byoyomi + limit.starttime;
+		}
+		else {
+			limit.endtime = TimeMan.maximum() + limit.starttime;
+		}
 	}
-	else {
-		limit.endtime = limit.remain_time[rootpos.sidetomove()] / 40 + limit.starttime;
-	}
+	
 #endif // ! LEARN
 
 

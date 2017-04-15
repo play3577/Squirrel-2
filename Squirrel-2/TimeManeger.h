@@ -29,13 +29,13 @@ class TimeManeger {
 
 private:
 	TimePoint startTime;
-	int optimumTime;
-	int maximumTime;
+	TimePoint optimumTime;
+	TimePoint maximumTime;
 public:
 	void init(SearchLimit& limit, Color us, int ply);
-	int optimum() const { return optimumTime; }
-	int maximum()const { return maximumTime; }
-	int elasped()const { return int(now() - startTime); }
+	TimePoint optimum() const { return optimumTime; }
+	TimePoint maximum()const { return maximumTime; }
+	TimePoint elasped()const { return TimePoint(now() - startTime); }
 
 };
-extern TimeManeger TimeMan;
+//extern TimeManeger TimeMan;

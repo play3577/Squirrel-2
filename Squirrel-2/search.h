@@ -45,6 +45,7 @@ struct SearchLimit {
 	TimePoint byoyomi;//秒読み時間
 	TimePoint inc_time;//フィッシャールール用
 	TimePoint endtime;
+	TimePoint opitmumTime;
 	bool is_inponder = false;
 };
 

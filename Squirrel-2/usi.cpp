@@ -102,6 +102,7 @@ void USI::init_option(OptionMap &o,string engine_name)
 	//o["is_0.1s"] << USIOption(false);
 	//o["bookpath"] << USIOption("c:/book2/book2016928fg2800_40.db");
 	o["Move Overhead"] << USIOption(100, 0, 3000);
+	o["Slow Mover"] << USIOption(89, 10, 1000);
 	o["Minimum Thinking Time"] << USIOption(100, 50, 10000);
 	o["bookpath"] << USIOption("c:/book2/standard_book.db");
 	o["usebook"] << USIOption(true);

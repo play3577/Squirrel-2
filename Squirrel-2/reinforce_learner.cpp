@@ -539,7 +539,7 @@ bool read_teacherdata() {
 	teacher_data t;
 	int i = 0;
 	if (f.eof()) { return false; }
-	while (!f.eof()&&i<10000) {
+	while (!f.eof()&&i<1000000) {
 		f.seekg(read_teacher_counter * sizeof(teacher_data));
 		f.read((char*)&t, sizeof(teacher_data));
 
@@ -586,7 +586,7 @@ void reinforce_learn() {
 	vector<std::thread> threads(maxthreadnum__ - 1);
 
 	for (int iter = 0; iter < num_iteration; iter++) {
-
+		read_teacher_counter = 0;
 		//初期化
 		sum_gradJ.clear();
 		for(dJValue& dJ : gradJs){ dJ.clear();}
@@ -603,8 +603,18 @@ void reinforce_learn() {
 			for (auto& th : threads) { th.join(); }
 		}
 
-
+		//様々な開始局面からの大量のデータがあるので次元下げは必要ないと考えられる
+		/*
+		値の更新の方法はbonanza methodと同じではダメ！！！
+		記録された深い探索の値もパラメーターが変わってくるとそれは深い探索の値ではなくなってくるはず
+		となると全教師データを用いて一回しか値を更新できない？？？？？う～～ん....それはさすがにないような気がするのだけれど....
+		値の更新の方法を勉強しないといけない...手元にadadeltaの論文があるしこれをつかうか？？
+		*/
 		renewal_PP(sum_gradJ);
+		////2回ぐらい動かしておいて大丈夫だろう..
+		//for (int up = 0; up < 2; up++) {
+		//	renewal_PP(sum_gradJ);
+		//}
 
 		Eval::param_sym_ij();
 		write_PP();
