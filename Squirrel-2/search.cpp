@@ -354,13 +354,13 @@ Value Thread::think() {
 		しかし誤mateかもしれないので20までは探索させる
 
 		*/
-
 		//ここでsignal stopもtrueにしておくべき？？
-		if (rootdepth > 20 && abs(bestvalue) > Value_mate_in_maxply) { goto ID_END; }
+		if (rootdepth > 20 && abs(bestvalue) > Value_mate_in_maxply) { signal.stop = true; goto ID_END; }
 
 
 		if (signal.stop) {
 			//cout << "signal stop" << endl;
+			
 			break;
 		}
 #ifdef ASP
@@ -406,6 +406,9 @@ Value Thread::think() {
 
 		if (!mainThread) { continue; }
 
+
+		
+
 #if !defined(LEARN) || !defined(MAKEBOOK)
 		if (idx == 0) { print_pv(rootdepth, bestvalue); }
 
@@ -414,15 +417,60 @@ Value Thread::think() {
 		if ((bool)Options["use_defined_time"] == false) {
 			if (!signal.stop && !signal.stopOnPonderHit)
 			{
+				// Stop the search if only one legal move is available, or if all
+				// of the available time has been used, or if we matched an easyMove
+				// from the previous search and just did a fast verification.
+				/*
+				合法手が1つしかなかった、使える時間を使い切ってしまった、
+				以前の探索のeasymoveと合致した
+				これらの場合は探索を終了する
+				*/
+				const int F[] = { mainThread->failedLow,
+					bestvalue - mainThread->previousScore };
+				//failed lowを起こした回数が大きい、bestvalue-previousscoreが負に大きいほどimprovefacotrは大きくなる。
+				//これは大きくなるべきではない値である
+				int improvingFactor = std::max(229, std::min(715, 357 + 119 * F[0] - 6 * F[1]));
+				double unstablePvFactor = 1 + mainThread->bestMoveChanges;//これもpvが不安定という意味なので大きくなるべき値でない
+
+				bool doEasyMove = (pv[0] == easyMove)&&(mainThread->bestMoveChanges<0.03)&&(TimeMan.elasped()>TimeMan.optimum() * 5 / 44);//5/44は小さすぎると思うんだよなぁ...
+
+				//探索を終了してしまってもいいか
+				if (end-RootMoves==1
+					|| TimeMan.elasped()>TimeMan.optimum()*unstablePvFactor*improvingFactor/628
+					|| (mainThread->easyMovePlayed = doEasyMove, doEasyMove)) {
+
+					if (limit.is_inponder) { signal.stopOnPonderHit = true; }
+					else { signal.stop = true; }
+
+				}
 
 
 			}
+		}//探索を終了するかどうか
+
+		if (pv.size() >= 3) {
+			EasyMove.update(rootpos, pv);
 		}
+		else {
+			EasyMove.clear();
+		}
+
+
 	}//end of 反復深化
 	sort_RootMove();
 ID_END:
 
 	previousScore = RootMoves[0].value;
+
+	if (!mainThread)
+		return bestvalue;
+	//ここから下はmainthreadのみの操作
+
+	// Clear any candidate easy move that wasn't stable for the last search
+	// iterations; the second condition prevents consecutive fast moves.
+	if (EasyMove.stableCnt < 6 || mainThread->easyMovePlayed) { EasyMove.clear(); }
+
+
 	return bestvalue;
 
 }
@@ -1593,6 +1641,15 @@ moves_loop:
 				for (Move* m = (ss + 1)->pv; *m != MOVE_NONE; ++m) {
 					thisthread->pv.push_back(*m);
 				}
+
+				/*
+				bestmoveが変更された回数を記録する。これは時間管理に用いられる
+				もしnestmoveが頻繁に変更されていればもっと時間を使うことを許す
+				*/
+				if (movecount > 1 && thisthread == Threadpool.main()) {
+					++static_cast<MainThread*>(thisthread)->bestMoveChanges;
+				}
+
 			}
 			else {
 				rm->value = Value_Mated;
