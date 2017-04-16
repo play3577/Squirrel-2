@@ -548,16 +548,16 @@ void learnphase1body(int number) {
 					th.l_beta = record_score +(Value)256;
 				}
 
-				th.l_depth = 3;
+				//th.l_depth = 3;
 
 				//Apery‚â‹ZI‚Ì‚æ‚¤‚É’Tõ[‚³‚ğ—”‚É‚æ‚Á‚Ä•ÏX‚µ‚Ä‚İ‚éB
 				//‘å’Î«Šû‚Ìƒy[ƒW‚ÅBonanza‚ªŠwK’†‚Ì’Tõ[‚³‚ğ1[‚­‚µ‚½‚ç‹­‚­‚È‚Á‚½‚Æ‚¢‚¤‚±‚Æ‚ª‘‚©‚ê‚Ä‚¢‚½‚Ì‚Å—”‚É‚æ‚Á‚Ä[‚­‚µ‚Ä‚İ‚éB
 				//„‚ÌèŒ³‚ÌÀŒ±ƒf[ƒ^‚Å‚Í[‚­‚µ‚Ä‚à‹­‚­‚È‚ç‚È‚©‚Á‚½‚Ì‚¾‚¯‚ê‚Ç...
 				//[‚­‚·‚é‚ÆŠÔ‚ª‚©‚©‚è‚·‚¬‚é‚Ì‚Å2,3‚Å‚â‚Á‚Ä‚İ‚½‚çã‚­‚È‚Á‚½B
-				/*std::random_device seed_gen;
+				std::random_device seed_gen;
 				std::default_random_engine engine(seed_gen());
 				std::uniform_int_distribution<int> dis(3, 4);
-				th.l_depth = dis(engine);*/
+				th.l_depth = dis(engine);
 
 				Value  score = th.think();
 				if (move_i == 0) { record_score = score; 

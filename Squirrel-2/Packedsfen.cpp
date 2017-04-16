@@ -2,13 +2,12 @@
 #include "misc.h"
 #include <sstream>
 
-
+#if defined(REIN) || defined(MAKETEACHER)
 /*
 no_piece,B_PAWN=1, B_LANCE, B_KNIGHT, B_SILVER, B_BISHOP, B_ROOK, B_GOLD, B_KING,
 B_PRO_PAWN, B_PRO_LANCE, B_PRO_NIGHT, B_PRO_SILVER, B_UNICORN, B_DRAGON,
 W_PAWN=17, W_LANCE, W_KNIGHT, W_SILVER, W_BISHOP, W_ROOK, W_GOLD, W_KING,
 W_PRO_PAWN, W_PRO_LANCE, W_PRO_NIGHT, W_PRO_SILVER, W_UNICORN, W_DRAGON,PC_ALL,
-
 */
 
 //‚±‚ê‚Éƒvƒ‰ƒX‚µ‚Ä
@@ -366,3 +365,4 @@ FINISH:;
 
 	//return nsfen;
 }
+#endif

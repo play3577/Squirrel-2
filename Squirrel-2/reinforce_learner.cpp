@@ -350,7 +350,7 @@ void make_startpos_detabase()
 
 #endif
 
-
+#if defined(REIN) || defined(MAKETEACHER)
 struct teacher_data {
 
 	bool haffman[256];
@@ -386,6 +386,7 @@ int lock_index_inclement__() {
 
 
 int maxthreadnum__;
+#endif
 
 #if defined(LEARN) && defined(MAKETEACHER)
 /*
@@ -518,7 +519,7 @@ void make_teacher_body(const int number) {
 }
 #endif
 
-#if defined(LEARN)
+#if defined(LEARN) && defined(REIN)
 //ok
 //éQçlÅ@http://gurigumi.s349.xrea.com/programming/binary.html
 /*

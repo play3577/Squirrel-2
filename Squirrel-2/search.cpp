@@ -127,12 +127,11 @@ struct EasyMoveManager {
 			pos.undo_move();
 			pos.undo_move();
 		}
-
 	}
 
 };
 
-
+EasyMoveManager EasyMove;
 
 //dŽè‚Å”Ò‰ñ‚Å‚«‚é•]‰¿’l‚Ì—\‘ª(d‚ÍÅ‘å‚Å‚à6)
 //‚UŽèæ‚Ü‚Å‚±‚ÌŠÖ”‚Å—\‘ª‚Å‚«‚é‚Æ‚¢‚¤‚Ì‚Í‚Ç‚¤‚È‚ñ‚¾‚ë‚¤‚©...‚à‚¤­‚µó‚¢‚Ù‚¤‚ª‚¢‚¢‹C‚ª‚·‚é...
@@ -266,12 +265,14 @@ Value Thread::think() {
 	Stack stack[MAX_PLY + 7], *ss = stack + 5;
 	std::memset(ss - 5, 0, 8 * sizeof(Stack));//‚Ü‚¦8‚Â‚¾‚¯‰Šú‰»‚·‚éHH
 	Value bestvalue, alpha, beta, delta;
+	Move easyMove = MOVE_NONE;
 	pv.clear();
 
 	bool findbook = false;
 
 	if (mainThread) {
-
+		easyMove = EasyMove.get(rootpos.key());
+		EasyMove.clear();
 		TT.new_search();
 		mainThread->easyMovePlayed = mainThread->failedLow = false;
 		mainThread->bestMoveChanges = 0;
@@ -301,6 +302,7 @@ Value Thread::think() {
 				continue;
 		}
 
+		if (mainThread) { mainThread->bestMoveChanges *= 0.505, mainThread->failedLow = false; }
 
 		previousScore = RootMoves[0].value;
 #ifdef ASP
@@ -352,6 +354,8 @@ Value Thread::think() {
 		‚µ‚©‚µŒëmate‚©‚à‚µ‚ê‚È‚¢‚Ì‚Å20‚Ü‚Å‚Í’Tõ‚³‚¹‚é
 
 		*/
+
+		//‚±‚±‚Åsignal stop‚àtrue‚É‚µ‚Ä‚¨‚­‚×‚«HH
 		if (rootdepth > 20 && abs(bestvalue) > Value_mate_in_maxply) { goto ID_END; }
 
 
@@ -367,16 +371,16 @@ Value Thread::think() {
 			delta += delta / 4 + 5;
 
 			if (mainThread) {
-				mainThread->failedLow = true;
-				signal.stopOnPonderHit = false;
+				mainThread->failedLow = true;//ƒ¿’l‚ð‰º‰ñ‚é‚Æ‚Í‚±‚Ìƒm[ƒh‚É‚ÍÅ‘PŽè‚Í‚È‚¢‚ÆŽv‚Á‚Ä‚¢‚é‚Æ‚¢‚¤‚±‚Æ
+				signal.stopOnPonderHit = false;//ƒ¿’l‚ð‰º‰ñ‚Á‚Ä‚¢‚é‚Æ‚«‚Éstoponponderhit‚ð‚µ‚Ä‚µ‚Ü‚¤‚Ì‚Í‚â‚Î‚¢
 			}
 
 
 			ASSERT(alpha >= -Value_Infinite&&beta <= Value_Infinite);
-			if (delta <= 0) {
+			/*if (delta <= 0) {
 				cout << alpha << " " << beta << " " << delta << " " << bestvalue << endl;
 				ASSERT(0);
-			}
+			}*/
 			goto research;
 		}
 		else if (bestvalue >= beta)
@@ -387,10 +391,10 @@ Value Thread::think() {
 
 
 			ASSERT(alpha >= -Value_Infinite&&beta <= Value_Infinite);
-			if (delta <= 0) {
+			/*if (delta <= 0) {
 				cout << alpha << " " << beta << " " << delta << " " << bestvalue << endl;
 				ASSERT(0);
-			}
+			}*/
 
 
 			goto research;
@@ -400,15 +404,20 @@ Value Thread::think() {
 		if (!signal.stop) completedDepth = rootdepth;
 
 
-
+		if (!mainThread) { continue; }
 
 #if !defined(LEARN) || !defined(MAKEBOOK)
 		if (idx == 0) { print_pv(rootdepth, bestvalue); }
 
 #endif
+		//’Tõ‚ð‘±‚¯‚é‚×‚«‚©‚»‚ê‚Æ‚à‚â‚ß‚Ä‚µ‚Ü‚Á‚Ä‚¢‚¢‚Ì‚©
+		if ((bool)Options["use_defined_time"] == false) {
+			if (!signal.stop && !signal.stopOnPonderHit)
+			{
 
 
-
+			}
+		}
 	}//end of ”½•œ[‰»
 	sort_RootMove();
 ID_END:
@@ -487,7 +496,6 @@ Value MainThread::think() {
 	if ((bool)Options["use_defined_time"] == true) {
 		limit.endtime = Options["defined_time"] + limit.starttime;
 	}
-	//’´ƒeƒLƒg[‚ÈŽžŠÔ§Œä‚ÌƒR[ƒh‚ ‚Æ‚Å‰½‚Æ‚©‚·‚é
 	else{
 		TimeMan.init(limit, rootpos.sidetomove(), rootpos.ply_from_startpos);
 		if (TimeMan.maximum()< limit.byoyomi) {

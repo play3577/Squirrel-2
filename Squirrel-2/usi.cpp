@@ -96,7 +96,7 @@ void USI::init_option(OptionMap &o,string engine_name)
 //#endif
 
 	o["USI_Ponder"] << USIOption(false);
-	o["Threads"] << USIOption(1, 1, 128);
+	o["Threads"] << USIOption(4, 1, 128);
 	o["USI_Hash"] << USIOption(1, 1, 256);
 	o["EngineName"] << USIOption(name.c_str());
 	//o["is_0.1s"] << USIOption(false);
@@ -403,6 +403,7 @@ void USI::loop()
 			make_teacher();
 		}
 #endif
+#ifdef REIN
 		else if (token == "readt") {
 			read_teacherdata();
 		}
@@ -413,6 +414,7 @@ void USI::loop()
 			if (yn != "y") { cout << "OK I do not  learning"; break; }
 			reinforce_learn();
 		}
+#endif
 #endif //  LEARN
 		else if (token == "hirate") { pos.set_hirate(); }
 		else if (token == "dp") { std::cout << pos << std::endl; }//debug position
@@ -710,9 +712,11 @@ void USI::loop()
 		else if (token == "occ") {
 			pos.check_occbitboard();
 		}
+#ifdef REIN
 		else if (token == "psfen") {
 			pos.pack_haffman_sfen();
 		}
+#endif
 		else if (token=="mate") {
 			cout << pos << endl << endl;
 			cout << pos.mate1ply() << endl;;
