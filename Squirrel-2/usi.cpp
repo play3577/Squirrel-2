@@ -95,7 +95,7 @@ void USI::init_option(OptionMap &o,string engine_name)
 //	name+="releaseTT ";
 //#endif
 
-	o["USI_Ponder"] << USIOption(false);
+	o["USI_Ponder"] << USIOption(true);
 	o["Threads"] << USIOption(4, 1, 128);
 	o["USI_Hash"] << USIOption(1, 1, 256);
 	o["EngineName"] << USIOption(name.c_str());

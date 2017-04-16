@@ -90,6 +90,7 @@ void Thread::sort_RootMove()
 
 	 StateInfo st;
 	 bool tthit;
+	 if (abs(previousScore) > Value_mate_in_maxply) { return false; }
 
 	 ASSERT(pv.size() == 1);
 	 if (!is_ok(pv[0])||pv[0]==MOVE_NONE) { return 0; }

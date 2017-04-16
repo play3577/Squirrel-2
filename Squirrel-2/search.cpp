@@ -355,7 +355,12 @@ Value Thread::think() {
 
 		*/
 		//‚±‚±‚Åsignal stop‚àtrue‚É‚µ‚Ä‚¨‚­‚×‚«HH
-		if (rootdepth > 20 && abs(bestvalue) > Value_mate_in_maxply) { signal.stop = true; goto ID_END; }
+		if (rootdepth > 20 && abs(bestvalue) > Value_mate_in_maxply) { 
+			
+			if (limit.is_inponder) { signal.stopOnPonderHit = true; }
+			else { signal.stop = true; }
+			goto ID_END;
+		}
 
 
 		if (signal.stop) {
@@ -489,7 +494,7 @@ Value MainThread::think() {
 
 
 	//‹l‚ñ‚Å‚é‚Æ‚«‚Í‰½‚à‚µ‚È‚¢‚Å‹A‚é
-	if (end == RootMoves&& limit.is_inponder == false) {
+	if (end == RootMoves/*&& limit.is_inponder == false*/) {
 #ifndef LEARN
 		if (!signal.stop&&limit.is_inponder) {
 			signal.stopOnPonderHit = true;
