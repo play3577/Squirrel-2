@@ -531,6 +531,7 @@ double object_func = 0;
 bool read_teacherdata() {
 	sum_teachers.clear();
 	ifstream f(TEACHERPATH, ios::in | ios::binary);
+	if (!f) { cout << "cantopen" << TEACHERPATH << endl; UNREACHABLE; }
 	teacher_data t;
 	int i = 0;
 	if (f.eof()) { return false; }
@@ -629,10 +630,9 @@ void reinforce_learn() {
 void reinforce_learn_pharse1(const int index) {
 
 	Position pos;
-	
 	Thread th;
-	/*StateInfo si[300];
-	ExtMove moves[600], *end;
+	StateInfo si[100];
+	/*ExtMove moves[600], *end;
 	end = moves;*/
 
 	for (int g = lock_index_inclement__(); g < sum_teachers.size(); g = lock_index_inclement__()) {
@@ -652,19 +652,16 @@ void reinforce_learn_pharse1(const int index) {
 
 		1手探索ぐらいはしたほうがいいのかもしれない
 
-		--------------------------------------------------------------------------
-		一手探索をしたら目的関数が小さくならなくなった。
-		一手探索をやめたら目的関数が小さくなった代わりに弱くなった。
-		一手探索時に目的関数が小さくならなかった原因はunpackedsfenで探索に必要なデータをちゃんと用意できていなくて、探索できていなかったことであると考えられる
-		探索できるようになれば強くなるはず...!!!
+		
 		*/
-		const Value shallow_v = Eval::eval(pos);
+		//const Value shallow_v = Eval::eval(pos);
 
-		/*th.set(pos);
+		th.set(pos);
 		th.l_alpha = -Value_Infinite;
 		th.l_beta = Value_Infinite;
 		th.l_depth = 2;
-		const Value shallow_v = th.think();*/
+		//Eval::eval(pos);
+		th.think();
 
 		//tanuki-さんの本を参考に目的関数の微分を作成。勝率の差の二乗を目的関数としている。勝率の式はponanzaそのままでうちで使えるかどうかは微妙。
 		/*double win_teacher = sigmoid(double(teacher) / double(600)), win_shallow = sigmoid(double(shallow_v) / double(600));
@@ -672,9 +669,9 @@ void reinforce_learn_pharse1(const int index) {
 		object_func += (win_teacher - win_shallow)*(win_teacher - win_shallow);*/
 
 
-		double win_teacher = sigmoid(double(teacher) / double(600)), win_shallow = sigmoid(double(shallow_v) / double(600));
-		double diffsig = win_shallow - win_teacher;
-		object_func += int(shallow_v - teacher)*int(shallow_v - teacher);
+		//double win_teacher = sigmoid(double(teacher) / double(600)), win_shallow = sigmoid(double(shallow_v) / double(600));
+		//double diffsig = win_shallow - win_teacher;
+		//object_func += int(shallow_v - teacher)*int(shallow_v - teacher);
 
 		/*double diffsig = 2*(shallow_v - teacher);
 		object_func += int(shallow_v - teacher)*int(shallow_v - teacher);*/
@@ -686,6 +683,15 @@ void reinforce_learn_pharse1(const int index) {
 		//object_func += int(diff)*int(diff);
 		//double diffsig = dsigmoid(diff);
 
+	
+		//一手読みをさせた場合はこの局面ではなくpvの末端の特徴量を更新しなければならない！！！！！！！！！！！！！
+		int ii = 0;
+		for (Move m : th.pv) { pos.do_move(m, &si[ii]); ii++; }
+		//teachervalueはrootから見た点数なのでshallowもrootから見た点数に変換
+		Value shallow_v = (rootColor == pos.sidetomove()) ? Eval::eval(pos) : -Eval::eval(pos);
+		double win_teacher = sigmoid(double(teacher) / double(600)), win_shallow = sigmoid(double(shallow_v) / double(600));
+		double diffsig = win_shallow - win_teacher;
+		object_func += int(shallow_v - teacher)*int(shallow_v - teacher);
 		diffsig = (rootColor == BLACK ? diffsig : -diffsig);
 
 		gradJs[index].update_dJ(pos, -diffsig);
