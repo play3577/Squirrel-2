@@ -387,6 +387,8 @@ int lock_index_inclement__() {
 
 int maxthreadnum__;
 
+void renewal_PP_rein(dJValue &data);
+
 #endif
 
 #if defined(LEARN) && defined(MAKETEACHER)
@@ -612,7 +614,7 @@ void reinforce_learn() {
 		となると全教師データを用いて一回しか値を更新できない？？？？？う～～ん....それはさすがにないような気がするのだけれど....
 		値の更新の方法を勉強しないといけない...手元にadadeltaの論文があるしこれをつかうか？？
 		*/
-		renewal_PP(sum_gradJ);
+		renewal_PP_rein(sum_gradJ);
 		Eval::param_sym_ij();
 		write_PP();
 		read_PP();
@@ -700,6 +702,40 @@ void reinforce_learn_pharse1(const int index) {
 
 
 }
+
+constexpr double row = 0.95, epsiron = 0.0001;
+double lastEg[SQ_NUM][fe_end] = { 0.0 }, last_Edeltax[SQ_NUM][fe_end] = { 0.0 };
+double RMS(const double a) { return sqrt(a + epsiron); }
+
+//Adadeltaを試してみる
+void renewal_PP_rein(dJValue &data) {
+
+
+	int h;
+
+	//こんなんでいいのか？
+	//
+
+	//対称性はdJの中に含まれているのでここでは考えなくていい
+	for (BonaPiece i = f_hand_pawn; i < fe_end2; i++) {
+		for (BonaPiece j = f_hand_pawn; j < fe_end2; j++) {
+
+
+			double gt = data.absolute_PP[i][j];
+			double gt2 = gt*gt;
+			double Egt = lastEg[i][j] = (row)*lastEg[i][j] + (1 - row)*gt2;
+			double delta_x = gt*RMS(last_Edeltax[i][j]) /RMS(Egt);
+			last_Edeltax[i][j] = (row)*last_Edeltax[i][j] + (1 - row)*delta_x;
+			//int inc = h*sign(data.absolute_PP[i][j]);
+			PP[i][j] += delta_x*FV_SCALE;
+
+
+		}
+	}
+}
+
+
+
 
 #endif
 
