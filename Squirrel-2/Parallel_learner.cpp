@@ -100,22 +100,36 @@ struct Parse2Data {
 
 void renewal_PP(dJValue &data) {
 
+
+#ifdef REIN
+#else
 	std::random_device rd;
 	std::mt19937 mt(rd());
 
+#endif
+	
 	int h;
 
-	//こんなんでいいのか？
+#ifdef REIN
+	h = 1;
+#else
 	h = std::abs(int(mt())) % 3;
+#endif
+	//こんなんでいいのか？
+	//
 
 	//対称性はdJの中に含まれているのでここでは考えなくていい
 	for (BonaPiece i = f_hand_pawn; i < fe_end2; i++) {
 		for (BonaPiece j = f_hand_pawn; j < fe_end2; j++) {
 
-			//bonanzaは4万局程に対してこの値なのでmin batchをつかうときはこれではだめ！！！！！
+			
+			//それぞれの更新幅を乱数できめる
+			//h = std::abs(int(mt())) % 3;
 
+		
 			//効きを含めた次元下げをしたらpenaltyは必須になると考えられるがどれぐらいの値を使うべきなのか.....
-#if 1
+#if 0
+			//bonanzaは4万局程に対してこの値なのでmin batchをつかうときはこれではだめ！！！！！
 			/*if (PP[i][j]>0) { data.dJ[i][j] -= double(0.2 / double(FV_SCALE)); }
 			else if (PP[i][j]<0) { data.dJ[i][j] += double(0.2 / double(FV_SCALE)); }*/
 			//PE次元下げでおかしなところにも値がついてしまっている可能性があるため

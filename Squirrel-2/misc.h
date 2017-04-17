@@ -159,13 +159,24 @@ inline double dsigmoid(const double x) {
 //bonanza®‚Ìx‚Ì”ÍˆÍ‚ği‚Á‚½sigmoidŠÖ”
 
 inline double sigmoid(const double x) {
+#ifdef REIN
+	double a = 1;
+#else
 	const double a = 7.0 / double(FV_WINDOW);
+#endif
+	//
+	
 	return (1.0) / (1.0 + exp(-a*x));
 }
 
 inline double dsigmoid(const double x) {
+#ifdef REIN
+	double a = 1;
+#else
 	if (x <= -FV_WINDOW || FV_WINDOW <= x) { return 0.0; }
 	const double a = 7.0 / double(FV_WINDOW);
+#endif
+	
 	return a*sigmoid(x) * (1.0 - sigmoid(x));
 }
 
@@ -174,3 +185,6 @@ inline double dsigmoid(const double x) {
 
 inline double normal_dist(double mean, double stddiv);
 
+#ifdef REIN
+#else
+#endif

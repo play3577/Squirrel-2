@@ -682,7 +682,7 @@ Value Thread::think() {
 
 
 
-#if  defined(MAKETEACHER) || defined(MAKESTARTPOS)
+#if  defined(MAKETEACHER) || defined(MAKESTARTPOS) || defined(REIN)
 		bestvalue = search<Root>(rootpos, ss, alpha, beta, rootdepth*ONE_PLY, false);
 #else
 		bestvalue = lsearch<Root>(rootpos, ss, alpha, beta, rootdepth*ONE_PLY, false);
@@ -1651,10 +1651,11 @@ moves_loop:
 				bestmoveが変更された回数を記録する。これは時間管理に用いられる
 				もしnestmoveが頻繁に変更されていればもっと時間を使うことを許す
 				*/
+#ifndef LEARN
 				if (movecount > 1 && thisthread == Threadpool.main()) {
 					++static_cast<MainThread*>(thisthread)->bestMoveChanges;
 				}
-
+#endif
 			}
 			else {
 				rm->value = Value_Mated;

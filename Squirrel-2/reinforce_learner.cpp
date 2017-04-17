@@ -36,7 +36,7 @@ packedsfenのほうがいいかもしれないがまずはsfenで作成する
 評価関数がよくないからか,あんまり質のいい開始局面は生成できなかった。
 depth2では評価値100以内だが他では1000超えてしまうみたいな...
 */
-#define TEACHERPATH "C:/teacher/teacherd3.bin"
+#define TEACHERPATH "C:/teacher/teacherd4.bin"
 
 #ifdef MAKESTARTPOS
 string Position::random_startpos()
@@ -386,6 +386,7 @@ int lock_index_inclement__() {
 
 
 int maxthreadnum__;
+
 #endif
 
 #if defined(LEARN) && defined(MAKETEACHER)
@@ -484,7 +485,7 @@ void make_teacher_body(const int number) {
 
 
 			th.set(pos);
-			th.l_depth = 4;
+			th.l_depth = 5;
 			th.l_beta = (Value)3001;
 			th.l_alpha = (Value)-3001;
 			Value v = th.think();
@@ -520,27 +521,20 @@ void make_teacher_body(const int number) {
 #endif
 
 #if defined(LEARN) && defined(REIN)
+//定数
+int read_teacher_counter = 0;
+int batchsize = 1000000;
+double object_func = 0;
+
 //ok
 //参考　http://gurigumi.s349.xrea.com/programming/binary.html
-/*
-ここで大量の教師データを読み込ませようとしてメモリエラーを起こしてしまったっぽい。
-分割して読み込ませなければならない。
-カウンターをglobalに配置し、それを用いて続きから教師データを読み込ませるようにする。
-一回につき10000教師データを読み込むことはできるはずだ。
-
-
-読み込むことには成功したが読み込んだデータがぶっ壊れてしまっていた...ちょっと前までうまくいってたのに.....そんなに大きく変更を施したつもりはないんだが
-上書きした場合壊れるのかと思ったけど上書きしなくても壊れてしまっているのでなんでなんだろ..
-*/
-int read_teacher_counter = 0;
-
 bool read_teacherdata() {
 	sum_teachers.clear();
 	ifstream f(TEACHERPATH, ios::in | ios::binary);
 	teacher_data t;
 	int i = 0;
 	if (f.eof()) { return false; }
-	while (!f.eof()&&i<1000000) {
+	while (!f.eof()&&i<batchsize) {
 		f.seekg(read_teacher_counter * sizeof(teacher_data));
 		f.read((char*)&t, sizeof(teacher_data));
 
@@ -548,6 +542,7 @@ bool read_teacherdata() {
 		read_teacher_counter++;
 		i++;
 	}
+	cout << "read teacher counter>>" << read_teacher_counter << endl;
 	bool is_eof = f.eof();
 	f.close();
 	return (is_eof == false);
@@ -566,9 +561,9 @@ void reinforce_learn_pharse1(const int index);
 
 void reinforce_learn() {
 
-	int num_iteration=100;
+	/*int num_iteration=100;
 
-	cout << "num_iteration?:"; cin >> num_iteration;
+	cout << "num_iteration?:"; cin >> num_iteration;*/
 
 
 	//read_teacherdata();//ここで教師データを読み込む
@@ -586,23 +581,28 @@ void reinforce_learn() {
 	//スレッド作成
 	vector<std::thread> threads(maxthreadnum__ - 1);
 
-	for (int iter = 0; iter < num_iteration; iter++) {
-		read_teacher_counter = 0;
-		//初期化
+	//何回もiterationを回してもいい代物ではないだろう
+	read_teacher_counter = 0;
+	//初期化
+	sum_gradJ.clear();
+	for (dJValue& dJ : gradJs) { dJ.clear(); }
+
+	//学習開始(readteacherdataでバッチサイズだけ棋譜を読み込んでミニバッチ学習を行う)
+	while (read_teacherdata()) {
+
+		object_func = 0;
+
 		sum_gradJ.clear();
-		for(dJValue& dJ : gradJs){ dJ.clear();}
+		for (dJValue& dJ : gradJs) { dJ.clear(); }
 
-		//学習開始
-		while (read_teacherdata()) {
-			index__ = 0;
-			for (int i = 0; i < maxthreadnum__ - 1; ++i) {
-				threads[i] = std::thread([i] {reinforce_learn_pharse1(i); });
-			}
-			reinforce_learn_pharse1(maxthreadnum__ - 1);
-
-			for (dJValue& dJ : gradJs) { sum_gradJ.add(dJ); }
-			for (auto& th : threads) { th.join(); }
+		index__ = 0;
+		for (int i = 0; i < maxthreadnum__ - 1; ++i) {
+			threads[i] = std::thread([i] {reinforce_learn_pharse1(i); });
 		}
+		reinforce_learn_pharse1(maxthreadnum__ - 1);
+
+		for (dJValue& dJ : gradJs) { sum_gradJ.add(dJ); }
+		for (auto& th : threads) { th.join(); }
 
 		//様々な開始局面からの大量のデータがあるので次元下げは必要ないと考えられる
 		/*
@@ -612,27 +612,25 @@ void reinforce_learn() {
 		値の更新の方法を勉強しないといけない...手元にadadeltaの論文があるしこれをつかうか？？
 		*/
 		renewal_PP(sum_gradJ);
-		////2回ぐらい動かしておいて大丈夫だろう..
-		//for (int up = 0; up < 2; up++) {
-		//	renewal_PP(sum_gradJ);
-		//}
-
 		Eval::param_sym_ij();
 		write_PP();
 		read_PP();
-		cout << "itereation:" << iter << endl;
+		cout << "object func:" << object_func << endl;
 	}
 
+
+	cout << "finish rein" << endl;
 }
 
 
 /*
-
+それ以前にunpacksfenは通常に動作している？？
 */
 void reinforce_learn_pharse1(const int index) {
 
 	Position pos;
 	
+	Thread th;
 	/*StateInfo si[300];
 	ExtMove moves[600], *end;
 	end = moves;*/
@@ -644,10 +642,50 @@ void reinforce_learn_pharse1(const int index) {
 		const Color rootColor = pos.sidetomove();
 		pos.unpack_haffman_sfen(sum_teachers[g].haffman);
 		
+		/*
+		http://www2.computer-shogi.org/wcsc27/appeal/Apery/appeal_wcsc27.html
+		基本的には6手読みで数十億局面に点数を付け、それらを0~1手読み(静止探索は完全に行う)で点数を近付けるようにオンライン学習を行います
 
+		Aperyはこういってるし、精子探索はしたほうがいいのかも...??まあ確かに動的な局面の静的評価値なんて信頼ならんし必要か？
+		よく考えたらうちのソフトの静止探索は駒の取り合いしか見ていないので静止探索入れても意味ないか...
+		（静止探索にrecapture以外を入れたら弱くなったがあれはバグがあったからなのかもしれないな...もう一回試してみたほうがいいか）
+
+		1手探索ぐらいはしたほうがいいのかもしれない
+
+		--------------------------------------------------------------------------
+		一手探索をしたら目的関数が小さくならなくなった。
+		一手探索をやめたら目的関数が小さくなった代わりに弱くなった。
+		一手探索時に目的関数が小さくならなかった原因はunpackedsfenで探索に必要なデータをちゃんと用意できていなくて、探索できていなかったことであると考えられる
+		探索できるようになれば強くなるはず...!!!
+		*/
 		const Value shallow_v = Eval::eval(pos);
-		Value diff=shallow_v-teacher;
-		double diffsig = dsigmoid(diff);
+
+		/*th.set(pos);
+		th.l_alpha = -Value_Infinite;
+		th.l_beta = Value_Infinite;
+		th.l_depth = 2;
+		const Value shallow_v = th.think();*/
+
+		//tanuki-さんの本を参考に目的関数の微分を作成。勝率の差の二乗を目的関数としている。勝率の式はponanzaそのままでうちで使えるかどうかは微妙。
+		/*double win_teacher = sigmoid(double(teacher) / double(600)), win_shallow = sigmoid(double(shallow_v) / double(600));
+		double diffsig = dsigmoid(double(shallow_v) / double(600))*(win_shallow - win_teacher) / double(300);
+		object_func += (win_teacher - win_shallow)*(win_teacher - win_shallow);*/
+
+
+		double win_teacher = sigmoid(double(teacher) / double(600)), win_shallow = sigmoid(double(shallow_v) / double(600));
+		double diffsig = win_shallow - win_teacher;
+		object_func += int(shallow_v - teacher)*int(shallow_v - teacher);
+
+		/*double diffsig = 2*(shallow_v - teacher);
+		object_func += int(shallow_v - teacher)*int(shallow_v - teacher);*/
+
+
+		/*目的関数がこの形ではないのでこれでは何をしているのかわからない！！！！！
+		*/
+		//Value diff = shallow_v - teacher;
+		//object_func += int(diff)*int(diff);
+		//double diffsig = dsigmoid(diff);
+
 		diffsig = (rootColor == BLACK ? diffsig : -diffsig);
 
 		gradJs[index].update_dJ(pos, -diffsig);
