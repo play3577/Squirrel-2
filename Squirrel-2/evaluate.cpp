@@ -1107,7 +1107,7 @@ namespace Eval {
 	}
 
 
-
+#ifdef LEARN
 	void Eval::param_sym_ij() {
 
 		
@@ -1140,9 +1140,14 @@ namespace Eval {
 		write_PP();
 		read_PP();
 	}
+#endif
 
 
-
+	/*
+	https://twitter.com/uuunuuun1/status/850891787874951168
+	SM‚Ågcc‚ÅR+40
+	tanuki-‚ÅAVX2•]‰¿ŠÖ”‚ÅR+18
+	*/
 
 
 

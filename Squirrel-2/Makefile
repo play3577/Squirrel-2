@@ -1,33 +1,45 @@
-#makefileを作って　g++でのビルドに挑戦！！
-#全然わからん(＾◇＾)
+#http://boysenberrypi.hatenadiary.jp/entry/2014/03/15/113703
 
-#コンパイラの指定
+#-----------------------------------最初に後で使う変数の定義を行っておく.-------------------------------------
 COMPILER = g++
-#コンパイル時のフラグ
-CFLAGS　= -std=c++14 -Wextra -Ofast -fno-exceptions -fno-rtti 
+#コンパイラ　オプション（コンパイラ　フラグ）
+#-MMD　デバッグ情報を作成
+#-MP  ソースファイルがインクルードするヘッダファイルが依存するものがないとして依存関係を出力する。
+#-MMDと-MPのオプションを使用しているのは，ヘッダファイルが更新された時にmakeが行われるようにするためである。
+#-Ofast 最も最適化するためのオプション？
+#例外を完全に除去-fno-exceptions
+#Wextra 厳しめの警告を出す
+CFLAGS	= -std=c++14 -Wextra  -fno-exceptions -fno-rtti -MMD -MP -Wl,-stack,10485760
+#gcc 4.2以降、-march=nativeのオプションを与えると、CPUに合わせた最適化オプションが得られるようになった
+CFLAGS   += -march=native 
+#CFLAGS +=	-g -O0
+#CFLAGS+=-O3
+
+
 LDFLAGS  = -lpthread
 LIBS     =
 INCLUDE  =  #-I../include
-#実行ファイル名
-TARGET= squirrel
 ifeq ($(OS),Windows_NT)
-  LDFLAGS += -static
+  TARGET = squirrel.exe
+  LDFLAGS += -static#スタティックリンクを使うように指定する(dllは使わないように)
+else
+  TARGET = squirrel
 endif
-#objectfileの作成位置
-OBJDIR   = ../obj
-#SOURCEとHEADERとOBJECTS
+#中間ファイルなどを置くディレクトリを宣言
+OBJDIR   = ./obj
+#ソースファイルの宣言
 SOURCES := $(wildcard *.cpp)
 HEADER := $(wildcard *.h)
+#addprefixで OBJDIR/souces.oを指定している
 OBJECTS  = $(addprefix $(OBJDIR)/, $(SOURCES:.cpp=.o))
 DEPENDS  = $(OBJECTS:.o=.d)
 
-#targetが引数で与えられた（または引数があたえられなかった）ときに何をするか
+
 $(TARGET): $(OBJECTS) $(LIBS)
 	$(COMPILER) -o $@ $^ $(LDFLAGS) $(CFLAGS)
 
-#オブジェクトファイルの作成
+
 $(OBJDIR)/%.o: %.cpp
-	@[ -d $(OBJDIR) ] ||  mkdir -p $(OBJDIR)
 	$(COMPILER) $(CFLAGS) $(INCLUDE) -o $@ -c $<
 
 
@@ -41,4 +53,6 @@ release:
 test:
 	echo $(OBJECTS)
 
+# ソースファイルの依存関係が明記された.dファイルをインクルードします。
+# これによって，ヘッダファイルのみが更新された場合でもmakeが実行される事になります。
 -include $(DEPENDS)

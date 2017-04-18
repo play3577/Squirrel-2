@@ -65,7 +65,7 @@ inline std::ostream& operator<<(std::ostream& os, const SearchLimit& sl) {
 }
 
 extern SearchLimit limit;
-extern Signal signal;
+extern Signal signals;
 void search_init();
 
 inline Value mated_in_ply(int ply) { return Value(Value_Mated + ply); }

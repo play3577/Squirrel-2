@@ -252,9 +252,12 @@ void init_occ256()
 		uint64_t b4 = (sq2sq_m45_256[sq] != Error_SQ) ? 1ULL << sq2sq_m45_256[sq] : 0;
 		//b1が一番下に来てしまっている！
 		//SquareBB256[sq].b256 = _mm256_set_epi64x(b1, b2, b3, b4);
-		SquareBB256[sq].b256 = _mm256_set_epi64x(b4, b3, b2, b1);
-		cout << int(sq) << endl;
-		cout << SquareBB256[sq] << endl;
+		//SquareBB256[sq].b256 = _mm256_set_epi64x(b4, b3, b2, b1);
+		SquareBB256[sq].b128[0]=_mm_set_epi64x(b2,b1);
+		SquareBB256[sq].b128[1]=_mm_set_epi64x(b4,b3);
+		
+		// cout << int(sq) << endl;
+		// cout << SquareBB256[sq] << endl;
 #endif
 		
 	}

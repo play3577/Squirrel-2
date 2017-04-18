@@ -110,6 +110,12 @@ Move Position::mate1ply()
 	Bitboard friend_effectBB[8] = {ZeroBB};
 	Bitboard matecandicateBB;
 	Bitboard can_escape;
+
+	int d[8] = { -10,-9,-8,-1,1,8,9,10 };
+	bool didrookdrop=false;
+	bool didgolddrop = false;
+	bool didbishopdrop = false;
+
 	//---------ç°ÇÃÇ∆Ç±ÇÎãÓÇ§ÇøÇæÇØå©ÇÈ
 	if (h == (Hand)0) { goto movecheck; }
 
@@ -119,7 +125,7 @@ Move Position::mate1ply()
 	853
 	*/
 	//int dx[8] = { -9,-9,-9,0,0,9,9,9 }, dy[8] = { -1,0,1,-1,1,-1,0,1 };
-	int d[8] = { -10,-9,-8,-1,1,8,9,10 };
+
 	for (int i = 0; i < 8; i++) {
 		Square around_ksq = eksq + d[i];
 		if (is_ok(around_ksq) && abs(sqtorank(around_ksq) - sqtorank(eksq)) < 2 && abs(sqtofile(around_ksq) - sqtofile(eksq)) < 2) {
@@ -139,7 +145,6 @@ Move Position::mate1ply()
 	//cout <<"feffect"<<endl<< f_effect << endl;
 
 	//-----------------------------------------------------------------ãÓÇ§Çø
-	bool didrookdrop = false;
 	//----------------------------------------------îÚé‘
 #ifdef matedrop
 	if (num_pt(h, ROOK) != 0) {
@@ -197,7 +202,6 @@ cant_matedrop_rook:;
 	//Ç±Ç±Ç‹Ç≈OK
 
 	//---------------------------------ã‡
-	bool didgolddrop = false;
 
 
 	if (num_pt(h, GOLD) != 0) {
@@ -251,7 +255,6 @@ cant_matedrop_gold:;
 	}
 
 	//------------------------------------äp
-	bool didbishopdrop = false;
 	if (num_pt(h, BISHOP)) {
 
 		matecandicateBB = can_dropBB&StepEffect[enemy][BISHOP][eksq] & f_effect;

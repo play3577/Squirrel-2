@@ -1,6 +1,6 @@
 #include "TimeManeger.h"
 #include "usi.h"
-
+#include <cfloat>
 //TimeManeger TimeMan;
 
 /*

@@ -39,6 +39,7 @@ struct Occ_256 {
 //#if defined(__GNUC__) 
 //		return uint64_t(_mm256_extract_epi64(b256, i));
 //#endif
+#if defined(_MSC_VER)
 		switch (i)
 		{
 		case 0:
@@ -57,7 +58,26 @@ struct Occ_256 {
 			UNREACHABLE;
 			break;
 		}
-
+#else
+	switch (i)
+		{
+		case 0:
+			return uint64_t(_mm_extract_epi64(b128[0], 0));
+			break;
+		case 1:
+			return uint64_t(_mm_extract_epi64(b128[0], 1));
+			break;
+		case 2:
+			return uint64_t(_mm_extract_epi64(b128[1], 0));
+			break;
+		case 3:
+			return uint64_t(_mm_extract_epi64(b128[1], 1));
+			break;
+		default:
+			UNREACHABLE;
+			break;
+		}
+#endif
 
 	}
 
@@ -70,6 +90,7 @@ struct Occ_256 {
 //		//_mm256_insert_epi64(b256, value, index);
 //		UNREACHABLE;
 //#endif
+#if defined(_MSC_VER)
 		switch (index)
 		{
 		case 0:
@@ -88,6 +109,26 @@ struct Occ_256 {
 			UNREACHABLE;
 			break;
 		}
+#else
+	switch (index)
+		{
+		case 0:
+			_mm_insert_epi64(b128[0],value,0);
+			break;
+		case 1:
+			_mm_insert_epi64(b128[0],value,1);
+			break;
+		case 2:
+			_mm_insert_epi64(b128[1],value,0);
+			break;
+		case 3:
+			_mm_insert_epi64(b128[1],value,1);
+			break;
+		default:
+			UNREACHABLE;
+			break;
+		}
+#endif
 	}
 /*
 Integer 256-bit vector logical operations.

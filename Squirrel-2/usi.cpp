@@ -175,7 +175,7 @@ void is_ready() {
 #endif // !LEARN
 
 	limit.is_inponder = false;
-	signal.stop = signal.stopOnPonderHit = false;
+	signals.stop = signals.stopOnPonderHit = false;
 	first_ready = false;
 }
 
@@ -348,13 +348,16 @@ void USI::loop()
 		else if (token == "ponderhit") {
 
 			limit.is_inponder = false;
-			if (signal.stopOnPonderHit) {
-				signal.stop = true;
+			if (signals
+	.stopOnPonderHit) {
+				signals
+		.stop = true;
 				Threadpool.main()->start_searching(true);
 			}
 		}
 		else if (token == "stop") {
-			signal.stop = true;
+			signals
+	.stop = true;
 			limit.is_inponder = false;
 			Threadpool.main()->start_searching(true);
 		}
@@ -746,9 +749,11 @@ void USI::loop()
 			cout << "not learning mode" << endl;
 #endif
 		}
+#ifdef LEARN
 		else if (token == "ij") {
 			Eval::param_sym_ij();
 		}
+#endif
 #if defined(MAKEBOOK)
 		else if (token == "makebook") {
 

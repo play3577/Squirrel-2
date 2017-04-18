@@ -157,7 +157,7 @@ int64_t ThreadPool::nodes_searched() {
 void ThreadPool::start_thinking(Position pos) {
 
 	main()->wait_for_search_finished();
-	signal.stopOnPonderHit = signal.stop = false;
+	signals.stopOnPonderHit = signals.stop = false;
 	
 	//毎回全スレッド差し手生成させるのは無駄だよな...
 	//posも参照渡しできないし...

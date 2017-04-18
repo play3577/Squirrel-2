@@ -31,7 +31,7 @@
 #endif
 //#define PREF2
 SearchLimit limit;
-Signal signal;
+Signal signals;
 TimeManeger TimeMan;
 
 typedef std::vector<int> Row;
@@ -251,7 +251,7 @@ void check_time() {
 	if (limit.is_inponder) { return; }
 	TimePoint now_ = now();
 	if (now_  > limit.endtime -20) {
-		signal.stop = true;
+		signals.stop = true;
 	}
 }
 
@@ -293,7 +293,7 @@ Value Thread::think() {
 
 
 
-	while (++rootdepth <maxdepth && !signal.stop) {
+	while (++rootdepth <maxdepth && !signals.stop) {
 
 		if (!mainThread)
 		{
@@ -354,17 +354,17 @@ Value Thread::think() {
 		しかし誤mateかもしれないので20までは探索させる
 
 		*/
-		//ここでsignal stopもtrueにしておくべき？？
+		//ここでsignals stopもtrueにしておくべき？？
 		if (rootdepth > 20 && abs(bestvalue) > Value_mate_in_maxply) { 
 			
-			if (limit.is_inponder) { signal.stopOnPonderHit = true; }
-			else { signal.stop = true; }
+			if (limit.is_inponder) { signals.stopOnPonderHit = true; }
+			else { signals.stop = true; }
 			goto ID_END;
 		}
 
 
-		if (signal.stop) {
-			//cout << "signal stop" << endl;
+		if (signals.stop) {
+			//cout << "signals stop" << endl;
 			
 			break;
 		}
@@ -377,7 +377,7 @@ Value Thread::think() {
 
 			if (mainThread) {
 				mainThread->failedLow = true;//α値を下回るとはこのノードには最善手はないと思っているということ
-				signal.stopOnPonderHit = false;//α値を下回っているときにstoponponderhitをしてしまうのはやばい
+				signals.stopOnPonderHit = false;//α値を下回っているときにstoponponderhitをしてしまうのはやばい
 			}
 
 
@@ -406,7 +406,7 @@ Value Thread::think() {
 		}
 #endif
 
-		if (!signal.stop) completedDepth = rootdepth;
+		if (!signals.stop) completedDepth = rootdepth;
 
 
 		if (!mainThread) { continue; }
@@ -420,7 +420,7 @@ Value Thread::think() {
 #endif
 		//探索を続けるべきかそれともやめてしまっていいのか
 		if ((bool)Options["use_defined_time"] == false) {
-			if (!signal.stop && !signal.stopOnPonderHit)
+			if (!signals.stop && !signals.stopOnPonderHit)
 			{
 				// Stop the search if only one legal move is available, or if all
 				// of the available time has been used, or if we matched an easyMove
@@ -444,8 +444,8 @@ Value Thread::think() {
 					|| TimeMan.elasped()>TimeMan.optimum()*unstablePvFactor*improvingFactor/628
 					|| (mainThread->easyMovePlayed = doEasyMove, doEasyMove)) {
 
-					if (limit.is_inponder) { signal.stopOnPonderHit = true; }
-					else { signal.stop = true; }
+					if (limit.is_inponder) { signals.stopOnPonderHit = true; }
+					else { signals.stop = true; }
 
 				}
 
@@ -496,9 +496,9 @@ Value MainThread::think() {
 	//詰んでるときは何もしないで帰る
 	if (end == RootMoves/*&& limit.is_inponder == false*/) {
 #ifndef LEARN
-		if (!signal.stop&&limit.is_inponder) {
-			signal.stopOnPonderHit = true;
-			wait(signal.stop);
+		if (!signals.stop&&limit.is_inponder) {
+			signals.stopOnPonderHit = true;
+			wait(signals.stop);
 		}
 		cout << "bestmove resign" << endl;
 #endif // !LEARN
@@ -542,7 +542,7 @@ Value MainThread::think() {
 	//===============
 	//探索開始
 	//==============
-	signal.stop = false;
+	signals.stop = false;
 	this->resetCalls = false;
 	this->call_count = 0;
 #ifndef  LEARN
@@ -569,13 +569,13 @@ Value MainThread::think() {
 
 
 	//ponder中に詰みを見つけた場合に差し手を返してしまわないようにここで待たせる
-	if (!signal.stop&&limit.is_inponder) {
-		signal.stopOnPonderHit = true;
-		wait(signal.stop);
+	if (!signals.stop&&limit.is_inponder) {
+		signals.stopOnPonderHit = true;
+		wait(signals.stop);
 	}
 
 
-	signal.stop = true;
+	signals.stop = true;
 	for (Thread* th : Threadpool) {
 		if (th != this) {
 			th->wait_for_search_finished();
@@ -650,7 +650,7 @@ Value Thread::think() {
 	seldepth = 0;
 
 	//時間制御
-	signal.stop = false;
+	signals.stop = false;
 	this->resetCalls = false;
 	this->call_count = 0;
 
@@ -669,7 +669,7 @@ Value Thread::think() {
 
 
 
-	while (++rootdepth <maxdepth && !signal.stop) {
+	while (++rootdepth <maxdepth && !signals.stop) {
 
 		previousScore = RootMoves[0].value;
 
@@ -704,8 +704,8 @@ Value Thread::think() {
 		if (rootdepth > 20 && abs(bestvalue) > Value_mate_in_maxply) { goto ID_END; }
 
 
-		if (signal.stop) {
-			//cout << "signal stop" << endl;
+		if (signals.stop) {
+			//cout << "signals stop" << endl;
 			break;
 		}
 
@@ -796,7 +796,7 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 
 	if (!RootNode) {
 		//step2
-		if (signal.stop.load(std::memory_order_relaxed)||ss->ply>=(MAX_PLY-3)) {
+		if (signals.stop.load(std::memory_order_relaxed)||ss->ply>=(MAX_PLY-3)) {
 			return Eval::eval(pos);
 		}
 
@@ -1633,7 +1633,7 @@ moves_loop:
 		ASSERT(value > -Value_Infinite&&value < Value_Infinite);
 
 		//時間切れなのでbestmoveとPVを汚さないうちに値を返す。
-		if (signal.stop.load(std::memory_order_relaxed)) {
+		if (signals.stop.load(std::memory_order_relaxed)) {
 			return Value_Zero;
 		}
 
@@ -2071,7 +2071,7 @@ Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
 		ASSERT(value > -Value_Infinite&&value < Value_Infinite);
 
 #ifndef LEARN
-		//if (signal.stop.load(std::memory_order_relaxed)) {
+		//if (signals.stop.load(std::memory_order_relaxed)) {
 		//	//時間切れはfail hardにしているがここもfail softにしておくべきか？
 		//	return alpha;
 		//}
@@ -2266,7 +2266,7 @@ template <Nodetype NT>Value lsearch(Position &pos, Stack* ss, Value alpha, Value
 
 	if (!RootNode) {
 		//step2
-		if (signal.stop.load(std::memory_order_relaxed)) {
+		if (signals.stop.load(std::memory_order_relaxed)) {
 			return Eval::eval(pos);
 		}
 		alpha = std::max(mated_in_ply(ss->ply), alpha);//alpha=max(-mate+ply,alpha)　alphaの値は現在つまされている値よりも小さくは成れない つまりalphaは最小でも-mate+ply
@@ -2353,7 +2353,7 @@ template <Nodetype NT>Value lsearch(Position &pos, Stack* ss, Value alpha, Value
 
 			pos.undo_move();
 			//時間切れなのでbestmoveとPVを汚さないうちに値を返す。
-			if (signal.stop.load(std::memory_order_relaxed)) {
+			if (signals.stop.load(std::memory_order_relaxed)) {
 				return Value_Zero;
 			}
 
