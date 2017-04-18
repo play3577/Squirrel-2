@@ -128,7 +128,7 @@ void renewal_PP(dJValue &data) {
 
 		
 			//効きを含めた次元下げをしたらpenaltyは必須になると考えられるがどれぐらいの値を使うべきなのか.....
-#if 0
+#if 1
 			//bonanzaは4万局程に対してこの値なのでmin batchをつかうときはこれではだめ！！！！！
 			/*if (PP[i][j]>0) { data.dJ[i][j] -= double(0.2 / double(FV_SCALE)); }
 			else if (PP[i][j]<0) { data.dJ[i][j] += double(0.2 / double(FV_SCALE)); }*/

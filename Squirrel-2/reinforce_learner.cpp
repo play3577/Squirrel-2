@@ -704,19 +704,20 @@ void reinforce_learn_pharse1(const int index) {
 }
 
 constexpr double row = 0.95, epsiron = 0.0001;
-double lastEg[SQ_NUM][fe_end] = { 0.0 }, last_Edeltax[SQ_NUM][fe_end] = { 0.0 };
+double lastEg[fe_end2][fe_end2] = { 0.0 }, last_Edeltax[fe_end2][fe_end2] = { 0.0 };
 double RMS(const double a) { return sqrt(a + epsiron); }
 
 //Adadeltaを試してみる
 void renewal_PP_rein(dJValue &data) {
 
 
-	int h;
-
-	//こんなんでいいのか？
-	//
 
 	//対称性はdJの中に含まれているのでここでは考えなくていい
+	/*
+	目的関数は小さくなったのだが、くっそ弱くなった。
+	目的関数が小さくなったということは学習には成功しているはずである。
+	教師データ作成、開始局面作成が雑すぎた、ハフマン符号化がうまくいってなかったということもあるかもしれないが、いったん強化学習部から離れてほかのところを弄ろうと思う。
+	*/
 	for (BonaPiece i = f_hand_pawn; i < fe_end2; i++) {
 		for (BonaPiece j = f_hand_pawn; j < fe_end2; j++) {
 
