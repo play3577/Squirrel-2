@@ -348,16 +348,13 @@ void USI::loop()
 		else if (token == "ponderhit") {
 
 			limit.is_inponder = false;
-			if (signals
-	.stopOnPonderHit) {
-				signals
-		.stop = true;
+			if (signals.stopOnPonderHit) {
+				signals.stop = true;
 				Threadpool.main()->start_searching(true);
 			}
 		}
 		else if (token == "stop") {
-			signals
-	.stop = true;
+			signals.stop = true;
 			limit.is_inponder = false;
 			Threadpool.main()->start_searching(true);
 		}
