@@ -31,7 +31,8 @@ using namespace std;
 
 #define SOFTKIFU
 
-
+//ó‚¢’TõŒ‹‰Ê‚Æ[‚¢’Tõ‚ÌŒ‹‰Ê‚ÌŒë·‚ª­‚È‚­‚È‚é‚æ‚¤‚È‘¹¸€‚ğ“ü‚ê‚é
+#define DEAP_LEARN
 
 
 /*
@@ -853,6 +854,10 @@ void learnphase2body(int number)
 					}
 					pos.undo_move();
 				}
+#ifdef DEAP_LEARN
+				//---------------------------------------------------------------------------------------------------
+
+#endif
 			}//Œù”zŒvZ
 		skip_calc:;
 			 //Ÿ‚Ì‹Ç–Ê‚Ö

@@ -49,7 +49,7 @@ int main() {
 	Zoblist::init();
 	search_init();
 #ifndef LEARN
-	Threadpool.init();
+	Threads.init();
 #endif
 	//Eval::initialize_PP();
 	/*if (Options["usebook"] == true) {

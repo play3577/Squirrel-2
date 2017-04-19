@@ -171,7 +171,7 @@ void is_ready() {
 	}
 
 #ifndef LEARN
-	Threadpool.init();
+	Threads.init();
 #endif // !LEARN
 
 	limit.is_inponder = false;
@@ -219,7 +219,7 @@ void go(Position& pos, istringstream& is/*, Thread& th*/) {
 	Eval::eval_PP(pos);
 
 #ifndef LEARN
-	Threadpool.start_thinking(pos);
+	Threads.start_thinking(pos);
 #endif // !LEARN
 
 	
@@ -350,13 +350,13 @@ void USI::loop()
 			limit.is_inponder = false;
 			if (signals.stopOnPonderHit) {
 				signals.stop = true;
-				Threadpool.main()->start_searching(true);
+				Threads.main()->start_searching(true);
 			}
 		}
 		else if (token == "stop") {
 			signals.stop = true;
 			limit.is_inponder = false;
-			Threadpool.main()->start_searching(true);
+			Threads.main()->start_searching(true);
 		}
 #endif
 		//学習用コマンド”アイ”ではなく"エル"

@@ -10,7 +10,7 @@ http://www.pixiv.net/member_illust.php?mode=medium&illust_id=61441523
 */
 
 
-ThreadPool Threadpool;
+ThreadPool Threads;
 
 /*
 ThreadPool::init() creates and launches requested threads that will go
@@ -28,7 +28,7 @@ Threadpoolは静的オブジェクトであり、ThreadコンストラクタでEndgamesを割り当てるた
 */
 void ThreadPool::init() {
 
-	push_back(new MainThread);//main threadを用意する
+	push_back(new MainThread());//main threadを用意する gccだと最適化したらここでエラーが起こる......
 	read_usi_options();//ここでいくつのスレッドをたてるかなどを設定から読み込む（しかしまだsetoptionを受け取る前であるのでこれはまた呼びなおされる。）
 
 }
@@ -39,7 +39,7 @@ Thread::Thread() {
 
 	exit =resetCalls= false;
 	cleartable();
-	idx = Threadpool.size();
+	idx = Threads.size();
 	//https://cpprefjp.github.io/reference/mutex/unique_lock.html
 	//http://qiita.com/termoshtt/items/c01745ea4bcc89d37edc
 	std::unique_lock<Mutex> lk(mutex);
@@ -129,7 +129,7 @@ void ThreadPool::read_usi_options() {
 
 	while (size()<requested)
 	{
-		push_back(new Thread);
+		push_back(new Thread());
 	}
 	while (size() > requested) {
 		delete back(), pop_back();
@@ -162,7 +162,7 @@ void ThreadPool::start_thinking(Position pos) {
 	//毎回全スレッド差し手生成させるのは無駄だよな...
 	//posも参照渡しできないし...
 	//main()->set(pos);
-	for (Thread*th : Threadpool) {
+	for (Thread*th : Threads) {
 		th->set(pos);
 	}
 

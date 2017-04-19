@@ -260,7 +260,7 @@ void check_time() {
 //---------------------------探索下請け
 Value Thread::think() {
 
-	MainThread* mainThread = (this == Threadpool.main() ? Threadpool.main() : nullptr);
+	MainThread* mainThread = (this == Threads.main() ? Threads.main() : nullptr);
 
 	Stack stack[MAX_PLY + 7], *ss = stack + 5;
 	std::memset(ss - 5, 0, 8 * sizeof(Stack));//まえ8つだけ初期化する？？
@@ -562,7 +562,7 @@ Value MainThread::think() {
 #endif // ! LEARN
 
 
-	for (Thread* th : Threadpool) {
+	for (Thread* th : Threads) {
 		if (th != this) { th->start_searching();}
 	}
 	Thread::think(); // Let's start searching!
@@ -576,7 +576,7 @@ Value MainThread::think() {
 
 
 	signals.stop = true;
-	for (Thread* th : Threadpool) {
+	for (Thread* th : Threads) {
 		if (th != this) {
 			th->wait_for_search_finished();
 		}
@@ -587,7 +587,7 @@ Value MainThread::think() {
 	//bestThread賞を選ぶ
 	if (pv[0] != MOVE_NONE) {
 
-		for (Thread* th : Threadpool) {
+		for (Thread* th : Threads) {
 			if (th->completedDepth > bestthread->completedDepth
 				&&th->RootMoves[0].value > bestthread->RootMoves[0].value) {
 				bestthread = th;
@@ -615,7 +615,7 @@ Value MainThread::think() {
 	}
 
 	cout << endl;
-	cout << "node all  " << Threadpool.nodes_searched() << endl;;
+	cout << "node all  " << Threads.nodes_searched() << endl;;
 	return Value(0);
 }
 
@@ -1659,7 +1659,7 @@ moves_loop:
 				もしnestmoveが頻繁に変更されていればもっと時間を使うことを許す
 				*/
 #ifndef LEARN
-				if (movecount > 1 && thisthread == Threadpool.main()) {
+				if (movecount > 1 && thisthread == Threads.main()) {
 					++static_cast<MainThread*>(thisthread)->bestMoveChanges;
 				}
 #endif
