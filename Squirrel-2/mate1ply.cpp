@@ -189,11 +189,7 @@ Move Position::mate1ply()
 			remove_occ256(to);
 			remove_piece(us, ROOK, to);
 			
-#ifdef MATETEST
 			return make_drop(to,add_color(ROOK,us));
-#else
-			return Move(to);
-#endif
 cant_matedrop_rook:;
 			
 		}
@@ -251,12 +247,7 @@ cant_matedrop_rook:;
 			remove_occ256(to);
 			remove_piece(us, GOLD, to);
 			//cout << "mate GOLD:"<<to<< endl;
-#ifdef MATETEST
-			return make_drop(to, add_color(GOLD, us));
-#else
-			return Move(to);
-#endif
-			
+			return make_drop(to, add_color(GOLD,us));
 cant_matedrop_gold:;
 			
 		}
@@ -293,12 +284,7 @@ cant_matedrop_gold:;
 			remove_occ256(to);
 			remove_piece(us, BISHOP, to);
 			//cout << "mate BISHOP" << endl;
-#ifdef MATETEST
-			return make_drop(to, add_color(BISHOP, us));
-#else
-			return Move(to);
-#endif
-			
+			return make_drop(to, add_color(BISHOP,us));
 cant_matedrop_bishop:;
 		}
 		didbishopdrop = true;
@@ -339,12 +325,7 @@ cant_matedrop_bishop:;
 			//goto文で飛ばされなかったということはつまされた。
 			remove_occ256(to);
 			remove_piece(us, SILVER, to);
-#ifdef MATETEST
-			return make_drop(to, add_color(SILVER, us));
-
-#else
-			return Move(to);
-#endif
+			return make_drop(to, add_color(SILVER,us));
 cant_matedrop_silver:;
 		}
 	}
@@ -377,11 +358,7 @@ cant_matedrop_silver:;
 			//goto文で飛ばされなかったということはつまされた。
 			remove_occ256(to);
 			remove_piece(us, LANCE, to);
-#ifdef MATETEST
-			return make_drop(to, add_color(LANCE, us));
-#else
-			return Move(to);
-#endif
+			return make_drop(to, add_color(LANCE,us));
 		cant_matedrop_LANCE:;
 		}
 	}
@@ -415,11 +392,7 @@ cant_matedrop_silver:;
 			//goto文で飛ばされなかったということはつまされた。
 			remove_occ256(to);
 			remove_piece(us, KNIGHT, to);
-#ifdef MATETEST
-			return make_drop(to, add_color(KNIGHT, us));
-#else
-			return Move(to);
-#endif
+			return make_drop(to, add_color(KNIGHT,us));
 cant_matedrop_KNIGHT:;
 		}
 
@@ -515,11 +488,7 @@ movecheck:;
 			if (!is_capture) { remove_occ256(to); }//捕獲だった場合はここで取り除いてはいけない！！！
 
 			remove_piece(us, GOLD, to);
-#ifdef MATETEST
-			return make_move(from, to, add_color(removedpiece, us));
-#else
-			return Move(to);
-#endif
+			return make_move(from,to, add_color(removedpiece,us));
 
 cant_mate_gold:;
 

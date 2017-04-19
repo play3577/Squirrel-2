@@ -24,7 +24,7 @@
 #endif
 
 #define MATEONE
-
+//#define MATETEST
 
 #ifdef MATETEST
 #include "makemove.h"
@@ -953,8 +953,8 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 //mate
 #ifdef MATEONE
 	if (!RootNode && !incheck) {
-		//Move mate;
-		if ((pos.mate1ply())!=MOVE_NONE) {
+		Move mate;
+		if ((mate=pos.mate1ply())!=MOVE_NONE) {
 #ifdef MATETEST
 			
 			
@@ -977,10 +977,16 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 #endif
 
 			ss->static_eval = bestvalue = mate_in_ply((ss->ply)+1);
+			if (!pos.capture_or_propawn(mate)) { update_stats(pos, ss, mate, nullptr, 0, bonus(depth)); }
+
+			if ((ss - 1)->moveCount == 1 && pos.state()->DirtyPiece[1] == NO_PIECE && (ss - 1)->currentMove != MOVE_NULL)
+			{
+				Square prevSq = move_to((ss - 1)->currentMove);
+				update_cm_stats(ss - 1, moved_piece((ss - 1)->currentMove), prevSq, -bonus(depth + ONE_PLY));
+			}
 #ifdef USETT
 			//‚¤`‚ñ‚±‚±‚Åmove‚ðŠi”[‚µ‚Ä‚àŒ‹‹Çmateoneply‚ÅŽ}‚ðØ‚é‚Ì‚Åttmove‚Í•K—v‚È‚¢‚µ–³‘Ê‚©HHH
-			//‚±‚±‚Åcountermove‚È‚Ç‚àupdate‚·‚×‚«HH
-			tte->save(poskey, value_to_tt(bestvalue, ss->ply), BOUND_EXACT, depth,MOVE_NONE/*, ss->static_eval*/, TT.generation());
+			tte->save(poskey, value_to_tt(bestvalue, ss->ply), BOUND_EXACT, depth,mate/*, ss->static_eval*/, TT.generation());
 #endif
 			ASSERT(bestvalue > -Value_Infinite&&bestvalue < Value_Infinite);
 			return bestvalue;
