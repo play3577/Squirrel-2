@@ -117,8 +117,8 @@ void movepicker::generatemove()
 }
 
 
-
-Move movepicker::return_nextmove()
+//‚©‚È‚è‘å’_‚È‚±‚Æ‚·‚é‚È‚Ÿ
+Move movepicker::return_nextmove(bool skipQuiets)
 {
 
 	Move m;
@@ -171,16 +171,22 @@ Move movepicker::return_nextmove()
 			}
 			break;
 		case QUIET:
-			m = current_++->move;
+			if ((!skipQuiets || current_->value >= Value_Zero)) {
+				m = current_++->move;
 
-			if (m != killers[0].move
-				&& m != killers[1].move
-				&& m != killers[2].move
-				&&m!=ttMove
-				) {
-				return m;
+				if (m != killers[0].move
+					&& m != killers[1].move
+					&& m != killers[2].move
+					&&m != ttMove
+					) {
+					return m;
 				}
+			}
+			else {
+				end_ = current_;
+			}
 			break;
+		
 		case BAD_CAPTURES:
 			return (current_--)->move;
 			break;

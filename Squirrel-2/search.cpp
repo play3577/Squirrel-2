@@ -770,7 +770,7 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 	Bound ttBound;
 	Depth ttdepth;
 	bool CaptureorPropawn;
-	bool givescheck, improve, singler_extension, move_count_pruning;
+	bool givescheck, improve, singler_extension, move_count_pruning, skipQuiets;
 	Depth extension, newdepth;
 
 #ifndef LEARN
@@ -977,6 +977,7 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 #endif
 
 			ss->static_eval = bestvalue = mate_in_ply((ss->ply)+1);
+
 			if (!pos.capture_or_propawn(mate)) { update_stats(pos, ss, mate, nullptr, 0, bonus(depth)); }
 
 			if ((ss - 1)->moveCount == 1 && pos.state()->DirtyPiece[1] == NO_PIECE && (ss - 1)->currentMove != MOVE_NULL)
@@ -984,6 +985,7 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 				Square prevSq = move_to((ss - 1)->currentMove);
 				update_cm_stats(ss - 1, moved_piece((ss - 1)->currentMove), prevSq, -bonus(depth + ONE_PLY));
 			}
+			
 #ifdef USETT
 			//‚¤`‚ñ‚±‚±‚Åmove‚ðŠi”[‚µ‚Ä‚àŒ‹‹Çmateoneply‚ÅŽ}‚ðØ‚é‚Ì‚Åttmove‚Í•K—v‚È‚¢‚µ–³‘Ê‚©HHH
 			tte->save(poskey, value_to_tt(bestvalue, ss->ply), BOUND_EXACT, depth,mate/*, ss->static_eval*/, TT.generation());
@@ -1348,7 +1350,7 @@ moves_loop:
 		
 		
 
-
+	skipQuiets = false;
 
 
 #ifdef USETT
@@ -1357,7 +1359,7 @@ moves_loop:
 	movepicker mp(pos, ss, MOVE_NONE,depth);
 #endif
 	//ŠwK’†countermoves‚É‚¨‚©‚µ‚ÈŽw‚µŽè‚ª“ü‚Á‚Ä‚¢‚é
-	while ((move = mp.return_nextmove()) != MOVE_NONE) {
+	while ((move = mp.return_nextmove(skipQuiets)) != MOVE_NONE) {
 
 		if (move == ss->excludedMove) {continue;}
 	
@@ -1457,7 +1459,10 @@ moves_loop:
 			if (!CaptureorPropawn
 				&& !givescheck) {
 
-				if (move_count_pruning) { continue; }
+				if (move_count_pruning) { 
+					skipQuiets = true;
+					continue;
+				}
 				Depth predicted_depth = std::max(newdepth - reduction<PVNode>(improve, depth, movecount), DEPTH_ZERO);
 
 				// Countermoves based pruning

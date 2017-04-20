@@ -854,10 +854,7 @@ void learnphase2body(int number)
 					}
 					pos.undo_move();
 				}
-#ifdef DEAP_LEARN
-				//---------------------------------------------------------------------------------------------------
 
-#endif
 			}//Œù”zŒvŽZ
 		skip_calc:;
 			 //ŽŸ‚Ì‹Ç–Ê‚Ö

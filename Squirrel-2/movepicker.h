@@ -91,7 +91,7 @@ public:
 
 	inline Stage ret_stage() { return st; }
 
-	Move return_nextmove();
+	Move return_nextmove(bool skipQuiets = false);
 
 	int num_move() {
 		//cout << "num_move " << (end_ - move_) << endl;
