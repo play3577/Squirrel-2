@@ -1453,7 +1453,7 @@ moves_loop:
 		//前向き枝切り
 		//これは差し手の延長を考える前にすべきではないか？？？？
 		if (!RootNode
-			&& !incheck
+			//&& !incheck
 			&&bestvalue > Value_mated_in_maxply) {
 
 			if (!CaptureorPropawn
@@ -1463,33 +1463,42 @@ moves_loop:
 					skipQuiets = true;
 					continue;
 				}
-				Depth predicted_depth = std::max(newdepth - reduction<PVNode>(improve, depth, movecount), DEPTH_ZERO);
+				int lmrdepth = std::max(newdepth - reduction<PVNode>(improve, depth, movecount), DEPTH_ZERO)/ONE_PLY;
 
 				// Countermoves based pruning
-				if (predicted_depth < 3 * ONE_PLY
+				if (
+					lmrdepth<3
 					&& (!cmh || (*cmh)[moved_piece(move)][move_to(move)] < Value_Zero)
 					&& (!fmh || (*fmh)[moved_piece(move)][move_to(move)] < Value_Zero)
-					&& (!fmh2 || (*fmh2)[moved_piece(move)][move_to(move)] < Value_Zero || (cmh && fmh))) {
+					&& (!fmh2 || (*fmh2)[moved_piece(move)][move_to(move)] < Value_Zero || (cmh && fmh)))
+				{
 					continue;
 				}
 
 				//親ノードのfutility
-				if (predicted_depth < 7 * ONE_PLY
-					&&staticeval + 256 + 200 * predicted_depth / int(ONE_PLY) <= alpha) {
+				if (
+					lmrdepth<7
+					&&!incheck
+					&&staticeval + 256 + 200 * lmrdepth <= alpha) 
+				{
 					continue;
 				}
 
-				if (predicted_depth < 8 * ONE_PLY) {
-					Value see_v = predicted_depth < 4 * ONE_PLY ? Value_Zero :
-						Value(-Eval::PawnValue * 2 * int(predicted_depth - 3 * ONE_PLY) / ONE_PLY);
-					if (!pos.see_ge(move,see_v)) { continue; }
+				if (lmrdepth < 8
+					&& !pos.see_ge(move, Value(-35 * lmrdepth*lmrdepth))) {
+					continue;
 				}
+				
 
 			}
-			else if (depth < 3 * ONE_PLY
-				&& (mp.see_sign() < 0 || (!mp.see_sign() && !pos.see_ge(move,Value_Zero)))) {
+			else if (depth<7*ONE_PLY
+				&&!extension
+				&&!pos.see_ge(move, Value(-Eval::PawnValue*int(depth/ONE_PLY)))
+				) 
+			{
 				continue;
 			}
+			
 
 		}
 		//これ早くなるんだろうか？？
