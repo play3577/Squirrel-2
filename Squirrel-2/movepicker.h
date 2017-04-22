@@ -17,6 +17,8 @@ enum Stage {
 	EVERSION,
 	START_Q_RECAPTURE,
 	RECAPTURE,
+	START_Q_CAP_PROPAWN,
+	Q_CAP_PROPAWN,
 	STOP,
 
 };
@@ -48,21 +50,7 @@ public:
 	movepicker(const Position& pos, Stack* ss_, Move ttm, Depth d);
 
 	//精子探索用コンストラクタ
-	movepicker(const Position& pos, Square recapsq,Move ttm) :pos_(pos) {
-		current_ = end_ = move_;
-		
-
-		if (pos.is_incheck()) {
-			st = START_Eversion;
-			ttMove = (ttm && pos.pseudo_legal(ttm)) ? ttm : MOVE_NONE;
-			end_ += (ttMove != MOVE_NONE);
-		}
-		else {
-			st = START_Q_RECAPTURE;
-			recapsq_ = recapsq;
-			ttMove = MOVE_NONE;
-		}
-	}
+	movepicker(const Position& pos, Square recapsq, Move ttm,Depth d);
 	////multicut用コンストラクタ
 	//movepicker(const Position& pos, Value v) :pos_(pos) {
 

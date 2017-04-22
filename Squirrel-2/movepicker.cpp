@@ -107,6 +107,14 @@ void movepicker::generatemove()
 			capturepropawn_score();
 		}*/
 		break;
+	case START_Q_CAP_PROPAWN:
+		current_ = end_;
+		st = STOP;
+		break;
+	case Q_CAP_PROPAWN:
+		end_ = move_generation<Cap_Propawn>(pos_, move_);
+		capturepropawn_score();
+		break;
 	case STOP:
 		break;
 	default:
@@ -202,6 +210,7 @@ Move movepicker::return_nextmove(bool skipQuiets)
 			}
 			break;
 		case START_Q_RECAPTURE:
+			//ここでttmoveがあれば返すようにすべきか？
 			break;
 		case RECAPTURE:
 			m = current_++->move;
@@ -209,6 +218,16 @@ Move movepicker::return_nextmove(bool skipQuiets)
 			//if (move_to(m) == recapsq_) {
 				return m;
 			//}
+			break;
+		case START_Q_CAP_PROPAWN:
+			current_++;
+			return ttMove;
+			break;
+		case Q_CAP_PROPAWN:
+			m = pick_best(current_++, end_);
+			if (m != ttMove) {
+				return m;
+			}
 			break;
 		case STOP:
 			return MOVE_NONE;
@@ -341,3 +360,30 @@ Move movepicker::pick_best(ExtMove * begin, ExtMove * end)
 	ttMove = (ttm && pos.pseudo_legal(ttm)) ? ttm : MOVE_NONE;
 	end_ += (ttMove != MOVE_NONE);
 }
+
+ //静止探索用コンストラクタ
+ movepicker::movepicker(const Position& pos, Square recapsq, Move ttm, Depth d) :pos_(pos) {
+	 ASSERT(d <= DEPTH_ZERO);
+	 current_ = end_ = move_;
+
+
+	 if (pos.is_incheck()) {
+		 st = START_Eversion;
+		 ttMove = (ttm && pos.pseudo_legal(ttm)) ? ttm : MOVE_NONE;
+		 end_ += (ttMove != MOVE_NONE);
+	 }
+	 else {
+
+		 if (d > DEPTH_QS_RECAPTURES) {
+			 st = START_Q_CAP_PROPAWN;
+			 ttMove= (ttm && pos.pseudo_legal(ttm)) ? ttm : MOVE_NONE;
+			 end_ += (ttMove != MOVE_NONE);
+
+		 }
+		 else {
+			 st = START_Q_RECAPTURE;
+			 recapsq_ = recapsq;
+			 ttMove = MOVE_NONE;
+		 }
+	 }
+ }

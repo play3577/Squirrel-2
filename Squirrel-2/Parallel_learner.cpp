@@ -857,7 +857,7 @@ void learnphase2body(int number)
 					}
 					pos.undo_move();
 				}
-#if 1
+#if 0
 				//[‚¢•]‰¿’l‚Æó‚¢•]‰¿’l‚Ì·‚©‚çŠwK(‹ZI‚ğQl)
 				//‚¤‚Ü‚­‚¢‚­‚©‚Í‚í‚©‚ç‚È‚¢
 				for (size_t i = 0; i < minfo_list.size(); i++) {

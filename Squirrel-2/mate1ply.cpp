@@ -461,6 +461,8 @@ movecheck:;
 			//修正した
 			if (!is_capture) { set_occ256(to); }
 
+			//---------よく考えたらcaptureの場合相手の駒をoccから取り除いていることになっていないのでcancapture_checkpieceでおかしなことになってないか？？
+			//----------いやtoの位置の駒がtoに効きを作ることはできないので大丈夫か...
 			put_piece(us, GOLD, to);
 
 			//ここからは玉が逃げることができるかどうか確認
@@ -499,12 +501,98 @@ cant_mate_gold:;
 		put_piece(us, removedpiece, from);
 		
 	}
-
+#if 0
 	//------------------------------銀（成り、成らずがあるため、かなり複雑そう..............）
 	//先に竜馬を調べたほうがいいかもしれない
-	//Bitboard matecandicate_silver = (occ_pt(us,SILVER))&PsuedoGivesCheckBB[us][SILVER][eksq];
-	////pinゴマを動かそうとしてはいけない（まあpinをしている駒をとることで王手できる場合もあるがそれはイレギュラーなので考えないほうがいいだろう）
-	//matecandicate_silver = andnot(matecandicate_silver, st->blocker[us]);
+	Bitboard matecandicate_silver = (occ_pt(us,SILVER))&PsuedoGivesCheckBB[us][SILVER][eksq];
+	//pinゴマを動かそうとしてはいけない（まあpinをしている駒をとることで王手できる場合もあるがそれはイレギュラーなので考えないほうがいいだろう）
+	matecandicate_silver = andnot(matecandicate_silver, st->blocker[us]);
+	const Bitboard movetoBB_SILVER = andnot(StepEffect[enemy][SILVER][eksq], occ(us));//駒の移動先
+
+	while (matecandicate_silver.isNot()) {
+
+		bool canpromte_from = false;
+		const Square from = matecandicate_silver.pop();
+		if ((SquareBB[from] & canPromoteBB[us]).isNot()) { canpromte_from = true; }//fromが3段目以内なので成ることができる
+		Bitboard toBB = movetoBB_SILVER&StepEffect[us][SILVER][from];
+		Bitboard canking_escape;
+		ASSERT(piece_type(piece_on(from)) == SILVER); 
+		ASSERT(piece_color(piece_on(from)) == us);
+		//まだ成っていないので取り除く駒は銀でいい。
+		const Piece removedpiece = SILVER;
+		remove_occ256(from);
+		remove_piece(us,SILVER, from);
+//		cout <<"toBB"<<endl<< toBB << endl;
+		while (toBB.isNot())
+		{
+			const Square to = toBB.pop();//銀を移動させる。
+			bool canpromote_to;
+			((SquareBB[to] & canPromoteBB[us]).isNot()) ? canpromote_to=true: canpromote_to=false;//移動先で成れるか
+
+			if (!attackers_to(us, to, occ256).isNot()) { goto cant_mate_silver; }//移動先に味方の駒の効きが聞いていなければとられてしまう
+			if (cancapture_checkpiece(to)) { goto cant_mate_silver; }//toに駒を置くと捕獲されてしまう
+
+			const bool is_capture = (piece_on(to) != NO_PIECE);
+
+			if (!is_capture) { set_occ256(to); }
+			put_piece(us, SILVER, to);
+			canking_escape = andnot(StepEffect[us][KING][eksq], (occ(enemy) | SquareBB[to] | StepEffect[us][SILVER][to]));//王の逃げ場候補
+//			cout << "cankingescape" << endl << canking_escape << endl;
+			while (canking_escape.isNot()) {
+				const Square escapeto = canking_escape.pop();//逃げ先。
+				if (!attackers_to(us, escapeto, occ256).isNot()) {
+					if (!is_capture) { remove_occ256(to); }
+					remove_piece(us, SILVER, to);
+					goto mate_progold;
+				}
+			}
+			//抜けてきたということは詰ませることができた
+			set_occ256(from);
+			put_piece(us, removedpiece, from);
+
+			if (!is_capture) { remove_occ256(to); }//捕獲だった場合はここで取り除いてはいけない！！！
+
+			remove_piece(us, SILVER, to);
+			return make_move(from, to, add_color(removedpiece, us));
+
+		mate_progold:;
+			//なることができる場合(こんな方法じゃ遅いよなぁ..)
+			if (canpromte_from || canpromote_to) {
+				if ((StepEffect[us][GOLD][to] & SquareBB[eksq]).isNot() == false) { goto cant_mate_silver; }//王手をできていない
+				if (!is_capture) { set_occ256(to); }
+				put_piece(us, GOLD, to);
+
+				
+				canking_escape = andnot(StepEffect[us][KING][eksq], (occ(enemy) | SquareBB[to] | StepEffect[us][GOLD][to]));//王の逃げ場候補
+//				cout << "cankingescape pro" << endl << canking_escape << endl;
+				while (canking_escape.isNot()) {
+					const Square escapeto = canking_escape.pop();//逃げ先。
+					if (!attackers_to(us, escapeto, occ256).isNot()) {
+						if (!is_capture) { remove_occ256(to); }
+						remove_piece(us, GOLD, to);
+						goto cant_mate_silver;
+					}
+				}
+
+				//抜けてきたということは詰ませることができた
+				set_occ256(from);
+				put_piece(us, removedpiece, from);
+
+				if (!is_capture) { remove_occ256(to); }//捕獲だった場合はここで取り除いてはいけない！！！
+
+				remove_piece(us, GOLD, to);
+				return make_movepromote(from, to, add_color(removedpiece, us));
+			}
+		cant_mate_silver:;
+		}//while toBB
+		//取り除いた駒を戻す
+		set_occ256(from);
+		put_piece(us, removedpiece, from);
+	}
+#endif
+
+
+
 
 
 #endif

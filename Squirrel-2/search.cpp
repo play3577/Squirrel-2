@@ -1133,7 +1133,7 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 		(ss + 1)->skip_early_prunning = true;//前向き枝切りはしない。（２回連続パスはよろしくない）
 
 		//nullmoveは取り合いが起こらないので静止探索を呼ばない。（静止探索で取り合い以外も探索するように成れば実装を変更する）
-		null_value = (depth - R) < ONE_PLY ? staticeval : -search<NonPV>(pos, ss + 1, -(beta), -beta + 1, depth - R,!cutNode);
+		null_value = (depth - R) < ONE_PLY ? -qsearch<NonPV, false>(pos, ss + 1, -beta, -beta + 1,DEPTH_ZERO) : -search<NonPV>(pos, ss + 1, -(beta), -beta + 1, depth - R,!cutNode);
 		(ss + 1)->skip_early_prunning = false;
 		pos.undo_nullmove();
 
@@ -1154,7 +1154,7 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 			//またここに入ってこないように前向き枝切りには入らないようにする。
 			ss->skip_early_prunning = true;
 			//do_moveをしていないのでss,betaでよい。
-			Value v= (depth - R) < ONE_PLY ? staticeval : search<NonPV>(pos, ss ,beta-1, beta, depth - R,false);
+			Value v= (depth - R) < ONE_PLY ? qsearch<NonPV, false>(pos, ss, beta - 1, beta,DEPTH_ZERO) : search<NonPV>(pos, ss ,beta-1, beta, depth - R,false);
 			ss->skip_early_prunning = false;
 
 			if (v >= beta) {
@@ -1789,7 +1789,7 @@ Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
 	ASSERT( depth <= DEPTH_ZERO);
 	ASSERT(alpha >= -Value_Infinite&&alpha < beta&&beta<=Value_Infinite);
 	ASSERT(PvNode || (alpha == beta - 1));
-	ASSERT(pos.state()->lastmove != MOVE_NULL);
+	//ASSERT(pos.state()->lastmove != MOVE_NULL);
 	ASSERT(incheck == pos.is_incheck());
 	Move pv[MAX_PLY + 1];
 	Move move;
@@ -2013,7 +2013,7 @@ Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
 	//ここでnullmoveが入ってきた場合のことも考えないといけない。
 	//というかnullmoveが入ってきたら取リ返すなんてありえないのでここで評価値返すしか無いでしょ(王手も生成するなら話は別）
 #ifdef USETT
-	movepicker mp(pos, move_to(pos.state()->lastmove),ttMove);
+	movepicker mp(pos, move_to(pos.state()->lastmove),ttMove,depth);
 #else
 	movepicker mp(pos, move_to(pos.state()->lastmove), MOVE_NONE);
 #endif

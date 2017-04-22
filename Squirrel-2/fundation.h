@@ -383,7 +383,7 @@ enum Depth {
 	HALF_PLY = 1,
 	ONE_PLY = 2,
 	MAX_DEPTH = 64,
-
+	DEPTH_QS_RECAPTURES =-10, //-5 * ONE_PLY,
 	DEPTH_NONE = -12,//6*ONEPLY
 };
 
