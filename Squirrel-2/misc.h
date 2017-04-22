@@ -182,6 +182,16 @@ inline double dsigmoid(const double x) {
 
 #endif
 
+inline double win_sig(const double x) {
+	const double a = 1.0 / 600.0;
+	return (1.0) / (1.0 + exp(-a*x));
+}
+
+inline double win_dsig(const double x) {
+	const double a = 1.0 / 600.0;
+	return a*win_sig(x)*(1 - win_sig(x));
+}
+
 
 inline double normal_dist(double mean, double stddiv);
 
