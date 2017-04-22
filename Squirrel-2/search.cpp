@@ -73,7 +73,7 @@ void update_stats(const Position& pos, Stack* ss, Move move, Move* quiets, int q
 
 template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value beta, Depth depth, bool cutNode);
 
-template <Nodetype NT>
+template <Nodetype NT,bool incheck>
 Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth);
 
 #ifdef LEARN
@@ -1063,11 +1063,11 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 
 		//stackはss+1でなくssでいいのか？？？（do_moveをしていないので構わない（ss->staticEvalなどの情報を使いまわせる！！！！））
 		if (depth <= ONE_PLY) {
-			return qsearch<NonPV>(pos, ss, alpha, beta, DEPTH_ZERO);
+			return qsearch<NonPV,false>(pos, ss, alpha, beta, DEPTH_ZERO);
 		}
 
 		Value ralpha = alpha - razor_margin[depth / ONE_PLY];
-		Value v = qsearch<NonPV>(pos, ss, ralpha, ralpha + 1, DEPTH_ZERO);
+		Value v = qsearch<NonPV,false>(pos, ss, ralpha, ralpha + 1, DEPTH_ZERO);
 		if (v <= ralpha) {
 			ASSERT(v > -Value_Infinite&&v < Value_Infinite);
 			return v;
@@ -1132,7 +1132,7 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 		pos.do_nullmove(&si);
 		(ss + 1)->skip_early_prunning = true;//前向き枝切りはしない。（２回連続パスはよろしくない）
 
-		//nullmoveは取り合いが起こらないので静止探索を呼ばない。（静止探索で王手も探索するように成れば実装を変更する）
+		//nullmoveは取り合いが起こらないので静止探索を呼ばない。（静止探索で取り合い以外も探索するように成れば実装を変更する）
 		null_value = (depth - R) < ONE_PLY ? staticeval : -search<NonPV>(pos, ss + 1, -(beta), -beta + 1, depth - R,!cutNode);
 		(ss + 1)->skip_early_prunning = false;
 		pos.undo_nullmove();
@@ -1627,7 +1627,7 @@ moves_loop:
 			}
 			else {
 				//value = Eval::eval(pos);
-				value = -qsearch<NonPV>(pos, ss + 1, -(alpha + 1), -alpha, DEPTH_ZERO);
+				value = givescheck ? -qsearch<NonPV,true>(pos, ss + 1, -(alpha + 1), -alpha, DEPTH_ZERO) : -qsearch<NonPV, false>(pos, ss + 1, -(alpha + 1), -alpha, DEPTH_ZERO);
 			}
 
 		}
@@ -1642,7 +1642,7 @@ moves_loop:
 			}
 			else {
 				//value = Eval::eval(pos);
-				value = -qsearch<PV>(pos, ss + 1, -beta, -alpha, DEPTH_ZERO);
+				value =givescheck ? -qsearch<PV,true>(pos, ss + 1, -beta, -alpha, DEPTH_ZERO) : -qsearch<PV, false>(pos, ss + 1, -beta, -alpha, DEPTH_ZERO);
 			}
 		}
 
@@ -1782,7 +1782,7 @@ moves_loop:
 
 //静止探索(ここかなり時間を食うためできるだけ枝切りしたい)
 //http://yaneuraou.yaneu.com/2016/11/03/%E6%8E%A2%E7%B4%A2%E3%81%AB%E3%81%8A%E3%81%91%E3%82%8B%E6%9E%9D%E5%88%88%E3%82%8A%E3%81%AE%E9%9A%8E%E5%B1%A4%E6%80%A7/
-template <Nodetype NT>
+template <Nodetype NT, bool incheck>
 Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
 
 	const bool PvNode = (NT == PV);
@@ -1790,7 +1790,7 @@ Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
 	ASSERT(alpha >= -Value_Infinite&&alpha < beta&&beta<=Value_Infinite);
 	ASSERT(PvNode || (alpha == beta - 1));
 	ASSERT(pos.state()->lastmove != MOVE_NULL);
-
+	ASSERT(incheck == pos.is_incheck());
 	Move pv[MAX_PLY + 1];
 	Move move;
 	Move bestMove;
@@ -1800,7 +1800,7 @@ Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
 	si.clear_stPP();
 	Value staticeval,oldAlpha;
 	int movecount = 0;
-	bool incheck = pos.is_incheck();
+	//bool incheck = pos.is_incheck();
 	Thread* thisthread = pos.searcher();
 	//-----TT関連
 	//読み太ではTTから読み込んでいる途中でTTが破壊された場合のことも考えていたので、それを参考にする
@@ -2086,7 +2086,7 @@ Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
 		if (pos.is_legal(move) == false) { continue; }
 		movecount++;
 		pos.do_move(move, &si, givescheck);
-		value = -qsearch<NT>(pos, ss + 1, -beta, -alpha, depth - ONE_PLY);
+		value = (givescheck)? -qsearch<NT,true>(pos, ss + 1, -beta, -alpha, depth - ONE_PLY): -qsearch<NT, false>(pos, ss + 1, -beta, -alpha, depth - ONE_PLY);
 		pos.undo_move();
 
 		ASSERT(value > -Value_Infinite&&value < Value_Infinite);

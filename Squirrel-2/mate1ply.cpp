@@ -501,10 +501,11 @@ cant_mate_gold:;
 	}
 
 	//------------------------------銀（成り、成らずがあるため、かなり複雑そう..............）
-
+	//先に竜馬を調べたほうがいいかもしれない
 	//Bitboard matecandicate_silver = (occ_pt(us,SILVER))&PsuedoGivesCheckBB[us][SILVER][eksq];
 	////pinゴマを動かそうとしてはいけない（まあpinをしている駒をとることで王手できる場合もあるがそれはイレギュラーなので考えないほうがいいだろう）
-	//matecandicate_silver = andnot(matecandicate_silver, pinned[us]);
+	//matecandicate_silver = andnot(matecandicate_silver, st->blocker[us]);
+
 
 #endif
 	return MOVE_NONE;

@@ -301,7 +301,6 @@ void movepicker::eversion_score()
 		/*if ((see = pos_.see_ge(m,Value_Zero))<Value_Zero) {
 			i->value = see - HistoryStats::Max;
 		}*/
-		//‚±‚±‚Å‚à‚µ‚©‚µ‚½‚çƒoƒO‚ª‚ ‚é‚Ì‚©‚à‚µ‚ê‚È‚¢
 		if (pos_.capture_or_propawn(m)) {
 			i->value = Value(Eval::piece_value[capturedpt]) - LVA(movept) + HistoryStats::Max;
 			if (is_promote(m)) {
