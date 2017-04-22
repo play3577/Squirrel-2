@@ -502,12 +502,72 @@ cant_mate_gold:;
 		
 	}
 #if 0
+	//-----------------------------------------竜
+	const Bitboard movetoBB_DRAGON = andnot(StepEffect[us][DRAGON][eksq],occ(us));//近接王手ができる縦横4マス　離れた王手は考えない　
+	Bitboard mate_candicate_Dragon = occ_pt(us, DRAGON);//飛車の場合Psuedogives checkは作成できない
+	while (mate_candicate_Dragon.isNot())
+	{
+		const Square from = mate_candicate_Dragon.pop();
+		Bitboard toBB = movetoBB_DRAGON&(rook_effect(occ256, from) | StepEffect[us][KING][from]);
+		Bitboard cankingescape;
+		const Piece removedpiece = DRAGON;
+		ASSERT(removedpiece == piece_type(piece_on(from)));
+		//駒を取り除く
+		remove_occ256(from);
+		remove_piece(us, removedpiece, from);
+
+		while (toBB.isNot()) {
+		
+			const Square to = toBB.pop();
+			const bool is_capture = (piece_on(to) != NO_PIECE);
+
+			if (!attackers_to(us, to, occ256).isNot()) { goto cant_matemove_dragon; }//もし移動先に味方の駒の効きが聞いていなければとられてしまうので罪にならない。
+			if (cancapture_checkpiece(to)) { goto cant_matemove_dragon; }//王手をかけた駒を捕獲できた。
+
+			//駒をtoに置く
+			if (!is_capture) { set_occ256(to); }
+			put_piece(us, DRAGON, to);
+			//逃げ場
+			cankingescape = andnot(StepEffect[us][KING][eksq], (occ(enemy) | SquareBB[to] | rook_effect(occ256,to) | StepEffect[us][KING][to]));
+
+			while (cankingescape.isNot())
+			{
+				const Square escapeto = cankingescape.pop();
+
+				if (!attackers_to(us, escapeto, occ256).isNot()) {
+					if (!is_capture) { remove_occ256(to); }
+					remove_piece(us, DRAGON, to);
+					goto cant_matemove_dragon;
+				}
+			}
+			//このwhileを抜けてこれたということはつまされてしまったということ。
+			set_occ256(from);
+			put_piece(us, removedpiece, from);
+
+			if (!is_capture) { remove_occ256(to); }//捕獲だった場合はここで取り除いてはいけない！！！
+
+			remove_piece(us, DRAGON, to);
+			return make_move(from, to, add_color(removedpiece, us));
+
+
+cant_matemove_dragon:;
+		}
+		set_occ256(from);
+		put_piece(us, removedpiece, from);
+
+
+	}
+
+#endif
+
+
+#if 1
 	//------------------------------銀（成り、成らずがあるため、かなり複雑そう..............）
 	//先に竜馬を調べたほうがいいかもしれない
 	Bitboard matecandicate_silver = (occ_pt(us,SILVER))&PsuedoGivesCheckBB[us][SILVER][eksq];
 	//pinゴマを動かそうとしてはいけない（まあpinをしている駒をとることで王手できる場合もあるがそれはイレギュラーなので考えないほうがいいだろう）
 	matecandicate_silver = andnot(matecandicate_silver, st->blocker[us]);
-	const Bitboard movetoBB_SILVER = andnot(StepEffect[enemy][SILVER][eksq], occ(us));//駒の移動先
+	const Bitboard movetoBB_SILVER = andnot(StepEffect[enemy][SILVER][eksq], occ(us));
 
 	while (matecandicate_silver.isNot()) {
 
