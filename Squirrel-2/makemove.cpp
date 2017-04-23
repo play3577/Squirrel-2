@@ -987,6 +987,27 @@ template ExtMove* move_generation<Quiet>(const Position& pos, ExtMove* movelist)
 template ExtMove* move_generation<Drop>(const Position& pos, ExtMove* movelist);
 
 
+
+#if 1
+template<Piece pt>
+ExtMove* make_checkdrop(const Position& pos,const Bitboard target, ExtMove * movelist) {
+
+	const Color us = pos.sidetomove();
+	auto hands = pos.hand(us);
+	int pc2 = add_color(pt,us) << 17;
+	Bitboard target2 = target;
+	if (num_pt(hands, pt) != 0) {
+		while (target2.isNot()) {
+			Square to = target2.pop();
+			movelist++->move = make_drop2(to, pc2);
+		}
+	}
+	return movelist;
+}
+
+
+
+
 /*
 静止探索で使うquietな王手生成
 
@@ -998,14 +1019,27 @@ template ExtMove* move_generation<Drop>(const Position& pos, ExtMove* movelist);
 
 ここで１と３には重複があるので１で3も生成しないようにしなければならない。
 両王手を先に生成しておくべきだと思うので3から先に生成すべき？？
+
+
+
+テスト局面
+2重王手可能　position sfen lnsgkgsnl/1r5b1/pp2G1ppp/9/9/4RB3/PPPPPPPPP/9/LNSGK1SNL b P3p 1 OK
+position sfen lnsgkgsnl/1r5b1/pp2GLppp/9/9/4RB3/PPPPP1PP1/9/LNSGK1SN1 b 3P3p 1 OK
+
 */
-#if 1
+
+
+
+
+//template<Color us,Square eksq,bool is_eksq_infield>
 ExtMove * move_generation_quietcheck(const Position & pos, ExtMove * movelist) {
 
 	ASSERT(!pos.is_incheck());
 	const Color us = pos.sidetomove();
 	const Color enemy = opposite(us);
 	const Square eksq = pos.ksq(opposite(us));
+	const bool is_eksq_infield=(SquareBB[eksq] & canPromoteBB[us]).isNot();//相手玉が敵陣にいるかどうか
+
 	Bitboard apart_check_brocker = pos.state()->pinner[us];//多分pinner_usでOKのはず（名前の付け方がまずかった）これを動かすと関節王手になる
 
 	//１味方の飛び効きを遮っている駒をどかす
@@ -1021,30 +1055,85 @@ ExtMove * move_generation_quietcheck(const Position & pos, ExtMove * movelist) {
 
 		Bitboard target;
 		if (pt == PAWN) {
-			target = andnot(StepEffect[us][PAWN][from], LineBB[from][eksq] | effectBB(pos.ret_occ_256(), pt, us, eksq)|pos.occ_all());
+			target = andnot(StepEffect[us][PAWN][from], LineBB[from][eksq] | effectBB(pos.ret_occ_256(), pt, enemy, eksq)|pos.occ_all());
 			target = andnot(target, canPromoteBB[us]);
 		}
 		else {
-			target = andnot(effectBB(pos.ret_occ_256(), pt, us, from), LineBB[from][eksq] | effectBB(pos.ret_occ_256(), pt, us, eksq) | pos.occ_all());
+			target = andnot(effectBB(pos.ret_occ_256(), pt, us, from), LineBB[from][eksq] | effectBB(pos.ret_occ_256(), pt, enemy, eksq) | pos.occ_all());
 		}
 		while (target.isNot())
 		{
 			Square to = target.pop();
-			movelist++->move = make_move2(from, to, pc2);
+			movelist++->move = make_move2(from2, to, pc2);
 		}
 
 	}
 	//２王手できる範囲に駒を打つ
 	//３王手できる範囲に駒を移動させる
+
+	//is_ksqIncheckはtemplate化できるな...
 	Bitboard target;
+
 	//歩
-	target = andnot(StepEffect[enemy][PAWN][eksq],pos.occ_all()|canPromoteBB[us]);
-	make_move_PAWN_bitshift(pos, target, movelist);
+	target = andnot(StepEffect[enemy][PAWN][eksq], pos.occ_all() | canPromoteBB[us]);
+	movelist=make_move_PAWN_bitshift(pos, target, movelist);
+
 	//香
-	target = andnot(lance_effect(pos.ret_occ_256(), enemy, eksq),pos.occ_all());
-	make_move_LANCE(pos, target, movelist);
-	//make_checkdrop<us, LANCE>(pos, movelist);//後で作成する
+	target = andnot(lance_effect(pos.ret_occ_256(), enemy, eksq), pos.occ_all());
+	movelist = make_checkdrop<LANCE>(pos, target, movelist);
+	if (is_eksq_infield) { target = andnot(target | (StepEffect[enemy][GOLD][eksq]& canPromoteBB[us]), pos.occ_all()); }//ちゃんと作れてないが,まぁ大体で...
+	movelist = make_move_LANCE(pos, target, movelist);
 
+	//桂馬
+	target = andnot(StepEffect[enemy][KNIGHT][eksq], pos.occ_all());
+	movelist= make_checkdrop<KNIGHT>(pos, target, movelist);
+	if (is_eksq_infield) {target = andnot(target | (StepEffect[enemy][GOLD][eksq]& canPromoteBB[us]), pos.occ_all());}//これ非効率的なんだが仕方ない
+	movelist = make_move_KNIGHT(pos, target, movelist);
 
+	//銀
+	target = andnot(StepEffect[enemy][SILVER][eksq], pos.occ_all());
+	movelist = make_checkdrop<SILVER>(pos, target, movelist);
+	if (is_eksq_infield) { target = andnot(target | (StepEffect[enemy][GOLD][eksq]& canPromoteBB[us]), pos.occ_all());}
+	movelist = make_move_SILVER(pos, target, movelist);
+
+	//金
+	target= andnot(StepEffect[enemy][GOLD][eksq], pos.occ_all());
+	movelist = make_move_ASGOLD(pos, target, movelist);
+	movelist=make_checkdrop<GOLD>(pos,target, movelist);
+
+	//飛車
+	target = andnot(rook_effect(pos.ret_occ_256(), eksq), pos.occ_all());
+	movelist = make_checkdrop<ROOK>(pos,target, movelist);
+	if (is_eksq_infield) {target = andnot(target|(StepEffect[us][KING][eksq]& canPromoteBB[us]), pos.occ_all());}
+	movelist = make_move_ROOK(pos, target, movelist);
+
+	//角
+	target = andnot(bishop_effect(pos.ret_occ_256(), eksq), pos.occ_all()); 
+	movelist = make_checkdrop<BISHOP>(pos,target, movelist);
+	if (is_eksq_infield) {target = andnot(target| (StepEffect[us][KING][eksq]& canPromoteBB[us]), pos.occ_all());}
+	movelist = make_move_BISHOP(pos, target, movelist);
+	
+
+	//竜
+	target = andnot(rook_effect(pos.ret_occ_256(), eksq) | StepEffect[us][KING][eksq], pos.occ_all());
+	movelist = make_move_DRAGON(pos, target, movelist);
+	//ユニコーン
+	target = andnot(bishop_effect(pos.ret_occ_256(), eksq) | StepEffect[us][KING][eksq], pos.occ_all());
+	movelist = make_move_UNICORN(pos, target, movelist);
+
+	return movelist;
 }
+
+ExtMove * test_quietcheck(const Position & pos, ExtMove * movelist) {
+
+	//const Color us = pos.sidetomove();
+	//const Square eksq = pos.ksq(opposite(us));
+	//const bool is_eksq_infield=(SquareBB[eksq] & canPromoteBB[us]).isNot();//相手玉が敵陣にいるかどうか
+
+	movelist = move_generation_quietcheck(pos, movelist);
+
+	return movelist;
+}
+
+
 #endif

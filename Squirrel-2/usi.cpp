@@ -516,6 +516,17 @@ void USI::loop()
 			*/
 			cout << pos.is_nyugyoku() << endl;
 		}
+		else if (token == "qc") {
+			cout << pos << endl;
+			ExtMove moves_[600], *end;
+			end = moves_;
+			end = test_quietcheck(pos, moves_);
+			for (ExtMove* i = moves_; i < end; i++) {
+				check_move(i->move);
+				
+			}
+			
+		}
 		else if (token == "smove") {
 
 			string move;
