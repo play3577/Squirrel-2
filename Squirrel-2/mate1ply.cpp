@@ -617,7 +617,7 @@ cant_matemove_dragon:;
 	}
 #endif
 
-#if 1
+#if 0
 	//------------------------------銀（成り、成らずがあるため、かなり複雑そう..............）
 	//先に竜馬を調べたほうがいいかもしれない
 	Bitboard matecandicate_silver = (occ_pt(us,SILVER))&PsuedoGivesCheckBB[us][SILVER][eksq];

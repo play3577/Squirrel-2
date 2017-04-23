@@ -2013,7 +2013,7 @@ Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
 	//ここでnullmoveが入ってきた場合のことも考えないといけない。
 	//というかnullmoveが入ってきたら取リ返すなんてありえないのでここで評価値返すしか無いでしょ(王手も生成するなら話は別）
 #ifdef USETT
-	movepicker mp(pos, move_to(pos.state()->lastmove),ttMove,depth);
+	movepicker mp(pos, move_to(pos.state()->lastmove),ttMove,depth,ss);
 #else
 	movepicker mp(pos, move_to(pos.state()->lastmove), MOVE_NONE);
 #endif
