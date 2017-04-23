@@ -211,6 +211,9 @@ Move movepicker::return_nextmove(bool skipQuiets)
 			break;
 		case START_Q_RECAPTURE:
 			//ここでttmoveがあれば返すようにすべきか？
+			//ttMoveを使うようにすると深さが深くなりすぎてエラーが出てきてしまったまあそりゃそうだ
+			/*current_++;
+			return ttMove;*/
 			break;
 		case RECAPTURE:
 			m = current_++->move;
@@ -383,7 +386,9 @@ Move movepicker::pick_best(ExtMove * begin, ExtMove * end)
 		 else {
 			 st = START_Q_RECAPTURE;
 			 recapsq_ = recapsq;
-			 ttMove = MOVE_NONE;
+			/* ttMove = (ttm && pos.pseudo_legal(ttm)) ? ttm : MOVE_NONE;
+			 end_ += (ttMove != MOVE_NONE);*/
+			 //ttMove = MOVE_NONE;
 		 }
 	 }
  }

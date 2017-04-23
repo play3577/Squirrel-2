@@ -20,7 +20,8 @@ Bitboard StepEffect[ColorALL][PT_ALL][SQ_NUM];//OK
 //SQ1とSQ2の間が1になっているbitboard
 //間というのは(SQ1,SQ2) つまり開区間とする
 Bitboard BetweenBB[SQ_NUM][SQ_NUM];
-
+//SQ1とSQ2のある一列が１になっているbitboard
+Bitboard LineBB[SQ_NUM][SQ_NUM];
 //127・・7bitすべて１の場合 
 //飛車の効きと角の利きは前後対称
 //成った場合はlongeffectに王の機器を足せばいい。
@@ -440,27 +441,6 @@ void bitboard_init()
 	}
 
 
-	//============================bitweenBBの作成
-	//上で作成したdirectiontableを用いれば簡単に作成できると考えられる
-	for (Square from = SQ_ZERO; from < SQ_NUM; from++) {
-		for (Square to = SQ_ZERO; to < SQ_NUM; to++) {
-
-			Direction d = direct_table[from][to];
-
-			if (d != Direction(0)) {
-
-				Square beteen = from + Square(d);
-
-				//rankがずれてるかどうかとか確認してないけどdirection_tableでそのあたりは確認済みであるため大丈夫だと考えられる。
-				while(beteen!=to){
-				
-					BetweenBB[from][to] |= SquareBB[beteen];
-
-					beteen += Square(d);
-				}
-			}
-		}
-	}
 
 
 	//-----------------------------psuedo attack
@@ -582,6 +562,73 @@ void bitboard_init()
 	cout <<"more than one"<< more_than_one(LancePsuedoAttack[c][sq]) << endl;
 	}
 	}*/
+
+	//============================bitweenBBの作成
+	//上で作成したdirectiontableを用いれば簡単に作成できると考えられる
+	for (Square from = SQ_ZERO; from < SQ_NUM; from++) {
+		for (Square to = SQ_ZERO; to < SQ_NUM; to++) {
+
+			Direction d = direct_table[from][to];
+
+			{
+				//LineBBの作成もついでに行う
+				switch (d)
+				{
+				case UP:
+					LineBB[from][to] = LongRookEffect_tate[from][0];
+					break;
+				case RightUP:
+					LineBB[from][to] = LongBishopEffect_plus45[from][0];
+					break;
+				case Right:
+					LineBB[from][to] = LongRookEffect_yoko[from][0];
+					break;
+				case RightDOWN:
+					LineBB[from][to] = LongBishopEffect_minus45[from][0];
+					break;
+				case DOWN:
+					LineBB[from][to] = LongRookEffect_tate[from][0];
+					break;
+				case LeftDOWN:
+					LineBB[from][to] = LongBishopEffect_plus45[from][0];
+					break;
+				case Left:
+					LineBB[from][to] = LongRookEffect_yoko[from][0];
+					break;
+				case LeftUP:
+					LineBB[from][to] = LongBishopEffect_minus45[from][0];
+					break;
+				default:
+					LineBB[from][to] = ZeroBB;
+					break;
+				}
+
+			}
+
+			if (d != Direction(0)) {
+
+				Square beteen = from + Square(d);
+
+				//rankがずれてるかどうかとか確認してないけどdirection_tableでそのあたりは確認済みであるため大丈夫だと考えられる。
+				while (beteen != to) {
+
+					BetweenBB[from][to] |= SquareBB[beteen];
+
+					beteen += Square(d);
+				}
+			}
+		}
+	}
+	//OK
+/*
+	for (Square from = SQ_ZERO; from < SQ_NUM; from++) {
+		for (Square to = SQ_ZERO; to < SQ_NUM; to++) {
+			cout << "linebb "<<from<<":"<<to << endl << LineBB[from][to] << endl;
+			cout << "betweenbb " << from << ":" << to << endl << BetweenBB[from][to] << endl;
+		}
+	}
+*/
+
 
 
 	//------------------gives_check_table

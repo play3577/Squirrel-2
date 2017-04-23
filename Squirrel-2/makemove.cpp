@@ -985,3 +985,37 @@ Drop,
 template ExtMove* move_generation<Cap_Propawn>(const Position& pos, ExtMove* movelist);
 template ExtMove* move_generation<Quiet>(const Position& pos, ExtMove* movelist);
 template ExtMove* move_generation<Drop>(const Position& pos, ExtMove* movelist);
+
+
+/*
+静止探索で使うquietな王手生成
+
+将棋の場合
+１味方の飛び効きを遮っている駒をどかす
+２王手できる範囲に駒を打つ
+３王手できる範囲に駒を移動させる
+の3つの王手の方法がある
+
+ここで１と３には重複があるので１で3も生成しないようにしなければならない。
+両王手を先に生成しておくべきだと思うので3から先に生成すべき？？
+*/
+#if 0
+ExtMove * move_generation_quietcheck(const Position & pos, ExtMove * movelist) {
+
+	ASSERT(!pos.is_incheck());
+	const Color us = pos.sidetomove();
+	Bitboard apart_check_brocker = pos.state()->pinner[us];//多分pinner_usでOKのはず（名前の付け方がまずかった）これを動かすと関節王手になる
+
+	while (apart_check_brocker.isNot())
+	{
+		const Square from = apart_check_brocker.pop();
+		const Piece pt = piece_type( pos.piece_on(from));
+		if (pt == KING) { continue; }//king動かすのはやばそうなのでやめとく
+		ASSERT(piece_color(pos.piece_on(from)) == us);
+		Bitboard target = andnot(effectBB(pos.ret_occ_256(), pt, us, from), effectBB(pos.ret_occ_256(), pt, us, pos.ksq(opposite(us))));
+	}
+
+
+
+}
+#endif

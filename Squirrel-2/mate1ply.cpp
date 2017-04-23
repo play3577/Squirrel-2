@@ -501,7 +501,7 @@ cant_mate_gold:;
 		put_piece(us, removedpiece, from);
 		
 	}
-#if 1
+#if 0
 	//-----------------------------------------竜
 	const Bitboard movetoBB_DRAGON = andnot(StepEffect[us][DRAGON][eksq],occ(us));//近接王手ができる縦横4マス　離れた王手は考えない　
 	Bitboard mate_candicate_Dragon = occ_pt(us, DRAGON);//飛車の場合Psuedogives checkは作成できない
@@ -559,7 +559,7 @@ cant_matemove_dragon:;
 	}
 
 #endif
-#if 1
+#if 0
 	//-----------ユニコーン
 	const Bitboard movetoBB_UNICORN = andnot(StepEffect[us][UNICORN][eksq], occ(us));//近接王手ができる縦横4マス　離れた王手は考えない　
 	Bitboard mate_candicate_UNICORN = occ_pt(us, UNICORN);//飛車の場合Psuedogives checkは作成できない

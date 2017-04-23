@@ -129,7 +129,7 @@ extern Direction direct_table[SQ_NUM][SQ_NUM];
 //ècâ°éŒÇﬂÇÃä÷åWÇ…Ç»Ç¢Ç∆Ç±ÇÎÇÕ2Ç…Ç»ÇÈÇ™Ç‹Ç†åjînÇæÇµÇ¢Ç¢Ç©
 extern int distance_table[SQ_NUM][SQ_NUM];
 extern Bitboard BetweenBB[SQ_NUM][SQ_NUM];//OK
-
+extern Bitboard LineBB[SQ_NUM][SQ_NUM];
 void bitboard_debug();
 void bitboard_init();
 Bitboard effectBB(const Position &pos, const Piece pt, const Color c, const Square sq);
