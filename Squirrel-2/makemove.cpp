@@ -999,22 +999,51 @@ template ExtMove* move_generation<Drop>(const Position& pos, ExtMove* movelist);
 ここで１と３には重複があるので１で3も生成しないようにしなければならない。
 両王手を先に生成しておくべきだと思うので3から先に生成すべき？？
 */
-#if 0
+#if 1
 ExtMove * move_generation_quietcheck(const Position & pos, ExtMove * movelist) {
 
 	ASSERT(!pos.is_incheck());
 	const Color us = pos.sidetomove();
+	const Color enemy = opposite(us);
+	const Square eksq = pos.ksq(opposite(us));
 	Bitboard apart_check_brocker = pos.state()->pinner[us];//多分pinner_usでOKのはず（名前の付け方がまずかった）これを動かすと関節王手になる
 
+	//１味方の飛び効きを遮っている駒をどかす
 	while (apart_check_brocker.isNot())
 	{
 		const Square from = apart_check_brocker.pop();
 		const Piece pt = piece_type( pos.piece_on(from));
+		const int from2 = from << 7;
+		const int pc2 = pos.piece_on(from) << 17;
 		if (pt == KING) { continue; }//king動かすのはやばそうなのでやめとく
 		ASSERT(piece_color(pos.piece_on(from)) == us);
-		Bitboard target = andnot(effectBB(pos.ret_occ_256(), pt, us, from), effectBB(pos.ret_occ_256(), pt, us, pos.ksq(opposite(us))));
-	}
+		//移動先（fromとeksqの直線上（この直線状には飛びゴマもある）だと空き王手にならない　直接王手は別で考えるので省く）
 
+		Bitboard target;
+		if (pt == PAWN) {
+			target = andnot(StepEffect[us][PAWN][from], LineBB[from][eksq] | effectBB(pos.ret_occ_256(), pt, us, eksq)|pos.occ_all());
+			target = andnot(target, canPromoteBB[us]);
+		}
+		else {
+			target = andnot(effectBB(pos.ret_occ_256(), pt, us, from), LineBB[from][eksq] | effectBB(pos.ret_occ_256(), pt, us, eksq) | pos.occ_all());
+		}
+		while (target.isNot())
+		{
+			Square to = target.pop();
+			movelist++->move = make_move2(from, to, pc2);
+		}
+
+	}
+	//２王手できる範囲に駒を打つ
+	//３王手できる範囲に駒を移動させる
+	Bitboard target;
+	//歩
+	target = andnot(StepEffect[enemy][PAWN][eksq],pos.occ_all()|canPromoteBB[us]);
+	make_move_PAWN_bitshift(pos, target, movelist);
+	//香
+	target = andnot(lance_effect(pos.ret_occ_256(), enemy, eksq),pos.occ_all());
+	make_move_LANCE(pos, target, movelist);
+	//make_checkdrop<us, LANCE>(pos, movelist);//後で作成する
 
 
 }
