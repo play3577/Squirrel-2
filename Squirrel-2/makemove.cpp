@@ -6,10 +6,10 @@ using namespace std;
 #define shiftpawn
 
 #ifdef shiftpawn
-//template<Move_type mt>
+template<Color US>
 ExtMove* make_move_PAWN_bitshift(const Position& pos, const Bitboard& target, ExtMove* movelist) {
 
-	Color US = pos.sidetomove();
+	ASSERT(US == pos.sidetomove());
 
 	Bitboard occ_us = pos.occ_pt(US, PAWN);
 	//縦型であれば歩の効きがあるマスはbitshiftで得られる
@@ -37,6 +37,15 @@ ExtMove* make_move_PAWN_bitshift(const Position& pos, const Bitboard& target, Ex
 		}
 	}
 	return movelist;
+}
+
+ExtMove* make_move_PAWN_bitshift(const Position& pos, const Bitboard& target, ExtMove* movelist) {
+	if (pos.sidetomove() == BLACK) {
+		return make_move_PAWN_bitshift<BLACK>(pos, target, movelist);
+	}
+	else {
+		return make_move_PAWN_bitshift<WHITE>(pos, target, movelist);
+	}
 }
 #else
 //指し手の移動の生成関数は駒種毎に特殊化して駒種の性質を考えながら高速化の工夫を図っていく。
@@ -116,9 +125,10 @@ ExtMove* make_move_PAWN(const Position& pos, const Bitboard& target, ExtMove* mo
 
 //香車の移動の生成関数
 //成りの場合とならずの場合で関数を分けた方がいいかもしれない。
+template<Color US>
 ExtMove* make_move_LANCE(const Position& pos, const Bitboard& target, ExtMove* movelist) {
 
-	Color US = pos.sidetomove();
+	ASSERT(US == pos.sidetomove());
 
 	Bitboard occ_us = pos.occ_pt(US, LANCE);
 	Bitboard target2;
@@ -167,10 +177,15 @@ ExtMove* make_move_LANCE(const Position& pos, const Bitboard& target, ExtMove* m
 	return movelist;
 }
 
+ExtMove* make_move_LANCE(const Position& pos, const Bitboard& target, ExtMove* movelist) {
+	return 	pos.sidetomove() == BLACK ?  make_move_LANCE<BLACK>(pos, target, movelist) : make_move_LANCE<WHITE>(pos, target, movelist);
+}
+
 //桂馬の移動の生成関数 多分これは遅い
+template<Color US>
 ExtMove* make_move_KNIGHT(const Position& pos, const Bitboard& target, ExtMove* movelist) {
 
-	Color US = pos.sidetomove();
+	ASSERT(US == pos.sidetomove());
 
 	Bitboard occ_us = pos.occ_pt(US, KNIGHT);
 	Bitboard target2;
@@ -218,10 +233,14 @@ ExtMove* make_move_KNIGHT(const Position& pos, const Bitboard& target, ExtMove* 
 	return movelist;
 }
 
+ExtMove* make_move_KNIGHT(const Position& pos, const Bitboard& target, ExtMove* movelist) {
+	return (pos.sidetomove() == BLACK) ? make_move_KNIGHT<BLACK>(pos, target, movelist) : make_move_KNIGHT<WHITE>(pos, target, movelist);
+}
 
+template<Color US>
 ExtMove* make_move_SILVER(const Position& pos, const Bitboard& target, ExtMove* movelist) {
 
-	Color US = pos.sidetomove();
+	ASSERT( US == pos.sidetomove());
 
 	Bitboard occ_us = pos.occ_pt(US, SILVER);
 	Bitboard target2;
@@ -254,9 +273,15 @@ ExtMove* make_move_SILVER(const Position& pos, const Bitboard& target, ExtMove* 
 	return movelist;
 }
 
+
+ExtMove* make_move_SILVER(const Position& pos, const Bitboard& target, ExtMove* movelist) {
+	return (pos.sidetomove() == BLACK) ? make_move_SILVER<BLACK>(pos, target, movelist) : make_move_SILVER<WHITE>(pos, target, movelist);
+}
+
+template<Color US>
 ExtMove* make_move_BISHOP(const Position& pos, const Bitboard& target, ExtMove* movelist) {
 
-	Color US = pos.sidetomove();
+	ASSERT( US == pos.sidetomove());
 
 	Bitboard occ_us = pos.occ_pt(US, BISHOP);
 	Bitboard target2;
@@ -307,10 +332,14 @@ ExtMove* make_move_BISHOP(const Position& pos, const Bitboard& target, ExtMove* 
 }
 
 
+ExtMove* make_move_BISHOP(const Position& pos, const Bitboard& target, ExtMove* movelist) {
+	return (pos.sidetomove() == BLACK) ? make_move_BISHOP<BLACK>(pos, target, movelist) : make_move_BISHOP<WHITE>(pos, target, movelist);
+}
 
+template<Color US>
 ExtMove* make_move_UNICORN(const Position& pos, const Bitboard& target, ExtMove* movelist) {
 
-	Color US = pos.sidetomove();
+	ASSERT( US == pos.sidetomove());
 
 	Bitboard occ_us = pos.occ_pt(US, UNICORN);
 	Bitboard target2;
@@ -346,9 +375,15 @@ ExtMove* make_move_UNICORN(const Position& pos, const Bitboard& target, ExtMove*
 	return movelist;
 }
 
+
+ExtMove* make_move_UNICORN(const Position& pos, const Bitboard& target, ExtMove* movelist) {
+	return (pos.sidetomove() == BLACK) ? make_move_UNICORN<BLACK>(pos, target, movelist) : make_move_UNICORN<WHITE>(pos, target, movelist);
+}
+
+template<Color US>
 ExtMove* make_move_ROOK(const Position& pos, const Bitboard& target, ExtMove* movelist) {
 
-	Color US = pos.sidetomove();
+	ASSERT( US == pos.sidetomove());
 
 	Bitboard occ_us = pos.occ_pt(US, ROOK);
 	Bitboard target2;
@@ -407,10 +442,14 @@ ExtMove* make_move_ROOK(const Position& pos, const Bitboard& target, ExtMove* mo
 	return movelist;
 }
 
+ExtMove* make_move_ROOK(const Position& pos, const Bitboard& target, ExtMove* movelist) {
+	return (pos.sidetomove() == BLACK) ? make_move_ROOK<BLACK>(pos, target, movelist) : make_move_ROOK<WHITE>(pos, target, movelist);
+}
 
+template<Color US>
 ExtMove* make_move_DRAGON(const Position& pos, const Bitboard& target, ExtMove* movelist) {
 
-	Color US = pos.sidetomove();
+	ASSERT( US == pos.sidetomove());
 
 	Bitboard occ_us = pos.occ_pt(US, DRAGON);
 	Bitboard target2;
@@ -448,10 +487,15 @@ ExtMove* make_move_DRAGON(const Position& pos, const Bitboard& target, ExtMove* 
 }
 
 
+ExtMove* make_move_DRAGON(const Position& pos, const Bitboard& target, ExtMove* movelist) {
+	return (pos.sidetomove() == BLACK) ? make_move_DRAGON<BLACK>(pos, target, movelist) : make_move_DRAGON<WHITE>(pos, target, movelist);
+}
+
 //GOLD相当の駒の移動の生成
+template<Color US>
 ExtMove* make_move_ASGOLD(const Position& pos, const Bitboard& target, ExtMove* movelist) {
 
-	Color US = pos.sidetomove();
+	ASSERT( US == pos.sidetomove());
 	
 	//こいつらは成れない
 
@@ -480,10 +524,17 @@ ExtMove* make_move_ASGOLD(const Position& pos, const Bitboard& target, ExtMove* 
 	return movelist;
 }
 
+
+ExtMove* make_move_ASGOLD(const Position& pos, const Bitboard& target, ExtMove* movelist) {
+	return (pos.sidetomove() == BLACK) ? make_move_ASGOLD<BLACK>(pos, target, movelist) : make_move_ASGOLD<WHITE>(pos, target, movelist);
+}
+
+
 //王の指し手生成（自殺手は生成してしまわないようにする）
+template<Color US>
 ExtMove* make_move_KING(const Position& pos, const Bitboard& target, ExtMove* movelist) {
 
-	Color US = pos.sidetomove();
+	ASSERT(US == pos.sidetomove());
 //	Color ENEMY = opposite(US);
 	//こいつらは成れない
 
@@ -514,6 +565,11 @@ ExtMove* make_move_KING(const Position& pos, const Bitboard& target, ExtMove* mo
 
 
 	return movelist;
+}
+
+
+ExtMove* make_move_KING(const Position& pos, const Bitboard& target, ExtMove* movelist) {
+	return (pos.sidetomove() == BLACK) ? make_move_KING<BLACK>(pos, target, movelist) : make_move_KING<WHITE>(pos, target, movelist);
 }
 
 #ifndef fastdrop
@@ -606,6 +662,7 @@ ExtMove* make_move_DROP(const Position& pos, const Bitboard& target, ExtMove* mo
 #endif // !fastdrop
 #ifdef fastdrop
 //Apery参考の駒うち
+template<Color US>
 ExtMove* make_move_DROP_fast(const Position& pos, const Bitboard& target, ExtMove* movelist) {
 
 	Color US = pos.sidetomove();
@@ -758,6 +815,11 @@ ExtMove* make_move_DROP_fast(const Position& pos, const Bitboard& target, ExtMov
 
 	return movelist;
 }
+
+ExtMove* make_move_DROP_fast(const Position& pos, const Bitboard& target, ExtMove* movelist) {
+	return (pos.sidetomove() == BLACK) ? make_move_DROP_fast<BLACK>(pos, target, movelist) : make_move_DROP_fast<WHITE>(pos, target, movelist);
+}
+
 #endif
 /*
 
@@ -781,7 +843,7 @@ ExtMove * move_generation(const Position& pos, ExtMove * movelist)
 	//EVERSIONは別の関数を用意する
 	ASSERT(mt != Eversion);
 
-	Color US = pos.sidetomove();
+	Color US = pos.sidetomove();//ここでUS用意してるってことはここでtemplate化できるやん
 	Color ENEMY = opposite(US);
 
 
@@ -800,31 +862,40 @@ ExtMove * move_generation(const Position& pos, ExtMove * movelist)
 			target_nonPAWN;
 
 		//ここの並ぶ順番も考えた方がいいか？（あとでorderingするのでそこまでする必要はないか）
-
-#ifdef shiftpawn
-		movelist = make_move_PAWN_bitshift(pos, target_PAWN, movelist);
-#else
-		movelist = make_move_PAWN<mt>(pos, target_PAWN, movelist);
-#endif
-		
-		movelist = make_move_LANCE(pos, target_nonPAWN, movelist);
-		movelist = make_move_KNIGHT(pos, target_nonPAWN, movelist);
-		movelist = make_move_SILVER(pos, target_nonPAWN, movelist);
-		movelist = make_move_BISHOP(pos, target_nonPAWN, movelist);
-		movelist = make_move_ROOK(pos, target_nonPAWN, movelist);
-		movelist = make_move_ASGOLD(pos, target_nonPAWN, movelist);
-		movelist = make_move_UNICORN(pos, target_nonPAWN, movelist);
-		movelist = make_move_DRAGON(pos, target_nonPAWN, movelist);
-		movelist = make_move_KING(pos, target_nonPAWN, movelist);
+		if (US == BLACK) {
+			movelist = make_move_PAWN_bitshift<BLACK>(pos, target_PAWN, movelist);
+			movelist = make_move_LANCE<BLACK>(pos, target_nonPAWN, movelist);
+			movelist = make_move_KNIGHT<BLACK>(pos, target_nonPAWN, movelist);
+			movelist = make_move_SILVER<BLACK>(pos, target_nonPAWN, movelist);
+			movelist = make_move_BISHOP<BLACK>(pos, target_nonPAWN, movelist);
+			movelist = make_move_ROOK<BLACK>(pos, target_nonPAWN, movelist);
+			movelist = make_move_ASGOLD<BLACK>(pos, target_nonPAWN, movelist);
+			movelist = make_move_UNICORN<BLACK>(pos, target_nonPAWN, movelist);
+			movelist = make_move_DRAGON<BLACK>(pos, target_nonPAWN, movelist);
+			movelist = make_move_KING<BLACK>(pos, target_nonPAWN, movelist);
+		}
+		else {
+			movelist = make_move_PAWN_bitshift<WHITE>(pos, target_PAWN, movelist);
+			movelist = make_move_LANCE<WHITE>(pos, target_nonPAWN, movelist);
+			movelist = make_move_KNIGHT<WHITE>(pos, target_nonPAWN, movelist);
+			movelist = make_move_SILVER<WHITE>(pos, target_nonPAWN, movelist);
+			movelist = make_move_BISHOP<WHITE>(pos, target_nonPAWN, movelist);
+			movelist = make_move_ROOK<WHITE>(pos, target_nonPAWN, movelist);
+			movelist = make_move_ASGOLD<WHITE>(pos, target_nonPAWN, movelist);
+			movelist = make_move_UNICORN<WHITE>(pos, target_nonPAWN, movelist);
+			movelist = make_move_DRAGON<WHITE>(pos, target_nonPAWN, movelist);
+			movelist = make_move_KING<WHITE>(pos, target_nonPAWN, movelist);
+		}
 	}
 	else {
 		const Bitboard target_drop = ~pos.occ_all();//ALLBBをマスクするのは番外にも１が立ってしまっている場所があるから
 		//
-#ifdef fastdrop
-		movelist = make_move_DROP_fast(pos, target_drop, movelist);
-#else
-		movelist = make_move_DROP(pos, target_drop, movelist);
-#endif
+		if (US == BLACK) {
+			movelist = make_move_DROP_fast<BLACK>(pos, target_drop, movelist);
+		}
+		else {
+			movelist = make_move_DROP_fast<WHITE>(pos, target_drop, movelist);
+		}
 	}
 
 	return movelist;
@@ -1026,20 +1097,22 @@ ExtMove* make_checkdrop(const Position& pos,const Bitboard target, ExtMove * mov
 2重王手可能　position sfen lnsgkgsnl/1r5b1/pp2G1ppp/9/9/4RB3/PPPPPPPPP/9/LNSGK1SNL b P3p 1 OK
 position sfen lnsgkgsnl/1r5b1/pp2GLppp/9/9/4RB3/PPPPP1PP1/9/LNSGK1SN1 b 3P3p 1 OK
 
+dropは除いたりしたほうがいいかもしれない
 */
 
 
-
-
-//template<Color us,Square eksq,bool is_eksq_infield>
-ExtMove * move_generation_quietcheck(const Position & pos, ExtMove * movelist) {
+template<Color us,bool is_eksq_infield>
+ExtMove * move_generation_quietcheck__(const Position & pos, ExtMove * movelist) {
 
 	ASSERT(!pos.is_incheck());
-	const Color us = pos.sidetomove();
+	ASSERT(us == pos.sidetomove());
+	
+	//const Color us = pos.sidetomove();
+
 	const Color enemy = opposite(us);
 	const Square eksq = pos.ksq(opposite(us));
-	const bool is_eksq_infield=(SquareBB[eksq] & canPromoteBB[us]).isNot();//相手玉が敵陣にいるかどうか
-
+	//const bool is_eksq_infield=(SquareBB[eksq] & canPromoteBB[us]).isNot();//相手玉が敵陣にいるかどうか
+	ASSERT(is_eksq_infield == (SquareBB[eksq] & canPromoteBB[us]).isNot());
 	Bitboard apart_check_brocker = pos.state()->pinner[us];//多分pinner_usでOKのはず（名前の付け方がまずかった）これを動かすと関節王手になる
 
 	//１味方の飛び効きを遮っている駒をどかす
@@ -1123,6 +1196,22 @@ ExtMove * move_generation_quietcheck(const Position & pos, ExtMove * movelist) {
 
 	return movelist;
 }
+
+
+template<Color us>
+ExtMove * move_generation_quietcheck_(const Position & pos, ExtMove * movelist) {
+	const Square eksq = pos.ksq(opposite(us));
+	if ((SquareBB[eksq] & canPromoteBB[us]).isNot()) { return move_generation_quietcheck__<us, true>(pos, movelist); }
+	else { return move_generation_quietcheck__<us, false>(pos, movelist); }
+}
+
+
+ExtMove * move_generation_quietcheck(const Position & pos, ExtMove * movelist) {
+	if (pos.sidetomove() == BLACK) { return move_generation_quietcheck_<BLACK>(pos, movelist); }
+	else { return move_generation_quietcheck_<WHITE>(pos, movelist); }
+}
+
+
 
 ExtMove * test_quietcheck(const Position & pos, ExtMove * movelist) {
 
