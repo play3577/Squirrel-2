@@ -926,14 +926,15 @@ ExtMove * move_eversion(const Position& pos, ExtMove * movelist) {
 	*/
 
 	int num_checker = 0;
-	Square ksq = pos.ksq(pos.sidetomove());
+	const Color US = pos.sidetomove();
+	const Square ksq = pos.ksq(US);
 	Square esq;
-	Color ENEMY = opposite(pos.sidetomove());
+	const Color ENEMY = opposite(US);
 	Bitboard checkers = pos.state()->checker;
 	Bitboard enemy_effected = ZeroBB;
 
 	int from2 = ksq << 7;
-	int king2 = add_color(KING, pos.sidetomove())<<17;
+	int king2 = add_color(KING, US)<<17;
 
 
 	while (checkers.isNot()) {
@@ -955,7 +956,7 @@ ExtMove * move_eversion(const Position& pos, ExtMove * movelist) {
 	ASSERT(num_checker);
 
 	//王の逃げ場
-	Bitboard cankingmove= andnot(andnot(step_effect(BLACK,KING, ksq),pos.occ(pos.sidetomove())),enemy_effected);
+	Bitboard cankingmove= andnot(andnot(step_effect(BLACK,KING, ksq),pos.occ(US)),enemy_effected);
 	//玉が移動した先に効きがあるかどうかはislegalで調べる
 	while (cankingmove.isNot()) {
 		Square to = cankingmove.pop();
@@ -972,30 +973,39 @@ ExtMove * move_eversion(const Position& pos, ExtMove * movelist) {
 	Bitboard target = target_drop | SquareBB[esq];
 	/*movelist = make_move_PAWN<Cap_Propawn>(pos, target, movelist);
 	movelist = make_move_PAWN<Quiet>(pos, target, movelist);*/
-#ifdef shiftpawn
-	movelist = make_move_PAWN_bitshift(pos,target,movelist);
-#else
-	movelist = make_move_PAWN<Eversion>(pos, target, movelist);
-#endif
-	
+	if (US == BLACK) {
+		movelist = make_move_PAWN_bitshift<BLACK>(pos, target, movelist);
+		movelist = make_move_LANCE<BLACK>(pos, target, movelist);
+		movelist = make_move_KNIGHT<BLACK>(pos, target, movelist);
+		movelist = make_move_SILVER<BLACK>(pos, target, movelist);
+		movelist = make_move_BISHOP<BLACK>(pos, target, movelist);
+		movelist = make_move_ROOK<BLACK>(pos, target, movelist);
+		movelist = make_move_ASGOLD<BLACK>(pos, target, movelist);
+		movelist = make_move_UNICORN<BLACK>(pos, target, movelist);
+		movelist = make_move_DRAGON<BLACK>(pos, target, movelist);
+		//movelist = make_move_KING(pos, target, movelist);
 
-	movelist = make_move_LANCE(pos, target, movelist);
-	movelist = make_move_KNIGHT(pos, target, movelist);
-	movelist = make_move_SILVER(pos, target, movelist);
-	movelist = make_move_BISHOP(pos, target, movelist);
-	movelist = make_move_ROOK(pos, target, movelist);
-	movelist = make_move_ASGOLD(pos, target, movelist);
-	movelist = make_move_UNICORN(pos, target, movelist);
-	movelist = make_move_DRAGON(pos, target, movelist);
-	//movelist = make_move_KING(pos, target, movelist);
+		//dropを打てるのは駒と駒の間だけ！！
+		//movelist = make_move_DROP(pos, target_drop, movelist);
+		movelist = make_move_DROP_fast<BLACK>(pos, target_drop, movelist);
+	}
+	else {
+		movelist = make_move_PAWN_bitshift<WHITE>(pos, target, movelist);
+		movelist = make_move_LANCE<WHITE>(pos, target, movelist);
+		movelist = make_move_KNIGHT<WHITE>(pos, target, movelist);
+		movelist = make_move_SILVER<WHITE>(pos, target, movelist);
+		movelist = make_move_BISHOP<WHITE>(pos, target, movelist);
+		movelist = make_move_ROOK<WHITE>(pos, target, movelist);
+		movelist = make_move_ASGOLD<WHITE>(pos, target, movelist);
+		movelist = make_move_UNICORN<WHITE>(pos, target, movelist);
+		movelist = make_move_DRAGON<WHITE>(pos, target, movelist);
+		//movelist = make_move_KING(pos, target, movelist);
 
-	//dropを打てるのは駒と駒の間だけ！！
-	//movelist = make_move_DROP(pos, target_drop, movelist);
-#ifdef fastdrop
-	movelist = make_move_DROP_fast(pos, target_drop, movelist);
-#else
-	movelist = make_move_DROP(pos, target_drop, movelist);
-#endif
+		//dropを打てるのは駒と駒の間だけ！！
+		//movelist = make_move_DROP(pos, target_drop, movelist);
+		movelist = make_move_DROP_fast<WHITE>(pos, target_drop, movelist);
+
+	}
 	return movelist;
 
 }
@@ -1004,22 +1014,31 @@ ExtMove * move_recapture(const Position & pos, ExtMove * movelist, Square recaps
 {
 	const Bitboard target = SquareBB[recapsq];
 
-#ifdef shiftpawn
-	movelist = make_move_PAWN_bitshift(pos, target, movelist);
-#else
-	movelist = make_move_PAWN<Cap_Propawn>(pos, target, movelist);//recaptureなのでcappropawnでいいと考えられる
-#endif
-	
-	movelist = make_move_LANCE(pos, target, movelist);
-	movelist = make_move_KNIGHT(pos, target, movelist);
-	movelist = make_move_SILVER(pos, target, movelist);
-	movelist = make_move_BISHOP(pos, target, movelist);
-	movelist = make_move_ROOK(pos, target, movelist);
-	movelist = make_move_ASGOLD(pos, target, movelist);
-	movelist = make_move_UNICORN(pos, target, movelist);
-	movelist = make_move_DRAGON(pos, target, movelist);
-	movelist = make_move_KING(pos, target, movelist);//これで相手の効きのある場所に移動してしまうことがあるがそれはislegalでしらべているはず
-
+	const Color US = pos.sidetomove();
+	if (US == BLACK) {
+		movelist = make_move_PAWN_bitshift<BLACK>(pos, target, movelist);
+		movelist = make_move_LANCE<BLACK>(pos, target, movelist);
+		movelist = make_move_KNIGHT<BLACK>(pos, target, movelist);
+		movelist = make_move_SILVER<BLACK>(pos, target, movelist);
+		movelist = make_move_BISHOP<BLACK>(pos, target, movelist);
+		movelist = make_move_ROOK<BLACK>(pos, target, movelist);
+		movelist = make_move_ASGOLD<BLACK>(pos, target, movelist);
+		movelist = make_move_UNICORN<BLACK>(pos, target, movelist);
+		movelist = make_move_DRAGON<BLACK>(pos, target, movelist);
+		movelist = make_move_KING<BLACK>(pos, target, movelist);//これで相手の効きのある場所に移動してしまうことがあるがそれはislegalでしらべているはず
+	}
+	else {
+		movelist = make_move_PAWN_bitshift<WHITE>(pos, target, movelist);
+		movelist = make_move_LANCE<WHITE>(pos, target, movelist);
+		movelist = make_move_KNIGHT<WHITE>(pos, target, movelist);
+		movelist = make_move_SILVER<WHITE>(pos, target, movelist);
+		movelist = make_move_BISHOP<WHITE>(pos, target, movelist);
+		movelist = make_move_ROOK<WHITE>(pos, target, movelist);
+		movelist = make_move_ASGOLD<WHITE>(pos, target, movelist);
+		movelist = make_move_UNICORN<WHITE>(pos, target, movelist);
+		movelist = make_move_DRAGON<WHITE>(pos, target, movelist);
+		movelist = make_move_KING<WHITE>(pos, target, movelist);//これで相手の効きのある場所に移動してしまうことがあるがそれはislegalでしらべているはず
+	}
 	return movelist;
 }
 

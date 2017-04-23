@@ -44,7 +44,10 @@ void speed_genmove(const Position & pos)
 		check_move(moves_[i].move);
 	}
 	std::cout << std::endl;
-
+	std::cout << "elapsed = " << elapsed << " [msec]" << std::endl;
+	if (elapsed != 0) {
+		std::cout << "times/s = " << num_gen / elapsed << " [k times/sec]" << std::endl;
+	}
 
 }
 
