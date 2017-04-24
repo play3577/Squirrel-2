@@ -332,7 +332,11 @@ namespace Eval {
 		}
 		else {
 			//全計算！
+#ifdef HAVE_AVX2
+			pp = eval_allPP_AVX2(pos);
+#else
 			pp = eval_PP(pos);
+#endif
 		}
 #else
 		pp = eval_PP(pos);
@@ -640,24 +644,24 @@ namespace Eval {
 				まあtanuki-さんの本に合わせて4にしておくか...
 				*/
 				__m256i b = _mm256_i32gather_epi32(reinterpret_cast<const int*>(p_pp_b), indices_fb, 4);
-				for (int k = 0; k < 8; k++) {
+				/*for (int k = 0; k < 8; k++) {
 					int32_t a = PP[k0_b][list_fb[j + k]];
 					int32_t aa = b.m256i_i32[k];
 					if (a != aa) {
 						cout << a << " " << aa << endl;
 						ASSERT(0);
 					}
-				}
+				}*/
 				__m256i w = _mm256_i32gather_epi32(reinterpret_cast<const int*>(p_pp_w), indices_fw, 4);
 				//ここでASSERTにかかってないってことはPPからの読み取りは正しくできている
-				for (int k = 0; k < 8; k++) {
+				/*for (int k = 0; k < 8; k++) {
 					int32_t a = PP[k0_w][list_fw[j + k]];
 					int32_t aa = w.m256i_i32[k];
 					if (a != aa) {
 						cout << a << " " << aa << endl;
 						ASSERT(0);
 					}
-				}
+				}*/
 
 				bPP256 = _mm256_add_epi32(bPP256, b);
 				wPP256 = _mm256_add_epi32(wPP256, w);
@@ -696,7 +700,34 @@ namespace Eval {
 				wPP256 = _mm256_add_epi32(wPP256, whi);*/
 			}
 			//4要素一気にできるところは一気にする
+			for (; j + 4 < i; j += 4) {
+				__m128i indices_fb = _mm_load_si128(reinterpret_cast<const __m128i*>(&list_fb[j]));
+				__m128i indices_fw = _mm_load_si128(reinterpret_cast<const __m128i*>(&list_fw[j]));
+				__m128i b = _mm_i32gather_epi32(reinterpret_cast<const int*>(p_pp_b), indices_fb, 4);
+				/*for (int k = 0; k < 4; k++) {
+					int32_t a = PP[k0_b][list_fb[j + k]];
+					int32_t aa = b.m128i_i32[k];
+					if (a != aa) {
+						cout << a << " " << aa << endl;
+						ASSERT(0);
+					}
+				}*/
+				__m128i w = _mm_i32gather_epi32(reinterpret_cast<const int*>(p_pp_w), indices_fw, 4);
+				/*for (int k = 0; k < 4; k++) {
+					int32_t a = PP[k0_w][list_fw[j + k]];
+					int32_t aa = w.m128i_i32[k];
+					if (a != aa) {
+						cout << a << " " << aa << endl;
+						ASSERT(0);
+					}
+				}*/
 
+				//https://www.xlsoft.com/jp/products/intel/compilers/ccw/12/ug/intref_cls/common/intref_avx_castsi128_si256.htm
+				//上位128bitは未定義というのが気になるな... うまくいってるのでこれでいけるはず...
+				bPP256 = _mm256_add_epi32(bPP256, _mm256_castsi128_si256(b));
+				wPP256 = _mm256_add_epi32(wPP256, _mm256_castsi128_si256(w));
+
+			}
 
 			//残り
 			for (; j < i; ++j) {
@@ -707,6 +738,7 @@ namespace Eval {
 		}
 		
 		//256bitのbPPsumをまとめる
+		//これなんかいいAVX2命令ないのか？
 		for (int l = 0; l < 8; l++) {
 			bPP += (Value)bPP256.m256i_i32[l];
 			wPP -= (Value)wPP256.m256i_i32[l];
@@ -718,12 +750,12 @@ namespace Eval {
 		pos.state()->wpp = wPP;
 		//評価値ホントに16bitで収まるかどうか確認
 		ASSERT(abs(bPP + wPP) / FV_SCALE < INT16_MAX);
-		Eval::eval_PP(pos);
+		/*Eval::eval_PP(pos);
 		if (bPP != pos.state()->bpp || wPP != pos.state()->wpp) {
 			cout << bPP << " " << wPP << endl;
 			cout << pos.state()->bpp << " " << pos.state()->wpp << endl;
 			ASSERT(0);
-		}
+		}*/
 
 
 

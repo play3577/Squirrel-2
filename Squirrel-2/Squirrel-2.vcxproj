@@ -144,6 +144,7 @@
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <ControlFlowGuard>Guard</ControlFlowGuard>
       <OpenMPSupport>true</OpenMPSupport>
+      <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
