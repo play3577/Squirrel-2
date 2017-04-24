@@ -183,14 +183,13 @@ inline void make_indexyoko() {
 
 	for (Square sq = SQ_ZERO; sq < SQ_NUM; sq++) {
 		File f = sqtofile(sq);
-		(9 * f <= sq&&sq <= 9 * f + 3) ? index_table_yoko[sq]= 1 : index_table_yoko[sq]= 0;
+		(9 * (int)f <= (int)sq&& (int)sq <= 9 * (int)f + 3) ? index_table_yoko[sq]= 1 : index_table_yoko[sq]= 0;
 	}
 }
 inline int shift_yoko(Square sq) {
 
 	ASSERT(is_ok(sq));
 	return shift_table_yoko[sq];
-
 }
 
 inline int index_yoko(Square sq) {

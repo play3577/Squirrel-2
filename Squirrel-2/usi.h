@@ -98,7 +98,7 @@ namespace USI {
 		}
 
 	};
-
+	std::ostream& operator<<(std::ostream& os, const OptionMap& om);
 	void init_option(OptionMap& o,string engine_name);
 	void loop();
 

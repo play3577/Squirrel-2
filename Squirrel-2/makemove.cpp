@@ -665,7 +665,7 @@ ExtMove* make_move_DROP(const Position& pos, const Bitboard& target, ExtMove* mo
 template<Color US>
 ExtMove* make_move_DROP_fast(const Position& pos, const Bitboard& target, ExtMove* movelist) {
 
-	Color US = pos.sidetomove();
+	ASSERT(US == pos.sidetomove());
 	auto hands = pos.hand(US);
 	Square to;
 	Piece pc;

@@ -77,15 +77,16 @@
 
 
 #if defined(_MSC_VER)
+
+//declspecとは.....????		http://hp.vector.co.jp/authors/VA023539/tips/dll/006.htm
+#define ALIGNED(X) __declspec(align(X))
 #endif
 #if defined(__GNUC__) 
 #include <string.h>//for memset
 #include <cstring>
+#define ALIGNED(X) __attribute__ ((aligned (X)))
 #endif
 
-
-//declspecとは.....????		http://hp.vector.co.jp/authors/VA023539/tips/dll/006.htm
-#define ALIGNED(X) __declspec(align(X))
 
 
 //教師手との差がこの範囲内に収まらなかった特徴は更新しない。
@@ -191,8 +192,8 @@ inline Piece rowpiece(const Piece pc) { /*ASSERT(!can_promote(pc));*/ return Pie
 inline Piece add_color(const Piece pt, const Color c) { return (c == BLACK) ? pt : Piece(pt | WHITE_piece); }
 inline bool is_promote_piece(const Piece pc) { return bool(pc&PROMOTE); }
 //表示用（コレでうまくいくか....????）OK上手く行けてた。
-extern char* outputPiece[PC_ALL] ;
-extern char* USIPiece[PC_ALL];
+extern std::string outputPiece[PC_ALL] ;
+extern std::string USIPiece[PC_ALL];
 std::ostream& operator<<(std::ostream& os, const Piece pc);//usi形式表示
 std::ostream& outputpiece(std::ostream& os, const Piece pc);
 

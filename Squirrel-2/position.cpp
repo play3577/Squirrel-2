@@ -38,7 +38,7 @@ void Position::set(std::string sfen)
 	}*/
 
 	//ÅŒã‚Ì‚P‚Í–³‹‚µ‚Ä‚à‚¢‚¢(‚ ‚ê‚Í¡‰½è–Ú‚È‚Ì‚©‚ğ•\‚µ‚Ä‚¢‚é‚Ì‚Å–³‹‚µ‚¿‚áƒ_ƒI)
-	int index = 0;
+	size_t index = 0;
 	bool promote = false;
 	char s;
 	Piece pc;

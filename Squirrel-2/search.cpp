@@ -838,7 +838,7 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 
 	//正直128手まで読んでしまうなんて信じられないのだが...そういう結果が出た上に変更点はそこしかないので信じるしかないか
 	//どうやってextentionのし過ぎを解消しよう...??
-	ASSERT(0<=ss->ply&&ss->ply<MAX_PLY)
+	ASSERT(0 <= ss->ply&&ss->ply < MAX_PLY);
 
 	//ssは過去の情報を消しておく必要がある
 	ss->currentMove = (ss + 1)->excludedMove=bestMove = MOVE_NONE;
@@ -1429,7 +1429,7 @@ moves_loop:
 				 &&move == ttMove
 				//&& !extension
 				&&pos.is_legal(move)) {
-				ASSERT(ttValue!=Value_error)
+				ASSERT(ttValue != Value_error);
 				//Value rBeta = std::max(ttValue - 4 * depth,Value_Mated);
 				Value rBeta = std::max(ttValue - 8*(ss->ply), Value_Mated);
 				//Depth d = (depth / (2 * int(ONE_PLY)))*int(ONE_PLY);
@@ -1851,7 +1851,7 @@ Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
 	
 #ifdef USETT
 	const Key posKey = pos.key();
-	ASSERT((posKey & uint64_t(1)) == pos.sidetomove());
+	ASSERT((posKey & uint64_t(1)) == (bool)pos.sidetomove());
 	tte = TT.probe(posKey, TThit);
 	if (TThit) {
 		ttValue = value_from_tt(tte->value(), ss->ply);

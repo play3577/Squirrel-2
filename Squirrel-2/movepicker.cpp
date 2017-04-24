@@ -300,7 +300,7 @@ void movepicker::capturepropawn_score()
 		const Piece capturedpt = piece_type(pos_.piece_on(move_to(m)));
 
 		ASSERT(NO_PIECE < movept&&movept < PT_ALL);
-		ASSERT(NO_PIECE <= capturedpt&&capturedpt < PT_ALL);//propawn‚Ìê‡‚ÍNO_piece‚ð‹–—e
+		//ASSERT(NO_PIECE <= capturedpt&&capturedpt < PT_ALL);//propawn‚Ìê‡‚ÍNO_piece‚ð‹–—e
 
 		i->value = Value(Eval::piece_value[capturedpt])-LVA(movept);
 		

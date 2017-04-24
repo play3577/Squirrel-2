@@ -236,7 +236,7 @@ namespace Eval {
 
 	//‹î—Ž‚¿‚É‘Î‰ž‚·‚é‚½‚ß‚ÉBP_ZERO‚ð‹–‚·
 	inline bool is_ok(BonaPiece bp) { return (BONA_PIECE_ZERO <= bp&&bp < fe_end2); }
-	inline std::ostream& operator<<(std::ostream& os, const BonaPiece bp);
+	//inline std::ostream& operator<<(std::ostream& os, const BonaPiece bp);
 	//‹î‚Ì”w”Ô†
 	enum UniformNumber :int8_t{
 		//no_uniform,

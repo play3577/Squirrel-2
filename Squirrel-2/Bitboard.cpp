@@ -449,7 +449,6 @@ void bitboard_init()
 	for (Square sq = SQ1A; sq < SQ_NUM; sq++) {
 		int direc_rook_yoko[2] = { 9,-9 };
 		Square oldto;
-		File tofile;
 		for (int i = 0; i < 2; i++) {
 			to = sq;
 			oldto = sq;
@@ -468,7 +467,6 @@ void bitboard_init()
 	for (Square sq = SQ1A; sq < SQ_NUM; sq++) {
 		int direc_rook_yoko[2] = { 1,-1 };
 		Square oldto;
-		File tofile;
 		for (int i = 0; i < 2; i++) {
 			to = sq;
 			oldto = sq;

@@ -15,7 +15,7 @@ CFLAGS   += -march=native
 #CFLAGS +=	-g -O0
 #CFLAGS+=-O3
 
-
+#std::thread用
 LDFLAGS  = -lpthread
 LIBS     =
 INCLUDE  =  #-I../include
@@ -27,7 +27,7 @@ else
 endif
 #中間ファイルなどを置くディレクトリを宣言
 OBJDIR   = ./obj
-#ソースファイルの宣言
+#ソースファイルの宣言 ここの順番がおかしいせいでエラーが起こる？？
 SOURCES := $(wildcard *.cpp)
 HEADER := $(wildcard *.h)
 #addprefixで OBJDIR/souces.oを指定している
@@ -43,8 +43,8 @@ $(OBJDIR)/%.o: %.cpp
 	$(COMPILER) $(CFLAGS) $(INCLUDE) -o $@ -c $<
 
 
-
-all: clean $(TARGET)
+clean:
+	 del /Q obj\
 
 release:
 	$(MAKE) CFLAGS='$(CFLAGS)' LDFLAGS='$(LDFLAGS) -flto' $(TARGET)

@@ -738,19 +738,30 @@ namespace Eval {
 		}
 		
 		//256bitのbPPsumをまとめる
-		//これなんかいいAVX2命令ないのか？
+		//これなんかいいAVX2命令ないのか？ないらしい
+#if defined(_MSC_VER)
 		for (int l = 0; l < 8; l++) {
 			bPP += (Value)bPP256.m256i_i32[l];
 			wPP -= (Value)wPP256.m256i_i32[l];
+			
 		}
 
+#elif defined(__GNUC__) 
+		bPP += _mm256_extract_epi32(bPP256, 0) + _mm256_extract_epi32(bPP256, 1) + _mm256_extract_epi32(bPP256, 2) +
+			_mm256_extract_epi32(bPP256, 3) + _mm256_extract_epi32(bPP256, 4) + _mm256_extract_epi32(bPP256, 5) +
+			_mm256_extract_epi32(bPP256, 6) + _mm256_extract_epi32(bPP256, 7);
+		wPP += _mm256_extract_epi32(wPP256, 0) + _mm256_extract_epi32(wPP256, 1) + _mm256_extract_epi32(wPP256, 2) +
+			_mm256_extract_epi32(wPP256, 3) + _mm256_extract_epi32(wPP256, 4) + _mm256_extract_epi32(wPP256, 5) +
+			_mm256_extract_epi32(wPP256, 6) + _mm256_extract_epi32(wPP256, 7);
+#endif
+		
 
 
 		pos.state()->bpp = (bPP);
 		pos.state()->wpp = wPP;
 		//評価値ホントに16bitで収まるかどうか確認
 		ASSERT(abs(bPP + wPP) / FV_SCALE < INT16_MAX);
-		/*Eval::eval_PP(pos);
+	/*	Eval::eval_PP(pos);
 		if (bPP != pos.state()->bpp || wPP != pos.state()->wpp) {
 			cout << bPP << " " << wPP << endl;
 			cout << pos.state()->bpp << " " << pos.state()->wpp << endl;
@@ -899,7 +910,7 @@ namespace Eval {
 #endif
 
 
-#endif;
+#endif
 	//差分計算
 
 	void BonaPList::makebonaPlist(const Position & pos)
@@ -1038,7 +1049,7 @@ namespace Eval {
 			ASSERT(inversebonapiece(bplist_fw[i]) == bplist_fb[i]);
 		}
 	}
-
+#if 0
 	std::ostream & operator<<(std::ostream & os, const Eval::BonaPiece bp)
 	{
 		//bp<fe_handendであればそれは手駒
@@ -1157,7 +1168,7 @@ namespace Eval {
 		}
 		return os;
 	}
-
+#endif
 	//コマ割をチェックするための関数（カツ丼将棋がコマ割の値がおかしかったそうで怖くなってきたので確認しておく。）
 	void komawari_check()
 	{
