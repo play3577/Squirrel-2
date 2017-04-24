@@ -146,7 +146,7 @@ https://twitter.com/daruma3940/status/812538092049420288
 
 */
 
-#ifdef HAVE_AVX2
+#if 0
 Occ_256& operator^=(const Occ_256& b1) { b256 = _mm256_xor_si256(b256, b1.b256); return *this; }
 Occ_256& operator|=(const Occ_256& b1) { b256 = _mm256_or_si256(b256, b1.b256); return *this; }
 Occ_256& operator&=(const Occ_256& b1) { b256 = _mm256_and_si256(b256, b1.b256); return *this; }

@@ -579,6 +579,163 @@ namespace Eval {
 		return Value((bPP+wPP) / FV_SCALE);
 	}
 
+
+	/*
+	AVX2を用いた評価関数計算高速化。
+
+	nodchipさんの本を参考に読み進めていく。
+
+	PPはlist[40]を用いて計算を行うので
+	8個の要素ずつの計算で完了させることができる。
+
+	PP要素は32bit
+
+	_mm256_i32gather_epi32
+	https://www.bing.com/search?q=_mm256_i32gather_epi32&pc=cosp&ptag=C1AE89FD93123&form=CONBDF&conlogo=CT3210127
+
+	_mm256_load_si256
+	https://www.bing.com/search?q=_mm256_load_si256&pc=cosp&ptag=C1AE89FD93123&form=CONBDF&conlogo=CT3210127
+
+	*/
+#ifdef HAVE_AVX2
+	Value eval_allPP_AVX2(const Position & pos)
+	{
+		int bPP = 0, wPP = 0;
+		BonaPiece *list_fb = pos.evallist().bplist_fb, *list_fw = pos.evallist().bplist_fw;
+
+		__m256i zero = _mm256_setzero_si256();
+		__m256i bPP256 = zero, wPP256 = zero;
+
+		//40要素に対して計算を行う
+		for (int i = 0; i < 40; ++i) {
+
+			const BonaPiece k0_b = list_fb[i], k0_w = list_fw[i];
+
+			//pointer pp black||white
+			const auto* p_pp_b = PP[k0_b];
+			const auto* p_pp_w = PP[k0_w];
+
+			int j = 0;
+			//8要素一気に計算する
+			//bonapieceをint16_tにすると16要素一気に計算できるよね？？
+			for (; j + 8 < i; j += 8) {
+
+				//bonapieceのindexを8要素ロードする。
+				__m256i indices_fb = _mm256_load_si256(reinterpret_cast<const __m256i*>(&list_fb[j]));
+				__m256i indices_fw = _mm256_load_si256(reinterpret_cast<const __m256i*>(&list_fw[j]));
+
+				//p_pp_bとp_pp_wから8要素をギャザーしてくる。
+				/*
+				__m256i _mm256_i32gather_epi32(int const * base, __m256i vindex, const int scale);
+				result[31:0] = mem[base+vindex[31:0]*scale];
+				result[63:32] = mem[base+vindex[63:32]*scale];
+				result[95:64] = mem[base+vindex[95:64]*scale];
+				result127:96] = mem[base+vindex[127:96]*scale];
+				result[159:128] = mem[base+vindex[159:128]*scale];
+				result[191:160] = mem[base+vindex[191:160]*scale];
+				result[223:192] = mem[base+vindex[223:192]*scale];
+				result[255:224] = mem[base+vindex[255:224]*scale];
+
+				これを見る限り32bit変数を読み取ろうと思ったらscaleは1なのでは...?→だめだった
+				まあtanuki-さんの本に合わせて4にしておくか...
+				*/
+				__m256i b = _mm256_i32gather_epi32(reinterpret_cast<const int*>(p_pp_b), indices_fb, 4);
+				for (int k = 0; k < 8; k++) {
+					int32_t a = PP[k0_b][list_fb[j + k]];
+					int32_t aa = b.m256i_i32[k];
+					if (a != aa) {
+						cout << a << " " << aa << endl;
+						ASSERT(0);
+					}
+				}
+				__m256i w = _mm256_i32gather_epi32(reinterpret_cast<const int*>(p_pp_w), indices_fw, 4);
+				//ここでASSERTにかかってないってことはPPからの読み取りは正しくできている
+				for (int k = 0; k < 8; k++) {
+					int32_t a = PP[k0_w][list_fw[j + k]];
+					int32_t aa = w.m256i_i32[k];
+					if (a != aa) {
+						cout << a << " " << aa << endl;
+						ASSERT(0);
+					}
+				}
+
+				bPP256 = _mm256_add_epi32(bPP256, b);
+				wPP256 = _mm256_add_epi32(wPP256, w);
+
+				/*
+				//下位128bitを16bit変数から32bit整数に変換する
+				__m256i blo = _mm256_cvtepi16_epi32(_mm256_extracti128_si256(b, 0));//0というのは128*0
+				__m256i wlo = _mm256_cvtepi16_epi32(_mm256_extracti128_si256(w, 0));
+				for (int k = 0; k < 4; k++) {
+					int32_t a = PP[k0_w][list_fw[j + k]];
+					int32_t aa = wlo.m256i_i32[k];
+					if (a != aa) {
+						cout << a << " " << aa << endl;
+						ASSERT(0);
+					}
+				}
+				//bpp256,wpp256に足し合わせる
+				bPP256 = _mm256_add_epi32(bPP256, blo);
+				wPP256 = _mm256_add_epi32(wPP256, wlo);
+
+				//上位128bitを16bit変数から32bit整数に変換する
+				//_mm256_extracti128_si256 ：上位or下位128bitをxmmレジスタに格納する
+				//_mm256_cvtepi16_epi32 :16 ビットの符号付き整数から 32 ビットの整数への符号拡張パックド移動操作を実行 : https://www.bing.com/search?q=_mm256_cvtepi16_epi32&pc=cosp&ptag=C1AE89FD93123&form=CONBDF&conlogo=CT3210127
+				__m256i bhi = _mm256_cvtepi16_epi32(_mm256_extracti128_si256(b, 1));//0というのは128*0
+				__m256i whi = _mm256_cvtepi16_epi32(_mm256_extracti128_si256(w, 1));
+				for (int k = 4; k < 8; k++) {
+					int32_t a = PP[k0_w][list_fw[j + k]];
+					int32_t aa = whi.m256i_i32[k];
+					if (a != aa) {
+						cout << a << " " << aa << endl;
+						ASSERT(0);
+					}
+				}
+				//bpp256,wpp256に足し合わせる
+				bPP256 = _mm256_add_epi32(bPP256, bhi);
+				wPP256 = _mm256_add_epi32(wPP256, whi);*/
+			}
+			//4要素一気にできるところは一気にする
+
+
+			//残り
+			for (; j < i; ++j) {
+				bPP += p_pp_b[list_fb[j]];
+				wPP -= p_pp_w[list_fw[j]];
+			}
+
+		}
+		
+		//256bitのbPPsumをまとめる
+		for (int l = 0; l < 8; l++) {
+			bPP += (Value)bPP256.m256i_i32[l];
+			wPP -= (Value)wPP256.m256i_i32[l];
+		}
+
+
+
+		pos.state()->bpp = (bPP);
+		pos.state()->wpp = wPP;
+		//評価値ホントに16bitで収まるかどうか確認
+		ASSERT(abs(bPP + wPP) / FV_SCALE < INT16_MAX);
+		Eval::eval_PP(pos);
+		if (bPP != pos.state()->bpp || wPP != pos.state()->wpp) {
+			cout << bPP << " " << wPP << endl;
+			cout << pos.state()->bpp << " " << pos.state()->wpp << endl;
+			ASSERT(0);
+		}
+
+
+
+		return Value((bPP + wPP) / FV_SCALE);
+
+
+	}
+
+#endif
+
+
+
 	//差分計算
 	Value eval_diff_PP(const Position & pos)
 	{
@@ -1147,112 +1304,6 @@ namespace Eval {
 	SMでgccでR+40
 	tanuki-でAVX2評価関数でR+18
 	*/
-
-
-
-	/*
-	AVX2を用いた評価関数計算高速化。
-	
-	nodchipさんの本を参考に読み進めていく。
-	
-	PPはlist[40]を用いて計算を行うので
-	8個の要素ずつの計算で完了させることができる。
-
-	PP要素は32bit
-
-	_mm256_i32gather_epi32
-	https://www.bing.com/search?q=_mm256_i32gather_epi32&pc=cosp&ptag=C1AE89FD93123&form=CONBDF&conlogo=CT3210127
-
-	_mm256_load_si256
-	https://www.bing.com/search?q=_mm256_load_si256&pc=cosp&ptag=C1AE89FD93123&form=CONBDF&conlogo=CT3210127
-
-	*/
-	Value eval_allPP_AVX2(const Position & pos)
-	{
-		int bPP = 0, wPP = 0;
-		BonaPiece *list_fb = pos.evallist().bplist_fb, *list_fw = pos.evallist().bplist_fw;
-
-		__m256i zero = _mm256_setzero_si256();
-		__m256i bPP256 = zero, wPP256 = zero;
-
-		//40要素に対して計算を行う
-		for (int i = 0; i < 40; ++i) {
-
-			const BonaPiece k0_b = list_fb[i],k0_w=list_fw[i];
-
-			//pointer pp black||white
-			const auto* p_pp_b = PP[k0_b];
-			const auto* p_pp_w = PP[k0_w];
-
-			int j = 0;
-			//8要素一気に計算する
-			//bonapieceをint16_tにすると16要素一気に計算できるよね？？
-			//まあいったん8要素でやってみてうまくいけば16要素で行く
-			for (; j + 8 < i; j += 8) {
-
-				//bonapieceのindexを8要素ロードする。
-				__m256i indices_fb = _mm256_load_si256(reinterpret_cast<const __m256i*>(&list_fb[j]));
-				__m256i indices_fw = _mm256_load_si256(reinterpret_cast<const __m256i*>(&list_fw[j]));
-
-				//p_pp_bとp_pp_wから8要素をギャザーしてくる。
-				/*
-				__m256i _mm256_i32gather_epi32(int const * base, __m256i vindex, const int scale);
-				result[31:0] = mem[base+vindex[31:0]*scale];
-				result[63:32] = mem[base+vindex[63:32]*scale];
-				result[95:64] = mem[base+vindex[95:64]*scale];
-				result127:96] = mem[base+vindex[127:96]*scale];
-				result[159:128] = mem[base+vindex[159:128]*scale];
-				result[191:160] = mem[base+vindex[191:160]*scale];
-				result[223:192] = mem[base+vindex[223:192]*scale];
-				result[255:224] = mem[base+vindex[255:224]*scale];
-
-				これを見る限り32bit変数を読み取ろうと思ったらscaleは1なのでは...?→だめだった
-				*/
-				__m256i b = _mm256_i32gather_epi32(reinterpret_cast<const int*>(p_pp_b), indices_fb, 4);
-				__m256i w = _mm256_i32gather_epi32(reinterpret_cast<const int*>(p_pp_w), indices_fw, 4);
-
-				//下位128bitを16bit変数から32bit整数に変換する
-				__m256i blo = _mm256_cvtepi16_epi32(_mm256_extracti128_si256(b, 0));//0というのは128*0
-				__m256i wlo = _mm256_cvtepi16_epi32(_mm256_extracti128_si256(w, 0));
-
-				//bpp256,wpp256に足し合わせる
-				bPP256 = _mm256_add_epi32(bPP256, blo);
-				wPP256 = _mm256_add_epi32(wPP256, wlo);
-
-				//上位128bitを16bit変数から32bit整数に変換する
-				//_mm256_extracti128_si256 ：上位or下位128bitをxmmレジスタに格納する
-				//_mm256_cvtepi16_epi32 :16 ビットの符号付き整数から 32 ビットの整数への符号拡張パックド移動操作を実行 : https://www.bing.com/search?q=_mm256_cvtepi16_epi32&pc=cosp&ptag=C1AE89FD93123&form=CONBDF&conlogo=CT3210127
-				__m256i bhi = _mm256_cvtepi16_epi32(_mm256_extracti128_si256(b, 1));//0というのは128*0
-				__m256i whi = _mm256_cvtepi16_epi32(_mm256_extracti128_si256(w, 1));
-
-				//bpp256,wpp256に足し合わせる
-				bPP256 = _mm256_add_epi32(bPP256, bhi);
-				wPP256 = _mm256_add_epi32(wPP256, whi);
-			}
-
-		}
-		//上位128bitと下位128bitを独立して8byte(64bit)右シフトしたものを足し合わせる。なんで8byteシフトさせる？？全然わからん.......
-		bPP256 = _mm256_add_epi32(bPP256, _mm256_srli_si256(bPP256, 8));
-		wPP256 = _mm256_add_epi32(wPP256, _mm256_srli_si256(wPP256, 8));
-
-		//bpp256の上位128bitと下位128bitを足し合わせてbpp128の代入する
-		__m128i bpp128 = _mm_add_epi32(_mm256_extracti128_si256(bPP256,0), _mm256_extracti128_si256(bPP256, 1));
-		__m128i wpp128 = _mm_add_epi32(_mm256_extracti128_si256(wPP256, 0), _mm256_extracti128_si256(wPP256, 1));
-
-		for (int i = 0; i < 4; i++) {
-			bPP += (Value)bpp128.m128i_i32[i];
-			wPP -= (Value)wpp128.m128i_i32[i];
-		}
-
-		pos.state()->bpp = (bPP);
-		pos.state()->wpp = wPP;
-		//評価値ホントに16bitで収まるかどうか確認
-		ASSERT(abs(bPP + wPP) / FV_SCALE < INT16_MAX);
-
-		return Value((bPP + wPP) / FV_SCALE);
-
-
-	}
 
 
 

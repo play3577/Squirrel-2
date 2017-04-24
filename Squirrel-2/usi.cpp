@@ -96,7 +96,7 @@ void USI::init_option(OptionMap &o,string engine_name)
 //#endif
 
 	o["USI_Ponder"] << USIOption(false);
-	o["Threads"] << USIOption(1, 1, 128);
+	o["Threads"] << USIOption(8, 1, 128);
 	o["USI_Hash"] << USIOption(1, 1, 256);
 	o["EngineName"] << USIOption(name.c_str());
 	//o["is_0.1s"] << USIOption(false);
@@ -732,11 +732,13 @@ void USI::loop()
 			cout << pos << endl << endl;
 			cout << pos.mate1ply() << endl;;
 		}
+#ifdef HAVE_AVX2
 		else if (token=="avx") {
 			Value avx = Eval::eval_allPP_AVX2(pos);
 			Value v = Eval::eval_PP(pos);
 			cout << "avx:" << avx << " eval:" << v << endl;
 		}
+#endif
 		else if (token == "cstm") {
 			pos.change_stm();
 		}

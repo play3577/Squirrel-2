@@ -27,7 +27,7 @@
 
 #define HAVE_SSE2
 #define HAVE_SSE4 //ÇµÇ©ÇµÇ§ÇøÇÃCPUÇÕSSE4.1Ç‹Ç≈ÇµÇ©éùÇ¡ÇƒÇ¢Ç»Ç¢..orz
-//#define HAVE_AVX2
+#define HAVE_AVX2
 
 //#define CHECKPOS
 
