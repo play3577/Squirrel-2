@@ -796,7 +796,8 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 
 	if (!RootNode) {
 		//step2
-		if (signals.stop.load(std::memory_order_relaxed)||ss->ply>=(MAX_PLY-3)) {
+		//position sfen 3Gls2+R/l3gk3/pp+Bp1ns1p/4gppp1/2PP5/4PPS2/N4SP1P/3G1K2+B/7RL b 5PL2N 145 Å‘å[‚³‚Ü‚Ås‚Á‚Ä‚à—Ž‚¿‚È‚­‚È‚Á‚½‚Ì‚ÅOKi‚»‚à‚»‚àÅ‘å[‚³‚Ü‚Å‚¢‚©‚È‚¢‚æ‚¤‚É‚µ‚ëj
+		if (signals.stop.load(std::memory_order_relaxed)||ss->ply>=(MAX_PLY-8)) {
 			return Eval::eval(pos);
 		}
 

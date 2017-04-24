@@ -43,7 +43,7 @@ namespace Eval {
 	void komawari_check();
 
 	//•Ï”–¼‚Í‚â‚Ë‚¤‚ç‰¤‚É‡‚í‚¹‚½i‚â‚Ë‚¤‚ç‰¤‚Íbonanza‚É‡‚í‚¹‚Ä‚¢‚éj
-	enum BonaPiece : int16_t
+	enum BonaPiece :/* int16_t*/int32_t
 	{
 		
 		BONA_PIECE_ZERO = 0, 

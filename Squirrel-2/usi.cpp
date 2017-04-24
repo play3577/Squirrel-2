@@ -108,7 +108,7 @@ void USI::init_option(OptionMap &o,string engine_name)
 	o["usebook"] << USIOption(true);
 	o["randombook"] << USIOption(true);
 	o["use_defined_time"] << USIOption(true);
-	o["defined_time"] << USIOption(1000,100,100000);
+	o["defined_time"] << USIOption(10000,100,100000);
 #ifdef  EVAL_KPP
 	o["KPP"] << USIOption("c:/yaneeval/kpp16ap.bin");
 	o["KKP"] << USIOption("c:/yaneeval/kkp32ap.bin");
@@ -731,6 +731,11 @@ void USI::loop()
 		else if (token=="mate") {
 			cout << pos << endl << endl;
 			cout << pos.mate1ply() << endl;;
+		}
+		else if (token=="avx") {
+			Value avx = Eval::eval_allPP_AVX2(pos);
+			Value v = Eval::eval_PP(pos);
+			cout << "avx:" << avx << " eval:" << v << endl;
 		}
 		else if (token == "cstm") {
 			pos.change_stm();
