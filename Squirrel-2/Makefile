@@ -44,7 +44,8 @@ $(OBJDIR)/%.o: %.cpp
 
 
 clean:
-	 del /Q obj\
+	 rm ./obj/*
+	 rm squirrel.exe
 
 release:
 	$(MAKE) CFLAGS='$(CFLAGS)' LDFLAGS='$(LDFLAGS) -flto' $(TARGET)
