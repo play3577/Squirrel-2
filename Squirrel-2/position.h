@@ -694,7 +694,7 @@ public:
 	Move mate1ply();
 	bool cancapture_checkpiece(Square to);
 	void slider_blockers(const Color stm, const Square s, Bitboard& dc_candicate, Bitboard& pinned) const;
-
+	//template<Color us> Move Position::mate1ply();
 	//“ü‹ÊéŒ¾
 	bool is_nyugyoku()const;
 

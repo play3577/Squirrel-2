@@ -28,7 +28,7 @@ Threadpoolは静的オブジェクトであり、ThreadコンストラクタでEndgamesを割り当てるた
 */
 void ThreadPool::init() {
 
-	
+	//cout << "a" << endl;
 	push_back(new MainThread());//main threadを用意する gccだと最適化したらここでエラーが起こる......
 	read_usi_options();//ここでいくつのスレッドをたてるかなどを設定から読み込む（しかしまだsetoptionを受け取る前であるのでこれはまた呼びなおされる。）
 
@@ -37,7 +37,7 @@ void ThreadPool::init() {
 
 //コンストラクタ。作られたらすぐにidle_loopに入り、sleep状態になる。
 Thread::Thread() {
-
+	//cout << "b" << endl;//ここにさえ引っかからない
 	exit =resetCalls= false;
 	cleartable();
 	idx = Threads.size();

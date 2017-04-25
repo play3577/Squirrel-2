@@ -96,7 +96,7 @@ void USI::init_option(OptionMap &o,string engine_name)
 //#endif
 
 	o["USI_Ponder"] << USIOption(false);
-	o["Threads"] << USIOption(1, 1, 128);
+	o["Threads"] << USIOption(4, 1, 128);
 	o["USI_Hash"] << USIOption(1, 1, 256);
 	o["EngineName"] << USIOption(name.c_str());
 	//o["is_0.1s"] << USIOption(false);
@@ -107,7 +107,7 @@ void USI::init_option(OptionMap &o,string engine_name)
 	o["bookpath"] << USIOption("c:/book2/standard_book.db");
 	o["usebook"] << USIOption(true);
 	o["randombook"] << USIOption(true);
-	o["use_defined_time"] << USIOption(true);
+	o["use_defined_time"] << USIOption(false);
 	o["defined_time"] << USIOption(1000,100,100000);
 #ifdef  EVAL_KPP
 	o["KPP"] << USIOption("c:/yaneeval/kpp16ap.bin");

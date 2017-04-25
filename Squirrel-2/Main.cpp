@@ -56,7 +56,7 @@ int main() {
 		BOOK::init();
 	}*/
 #ifdef USETT
-	TT.resize(30);//30MBで初期化する（やねうら王に倣った）
+	TT.resize(30);//600にするとマルチスレッドにできない プロセスめもりかなんかで変更できないのか？？ 100でもだめだった
 #endif
 	//bitboard_debug();
 

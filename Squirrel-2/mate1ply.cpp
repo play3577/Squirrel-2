@@ -95,12 +95,14 @@ ksqをoccから取り除くocc2
 相手の持ち駒が存在しないときに考える
 駒を打ったマスと王のあいだ+駒を打った升に移動できる相手の駒があるのでは詰まない。
 */
+//template<Color us> 
 Move Position::mate1ply()
 {
 	const Color us = sidetomove();
-	const Color enemy = opposite(sidetomove());
+	//ASSERT(us == sidetomove());
+	const Color enemy = opposite(us);
 	const Square eksq = ksq(enemy);//詰ませたい相手玉の位置。
-	const Hand h = hand(sidetomove());//手番側の持ち駒。
+	const Hand h = hand(us);//手番側の持ち駒。
 
 	Bitboard f_effect = ZeroBB;
 	Bitboard can_dropBB = andnot(ALLBB, occ(BLACK) | occ(WHITE));//駒のいない場所BB
@@ -714,6 +716,10 @@ cant_matemove_dragon:;
 #endif
 	return MOVE_NONE;
 }
+//Move Position::mate1ply() {
+//	return sidetomove() == BLACK ? mate1ply<BLACK>() : mate1ply<WHITE>();
+//}
+
 /*
 王手をかけている駒をとれるかどうか
 そしてとったときに玉に王手がかからないか

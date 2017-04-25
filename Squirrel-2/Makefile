@@ -11,8 +11,8 @@ COMPILER = g++
 #Wextra 厳しめの警告を出す
 CFLAGS	= -std=c++14 -Wextra  -fno-exceptions -fno-rtti -MMD -MP -Wl,-stack,10485760
 #gcc 4.2以降、-march=nativeのオプションを与えると、CPUに合わせた最適化オプションが得られるようになった
-CFLAGS   += -march=native 
-#CFLAGS +=	-g -O0
+CFLAGS   +=-march=native
+CFLAGS +=	-g -O0
 #CFLAGS+=-O3
 
 #std::thread用
@@ -34,11 +34,13 @@ HEADER := $(wildcard *.h)
 OBJECTS  = $(addprefix $(OBJDIR)/, $(SOURCES:.cpp=.o))
 DEPENDS  = $(OBJECTS:.o=.d)
 
-
+#自動変数
+#$@: ターゲットファイル名 squirrel 
+#$^: 全ての依存ファイル名 $(OBJECTS) $(LIBS)
 $(TARGET): $(OBJECTS) $(LIBS)
 	$(COMPILER) -o $@ $^ $(LDFLAGS) $(CFLAGS)
 
-
+#$< 最初の依存ファイル名 
 $(OBJDIR)/%.o: %.cpp
 	$(COMPILER) $(CFLAGS) $(INCLUDE) -o $@ -c $<
 
