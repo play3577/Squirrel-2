@@ -70,7 +70,7 @@ void Thread::sort_RootMove()
 	TimePoint elapsed = (now() - limit.starttime + 1);//ƒ[ƒ‚Å‚í‚ç“à—e‚É‚·‚é‚½‚ß‚É‚P‚ğ‘«‚µ‚Ä‚¨‚­
 
 	std::cout << "info depth " << depth <<"/"<<seldepth<< " score cp " <<print_value(v) << " time " << elapsed << " nodes " << rootpos.searched_nodes()
-		<< " nps " << rootpos.searched_nodes() / uint64_t(elapsed) << "k";
+		<< " nps " << rootpos.searched_nodes() / uint64_t(elapsed) << "k hashfull "<<TT.hashfull();
 
 	std::cout << " pv ";
 

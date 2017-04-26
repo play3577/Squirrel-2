@@ -38,6 +38,19 @@ void insertion_sort(ExtMove* begin, ExtMove* end)
 	}
 }
 
+void partial_insertion_sort(ExtMove* begin, ExtMove* end, int limit) {
+
+	for (ExtMove *sortedEnd = begin + 1, *p = begin + 1; p < end; ++p)
+		if (p->value >= limit)
+		{
+			ExtMove tmp = *p, *q;
+			*p = *sortedEnd;
+			for (q = sortedEnd; q != begin && *(q - 1) < tmp; --q)
+				*q = *(q - 1);
+			*q = tmp;
+			++sortedEnd;
+		}
+}
 
 void movepicker::generatemove()
 {
@@ -72,14 +85,15 @@ void movepicker::generatemove()
 		quietscore();
 		//ここSF8はもっと詳しくsortしている
 		//将棋だと駒打ちなどがあるときにここの要素数が多くなってしまうのでまずはgoodquietmoveだけソートするようにしてみる（ここ調整が必要）
-		if (depth_ < 3 * ONE_PLY) {
+		partial_insertion_sort(move_, end_, -4000 * depth_ / ONE_PLY);
+		/*if (depth_ < 3 * ONE_PLY) {
 			goodQuiet = std::partition(move_, end_, [](const ExtMove& m) { return m.value > Value_Zero; });
 			insertion_sort(move_, goodQuiet);
 		}
 		else {
 			insertion_sort(move_, end_);
 			
-		}
+		}*/
 		break;
 	case BAD_CAPTURES:
 		current_ = move_ + 600 - 1;

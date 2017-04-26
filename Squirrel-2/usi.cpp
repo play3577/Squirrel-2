@@ -12,6 +12,7 @@
 #include "progress.h"
 //#include "makemove.h"
 #include "reinforce_learner.h"
+#include "tpt.h"
 
 #include <iostream>
 #include <string>
@@ -96,8 +97,8 @@ void USI::init_option(OptionMap &o,string engine_name)
 //#endif
 
 	o["USI_Ponder"] << USIOption(false);
-	o["Threads"] << USIOption(4, 1, 128);
-	o["USI_Hash"] << USIOption(1, 1, 256);
+	o["Threads"] << USIOption(1, 1, 128);
+	o["USI_Hash"] << USIOption(30, 1, 256);
 	o["EngineName"] << USIOption(name.c_str());
 	//o["is_0.1s"] << USIOption(false);
 	//o["bookpath"] << USIOption("c:/book2/book2016928fg2800_40.db");
@@ -107,7 +108,7 @@ void USI::init_option(OptionMap &o,string engine_name)
 	o["bookpath"] << USIOption("c:/book2/standard_book.db");
 	o["usebook"] << USIOption(true);
 	o["randombook"] << USIOption(true);
-	o["use_defined_time"] << USIOption(false);
+	o["use_defined_time"] << USIOption(true);
 	o["defined_time"] << USIOption(1000,100,100000);
 #ifdef  EVAL_KPP
 	o["KPP"] << USIOption("c:/yaneeval/kpp16ap.bin");
@@ -160,6 +161,10 @@ void is_ready() {
 	//evalのパスが変更されているかもしれないためもう一回読み直す。
 	//と言うか先にusiに返事してからreadさせたほうがいいか？
 	if (first_ready == true) {
+#ifdef USETT
+		cout << "usihash(MB):" << (int)Options["USI_Hash"] << endl;
+		TT.resize((int)Options["USI_Hash"]);
+#endif
 #ifdef EVAL_PP
 		Eval::read_PP();
 #elif EVAL_KPP 1
@@ -171,7 +176,8 @@ void is_ready() {
 	}
 
 #ifndef LEARN
-	Threads.init();
+	//Threads.init();
+	Threads.read_usi_options();
 #endif // !LEARN
 
 	limit.is_inponder = false;

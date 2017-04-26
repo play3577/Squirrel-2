@@ -329,9 +329,9 @@ Value Thread::think() {
 #endif
 	research:
 		//‚±‚±‚Å’TõŠÖ”‚ğŒÄ‚Ño‚·B
-		if (alpha >= beta) {
+		/*if (alpha >= beta) {
 			cout << "alpha:" << alpha << " beta:" << beta << " previous value:" << previousScore << " bestvalue:" << bestvalue << " delta:" << delta << endl;
-		}
+		}*/
 		ASSERT(alpha < beta);
 
 

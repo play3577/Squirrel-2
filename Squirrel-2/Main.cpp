@@ -56,7 +56,7 @@ int main() {
 		BOOK::init();
 	}*/
 #ifdef USETT
-	TT.resize(30);//600にするとマルチスレッドにできない プロセスめもりかなんかで変更できないのか？？ 100でもだめだった
+	TT.resize(30);
 #endif
 	//bitboard_debug();
 

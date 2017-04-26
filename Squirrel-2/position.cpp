@@ -1112,10 +1112,10 @@ bool Position::is_legal(const Move m) const {
 	ASSERT(piece_on(to) == NO_PIECE || piece_color(piece_on(to)) != sidetomove_);
 #endif
 	
-
+	
 
 	ASSERT(piece_type(piece_on(to)) != KING);
-//	//Žæ‚ë‚¤‚Æ‚µ‚Ä‚¢‚é‹î‚Í‹Ê‚Å‚Í‚È‚¢
+	//Žæ‚ë‚¤‚Æ‚µ‚Ä‚¢‚é‹î‚Í‹Ê‚Å‚Í‚È‚¢
 //	if (piece_type(piece_on(to)) == KING) {
 ////#ifndef LEARN
 //		cout <<endl<< *this << endl;
