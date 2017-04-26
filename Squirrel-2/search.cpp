@@ -33,8 +33,7 @@ MultiPV‚T‚É‚µ‚ÄŠmŽÀ‚Éo‚é“Ç‚Ý”²‚¯‚ð–hŽ~‚µ‚½‚èA‘ŠŽè‚Ì“Ç‚Ý”²‚¯‚ð™é‚ß‚½‚èA×‚©‚¢•
 //------------------------------------
 ‚Ü‚ ‚¤‚¿‚Å‚Í‘‚¢’iŠK‚©‚ç³Šm‚ÈŒ`¬”»’f‚Í‚Å‚«‚Ä‚¢‚È‚¢‚ª
 ‚ ‚è‚à‚µ‚È‚¢Žè‚ð’T‚·‚æ‚è‚Í‚¢‚¢‚ÆŽv‚¤‚Ì‚ÅMaltiPV‘Î‰ž‚µ‚ÄðŒ‚ðŽÀŒ±‚µ‚Ä‚Ý‚éB
-
-
+‚â‚Á‚Ï‚èŽã‚­‚È‚Á‚½iŽÀ‘•‚ªˆ«‚©‚Á‚½‚Ì‚©‚à‚µ‚ê‚È‚¢‚ªj
 */
 
 #if defined(_MSC_VER)
@@ -1846,7 +1845,8 @@ Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
 	Value futilityvalue;
 	bool evasionPrunable;
 
-
+	Depth  ttDepth_ = incheck || depth >= DEPTH_QS_CHECKS ? DEPTH_QS_CHECKS
+		: DEPTH_QS_NO_CHECKS;
 
 
 	if (PvNode)
@@ -1911,7 +1911,7 @@ Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
 	*/
 	if (!PvNode
 		&&TThit
-		&&ttdepth >= depth
+		&&ttdepth >= ttDepth_
 		&&ttValue != Value_error//‚±‚ê¡‚Ì‚Æ‚±‚ë‚¢‚ç‚È‚¢(‚±‚±‚à‚Á‚ÆÚ‚µ‚­“Ç‚Þ•K—v‚ª‚ ‚é)
 		&& (ttValue >= beta ? (ttBound&BOUND_LOWER) : (ttBound&BOUND_UPPER))//BOUND_EXACT = BOUND_UPPER | BOUND_LOWER‚Å‚ ‚é‚Ì‚Å‚Ç‚¿‚ç‚Ì&‚à–ž‚½‚·
 		) {
@@ -2150,7 +2150,7 @@ Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
 #ifdef USETT
 					//value‚ªbeta‚ð’´‚¦‚½‚Æ‚¢‚¤‚±‚Æ‚Í‚±‚Ì“_”ˆÈã‚ÌŽw‚µŽè‚ª‚Ü‚¾‚ ‚é‚©‚à‚µ‚ê‚È‚¢‚Æ‚¢‚¤‚±‚Æ‚È‚Ì‚ÅBOUND_LOWER
 					tte->save(posKey, value_to_tt(value, ss->ply), BOUND_LOWER,
-						depth, move/*, staticeval*/, TT.generation());
+						ttDepth_, move/*, staticeval*/, TT.generation());
 #endif
 					return value;
 				}
@@ -2170,7 +2170,7 @@ Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
 	//PVnode‚Å‚Í‚È‚¢‚Æ‚¢‚¤‚±‚Æ‚ÍƒÀ’´‚¦‚Í‹N‚±‚ç‚È‚©‚Á‚½nullwindow‚ÌƒAƒ‹ƒtƒ@’l‚ð’´‚¦‚ç‚ê‚È‚©‚Á‚½‚Â‚Ü‚èUPPER‚Å‚ ‚é
 	tte->save(posKey, value_to_tt(bestvalue, ss->ply),
 		PvNode && bestvalue > oldAlpha ? BOUND_EXACT : BOUND_UPPER,
-		depth, bestMove/*, staticeval*/, TT.generation());
+		ttDepth_, bestMove/*, staticeval*/, TT.generation());
 #endif
 	ASSERT(bestvalue > -Value_Infinite&&bestvalue < Value_Infinite);
 	return bestvalue;

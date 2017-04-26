@@ -1957,3 +1957,20 @@ bool Position::is_nyugyoku() const{
 WIN_NYUUGYOKU:
 	return true;
 }
+
+/*
+千日手　
+http://www2.computer-shogi.org/wcsc27/　
+https://ja.wikipedia.org/wiki/%E5%8D%83%E6%97%A5%E6%89%8B
+
+将棋においては駒の配置、両対局者の持ち駒の種類や数、手番が全く同じ状態が1局中に4回現れると千日手になる
+
+千日手は指し直さず、引き分けとする。
+但し、連続王手の千日手（同一局面の最初と４回目の間の一方の指し手が王手のみだった場合）は、
+連続王手をかけていたほうが負けとなる
+*/
+bool Position::is_sennichite() const
+{
+	
+	return false;
+}

@@ -237,15 +237,17 @@ void go(Position& pos, istringstream& is/*, Thread& th*/) {
 	v = th.think();
 #endif
 }
+/*
+こんなんが入ってくる
 
-
+position startpos moves 7g7f 8c8d 7i6h 3c3d 6h7g 7a6b 2g2f 3a4b 3i4h 4a3b 6i7h 5a4a 5i6i 5c5d 5g5f 6a5b 3g3f 7c7d 4i5h 4b3c 8h7i 2b3a 1g1f 1c1d
+*/
 void position(Position& pos, istringstream& is) {
 
-	/*
-	こんなんが入ってくる
-
-	position startpos moves 7g7f 8c8d 7i6h 3c3d 6h7g 7a6b 2g2f 3a4b 3i4h 4a3b 6i7h 5a4a 5i6i 5c5d 5g5f 6a5b 3g3f 7c7d 4i5h 4b3c 8h7i 2b3a 1g1f 1c1d
-	*/
+#if 0
+	//千日手対策の情報vectorを初期化
+	pos.reputaion_infos.clear();
+#endif
 
 	string token,sfen="sfen ";
 	is >> token;
@@ -262,6 +264,7 @@ void position(Position& pos, istringstream& is) {
 		pos.set(sfen);
 	}
 
+	
 	Move m;
 	int ply=0;
 	//ここからは初期局面からの移動
@@ -273,7 +276,30 @@ void position(Position& pos, istringstream& is) {
 		pos.do_move(m, &g_st[ply]);
 		ply++;
 		pos.ply_from_startpos++;
+#if 0
+		//千日手対策
+		uint8_t checkside;
+		if (pos.is_incheck()) { checkside = opposite(pos.sidetomove()) + 1; }
+		else { checkside = 0; }
+		
+		bool find = false;
+		for (auto a : pos.reputaion_infos) {
+			if (a.key == pos.key) { a.count_up(); find = true; break; }
+		}
+		if (find == false) {
+			ReputationInfo ri(pos.key(), checkside);
+			pos.reputaion_infos.push_back(ri);
+		}
+#endif
 	}
+
+
+#if 0
+	//出てきた回数が少ないものは消す
+	for (int i = 0; i < pos.reputaion_infos.size(); i++) {
+		if (pos.reputaion_infos[i].count < 2) { pos.reputaion_infos.erase(pos.reputaion_infos.begin() + i); }
+	}
+#endif
 //	cout << "進行度 " << Progress::prog_scale*Progress::calc_prog(pos) << endl;
 
 	//cout << pos << endl;

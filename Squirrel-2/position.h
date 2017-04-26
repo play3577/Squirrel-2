@@ -20,10 +20,35 @@ using namespace std;
 struct Thread;
 
 /*
+千日手に関する情報を格納する
+positionコマンド内のdo_move()で局面を進めるときに作成する。
+
+countの数が１のものはvectorから削除する。
+水際対策の千日手チェックではあるが探索時の速度的にこれで行く
+*/
+#if 0
+struct ReputationInfo {
+
+	Key key = 0;
+	int count = 1;//１で初期化する
+	uint8_t checkside = 0;//0:noncheck 1:black 2:white
+
+	void count_up() { count++; }
+	//初期化
+	ReputationInfo(const Key key_,const uint8_t checkside_) :key(key_),count(1), checkside(checkside_) {}
+	bool operator==(const Key key_) { return key == key_; }
+};
+inline std::ostream& operator<<(std::ostream& os, const ReputationInfo& ri) {
+
+
+	return os;
+}
+#endif
+
+/*
 やっぱ利きテーブルを持つの差分計算とか簡単じゃないのでやめる
 wordboardとか理解できるようになったなら持ってもいいかもしれない
 */
-
 struct StateInfo
 {
 	
@@ -126,6 +151,9 @@ private:
 	double prog;
 	
 public:
+#if 0
+	vector<ReputationInfo> reputaion_infos;
+#endif
 	bool packed_sfen[256];
 
 	void change_stm() { sidetomove_ = opposite(sidetomove_); }
@@ -695,8 +723,12 @@ public:
 	bool cancapture_checkpiece(Square to);
 	void slider_blockers(const Color stm, const Square s, Bitboard& dc_candicate, Bitboard& pinned) const;
 	//template<Color us> Move Position::mate1ply();
+
+	//---------------------------------------------------
 	//入玉宣言
 	bool is_nyugyoku()const;
+	//千日手判定
+	bool is_sennichite() const;
 
 	string random_startpos();
 };
