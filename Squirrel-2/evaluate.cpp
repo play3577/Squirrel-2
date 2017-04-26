@@ -568,9 +568,15 @@ namespace Eval {
 				//listの内容の順番はどうでもいいと思うのだけれど...
 
 				//この方法では見てはいけないメモリを見てしまっているのでセグフォが起こる！　
-
+#if defined(_MSC_VER)
 				bPP += PP[list_fb[i]][list_fb[j]];
 				wPP -= PP[list_fw[i]][list_fw[j]];
+#endif
+#if defined(__GNUC__)
+				bPP += PP[pos.evallist().bplist_fb[i]][pos.evallist().bplist_fb[j]];
+				wPP -= PP[pos.evallist().bplist_fw[i]][pos.evallist().bplist_fw[j]];
+#endif
+				
 
 			}
 		}
@@ -601,6 +607,14 @@ namespace Eval {
 	https://www.bing.com/search?q=_mm256_load_si256&pc=cosp&ptag=C1AE89FD93123&form=CONBDF&conlogo=CT3210127
 
 	*/
+#if defined(_MSC_VER)
+	
+#endif
+#if defined(__GNUC__)
+
+#endif
+
+
 #ifdef HAVE_AVX2
 	Value eval_allPP_AVX2(const Position & pos)
 	{
@@ -625,8 +639,15 @@ namespace Eval {
 			for (; j + 8 < i; j += 8) {
 
 				//bonapieceのindexを8要素ロードする。
+#if defined(_MSC_VER)
 				__m256i indices_fb = _mm256_load_si256(reinterpret_cast<const __m256i*>(&list_fb[j]));
 				__m256i indices_fw = _mm256_load_si256(reinterpret_cast<const __m256i*>(&list_fw[j]));
+#endif
+#if defined(__GNUC__)
+				__m256i indices_fb = _mm256_load_si256(reinterpret_cast<const __m256i*>(&pos.evallist().bplist_fb[j]));
+				__m256i indices_fw = _mm256_load_si256(reinterpret_cast<const __m256i*>(&pos.evallist().bplist_fb[j]));
+#endif
+				
 
 				//p_pp_bとp_pp_wから8要素をギャザーしてくる。
 				/*
@@ -731,8 +752,15 @@ namespace Eval {
 
 			//残り
 			for (; j < i; ++j) {
+#if defined(_MSC_VER)
 				bPP += p_pp_b[list_fb[j]];
 				wPP -= p_pp_w[list_fw[j]];
+#endif			
+#if defined(__GNUC__)
+				bPP += p_pp_b[pos.evallist().bplist_fb[j]];
+				wPP -= p_pp_w[pos.evallist().bplist_fb[j]];
+#endif
+				
 			}
 
 		}

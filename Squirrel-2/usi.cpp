@@ -221,9 +221,11 @@ void go(Position& pos, istringstream& is/*, Thread& th*/) {
 #ifdef TEST
 	cout << limit << endl;
 #endif
-
+#ifdef HAVE_AVX2
+	Eval::eval_allPP_AVX2(pos);
+#else
 	Eval::eval_PP(pos);
-
+#endif
 #ifndef LEARN
 	Threads.start_thinking(pos);
 #endif // !LEARN

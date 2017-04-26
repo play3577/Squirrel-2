@@ -9,17 +9,12 @@ COMPILER = g++
 #-Ofast 最も最適化するためのオプション？
 #例外を完全に除去-fno-exceptions
 #Wextra 厳しめの警告を出す
-CFLAGS	= -std=c++14 -Wextra   -Wl,-stack,10485760 -fno-exceptions -fno-rtti -MMD -MP
+CFLAGS	= -std=c++14 -Wextra -fno-exceptions -fno-rtti -MMD -MP
 #gcc 4.2以降、-march=nativeのオプションを与えると、CPUに合わせた最適化オプションが得られるようになった
 CFLAGS   +=-march=native
 #CFLAGS+= -mavx -msse4.2 -m64 -mbmi -mbmi2 -mavx2
 #CFLAGS +=	-g -O0
-#CFLAGS+=-O3
-
-#Stockfishのコンパイラオプション
-#CFLAGS=-Wall -Wcast-qual -fno-exceptions -fno-rtti -std=c++14  -pedantic -Wextra -Wshadow -m64 -DNDEBUG -O3 -DIS_64BIT  -flto -march=native
-#LDFLAGS=-m64 -Wl,--no-as-needed -lpthread -Wall -Wcast-qual -fno-exceptions -fno-rtti -std=c++14  -pedantic -Wextra -Wshadow -m64 -DNDEBUG -O3 -DIS_64BIT -msse -flto
-
+CFLAGS+=-Ofast
 
 #std::thread用
 LDFLAGS  = -lpthread -Wl,--no-as-needed 
