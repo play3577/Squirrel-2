@@ -244,7 +244,7 @@ position startpos moves 7g7f 8c8d 7i6h 3c3d 6h7g 7a6b 2g2f 3a4b 3i4h 4a3b 6i7h 5
 */
 void position(Position& pos, istringstream& is) {
 
-#if 0
+#ifdef SENNICHI
 	//千日手対策の情報vectorを初期化
 	pos.reputaion_infos.clear();
 #endif
@@ -276,34 +276,66 @@ void position(Position& pos, istringstream& is) {
 		pos.do_move(m, &g_st[ply]);
 		ply++;
 		pos.ply_from_startpos++;
-#if 0
+#ifdef SENNICHI
 		//千日手対策
-		uint8_t checkside;
-		if (pos.is_incheck()) { checkside = opposite(pos.sidetomove()) + 1; }
-		else { checkside = 0; }
-		
+		/*uint8_t checkdside;
+		if (pos.is_incheck()) { checkdside = (uint8_t)(pos.sidetomove()) + 1; }
+		else { checkdside = 0; }*/
+#if 0
+		//毎回コンストラクタを呼ぶのは遅いと考えられるので没にする
+		struct Matcher {
+			Key v;
+			Matcher(Key v_ = 0) : v(v_) {}
+			bool operator()(const ReputationInfo &a) const { return v == a.key; }
+		};
+		const Key posKey = pos.key();
+		auto fp = std::find_if(pos.reputaion_infos.begin(), pos.reputaion_infos.end(),Matcher(posKey));
+		if (fp != pos.reputaion_infos.end()) {
+			fp->count_up();
+		}
+		else {
+			
+			ReputationInfo ri(posKey, checkdside);
+			pos.reputaion_infos.push_back(ri);
+		}
+#else
 		bool find = false;
-		for (auto a : pos.reputaion_infos) {
-			if (a.key == pos.key) { a.count_up(); find = true; break; }
+		for (ReputationInfo& a : pos.reputaion_infos) {
+			if (a.key == pos.key()) { a.count_up(); find = true; break; }
 		}
 		if (find == false) {
-			ReputationInfo ri(pos.key(), checkside);
+			ReputationInfo ri(pos.key()/*, checkdside*/);
 			pos.reputaion_infos.push_back(ri);
 		}
 #endif
-	}
 
-
-#if 0
-	//出てきた回数が少ないものは消す
-	for (int i = 0; i < pos.reputaion_infos.size(); i++) {
-		if (pos.reputaion_infos[i].count < 2) { pos.reputaion_infos.erase(pos.reputaion_infos.begin() + i); }
-	}
 #endif
-//	cout << "進行度 " << Progress::prog_scale*Progress::calc_prog(pos) << endl;
+	}
 
-	//cout << pos << endl;
 
+#ifdef SENNICHI
+
+	/*for (auto a : pos.reputaion_infos) {
+		cout << a << endl;
+	}
+	cout << "repsize:" << pos.reputaion_infos.size() << endl;*/
+	//出てきた回数が少ないものは消す
+	//サイズはどんどん変わっていくのでiで指定するのは良くない....
+	//http://d.hatena.ne.jp/unk_pizza/20140426/p1　参照 この方法はかっこいいな
+	auto tail_itr = std::remove_if(pos.reputaion_infos.begin(), pos.reputaion_infos.end(), [](ReputationInfo ri){return (ri.count < 3);});
+	pos.reputaion_infos.erase(tail_itr, pos.reputaion_infos.end());
+	//OK
+
+	/*
+	for (auto a : pos.reputaion_infos) {
+		cout << a << endl;
+	}
+	cout << "repsize:" << pos.reputaion_infos.size() << endl;
+	*/
+
+#endif
+
+	
 }
 
 

@@ -26,21 +26,22 @@ positionコマンド内のdo_move()で局面を進めるときに作成する。
 countの数が１のものはvectorから削除する。
 水際対策の千日手チェックではあるが探索時の速度的にこれで行く
 */
-#if 0
-struct ReputationInfo {
+#ifdef SENNICHI
 
+
+struct ReputationInfo {
+public:
 	Key key = 0;
 	int count = 1;//１で初期化する
-	uint8_t checkside = 0;//0:noncheck 1:black 2:white
+	//uint8_t checkdside = 0;//0:noncheck 1:black 2:white 王手をかけられている側
 
 	void count_up() { count++; }
 	//初期化
-	ReputationInfo(const Key key_,const uint8_t checkside_) :key(key_),count(1), checkside(checkside_) {}
-	bool operator==(const Key key_) { return key == key_; }
+	ReputationInfo(const Key key_/*,const uint8_t checkside_*/) :key(key_),count(1)/*, checkdside(checkside_)*/ {}
+	bool operator==(const ReputationInfo& ri ) { return key == ri.key; }
 };
 inline std::ostream& operator<<(std::ostream& os, const ReputationInfo& ri) {
-
-
+	os << "key:" << ri.key << " count:" << ri.count << " checkside:" /*<<(int)ri.checkdside*/;
 	return os;
 }
 #endif
@@ -151,7 +152,7 @@ private:
 	double prog;
 	
 public:
-#if 0
+#ifdef SENNICHI
 	vector<ReputationInfo> reputaion_infos;
 #endif
 	bool packed_sfen[256];
@@ -728,7 +729,7 @@ public:
 	//入玉宣言
 	bool is_nyugyoku()const;
 	//千日手判定
-	bool is_sennichite() const;
+	bool is_sennichite();
 
 	string random_startpos();
 };

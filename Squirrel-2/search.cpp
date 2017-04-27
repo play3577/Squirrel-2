@@ -828,7 +828,11 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 		if (signals.stop.load(std::memory_order_relaxed)||ss->ply>=(MAX_PLY-8)) {
 			return Eval::eval(pos);
 		}
-
+#ifdef SENNICHI
+		if (pos.is_sennichite()) {
+			return Value(0);
+		}
+#endif
 		// Step 3. Mate distance pruning. Even if we mate at the next move our score
 		// would be at best mate_in(ss->ply+1), but if alpha is already bigger because
 		// a shorter mate was found upward in the tree then there is no need to search
