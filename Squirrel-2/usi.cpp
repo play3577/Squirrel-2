@@ -830,6 +830,17 @@ void USI::loop()
 			cout << "not learning mode" << endl;
 #endif
 		}
+#if defined(REIN) || defined(MAKETEACHER)
+		else if (token == "haff") {
+			bool haff[256];
+			pos.pack_haffman_sfen();
+			memcpy(haff, pos.packed_sfen, sizeof(haff));
+			Position pos_haffman;
+			pos_haffman.unpack_haffman_sfen(haff);
+			ASSERT(pos_haffman == pos);
+
+		}
+#endif
 #ifdef LEARN
 		else if (token == "ij") {
 			Eval::param_sym_ij();

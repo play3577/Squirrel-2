@@ -732,6 +732,8 @@ public:
 	bool is_sennichite();
 
 	string random_startpos();
+
+	bool operator==(const Position& p)const;
 };
 
 std::ostream& operator<<(std::ostream& os, const Position& pos);

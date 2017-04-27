@@ -287,8 +287,10 @@ string Position::random_startpos()
 	
 	th.set(*this);
 	th.l_depth = 10;
-	th.l_beta = (Value)101;
-	th.l_alpha = (Value)-101;
+	//th.l_beta = (Value)101;
+	//th.l_alpha = (Value)-101;
+	th.l_beta = Value_Infinite;
+	th.l_alpha = -Value_Infinite;
 	Value v = th.think();
 	//あまり評価値が離れていると初期局面として不適切と考えられる。
 	if (abs(v) > 100/* Progress::prog_scale*Progress::calc_prog(*this)>2000*/) {
@@ -369,6 +371,10 @@ vector<vector<teacher_data>> teachers;
 vector<teacher_data> sum_teachers;
 
 
+
+//==========================================================================
+//                               maltithread時のrandam開始局面databaseのindexとか教師データのindexとかに使う
+
 std::mutex mutex__;
 int index__ = 0;
 
@@ -383,18 +389,22 @@ int lock_index_inclement__() {
 
 	return index__++;
 }
-
+//==========================================================================
 
 int maxthreadnum__;
 
 void renewal_PP_rein(dJValue &data);
 
+//ランダム開始局面から1手ランダムにささせるために使う
+void do_randommove(Position& pos, StateInfo* s, std::mt19937& mt);
+
 #endif
 
 #if defined(LEARN) && defined(MAKETEACHER)
-/*
-3手先の評価値と局面の組をセットにした教師データを作成する。
-*/
+/*---------------------------------------------------------------------------
+数手先の評価値と局面の組をセットにした教師データを作成するための関数
+これは初期化とthreadの取りまとめのための関数であるので
+----------------------------------------------------------------------------*/
 void make_teacher()
 {
 	int maxnum;
@@ -470,45 +480,83 @@ void make_teacher_body(const int number) {
 
 	std::random_device rd;
 	std::mt19937 mt(rd());
-	std::uniform_int_distribution<int> isrand(0, 9);
+	std::uniform_int_distribution<double> random_move_probability(0.0, 1.0);//doubleのほうが扱いやすいか
+	double random_probability=0.4;
 	Position pos;
 	StateInfo si[500];
+	StateInfo s_start;
 	ExtMove moves[600], *end;
 	Thread th;
 	end = moves;
 
 	for (int g = lock_index_inclement__(); g < startpos_db.size(); g = lock_index_inclement__()) {
-		string startpos = startpos_db[g];
-		if (startpos.size() < 10) { continue; }//10は適当
-		pos.set(startpos);
+
+		string startposdb_string = startpos_db[g];
+		if (startposdb_string.size() < 10) { continue; }//文字列の長さがありえないほど短いのはエラーであるので使わない
+		pos.set(startposdb_string);//random開始局面集から一つ取り出してsetする。（このランダム開始局面は何回も出てくるのでここから一手動かしたほうがいい）
+		do_randommove(pos, &s_start, mt);//random初期局面から1手ランダムに進めておく
 		th.cleartable();
+
+		random_probability = 0.4;
 
 		for (int i = 0; i < 256; i++) {
 
-
+			//探索前にthreadを初期化しておく
 			th.set(pos);
-			th.l_depth = 5;
-			th.l_beta = (Value)3001;
-			th.l_alpha = (Value)-3001;
-			Value v = th.think();
-			if (abs(v) > 3000) { goto NEXT_STARTPOS; }
+			th.l_depth = 6;
+			th.l_alpha = -Value_Infinite;
+			th.l_beta = Value_Infinite;
+			Value v = th.think();//探索を実行する
+			if (abs(v) > 3000) { goto NEXT_STARTPOS; }//評価値が3000を超えてしまった場合は次の局面へ移る
+
 			pos.pack_haffman_sfen();
-			teacher_data td(pos.packed_sfen, v);
+			//root局面のhaffman符号を用意しておく
+			bool HaffmanrootPos[256];
+			memcpy(HaffmanrootPos, pos.packed_sfen, sizeof(HaffmanrootPos));
+
+			//------------------------------PVの末端のノードに移ってそこでの静止探索の値を求めteacher_dataに格納
+			StateInfo si2[64];
+			int pv_depth = 0;
+			const Color rootColor = pos.sidetomove();//HaffmanrootPosの手番
+
+			pos.do_move(th.RootMoves[0].move, &si2[pv_depth++]);
+			for (Move m : th.pv) {
+				if (pos.is_legal(m) == false || pos.pseudo_legal(m) == false) { ASSERT(0); }
+				pos.do_move(m, &si2[pv_depth++]);
+			}
+			//rootから見た評価値を格納する
+			const Value deepvalue = (rootColor==pos.sidetomove()) ? Eval::eval(pos):-Eval::eval(pos);
+
+			teacher_data td(HaffmanrootPos, deepvalue);
 			//teacher_data td(pos.make_sfen(), v);
 			teachers[number].push_back(td);
 
+			for (int jj = 0; jj < pv_depth; jj++) {
+				pos.undo_move();
+			}
+			//---------------------------------------------------------------------------
 			//次の差し手を選別。(合法手が選ばれるまでなんども繰り返す必要がある)
 			memset(moves, 0, sizeof(moves));//初期化
 			end = test_move_generation(pos, moves);
 			ptrdiff_t num_moves = end - moves;
 			Move m;
-			while (true) {
-				int a = isrand(rd);
 
-				//40パーセントでpvの差し手。
-				if (a < 4) { m = th.pv[0]; }
-				//60パーセントでランダム
-				else { m= moves[mt() % num_moves];}
+
+
+			while (true) {
+				//次の局面に進めるための指し手の選択
+				//合法手が選択されるまでwhileで回る
+
+				//王手がかかっていない場合、40パーセントでランダムの指し手で次局面に
+				if (!pos.is_incheck() 
+					&& random_move_probability(rd) < random_probability)
+				{ 
+					random_probability /= 1.5; m = moves[mt() % num_moves]; 
+				}
+				else {
+					//60パーセントでpv
+					m = th.RootMoves[0].move;
+				}
 
 				if (pos.is_legal(m) && pos.pseudo_legal(m)) {break;}
 			}
@@ -520,6 +568,23 @@ void make_teacher_body(const int number) {
 	}
 
 }
+
+//メルセンヌついスタのコンストラクタは遅いので参照で渡す
+void do_randommove(Position& pos, StateInfo* s, std::mt19937& mt) {
+
+	
+
+	ExtMove moves[600], *end;
+
+	memset(moves, 0, sizeof(moves));//指し手の初期化
+	end = test_move_generation(pos, moves);//指し手生成
+	ptrdiff_t num_moves = end - moves;
+	Move m = moves[mt() % num_moves];
+	pos.do_move(m, s);
+
+}
+
+
 #endif
 
 #if defined(LEARN) && defined(REIN)
@@ -734,8 +799,6 @@ void renewal_PP_rein(dJValue &data) {
 		}
 	}
 }
-
-
 
 
 #endif

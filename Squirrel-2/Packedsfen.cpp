@@ -2,6 +2,8 @@
 #include "misc.h"
 #include <sstream>
 
+
+//‚±‚ê‚ç‚Í‚¤‚Ü‚­‚¢‚Á‚Ä‚é‚Á‚Û‚¢
 #if defined(REIN) || defined(MAKETEACHER)
 /*
 no_piece,B_PAWN=1, B_LANCE, B_KNIGHT, B_SILVER, B_BISHOP, B_ROOK, B_GOLD, B_KING,

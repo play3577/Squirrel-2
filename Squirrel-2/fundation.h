@@ -30,18 +30,18 @@
 //#define HAVE_AVX2
 
 //#define CHECKPOS
-#define SENNICHI
+//#define SENNICHI
 
 
 //---------------------------------äwèKä÷òA
 
-//#define LEARN
+#define LEARN
 //#define MAKESTARTPOS
-//#define MAKETEACHER
+#define MAKETEACHER
 //#define Prog_LEARN
 //#define REIN
 
-//#define USETT
+#define USETT
 
 #ifndef LEARN
 #define USETT

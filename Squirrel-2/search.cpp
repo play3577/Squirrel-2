@@ -235,10 +235,7 @@ void search_init() {
 	{
 		FutilityMoveCounts[0][d] = int(2.4 + 0.773 * pow(d + 0.00, 1.8));
 		FutilityMoveCounts[1][d] = int(2.9 + 1.045 * pow(d + 0.49, 1.8));
-		//‚·‚±‚µŠÉ‚­‚µ‚Ä‚İ‚é
-		//‚±‚ê‚ª‘å‚«‚¢‚Ù‚¤‚ªğŒ‚ªŠÉ‚¢
-		//FutilityMoveCounts[0][d] = int(3.4 + 0.773 * pow(d + 0.00, 1.8));
-		//FutilityMoveCounts[1][d] = int(3.9 + 1.045 * pow(d + 0.49, 1.8));
+		//move count fomula fix‚Íã‚­‚È‚Á‚½‚Ì‚ÅÌ—p‚µ‚È‚¢
 	}
 
 }

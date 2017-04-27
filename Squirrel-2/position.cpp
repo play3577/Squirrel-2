@@ -1993,3 +1993,21 @@ bool Position::is_sennichite(){
 	}
 	return false;
 }
+
+
+
+bool Position::operator==(const Position & p) const
+{
+	if (sidetomove() != p.sidetomove()) { return false; }//è”Ô‚ªˆá‚¤
+	//”Õã‚Ì‹î‚ªˆá‚¤
+	for (Square sq = SQ_ZERO; sq < SQ_NUM; sq++) {
+		if (piece_on(sq) != p.piece_on(sq)) { return false; }
+	}
+	//‚¿‹î‚ª‚ ‚Á‚Ä‚é‚©
+	if ((uint32_t)hand(BLACK) != (uint32_t)p.hand(BLACK)) { return false; }
+	//”Õã‚Æhand(BLACK)‚ª‡‚Á‚Ä‚¢‚é‚Ì‚È‚çhand_white‚à‚ ‚Á‚Ä‚¢‚é
+
+
+
+	return true;
+}

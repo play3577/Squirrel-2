@@ -102,37 +102,45 @@ void randomwalker(Position & pos, int maxdepth)
 
 
 
-		if (pos.is_legal(m) == false) { ++continue_count;  continue;  }//‚·‚×‚Ä‚Ì·‚µŽè‚ªillegal‚Â‚Ü‚è‹l‚Ý‚Ìó‘Ô‚É‚È‚ê‚Î‚±‚ê‚Å‚Í‚¨‚©‚µ‚­‚È‚Á‚Ä‚µ‚Ü‚¤‚Ì‚ÅC³
+		if (pos.is_legal(m) == false||pos.pseudo_legal(m)==false) { ++continue_count;  continue;  }//‚·‚×‚Ä‚Ì·‚µŽè‚ªillegal‚Â‚Ü‚è‹l‚Ý‚Ìó‘Ô‚É‚È‚ê‚Î‚±‚ê‚Å‚Í‚¨‚©‚µ‚­‚È‚Á‚Ä‚µ‚Ü‚¤‚Ì‚ÅC³
 		else { continue_count = 0; }
 		//ˆê‰ñ‚¿‚á‚ñ‚Ædo-undo‚Å‚«‚é‚©Šm”F‚ð‚µ‚Ä‚©‚ç
 		//Key hash1 = pos.key();
 		//pos.do_move(m, &si[depth]);
-		bool givescheck = pos.is_gives_check(m);
-		pos.do_move(m, &si[depth], givescheck);
-		Key hash3 = pos.key();
-		pos.check_bplist();
-		pos.evallist().list_check();
-		pos.undo_move();
-		pos.check_bplist();
-//		Progress::calc_diff_prog(pos);
-		pos.mate1ply();
-		//Key hash2 = pos.key();
-		ASSERT(pos.evallist().bplist_fb[39] >= Eval::fe_end);
-		ASSERT(pos.evallist().bplist_fb[38] >= Eval::fe_end);
-		//ASSERT(k == hash3);
-		if (k != hash3) {
-
-			cout << pos << endl;
-			check_move(m);
-
-			ASSERT(0);
-
-		}
-		//Value v = pos.see_sign(m);
-		bool v_ge = pos.see_ge(m,Value(0));
-
+//		bool givescheck = pos.is_gives_check(m);
+//		pos.do_move(m, &si[depth], givescheck);
+//		Key hash3 = pos.key();
+//		pos.check_bplist();
+//		pos.evallist().list_check();
+//		pos.undo_move();
+//		pos.check_bplist();
+////		Progress::calc_diff_prog(pos);
+//		pos.mate1ply();
+//		//Key hash2 = pos.key();
+//		ASSERT(pos.evallist().bplist_fb[39] >= Eval::fe_end);
+//		ASSERT(pos.evallist().bplist_fb[38] >= Eval::fe_end);
+//		//ASSERT(k == hash3);
+//		if (k != hash3) {
+//
+//			cout << pos << endl;
+//			check_move(m);
+//
+//			ASSERT(0);
+//
+//		}
+//		//Value v = pos.see_sign(m);
+//		bool v_ge = pos.see_ge(m,Value(0));
+//
 		/*if (v >= 0) { if (!v_ge) { cout << pos << endl; cout << m << endl; }; }
 		else { if (v_ge) { cout << pos << endl; cout << m << endl; }; }*/
+#if defined(REIN) || defined(MAKETEACHER)
+		bool haff[256];
+		pos.pack_haffman_sfen();
+		memcpy(haff, pos.packed_sfen, sizeof(haff));
+		Position pos_haffman;
+		pos_haffman.unpack_haffman_sfen(haff);
+		ASSERT(pos_haffman == pos);
+#endif
 
 		pos.do_move(m, &si[depth]);
 		depth++;
