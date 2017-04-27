@@ -480,6 +480,7 @@ void USI::loop()
 			if (yn != "y") { cout << "OK I do not  learning"; break; }
 			reinforce_learn();
 		}
+	
 #endif
 #endif //  LEARN
 		else if (token == "hirate") { pos.set_hirate(); }

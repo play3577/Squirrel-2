@@ -30,7 +30,7 @@
 //#define HAVE_AVX2
 
 //#define CHECKPOS
-//#define SENNICHI
+#define SENNICHI
 
 
 //---------------------------------äwèKä÷òA

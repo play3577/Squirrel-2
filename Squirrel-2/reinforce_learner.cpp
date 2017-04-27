@@ -36,7 +36,7 @@ packedsfenのほうがいいかもしれないがまずはsfenで作成する
 評価関数がよくないからか,あんまり質のいい開始局面は生成できなかった。
 depth2では評価値100以内だが他では1000超えてしまうみたいな...
 */
-#define TEACHERPATH "C:/teacher/teacherd4.bin"
+#define TEACHERPATH "C:/teacher/teacherd5.bin"
 
 #ifdef MAKESTARTPOS
 string Position::random_startpos()
@@ -356,10 +356,10 @@ void make_startpos_detabase()
 struct teacher_data {
 
 	bool haffman[256];
-	//string sfen;
+	//string sfen;//ちゃんとハフマンを読み込めているか確認のためにsfenを追加(stringをバイナリ書き出しはできんかった...)
 	int16_t teacher_value;
 	//teacher_data() {};
-	teacher_data(const bool *haff/*string sfen_*/, Value teachervalue) {
+	teacher_data(const bool *haff/*,string sfen_*/, Value teachervalue) {
 		memcpy(haffman, haff, sizeof(haffman));
 		/*sfen = sfen_;*/
 		teacher_value = (int16_t)teachervalue;
@@ -420,7 +420,7 @@ void make_teacher()
 	}
 	f.close();
 
-
+	cout << "startposdb_size:" << startpos_db.size() << endl;
 	//教師データ格納庫用意
 	maxthreadnum__ = omp_get_max_threads();
 	for (size_t i = 0; i < maxthreadnum__; i++) {
@@ -470,6 +470,7 @@ void make_teacher()
 		of.write(reinterpret_cast<const char*>(&sum_teachers[0]), sum_teachers.size() * sizeof(teacher_data));
 
 		of.close();
+		cout << i << endl;
 	}
 
 	
@@ -480,7 +481,7 @@ void make_teacher_body(const int number) {
 
 	std::random_device rd;
 	std::mt19937 mt(rd());
-	std::uniform_int_distribution<double> random_move_probability(0.0, 1.0);//doubleのほうが扱いやすいか
+	std::uniform_real_distribution<double> random_move_probability(0.0, 1.0);//doubleのほうが扱いやすいか
 	double random_probability=0.4;
 	Position pos;
 	StateInfo si[500];
@@ -513,13 +514,13 @@ void make_teacher_body(const int number) {
 			//root局面のhaffman符号を用意しておく
 			bool HaffmanrootPos[256];
 			memcpy(HaffmanrootPos, pos.packed_sfen, sizeof(HaffmanrootPos));
-
+			//string sfen_rootpos = pos.make_sfen();
 			//------------------------------PVの末端のノードに移ってそこでの静止探索の値を求めteacher_dataに格納
 			StateInfo si2[64];
 			int pv_depth = 0;
 			const Color rootColor = pos.sidetomove();//HaffmanrootPosの手番
 
-			pos.do_move(th.RootMoves[0].move, &si2[pv_depth++]);
+			//pos.do_move(th.RootMoves[0].move, &si2[pv_depth++]);
 			for (Move m : th.pv) {
 				if (pos.is_legal(m) == false || pos.pseudo_legal(m) == false) { ASSERT(0); }
 				pos.do_move(m, &si2[pv_depth++]);
@@ -527,7 +528,7 @@ void make_teacher_body(const int number) {
 			//rootから見た評価値を格納する
 			const Value deepvalue = (rootColor==pos.sidetomove()) ? Eval::eval(pos):-Eval::eval(pos);
 
-			teacher_data td(HaffmanrootPos, deepvalue);
+			teacher_data td(HaffmanrootPos,/*sfen_rootpos,*/ deepvalue);
 			//teacher_data td(pos.make_sfen(), v);
 			teachers[number].push_back(td);
 
@@ -573,13 +574,25 @@ void make_teacher_body(const int number) {
 void do_randommove(Position& pos, StateInfo* s, std::mt19937& mt) {
 
 	
+	if (pos.is_incheck()) { return; }
 
 	ExtMove moves[600], *end;
 
 	memset(moves, 0, sizeof(moves));//指し手の初期化
 	end = test_move_generation(pos, moves);//指し手生成
 	ptrdiff_t num_moves = end - moves;
-	Move m = moves[mt() % num_moves];
+
+	Move m;
+
+	while (true) {
+		//次の局面に進めるための指し手の選択
+		//合法手が選択されるまでwhileで回る
+
+		 m = moves[mt() % num_moves];
+		
+
+		if (pos.is_legal(m) && pos.pseudo_legal(m)) { break; }
+	}
 	pos.do_move(m, s);
 
 }
@@ -679,7 +692,11 @@ void reinforce_learn() {
 		となると全教師データを用いて一回しか値を更新できない？？？？？う～～ん....それはさすがにないような気がするのだけれど....
 		値の更新の方法を勉強しないといけない...手元にadadeltaの論文があるしこれをつかうか？？
 		*/
+#if 1
 		renewal_PP_rein(sum_gradJ);
+#else
+		renewal_PP(sum_gradJ);
+#endif
 		Eval::param_sym_ij();
 		write_PP();
 		read_PP();
@@ -759,7 +776,7 @@ void reinforce_learn_pharse1(const int index) {
 		double win_teacher = sigmoid(double(teacher) / double(600)), win_shallow = sigmoid(double(shallow_v) / double(600));
 		double diffsig = win_shallow - win_teacher;
 		object_func += int(shallow_v - teacher)*int(shallow_v - teacher);
-		diffsig = (rootColor == BLACK ? diffsig : -diffsig);
+		diffsig = (rootColor == BLACK ? diffsig : -diffsig);//+bpp-wppの関係
 
 		gradJs[index].update_dJ(pos, -diffsig);
 
@@ -800,6 +817,23 @@ void renewal_PP_rein(dJValue &data) {
 	}
 }
 
+//
+//void check_teacherdata() {
+//
+//	Position pos;
+//	Position pos__;
+//
+//	while (read_teacherdata()) {
+//
+//		for (int g = lock_index_inclement__(); g < sum_teachers.size(); g = lock_index_inclement__()) {
+//
+//			pos.set(sum_teachers[g].sfen);
+//			pos__.unpack_haffman_sfen(sum_teachers[g].haffman);
+//			ASSERT(pos == pos__);
+//		}
+//	}
+//
+//}
 
 #endif
 

@@ -30,3 +30,5 @@ void make_teacher();
 void make_teacher_body(const int number);
 bool read_teacherdata();
 void reinforce_learn();
+
+//void check_teacherdata();
