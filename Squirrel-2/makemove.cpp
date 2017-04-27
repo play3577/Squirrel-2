@@ -1168,43 +1168,43 @@ ExtMove * move_generation_quietcheck__(const Position & pos, ExtMove * movelist)
 
 	//歩
 	target = andnot(StepEffect[enemy][PAWN][eksq], pos.occ_all() | canPromoteBB[us]);
-	movelist=make_move_PAWN_bitshift<us>(pos, target, movelist);
+	movelist = make_move_PAWN_bitshift<us>(pos, target, movelist);
 
 	//香
 	target = andnot(lance_effect(pos.ret_occ_256(), enemy, eksq), pos.occ_all());
-	movelist = make_checkdrop<LANCE,us>(pos, target, movelist);
-	if (is_eksq_infield) { target = andnot(target | (StepEffect[enemy][GOLD][eksq]& canPromoteBB[us]), pos.occ_all()); }//ちゃんと作れてないが,まぁ大体で...
+	movelist = make_checkdrop<LANCE, us>(pos, target, movelist);
+	if (is_eksq_infield) { target = andnot(target | (StepEffect[enemy][GOLD][eksq] & canPromoteBB[us]), pos.occ_all()); }//ちゃんと作れてないが,まぁ大体で...
 	movelist = make_move_LANCE<us>(pos, target, movelist);
 
 	//桂馬
 	target = andnot(StepEffect[enemy][KNIGHT][eksq], pos.occ_all());
-	movelist= make_checkdrop<KNIGHT, us>(pos, target, movelist);
-	if (is_eksq_infield) {target = andnot(target | (StepEffect[enemy][GOLD][eksq]& canPromoteBB[us]), pos.occ_all());}//これ非効率的なんだが仕方ない
+	movelist = make_checkdrop<KNIGHT, us>(pos, target, movelist);
+	if (is_eksq_infield) { target = andnot(target | (StepEffect[enemy][GOLD][eksq] & canPromoteBB[us]), pos.occ_all()); }//これ非効率的なんだが仕方ない
 	movelist = make_move_KNIGHT<us>(pos, target, movelist);
 
 	//銀
 	target = andnot(StepEffect[enemy][SILVER][eksq], pos.occ_all());
 	movelist = make_checkdrop<SILVER, us>(pos, target, movelist);
-	if (is_eksq_infield) { target = andnot(target | (StepEffect[enemy][GOLD][eksq]& canPromoteBB[us]), pos.occ_all());}
+	if (is_eksq_infield) { target = andnot(target | (StepEffect[enemy][GOLD][eksq] & canPromoteBB[us]), pos.occ_all()); }
 	movelist = make_move_SILVER<us>(pos, target, movelist);
 
 	//金
-	target= andnot(StepEffect[enemy][GOLD][eksq], pos.occ_all());
+	target = andnot(StepEffect[enemy][GOLD][eksq], pos.occ_all());
 	movelist = make_move_ASGOLD<us>(pos, target, movelist);
-	movelist=make_checkdrop<GOLD, us>(pos,target, movelist);
+	movelist = make_checkdrop<GOLD, us>(pos, target, movelist);
 
 	//飛車
 	target = andnot(rook_effect(pos.ret_occ_256(), eksq), pos.occ_all());
-	movelist = make_checkdrop<ROOK, us>(pos,target, movelist);
-	if (is_eksq_infield) {target = andnot(target|(StepEffect[us][KING][eksq]& canPromoteBB[us]), pos.occ_all());}
+	movelist = make_checkdrop<ROOK, us>(pos, target, movelist);
+	if (is_eksq_infield) { target = andnot(target | (StepEffect[us][KING][eksq] & canPromoteBB[us]), pos.occ_all()); }
 	movelist = make_move_ROOK<us>(pos, target, movelist);
 
 	//角
-	target = andnot(bishop_effect(pos.ret_occ_256(), eksq), pos.occ_all()); 
-	movelist = make_checkdrop<BISHOP, us>(pos,target, movelist);
-	if (is_eksq_infield) {target = andnot(target| (StepEffect[us][KING][eksq]& canPromoteBB[us]), pos.occ_all());}
+	target = andnot(bishop_effect(pos.ret_occ_256(), eksq), pos.occ_all());
+	movelist = make_checkdrop<BISHOP, us>(pos, target, movelist);
+	if (is_eksq_infield) { target = andnot(target | (StepEffect[us][KING][eksq] & canPromoteBB[us]), pos.occ_all()); }
 	movelist = make_move_BISHOP<us>(pos, target, movelist);
-	
+
 
 	//竜
 	target = andnot(rook_effect(pos.ret_occ_256(), eksq) | StepEffect[us][KING][eksq], pos.occ_all());
@@ -1212,7 +1212,7 @@ ExtMove * move_generation_quietcheck__(const Position & pos, ExtMove * movelist)
 	//ユニコーン
 	target = andnot(bishop_effect(pos.ret_occ_256(), eksq) | StepEffect[us][KING][eksq], pos.occ_all());
 	movelist = make_move_UNICORN<us>(pos, target, movelist);
-
+	
 	return movelist;
 }
 

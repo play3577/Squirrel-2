@@ -1921,7 +1921,7 @@ Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
 	}
 #endif
 #ifdef MATEONE
-	if (!incheck) {
+	if (!incheck&&depth<DEPTH_QS_CHECKS) {
 		Move mate;
 		if ((mate=pos.mate1ply())!=MOVE_NONE) {
 #ifdef MATETEST
