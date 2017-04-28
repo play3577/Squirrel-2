@@ -402,7 +402,7 @@ Move movepicker::pick_best(ExtMove * begin, ExtMove * end)
 
 	 if (pos.is_incheck()) {
 		 st = START_Eversion;
-		 ttMove = (ttm && pos.pseudo_legal(ttm)) ? ttm : MOVE_NONE;
+		 ttMove = (ttm && pos.pseudo_legal(ttm)&&pos.is_legal(ttm)) ? ttm : MOVE_NONE;
 		 end_ += (ttMove != MOVE_NONE);
 	 }
 	 else {

@@ -320,7 +320,11 @@ void	Position::unpack_haffman_sfen(bool *psfen_){
 	while (index < 256) {
 		
 		shand += itos(psfen[index++]);
-		ASSERT(shand.size() <= 6);
+		if (shand.size() > 6) {
+			cout <<endl<< *this << endl;
+			cout << occ_all() << endl;
+			ASSERT(0);
+		}
 		for (Piece i = PAWN; i < KING; i++) {
 			if (shand == hand_unhaffman_str[(int)i]) {
 				c = (Color)psfen[index++];

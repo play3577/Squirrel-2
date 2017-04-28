@@ -1114,18 +1114,20 @@ bool Position::is_legal(const Move m) const {
 	
 	
 
-	ASSERT(piece_type(piece_on(to)) != KING);
+	//ASSERT(piece_type(piece_on(to)) != KING);
 	//取ろうとしている駒は玉ではない
-//	if (piece_type(piece_on(to)) == KING) {
-////#ifndef LEARN
-//		cout <<endl<< *this << endl;
-//		check_move(m);
-//		ASSERT(0);
-////#else 
-//		//学習中は人間の棋譜で相手の効きのある場所に王を動かしてしまうことが起こってしまうこともあるみたい
-//		//return false;
-////#endif
-//	}
+	if (piece_type(piece_on(to)) == KING) {
+//#ifndef LEARN
+		cout <<endl<< *this << endl;
+		cout << ret_occ_256() << endl;
+		cout << occ_all() << endl;
+		check_move(m);
+		ASSERT(0);
+//#else 
+		//学習中は人間の棋譜で相手の効きのある場所に王を動かしてしまうことが起こってしまうこともあるみたい
+		//return false;
+//#endif
+	}
 
 
 

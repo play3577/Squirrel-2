@@ -1355,6 +1355,8 @@ moves_loop:
 
 			//静的評価値が前の自分の手番よりもよくなっているかまたは以前の評価値が存在しなかった
 	improve = ss->static_eval >= (ss - 2)->static_eval || (ss - 2)->static_eval == Value_error;
+
+	//学習時はextentionしないようにしてるがこれでいいだろうか？
 #ifdef EXTENSION
 		/*=================================================================================
 				singularExtension
@@ -2046,7 +2048,7 @@ Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
 #ifdef USETT
 	movepicker mp(pos, move_to(pos.state()->lastmove),ttMove,depth,ss);
 #else
-	movepicker mp(pos, move_to(pos.state()->lastmove), MOVE_NONE);
+	movepicker mp(pos, move_to(pos.state()->lastmove), MOVE_NONE,depth,ss);
 #endif
 
 	while ((move = mp.return_nextmove()) != MOVE_NONE) {

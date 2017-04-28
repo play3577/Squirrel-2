@@ -322,8 +322,10 @@ void position(Position& pos, istringstream& is) {
 	//出てきた回数が少ないものは消す
 	//サイズはどんどん変わっていくのでiで指定するのは良くない....
 	//http://d.hatena.ne.jp/unk_pizza/20140426/p1　参照 この方法はかっこいいな
-	auto tail_itr = std::remove_if(pos.reputaion_infos.begin(), pos.reputaion_infos.end(), [](ReputationInfo ri){return (ri.count < 3);});
-	pos.reputaion_infos.erase(tail_itr, pos.reputaion_infos.end());
+	if (pos.reputaion_infos.size() != 0) {
+		auto tail_itr = std::remove_if(pos.reputaion_infos.begin(), pos.reputaion_infos.end(), [](ReputationInfo ri) {return (ri.count < 3); });
+		pos.reputaion_infos.erase(tail_itr, pos.reputaion_infos.end());
+	}
 	//OK
 
 	/*
@@ -480,7 +482,9 @@ void USI::loop()
 			if (yn != "y") { cout << "OK I do not  learning"; break; }
 			reinforce_learn();
 		}
-	
+		else if (token == "hafft") {
+			check_teacherdata();
+		}
 #endif
 #endif //  LEARN
 		else if (token == "hirate") { pos.set_hirate(); }

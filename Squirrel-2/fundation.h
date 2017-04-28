@@ -37,11 +37,11 @@
 
 #define LEARN
 //#define MAKESTARTPOS
-#define MAKETEACHER
+//#define MAKETEACHER
 //#define Prog_LEARN
-//#define REIN
+#define REIN
 
-#define USETT
+//#define USETT
 
 #ifndef LEARN
 #define USETT

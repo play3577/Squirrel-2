@@ -34,7 +34,7 @@ packedsfenのほうがいいかもしれないがまずはsfenで作成する
 
 
 評価関数がよくないからか,あんまり質のいい開始局面は生成できなかった。
-depth2では評価値100以内だが他では1000超えてしまうみたいな...
+depth2では評価値100以内だが他では1000超えてしまうみたいな...(TTをonにしたらきれいになった)
 */
 #define TEACHERPATH "C:/teacher/teacherd5.bin"
 
@@ -721,10 +721,10 @@ void reinforce_learn_pharse1(const int index) {
 
 	for (int g = lock_index_inclement__(); g < sum_teachers.size(); g = lock_index_inclement__()) {
 
-
-		const Value teacher = (Value)sum_teachers[g].teacher_value;
+		auto teacher_data = sum_teachers[g];
+		const Value teacher = (Value)teacher_data.teacher_value;
 		const Color rootColor = pos.sidetomove();
-		pos.unpack_haffman_sfen(sum_teachers[g].haffman);
+		pos.unpack_haffman_sfen(teacher_data.haffman);
 		
 		/*
 		http://www2.computer-shogi.org/wcsc27/appeal/Apery/appeal_wcsc27.html
@@ -817,23 +817,24 @@ void renewal_PP_rein(dJValue &data) {
 	}
 }
 
-//
-//void check_teacherdata() {
-//
+
+void check_teacherdata() {
+
 //	Position pos;
-//	Position pos__;
-//
-//	while (read_teacherdata()) {
-//
-//		for (int g = lock_index_inclement__(); g < sum_teachers.size(); g = lock_index_inclement__()) {
-//
-//			pos.set(sum_teachers[g].sfen);
-//			pos__.unpack_haffman_sfen(sum_teachers[g].haffman);
-//			ASSERT(pos == pos__);
-//		}
-//	}
-//
-//}
+	Position pos__;
+
+	while (read_teacherdata()) {
+
+		for (int g = lock_index_inclement__(); g < sum_teachers.size(); g = lock_index_inclement__()) {
+
+			auto data = sum_teachers[g];
+			//pos.set(sum_teachers[g].sfen);
+			pos__.unpack_haffman_sfen(data.haffman);
+			//ASSERT(pos == pos__);
+		}
+	}
+
+}
 
 #endif
 
