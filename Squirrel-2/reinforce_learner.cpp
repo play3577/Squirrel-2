@@ -36,7 +36,7 @@ packedsfenのほうがいいかもしれないがまずはsfenで作成する
 評価関数がよくないからか,あんまり質のいい開始局面は生成できなかった。
 depth2では評価値100以内だが他では1000超えてしまうみたいな...(TTをonにしたらきれいになった)
 */
-#define TEACHERPATH "C:/teacher/teacherd5.bin"
+#define TEACHERPATH "C:/teacher/teacherd5.txt"
 
 #ifdef MAKESTARTPOS
 string Position::random_startpos()
@@ -355,17 +355,23 @@ void make_startpos_detabase()
 #if defined(REIN) || defined(MAKETEACHER)
 struct teacher_data {
 
-	bool haffman[256];
-	//string sfen;//ちゃんとハフマンを読み込めているか確認のためにsfenを追加(stringをバイナリ書き出しはできんかった...)
+	//bool haffman[256];
+	string sfen;//ハフマン失敗しまくったのでstringで行く。
 	int16_t teacher_value;
 	//teacher_data() {};
-	teacher_data(const bool *haff/*,string sfen_*/, Value teachervalue) {
-		memcpy(haffman, haff, sizeof(haffman));
-		/*sfen = sfen_;*/
+	teacher_data(/*const bool *haff,*/const string sfen_, Value teachervalue) {
+		//memcpy(haffman, haff, sizeof(haffman));
+		sfen = sfen_;
 		teacher_value = (int16_t)teachervalue;
 	}
 	teacher_data(){}
 };
+inline std::ostream& operator<<(std::ostream& os, const teacher_data& td) {
+	os <<td.sfen<<endl;
+	os << td.teacher_value << endl;
+	return os;
+}
+
 vector<string> startpos_db;
 vector<vector<teacher_data>> teachers;
 vector<teacher_data> sum_teachers;
@@ -467,8 +473,10 @@ void make_teacher()
 		*/
 		ofstream of(TEACHERPATH, ios::out | ios::binary|ios::app);
 		if (!of) { UNREACHABLE; }
-		of.write(reinterpret_cast<const char*>(&sum_teachers[0]), sum_teachers.size() * sizeof(teacher_data));
-
+		//of.write(reinterpret_cast<const char*>(&sum_teachers[0]), sum_teachers.size() * sizeof(teacher_data));
+		for (auto& td : sum_teachers) {
+			of << td;
+		}
 		of.close();
 		cout << i << endl;
 	}
@@ -512,9 +520,9 @@ void make_teacher_body(const int number) {
 
 			pos.pack_haffman_sfen();
 			//root局面のhaffman符号を用意しておく
-			bool HaffmanrootPos[256];
-			memcpy(HaffmanrootPos, pos.packed_sfen, sizeof(HaffmanrootPos));
-			//string sfen_rootpos = pos.make_sfen();
+		/*	bool HaffmanrootPos[256];
+			memcpy(HaffmanrootPos, pos.packed_sfen, sizeof(HaffmanrootPos));*/
+			string sfen_rootpos = pos.make_sfen();
 			//------------------------------PVの末端のノードに移ってそこでの静止探索の値を求めteacher_dataに格納
 			StateInfo si2[64];
 			int pv_depth = 0;
@@ -528,7 +536,7 @@ void make_teacher_body(const int number) {
 			//rootから見た評価値を格納する
 			const Value deepvalue = (rootColor==pos.sidetomove()) ? Eval::eval(pos):-Eval::eval(pos);
 
-			teacher_data td(HaffmanrootPos,/*sfen_rootpos,*/ deepvalue);
+			teacher_data td(/*HaffmanrootPos,*/sfen_rootpos, deepvalue);
 			//teacher_data td(pos.make_sfen(), v);
 			teachers[number].push_back(td);
 
@@ -616,12 +624,21 @@ bool read_teacherdata() {
 	int i = 0;
 	if (f.eof()) { return false; }
 	while (!f.eof()&&i<batchsize) {
-		f.seekg(read_teacher_counter * sizeof(teacher_data));
+		/*f.seekg(read_teacher_counter * sizeof(teacher_data));
 		f.read((char*)&t, sizeof(teacher_data));
 
 		sum_teachers.push_back(t);
-		read_teacher_counter++;
+		read_teacher_counter++;*/
+		std::string line,sfen;
+		Value v;
+		if (!getline(f, line)) { break; };
+		sfen = line;
+		if (!getline(f, line)) { break; };
+		v = (Value)stoi(line);
+		teacher_data td(sfen, v);
+		sum_teachers.push_back(td);
 		i++;
+		read_teacher_counter++;
 	}
 	cout << "read teacher counter>>" << read_teacher_counter << endl;
 	bool is_eof = f.eof();
@@ -724,7 +741,8 @@ void reinforce_learn_pharse1(const int index) {
 		auto teacher_data = sum_teachers[g];
 		const Value teacher = (Value)teacher_data.teacher_value;
 		const Color rootColor = pos.sidetomove();
-		pos.unpack_haffman_sfen(teacher_data.haffman);
+		//pos.unpack_haffman_sfen(teacher_data.haffman);
+		pos.set(teacher_data.sfen);
 		
 		/*
 		http://www2.computer-shogi.org/wcsc27/appeal/Apery/appeal_wcsc27.html
@@ -823,16 +841,16 @@ void check_teacherdata() {
 //	Position pos;
 	Position pos__;
 
-	while (read_teacherdata()) {
+	read_teacherdata();
 
 		for (int g = lock_index_inclement__(); g < sum_teachers.size(); g = lock_index_inclement__()) {
 
 			auto data = sum_teachers[g];
-			//pos.set(sum_teachers[g].sfen);
-			pos__.unpack_haffman_sfen(data.haffman);
+			pos__.set(sum_teachers[g].sfen);
+			//pos__.unpack_haffman_sfen(data.haffman);
 			//ASSERT(pos == pos__);
 		}
-	}
+	
 
 }
 
