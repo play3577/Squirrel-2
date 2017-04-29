@@ -5,8 +5,8 @@
 #include "makemove.h"
 #include "learner.h"
 #include <random>
-#include <sstream>
-#include <fstream>
+
+
 #include <omp.h>
 /*
 ここではランダムに初期局面を用意しsfen文字列に変換し、ファイルに書き出す。
@@ -439,8 +439,11 @@ void make_teacher()
 	//スレッド作成
 	vector<std::thread> threads(maxthreadnum__ - 1);
 	
-	for (int i = 0; i < (maxnum / startpos_db.size())+1; i++) {
-
+	int i = 0;
+	//for (int i = 0; i < (maxnum / startpos_db.size())+1; i++)
+	while(true)
+	{
+		i++;
 
 
 		sum_teachers.clear();
@@ -461,9 +464,11 @@ void make_teacher()
 		for (auto& th : threads) { th.join(); }
 
 		//thread毎のteacherをmerge
+		int h = 0;
 		for each (vector<teacher_data> tdv in teachers)
 		{
 			std::copy(tdv.begin(), tdv.end(), std::back_inserter(sum_teachers));
+			teachers[h++].clear();
 		}
 		
 
@@ -471,7 +476,7 @@ void make_teacher()
 		/*
 		読み込むときはvector一つ分とってきて、それをpushbackしていけばいいと考えられるのだが
 		*/
-		ofstream of(TEACHERPATH, ios::out /*| ios::binary*/|ios::app);
+		ofstream of(TEACHERPATH,ios::app);
 		if (!of) { UNREACHABLE; }
 		//of.write(reinterpret_cast<const char*>(&sum_teachers[0]), sum_teachers.size() * sizeof(teacher_data));
 		for (auto& td : sum_teachers) {
@@ -617,9 +622,14 @@ double object_func = 0;
 
 //ok
 //参考　http://gurigumi.s349.xrea.com/programming/binary.html
-bool read_teacherdata() {
+/*
+この方法で文字列を読もうとすると最初の文字列を何回も読み直してしまう！！
+ifstreamを外部から参照渡しすることにする
+
+*/
+bool read_teacherdata(ifstream& f) {
 	sum_teachers.clear();
-	ifstream f(TEACHERPATH, ios::in | ios::binary);
+	//ifstream f(TEACHERPATH);
 	if (!f) { cout << "cantopen" << TEACHERPATH << endl; UNREACHABLE; }
 	teacher_data t;
 	int i = 0;
@@ -643,7 +653,7 @@ bool read_teacherdata() {
 	}
 	cout << "read teacher counter>>" << read_teacher_counter << endl;
 	bool is_eof = f.eof();
-	f.close();
+	//f.close();
 	return (is_eof == false);
 	/*Position pos;
 
@@ -656,7 +666,11 @@ bool read_teacherdata() {
 dJValue sum_gradJ;
 vector<dJValue> gradJs;
 
+lowerDimPP lowdim_;
+
 void reinforce_learn_pharse1(const int index);
+
+
 
 void reinforce_learn() {
 
@@ -666,6 +680,10 @@ void reinforce_learn() {
 
 
 	//read_teacherdata();//ここで教師データを読み込む
+
+
+	ifstream f(TEACHERPATH);
+	if (!f) { cout << "cantopen" << TEACHERPATH << endl; UNREACHABLE; }
 
 	
 	std::random_device rd;
@@ -687,7 +705,7 @@ void reinforce_learn() {
 	for (dJValue& dJ : gradJs) { dJ.clear(); }
 
 	//学習開始(readteacherdataでバッチサイズだけ棋譜を読み込んでミニバッチ学習を行う)
-	while (read_teacherdata()) {
+	while (read_teacherdata(f)) {
 
 		object_func = 0;
 
@@ -710,7 +728,18 @@ void reinforce_learn() {
 		となると全教師データを用いて一回しか値を更新できない？？？？？う～～ん....それはさすがにないような気がするのだけれど....
 		値の更新の方法を勉強しないといけない...手元にadadeltaの論文があるしこれをつかうか？？
 		*/
-#if 1
+
+//
+//#ifdef JIGENSAGE
+//		lowdim_.clear();
+//		lower__dimPP(lowdim_, sum_gradJ);
+//		sum_gradJ.clear();
+//		weave_lowdim_to_gradj(sum_gradJ, lowdim_);
+//#endif
+//
+
+
+#if 0
 		renewal_PP_rein(sum_gradJ);
 #else
 		renewal_PP(sum_gradJ);
@@ -721,7 +750,7 @@ void reinforce_learn() {
 		cout << "object func:" << object_func << endl;
 	}
 
-
+	f.close();
 	cout << "finish rein" << endl;
 }
 
@@ -758,14 +787,14 @@ void reinforce_learn_pharse1(const int index) {
 		
 		*/
 		//const Value shallow_v = Eval::eval(pos);
-
+#if 0
 		th.set(pos);
 		th.l_alpha = -Value_Infinite;
 		th.l_beta = Value_Infinite;
 		th.l_depth = 2;
 		//Eval::eval(pos);
 		th.think();
-
+#endif
 		//tanuki-さんの本を参考に目的関数の微分を作成。勝率の差の二乗を目的関数としている。勝率の式はponanzaそのままでうちで使えるかどうかは微妙。
 		/*double win_teacher = sigmoid(double(teacher) / double(600)), win_shallow = sigmoid(double(shallow_v) / double(600));
 		double diffsig = dsigmoid(double(shallow_v) / double(600))*(win_shallow - win_teacher) / double(300);
@@ -788,9 +817,11 @@ void reinforce_learn_pharse1(const int index) {
 
 	
 		//一手読みをさせた場合はこの局面ではなくpvの末端の特徴量を更新しなければならない！！！！！！！！！！！！！
+#if 0
 		int ii = 0;
 		for (Move m : th.pv) { pos.do_move(m, &si[ii]); ii++; }
 		//teachervalueはrootから見た点数なのでshallowもrootから見た点数に変換
+#endif
 		Value shallow_v = (rootColor == pos.sidetomove()) ? Eval::eval(pos) : -Eval::eval(pos);
 		double win_teacher = sigmoid(double(teacher) / double(600)), win_shallow = sigmoid(double(shallow_v) / double(600));
 		double diffsig = win_shallow - win_teacher;
@@ -829,8 +860,12 @@ void renewal_PP_rein(dJValue &data) {
 			double delta_x = gt*RMS(last_Edeltax[i][j]) /RMS(Egt);
 			last_Edeltax[i][j] = (row)*last_Edeltax[i][j] + (1 - row)*delta_x;
 			//int inc = h*sign(data.absolute_PP[i][j]);
-			PP[i][j] += delta_x*FV_SCALE;
 
+
+			int add = int(delta_x)*FV_SCALE;//clampか何かしたほうがいいか？
+			if (abs(PP[i][j] + add) < INT16_MAX) {
+				PP[i][j] += add;
+			}
 
 		}
 	}
@@ -842,16 +877,21 @@ void check_teacherdata() {
 //	Position pos;
 	Position pos__;
 
-	read_teacherdata();
+	ifstream f(TEACHERPATH);
+	if (!f) { cout << "cantopen" << TEACHERPATH << endl; UNREACHABLE; }
+	uint64_t count = 0;
+
+	while (read_teacherdata(f)) {
 
 		for (int g = lock_index_inclement__(); g < sum_teachers.size(); g = lock_index_inclement__()) {
-
+			count++;
 			auto data = sum_teachers[g];
 			pos__.set(sum_teachers[g].sfen);
 			//pos__.unpack_haffman_sfen(data.haffman);
 			//ASSERT(pos == pos__);
 		}
-	
+		cout << count << endl;
+	}
 
 }
 

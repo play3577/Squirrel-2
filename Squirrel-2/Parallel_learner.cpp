@@ -52,43 +52,11 @@ xpp
 KPE次元下げ 
 効きを与えている駒が何であろうがその効きのあるsquareと駒のcolorが同じならばそこにも値を与える。
 */
-#ifndef EVAL_PROG
-struct lowerDimPP
-{
-	double absolute_pp[fe_end2][fe_end2];//絶対PP　
-	double relative_pp[PC_ALL][PC_ALL][17][17];//PP平行移動（x,y座標固定の寄与を大きくしてrelativePPのほうは寄与を小さくすべきか？）
-	double relative_ypp[PC_ALL][PC_ALL][17][17][Rank_Num];//y座標固定PP平行移動　rankにはiのrankが格納される
-	double relative_xpp[PC_ALL][PC_ALL][17][17][File_Num];//x座標固定
-	//double absolute_p[fe_end2];//絶対P これはたぶんダメ
 
-	//どれだけ小さい値でも値が付いていればPPを動かすのでペナルティが重要になってくるか....
-	double absolute_pe[fe_end2][ColorALL][SQ_NUM][SQ_NUM];//[bonap][効きの原因となった駒の色][効きのあるマス][効きの原因となる駒の位置]  ppeだとなんの次元下げにもならないのでpe　駒の位置も追加する
-
-	void clear() {
-		memset(this, 0, sizeof(*this));
-	}
-};
-
-#else
-struct lowerDimPP
-{
-	double absolute_pp[fe_end2][fe_end2];//絶対PP　
-	double relative_pp[PC_ALL][PC_ALL][17][17];//相対PP
-	 //double absolute_p[fe_end2];//絶対P 
-	double absolute_ppF[fe_end2][fe_end2];//絶対PP　   終盤用
-	double relative_ppF[PC_ALL][PC_ALL][17][17];//相対PP	終盤用
-
-	void clear() {
-		memset(this, 0, sizeof(*this));
-	}
-};
-#endif
 lowerDimPP lowdimPP;
 
 
 
-void lower__dimPP(lowerDimPP& lowdim,const dJValue& gradJ);
-void weave_lowdim_to_gradj(dJValue& newgradJ, const lowerDimPP& lowdim);
 
 struct Parse2Data {
 	
@@ -102,7 +70,7 @@ struct Parse2Data {
 void renewal_PP(dJValue &data) {
 
 
-#ifdef REIN
+#ifdef AA
 #else
 	std::random_device rd;
 	std::mt19937 mt(rd());
@@ -111,7 +79,7 @@ void renewal_PP(dJValue &data) {
 	
 	int h;
 
-#ifdef REIN
+#ifdef AA
 	h = 1;
 #else
 	h = std::abs(int(mt())) % 3;
@@ -129,7 +97,7 @@ void renewal_PP(dJValue &data) {
 
 		
 			//効きを含めた次元下げをしたらpenaltyは必須になると考えられるがどれぐらいの値を使うべきなのか.....
-#if 1
+#if 0
 			//bonanzaは4万局程に対してこの値なのでmin batchをつかうときはこれではだめ！！！！！
 			/*if (PP[i][j]>0) { data.dJ[i][j] -= double(0.2 / double(FV_SCALE)); }
 			else if (PP[i][j]<0) { data.dJ[i][j] += double(0.2 / double(FV_SCALE)); }*/

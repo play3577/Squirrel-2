@@ -24,11 +24,13 @@ sfenはハフマン化して256bit 評価値は16bitであるので　272bitあればよい
 完全にランダムでもそれなりに良いかもしれないが、30％ぐらいにしておこうかな
 
 */
+#include <fstream>
+#include <sstream>
 void make_startpos_detabase();
 
 void make_teacher();
 void make_teacher_body(const int number);
-bool read_teacherdata();
+bool read_teacherdata(std::ifstream& f);
 void reinforce_learn();
 
 void check_teacherdata();

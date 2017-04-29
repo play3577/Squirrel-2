@@ -472,9 +472,9 @@ void USI::loop()
 		}
 #endif
 #ifdef REIN
-		else if (token == "readt") {
+		/*else if (token == "readt") {
 			read_teacherdata();
-		}
+		}*/
 		else if (token == "rein") {
 			string yn;
 			cout << "do you really wanna learning fv? [y/n]  ";
