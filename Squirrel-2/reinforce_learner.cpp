@@ -471,7 +471,7 @@ void make_teacher()
 		/*
 		読み込むときはvector一つ分とってきて、それをpushbackしていけばいいと考えられるのだが
 		*/
-		ofstream of(TEACHERPATH, ios::out | ios::binary|ios::app);
+		ofstream of(TEACHERPATH, ios::out /*| ios::binary*/|ios::app);
 		if (!of) { UNREACHABLE; }
 		//of.write(reinterpret_cast<const char*>(&sum_teachers[0]), sum_teachers.size() * sizeof(teacher_data));
 		for (auto& td : sum_teachers) {
@@ -479,6 +479,7 @@ void make_teacher()
 		}
 		of.close();
 		cout << i << endl;
+		//なぜか落ちるので明日の朝チェックをする
 	}
 
 	

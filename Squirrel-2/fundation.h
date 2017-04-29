@@ -35,11 +35,11 @@
 
 //---------------------------------äwèKä÷òA
 
-#define LEARN
+//#define LEARN
 //#define MAKESTARTPOS
 //#define MAKETEACHER
 //#define Prog_LEARN
-#define REIN
+//#define REIN
 
 //#define USETT
 

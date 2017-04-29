@@ -2094,6 +2094,7 @@ Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
 #if 1
 		// Detect non-capture evasions that are candidates to be pruned
 		evasionPrunable = incheck
+			//&&depth!=DEPTH_ZERO
 			&&  bestvalue > Value_mated_in_maxply
 			&& !pos.capture(move);
 		// Don't search moves with negative SEE values
@@ -2172,7 +2173,7 @@ Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
 	//PVnode&&bestvalue>oldalphaということはコレは正確な評価値である。
 	//PVnodeではないということはβ超えは起こらなかったnullwindowのアルファ値を超えられなかったつまりUPPERである
 	tte->save(posKey, value_to_tt(bestvalue, ss->ply),
-		PvNode && bestvalue > oldAlpha ? BOUND_EXACT : BOUND_UPPER,
+		PvNode && bestvalue > oldAlpha/*bestMove!=MOVE_NONE*/ ? BOUND_EXACT : BOUND_UPPER,
 		ttDepth_, bestMove/*, staticeval*/, TT.generation());
 #endif
 	ASSERT(bestvalue > -Value_Infinite&&bestvalue < Value_Infinite);
