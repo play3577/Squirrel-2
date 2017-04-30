@@ -962,6 +962,7 @@ void weave_eachPP(dJValue& newgradJ, const lowerDimPP& lowdim, const BonaPiece b
 	/*
 	‚Î‚ç‚Ü‚¢‚½grad‚ğ‚©‚«W‚ß‚Ä‚­‚é
 	*/
+#if 0
 	if (f_pawn <= i) {
 		const Piece pci = (bp2piece.bp_to_piece(bpwithoutsq(i)));
 		const Piece pti = piece_type(pci);
@@ -986,7 +987,7 @@ void weave_eachPP(dJValue& newgradJ, const lowerDimPP& lowdim, const BonaPiece b
 			newgradJ.absolute_PP[bp1][bp2] += lowdim.absolute_pe[i][cj][effsq][sqj];
 		}
 	}
-
+#endif
 
 	//â‘ÎPP
 	newgradJ.absolute_PP[bp1][bp2] += lowdim.absolute_pp[i][j];

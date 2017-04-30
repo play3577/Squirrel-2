@@ -418,11 +418,16 @@ void make_teacher()
 	cin >> maxnum;
 
 	//開始局面データベース読み込み
-	ifstream f("C:/sp_db/startpos.db");
+	/*
+	出てこないきょくめんばかりだった可能性が大なので定跡から読み込ませる
+	*/
+	//ifstream f("C:/sp_db/startpos.db");
+	ifstream f("C:/book2/joseki/R2800_30te.db");
 	string s;
 	while (!f.eof()) {
 		getline(f, s);
-		startpos_db.push_back(s);
+		if (s.find("sfen")!=string::npos) { startpos_db.push_back(s); }
+		
 	}
 	f.close();
 
@@ -440,8 +445,8 @@ void make_teacher()
 	vector<std::thread> threads(maxthreadnum__ - 1);
 	
 	int i = 0;
-	//for (int i = 0; i < (maxnum / startpos_db.size())+1; i++)
-	while(true)
+	for (int i = 0; i < (maxnum / startpos_db.size()); i++)
+	//while(true)
 	{
 		i++;
 
@@ -496,7 +501,7 @@ void make_teacher_body(const int number) {
 	std::random_device rd;
 	std::mt19937 mt(rd());
 	std::uniform_real_distribution<double> random_move_probability(0.0, 1.0);//doubleのほうが扱いやすいか
-	double random_probability=0.4;
+	double random_probability=1.0;
 	Position pos;
 	StateInfo si[500];
 	StateInfo s_start;
@@ -512,7 +517,7 @@ void make_teacher_body(const int number) {
 		do_randommove(pos, &s_start, mt);//random初期局面から1手ランダムに進めておく
 		th.cleartable();
 
-		random_probability = 0.4;
+		random_probability = 1.0;
 
 		for (int i = 0; i < 256; i++) {
 
@@ -729,17 +734,17 @@ void reinforce_learn() {
 		値の更新の方法を勉強しないといけない...手元にadadeltaの論文があるしこれをつかうか？？
 		*/
 
-//
-//#ifdef JIGENSAGE
-//		lowdim_.clear();
-//		lower__dimPP(lowdim_, sum_gradJ);
-//		sum_gradJ.clear();
-//		weave_lowdim_to_gradj(sum_gradJ, lowdim_);
-//#endif
-//
+
+#ifdef JIGENSAGE
+		lowdim_.clear();
+		lower__dimPP(lowdim_, sum_gradJ);
+		sum_gradJ.clear();
+		weave_lowdim_to_gradj(sum_gradJ, lowdim_);
+#endif
 
 
-#if 0
+
+#if 1
 		renewal_PP_rein(sum_gradJ);
 #else
 		renewal_PP(sum_gradJ);
@@ -822,6 +827,10 @@ void reinforce_learn_pharse1(const int index) {
 		for (Move m : th.pv) { pos.do_move(m, &si[ii]); ii++; }
 		//teachervalueはrootから見た点数なのでshallowもrootから見た点数に変換
 #endif
+		/*
+		目的関数の形はこれでいいのか？？
+		いまは交差エントロピー
+		*/
 		Value shallow_v = (rootColor == pos.sidetomove()) ? Eval::eval(pos) : -Eval::eval(pos);
 		double win_teacher = sigmoid(double(teacher) / double(600)), win_shallow = sigmoid(double(shallow_v) / double(600));
 		double diffsig = win_shallow - win_teacher;
@@ -861,7 +870,7 @@ void renewal_PP_rein(dJValue &data) {
 			last_Edeltax[i][j] = (row)*last_Edeltax[i][j] + (1 - row)*delta_x;
 			//int inc = h*sign(data.absolute_PP[i][j]);
 
-
+			//FV_SCALEでいいのか？
 			int add = int(delta_x)*FV_SCALE;//clampか何かしたほうがいいか？
 			if (abs(PP[i][j] + add) < INT16_MAX) {
 				PP[i][j] += add;

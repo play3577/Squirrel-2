@@ -41,7 +41,7 @@
 //#define Prog_LEARN
 #define REIN
 
-//#define USETT
+#define USETT
 
 #ifndef LEARN
 #define USETT
