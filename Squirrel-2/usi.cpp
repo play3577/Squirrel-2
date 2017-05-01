@@ -421,7 +421,7 @@ void USI::loop()
 				Threads.main()->start_searching(true);
 			}
 		}
-		else if (token == "stop") {
+		else if (token == "stop"||token=="gameover") {
 			signals.stop = true;
 			limit.is_inponder = false;
 			Threads.main()->start_searching(true);

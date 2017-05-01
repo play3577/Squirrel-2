@@ -448,7 +448,7 @@ void make_teacher()
 	for (int i = 0; i < (maxnum / startpos_db.size()); i++)
 	//while(true)
 	{
-		i++;
+		//i++;
 
 
 		sum_teachers.clear();
@@ -803,7 +803,8 @@ void reinforce_learn_pharse1(const int index) {
 		//tanuki-さんの本を参考に目的関数の微分を作成。勝率の差の二乗を目的関数としている。勝率の式はponanzaそのままでうちで使えるかどうかは微妙。
 		/*double win_teacher = sigmoid(double(teacher) / double(600)), win_shallow = sigmoid(double(shallow_v) / double(600));
 		double diffsig = dsigmoid(double(shallow_v) / double(600))*(win_shallow - win_teacher) / double(300);
-		object_func += (win_teacher - win_shallow)*(win_teacher - win_shallow);*/
+		object_func += (win_teacher - win_shallow)*(win_teacher - win_shallow);
+		*/
 
 
 		//double win_teacher = sigmoid(double(teacher) / double(600)), win_shallow = sigmoid(double(shallow_v) / double(600));
@@ -833,7 +834,8 @@ void reinforce_learn_pharse1(const int index) {
 		*/
 		Value shallow_v = (rootColor == pos.sidetomove()) ? Eval::eval(pos) : -Eval::eval(pos);
 		double win_teacher = sigmoid(double(teacher) / double(600)), win_shallow = sigmoid(double(shallow_v) / double(600));
-		double diffsig = win_shallow - win_teacher;
+		//double diffsig = win_shallow - win_teacher;//交差エントロピー
+		double diffsig = dsigmoid(double(shallow_v) / double(600))*(win_shallow - win_teacher) / double(300);//勝率の差の2条（これ正直言って係数が変わるだけなんだよなぁ無意味か..?まあやってみるadadeltaの更新幅が変わるのでやってみる）
 		object_func += int(shallow_v - teacher)*int(shallow_v - teacher);
 		diffsig = (rootColor == BLACK ? diffsig : -diffsig);//+bpp-wppの関係
 
