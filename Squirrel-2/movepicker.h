@@ -7,19 +7,31 @@ enum Stage {
 	//Start_Multicut,
 	//Gen_Malticut,
 	Start_Probcut,
+	Probcur_INIT,
 	Gen_Probcut,
+
 	START_Normal,
+	Capture_INIT,
 	CAP_PRO_PAWN,
 	Killers,
+	COUNTERMOVE,
+	QUIET_INIT,
 	QUIET,
 	BAD_CAPTURES,
+
 	START_Eversion,
+	EVERSION_INIT,
 	EVERSION,
+
 	START_Q_RECAPTURE,
 	RECAPTURE,
+
 	START_Q_CAP_PROPAWN,
+	Q_CAP_PROPAWNINIT,
 	Q_CAP_PROPAWN,
+
 	START_Q_WITH_CHECKS,
+	Q_CAP_PROPAWN_2_INIT,
 	Q_CAP_PROPAWN_2,
 	Q_CHECKS,
 	STOP,
@@ -43,7 +55,7 @@ private:
 	void eversion_score();
 	Move pick_best(ExtMove* begin, ExtMove* end);
 	Value Threshold;
-	ExtMove killers[3];
+	Move killers[2];
 	Move ttMove;
 	const Stack* ss;
 	Depth depth_;
@@ -63,21 +75,7 @@ public:
 	//	st = Start_Multicut;
 	//}
 
-	movepicker(const Position& pos, Move ttm, Value th) :pos_(pos), Threshold(th) {
-
-
-		ASSERT(pos.is_incheck() == false);
-		current_ = end_ = move_;
-		st = Start_Probcut;
-
-		ttMove = (ttm != MOVE_NONE
-			&&pos_.pseudo_legal(ttm)
-			&& pos_.capture(ttm)
-			//&&pos_.capture_or_propawn(ttm)
-			&& pos.see_ge(ttm,Threshold))? ttm : MOVE_NONE;
-
-		end_ += (ttMove != MOVE_NONE);
-	}
+	movepicker(const Position& pos, Move ttm, Value th);
 
 
 	inline Stage ret_stage() { return st; }

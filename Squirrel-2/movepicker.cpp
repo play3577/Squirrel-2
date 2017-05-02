@@ -51,7 +51,7 @@ void partial_insertion_sort(ExtMove* begin, ExtMove* end, int limit) {
 			++sortedEnd;
 		}
 }
-
+#if 0
 void movepicker::generatemove()
 {
 	current_ = end_ = move_;
@@ -148,6 +148,7 @@ void movepicker::generatemove()
 	}
 
 }
+#endif
 
 
 //Ç©Ç»ÇËëÂí_Ç»Ç±Ç∆Ç∑ÇÈÇ»Çü
@@ -156,127 +157,201 @@ Move movepicker::return_nextmove(bool skipQuiets)
 
 	Move m;
 
-	while (true)
+	switch (st)
 	{
+		//------------------------------------------------
+	case Start_Probcut:
+		st++;
+		return ttMove;
+	case Probcur_INIT:
+		current_ = move_;
+		end_ = move_generation<Cap_Propawn>(pos_, move_);
+		capturepropawn_score();
+		st++;
 
-		while (end_ == current_&&st != STOP) { st++; generatemove(); }
-
-
-		switch (st)
+	case Gen_Probcut:
+		while (current_<end_)
 		{
-		//case Start_Multicut:
-		//	break;
-		//case Gen_Malticut:
-		//	//m = current_++->move;
-		//	m = pick_best(current_++, end_);
-		//	return m;
-		//	break;
-		case Start_Probcut:
-			++current_;
-			return ttMove;
-			break;
-		case Gen_Probcut:
 			m = pick_best(current_++, end_);
-			if (m != ttMove&&pos_.see_ge(m,Threshold)) { return m; }
-			break;
-		case START_Normal:
-			current_++;
-			return ttMove;
-			break;
-		case CAP_PRO_PAWN:
-			m = pick_best(current_++, end_);
-			if (m != ttMove) {
-
-				if (pos_.see_ge(m,Value_Zero)) {
-					return m;
-				}
-				(end_badcaptures--)->move = m;
-				//return m;
-			}
-			break;
-		case Killers:
-			m = current_++->move;
-			if (m != MOVE_NONE
-				&&  m != ttMove
-				&&  pos_.pseudo_legal(m)
-				&& !pos_.capture_or_propawn(m)) {
-				return m;
-			}
-			break;
-		case QUIET:
-			if ((!skipQuiets || current_->value >= Value_Zero)) {
-				m = current_++->move;
-
-				if (m != killers[0].move
-					&& m != killers[1].move
-					&& m != killers[2].move
-					&&m != ttMove
-					) {
-					return m;
-				}
-			}
-			else {
-				end_ = current_;
-			}
-			break;
-		
-		case BAD_CAPTURES:
-			return (current_--)->move;
-			break;
-		case START_Eversion:
-			current_++;
-			return ttMove;
-			break;
-		case EVERSION:
-		//	m = current_++->move;
-			m = pick_best(current_++, end_);
-			if (m != ttMove) {
-				return m;
-			}
-			break;
-		case START_Q_RECAPTURE:
-			//Ç±Ç±Ç≈ttmoveÇ™Ç†ÇÍÇŒï‘Ç∑ÇÊÇ§Ç…Ç∑Ç◊Ç´Ç©ÅH
-			//ttMoveÇégÇ§ÇÊÇ§Ç…Ç∑ÇÈÇ∆ê[Ç≥Ç™ê[Ç≠Ç»ÇËÇ∑Ç¨ÇƒÉGÉâÅ[Ç™èoÇƒÇ´ÇƒÇµÇ‹Ç¡ÇΩÇ‹Ç†ÇªÇËÇ·ÇªÇ§Çæ
-			/*current_++;
-			return ttMove;*/
-			break;
-		case RECAPTURE:
-			m = current_++->move;
-			//m = pick_best(current_++, end_);
-			//if (move_to(m) == recapsq_) {
-				return m;
-			//}
-			break;
-		case START_Q_CAP_PROPAWN:
-			current_++;
-			return ttMove;
-			break;
-		case Q_CAP_PROPAWN: case Q_CAP_PROPAWN_2:
-			m = pick_best(current_++, end_);
-			if (m != ttMove) {
-				return m;
-			}
-			break;
-		case START_Q_WITH_CHECKS:
-			current_++;
-			return ttMove;
-			break;
-		case Q_CHECKS:
-			m = current_++->move;
-			if (m != ttMove) {
-				return m;
-			}
-			break;
-		case STOP:
-			return MOVE_NONE;
-			break;
-		default:
-			UNREACHABLE;
-			return MOVE_NONE;
-			break;
+			if (m != ttMove&&pos_.see_ge(m, Threshold)) { return m; }
 		}
-	}
+		break;
+		//------------------------------------------------
+	case START_Normal:
+		st++;
+		return ttMove;
+		
+	case Capture_INIT:
+		end_badcaptures = current_ = move_;
+		end_ = move_generation<Cap_Propawn>(pos_, move_);
+		capturepropawn_score();
+		st++;
+	case CAP_PRO_PAWN:
+		while (current_<end_)
+		{
+			m = pick_best(current_++, end_);
+			if (m != ttMove) {
+				if (pos_.see_ge(m, Value_Zero)) {
+					return m;
+				}
+				else {//ï|Ç¢ÇÃÇ≈àÍâû
+					(end_badcaptures++)->move = m;
+				}
+			}
+		}
+		st++;
+		m = killers[0];
+		if (m != MOVE_NONE
+			&&  m != ttMove
+			&&  pos_.pseudo_legal(m)
+			&& !pos_.capture_or_propawn(m)) {
+			return m;
+		}
+	case Killers:
+		st++;
+		m = killers[1];
+		//killers[0]Ç∆à·Ç§ç∑ÇµéËÇ≈Ç†ÇÈÇ±Ç∆ÇÕäiî[éûÇ…ï€èÿçœÇ›
+		if (m != MOVE_NONE
+			&&  m != ttMove
+			&&  pos_.pseudo_legal(m)
+			&& !pos_.capture_or_propawn(m)) {
+			return m;
+		}
+	case COUNTERMOVE:
+		st++;
+		m = countermove;
+		if (m!=MOVE_NONE
+			&&m != ttMove
+			&&m != killers[0]
+			&& m != killers[1]
+			&& pos_.pseudo_legal(m)
+			&& !pos_.capture_or_propawn(m)
+			) {
+			return m;
+		}
+		
+	case QUIET_INIT:
+		current_ = end_badcaptures;
+		end_ = move_generation<Quiet>(pos_, end_badcaptures);
+		end_ = move_generation<Drop>(pos_, end_);
+		quietscore();
+		partial_insertion_sort(current_, end_, -4000 * depth_ / ONE_PLY);
+		st++;
+	case QUIET:
+		while (current_ < end_ && (!skipQuiets || current_->value >= Value_Zero)) {
+			m = current_++->move;
+			if (m != ttMove
+				&&m != killers[0]
+				&& m != killers[1]
+				&&m!=countermove
+				) {
+				return m;
+			}
+		}
+		st++;
+		current_ = move_;
+	case BAD_CAPTURES:
 
+		if (current_ < end_badcaptures) {
+			return current_++->move;
+		}
+
+		break;
+		//------------------------------------------------
+	case START_Eversion:
+		st++;
+		return ttMove;
+		
+	case EVERSION_INIT:
+		current_ = move_;
+		ASSERT(pos_.is_incheck());
+		end_ = move_eversion(pos_, move_);
+		if (end_ - move_ > 1) {
+			eversion_score();
+		}
+		st++;
+	case EVERSION:
+		while (current_<end_)
+		{
+			m = pick_best(current_++, end_);
+			if (m != ttMove) {
+				return m;
+			}
+		}
+		break;
+		//------------------------------------------------
+	case START_Q_RECAPTURE:
+		current_ = move_;
+		end_ = move_recapture(pos_, move_, recapsq_);
+		if (end_ - move_ > 1) {
+			capturepropawn_score();
+		}
+		st++;
+	case RECAPTURE:
+		while (current_ < end_) {
+			m = pick_best(current_++, end_);
+			return m;
+		}
+
+		break;
+	case START_Q_CAP_PROPAWN:
+		st++;
+		return ttMove;
+	case Q_CAP_PROPAWNINIT:
+		current_ = move_;
+		end_ = move_generation<Cap_Propawn>(pos_, move_);
+		capturepropawn_score();
+		st++;
+		
+	case Q_CAP_PROPAWN:
+		while (current_ < end_) {
+			m = pick_best(current_++, end_);
+			if (m != ttMove) {
+				return m;
+			}
+		}
+		break;
+		//------------------------------------------------
+	case START_Q_WITH_CHECKS:
+		st++;
+		return ttMove;
+
+	case Q_CAP_PROPAWN_2_INIT:
+		current_ = move_;
+		end_ = move_generation<Cap_Propawn>(pos_, move_);
+		capturepropawn_score();
+		st++;
+	
+	case Q_CAP_PROPAWN_2:
+		while (current_ < end_) {
+			m = pick_best(current_++, end_);
+			if (m != ttMove) {
+				return m;
+			}
+		}
+		current_ = move_;
+		end_ = test_quietcheck(pos_, move_);
+		if (end_ - move_>1) {
+			quietscore();//ssÇìnÇµÇƒÇ¢Ç»Ç©Ç¡ÇΩ
+			insertion_sort(move_, end_);
+		}
+		st++;
+	case Q_CHECKS:
+		while (current_<end_)
+		{
+			m = current_++->move;
+			if (m != ttMove) {
+				return m;
+			}
+		}
+		break;
+	case STOP:
+		break;
+	default:
+		UNREACHABLE;
+		break;
+	}
+	return MOVE_NONE;
 }
 
 
@@ -288,20 +363,23 @@ void movepicker::quietscore()
 	const CounterMoveStats* fm = (ss - 2)->counterMoves;
 	const CounterMoveStats* f2 = (ss - 4)->counterMoves;
 	Color c = pos_.sidetomove();
-	ptrdiff_t num_move = end_ - move_;
+	//ptrdiff_t num_move = end_ - move_;
 //	int j = 0;
-	for (int i = 0; i < num_move; i++) {
+	//Ç±Ç±Ç≈badcaptureÇ…Ç‡ì_êîÇÇ¬ÇØÇƒÇµÇ‹Ç¡ÇƒÇ¢ÇÈÇ»...
+	//currentÇ…ïœÇ¶ÇΩÇÃÇ≈badcaptureÇ…ì_êîÇ™ïtÇ©Ç»Ç¢ÇÕÇ∏Ç≈Ç†ÇÈ
+	for (ExtMove* i = current_; i < end_; i++) {
 
-		Piece pc = moved_piece(move_[i].move);
-		Square to = move_to(move_[i].move);
+		const Move m = i->move;
+		Piece pc = moved_piece(m);
+		Square to = move_to(m);
 		ASSERT(is_ok(pc));
 		ASSERT(is_ok(to));
 		//move_[i].value = history[pc][to];
-		move_[i].value = history[pc][to]
+		i->value = history[pc][to]
 			+ (cm ? (*cm)[pc][to] : Value_Zero)
 			+ (fm ? (*fm)[pc][to] : Value_Zero)
 			+ (f2 ? (*f2)[pc][to] : Value_Zero)
-			+ fromTo.get(c, move_[i].move);
+			+ fromTo.get(c, m);
 	}
 
 }
@@ -392,11 +470,12 @@ Move movepicker::pick_best(ExtMove * begin, ExtMove * end)
 		Square prevSq = move_to((ss - 1)->currentMove);
 
 		countermove = pos.searcher()->counterMoves[moved_piece((ss - 1)->currentMove)][prevSq];
-
+		killers[0] = ss->killers[0];
+		killers[1] = ss->killers[1];
 		
 	}
 	ttMove = (ttm && pos.pseudo_legal(ttm)) ? ttm : MOVE_NONE;
-	end_ += (ttMove != MOVE_NONE);
+	if (ttMove == MOVE_NONE) { st++; }
 }
 
  //ê√é~íTçıópÉRÉìÉXÉgÉâÉNÉ^
@@ -408,18 +487,21 @@ Move movepicker::pick_best(ExtMove * begin, ExtMove * end)
 	 if (pos.is_incheck()) {
 		 st = START_Eversion;
 		 ttMove = (ttm && pos.pseudo_legal(ttm)&&pos.is_legal(ttm)) ? ttm : MOVE_NONE;
-		 end_ += (ttMove != MOVE_NONE);
+		 //end_ += (ttMove != MOVE_NONE);
+		 if (ttMove == MOVE_NONE) { st++; }
 	 }
 	 else {
 		 if (d>DEPTH_QS_NO_CHECKS) {
 			 st = START_Q_WITH_CHECKS;
 			 ttMove = (ttm && pos.pseudo_legal(ttm)) ? ttm : MOVE_NONE;
-			 end_ += (ttMove != MOVE_NONE);
+			// end_ += (ttMove != MOVE_NONE);
+			 if (ttMove == MOVE_NONE) { st++; }
 		 }
 		 else if (d > DEPTH_QS_RECAPTURES) {
 			 st = START_Q_CAP_PROPAWN;
 			 ttMove= (ttm && pos.pseudo_legal(ttm)) ? ttm : MOVE_NONE;
-			 end_ += (ttMove != MOVE_NONE);
+			// end_ += (ttMove != MOVE_NONE);
+			 if (ttMove == MOVE_NONE) { st++; }
 
 		 }
 		 else {
@@ -430,4 +512,21 @@ Move movepicker::pick_best(ExtMove * begin, ExtMove * end)
 			 //ttMove = MOVE_NONE;
 		 }
 	 }
+ }
+
+ movepicker::movepicker(const Position & pos, Move ttm, Value th) :pos_(pos), Threshold(th) {
+
+
+	 ASSERT(pos.is_incheck() == false);
+	 current_ = end_ = move_;
+	 st = Start_Probcut;
+
+	 ttMove = (ttm != MOVE_NONE
+		 &&pos_.pseudo_legal(ttm)
+		 && pos_.capture(ttm)
+		 //&&pos_.capture_or_propawn(ttm)
+		 && pos.see_ge(ttm, Threshold)) ? ttm : MOVE_NONE;
+
+	 if (ttMove == MOVE_NONE) { st++; }
+	 //end_ += (ttMove != MOVE_NONE);
  }
