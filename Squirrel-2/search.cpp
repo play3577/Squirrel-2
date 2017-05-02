@@ -530,7 +530,7 @@ Value MainThread::think() {
 		return Value_Mated;
 	}
 	//“ü‹ÊéŒ¾Ÿ‚¿
-	if (rootpos.ply_from_startpos>200&&limit.is_inponder == false&&rootpos.is_nyugyoku() ) {
+	if (rootpos.ply_from_startpos>180&&limit.is_inponder == false&&rootpos.is_nyugyoku() ) {
 		cout << "bestmove win" << endl;
 		return Value_Mate;
 	}
@@ -549,11 +549,11 @@ Value MainThread::think() {
 				std::random_device rd;
 				std::mt19937 mt(rd());
 				RootMoves[0].move = entrys[mt() % entrys.size()].move;
-				pondermove = entrys[mt() % entrys.size()].counter;
+				//pondermove = entrys[mt() % entrys.size()].counter;//‚±‚ê‚ð“ü‚ê‚é‚Æ’èÕ‚ª‚Ü‚Æ‚à‚É‹@”\‚µ‚È‚¢
 			}
 			else {
 				RootMoves[0].move = entrys[0].move;
-				pondermove = entrys[0].counter;
+				//pondermove = entrys[0].counter;
 			}
 
 
@@ -974,7 +974,7 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 #endif
 
 	//“ü‹ÊéŒ¾
-	if (pos.ply_from_startpos > 200&&!RootNode) {
+	if (pos.ply_from_startpos > 180&&!RootNode) {
 		if (pos.is_nyugyoku()) {
 			return mate_in_ply((ss->ply));
 		}

@@ -56,7 +56,7 @@ int main() {
 		BOOK::init();
 	}*/
 #ifdef USETT
-	TT.resize(30);
+	TT.resize(64);
 #endif
 	//bitboard_debug();
 

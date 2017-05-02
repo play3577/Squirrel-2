@@ -98,14 +98,15 @@ void USI::init_option(OptionMap &o,string engine_name)
 
 	o["USI_Ponder"] << USIOption(false);
 	o["Threads"] << USIOption(1, 1, 128);
-	o["USI_Hash"] << USIOption(30, 1, 256);
+	o["USI_Hash"] << USIOption(64, 1, 256);
 	o["EngineName"] << USIOption(name.c_str());
 	//o["is_0.1s"] << USIOption(false);
 	//o["bookpath"] << USIOption("c:/book2/book2016928fg2800_40.db");
 	o["Move Overhead"] << USIOption(100, 0, 3000);
 	o["Slow Mover"] << USIOption(89, 10, 1000);
 	o["Minimum Thinking Time"] << USIOption(100, 50, 10000);
-	o["bookpath"] << USIOption("c:/book2/standard_book.db");
+	//o["bookpath"] << USIOption("c:/book2/standard_book.db");
+	o["bookpath"] << USIOption("c:/book2/wcsc27.db");
 	o["usebook"] << USIOption(true);
 	o["randombook"] << USIOption(true);
 	o["use_defined_time"] << USIOption(true);
