@@ -4,8 +4,8 @@
 
 enum Stage {
 
-	Start_Multicut,
-	Gen_Malticut,
+	//Start_Multicut,
+	//Gen_Malticut,
 	Start_Probcut,
 	Gen_Probcut,
 	START_Normal,

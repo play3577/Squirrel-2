@@ -155,7 +155,7 @@ Move CSA2Move(const string smove, const Position& pos)
 }
 
 
-
+#if 0
 inline double normal_dist(double mean, double stddiv)
 {
 	std::default_random_engine generator;
@@ -163,3 +163,4 @@ inline double normal_dist(double mean, double stddiv)
 
 	return dist(generator);
 }
+#endif

@@ -446,10 +446,10 @@ void USI::loop()
 		//ここから下はデバッグ用コマンド
 		//====================
 #if 1
-		else if (token == "gm") {
-			//指し手生成速度計測
-			speed_genmove(pos);
-		}
+		//else if (token == "gm") {
+		//	//指し手生成速度計測
+		//	speed_genmove(pos);
+		//}
 		
 		else if (token == "maturi") {
 			pos.set(maturi);
@@ -489,379 +489,378 @@ void USI::loop()
 #endif //  LEARN
 		else if (token == "hirate") { pos.set_hirate(); }
 		else if (token == "dp") { std::cout << pos << std::endl; }//debug position
-		//else if (token == "ebb") { pos.check_effecttoBB(); }
-		//else if (token == "pbb") { pos.print_existpawnBB(); }
-		//else if (token == "testpbb") {
-		//	StateInfo si;
-		//	pos.set("sfen lnsgkgsnl/1r5b1/ppppppppp/P8/9/9/1PPPPPPPP/1B5R1/LNSGKGSNL b - 1");
-		//	Move m = make_movepromote(SQ9D, SQ9C,PAWN);
-		//	cout << pos << endl;
-		//	pos.do_move(m, &si);
-		//	cout << pos << endl;
-		//	pos.print_existpawnBB();
-		//	pos.undo_move();
-		//	cout << pos << endl;
-		//	pos.print_existpawnBB();
-		//}
-		//else if (token == "uchihu") {
-		//	//打ち歩詰めの局面
-		//	/*pos.set("sfen ln6n/s2RSR3/ppp1p1ppp/gb2k2bl/g2p1p2s/4G4/PPPP1PPPP/9/LN1GK1SNL b P 1");
-		//	bool uchihu= pos.is_uchihu(BLACK, SQ5E);
-		//	cout << uchihu << endl;*/
-
-		//	pos.set("sfen lnG1kgRnl/7b1/pppp+Bpppp/9/9/9/PPPP1PPPP/7R1/LNSGKGSNL b 2S2P 1");
-		//	bool buchihu = pos.is_uchihu(BLACK, SQ5B);
-		//	cout << buchihu << endl;
-
-		//	pos.set("sfen lnGskgRnl/7b1/pppp+Bpppp/9/9/9/PPPP1PPPP/7R1/LNSGKGSNL b S2P 1");
-		//	 buchihu = pos.is_uchihu(BLACK, SQ5B);
-		//	cout << buchihu << endl;
-
-		//}
-		//else if (token=="suicide") {
-		//	pos.set("sfen ln6n/s2RSR3/ppp1p1ppp/gb2k2bl/g2p1p2s/4G4/PPPP1PPPP/9/LN1GK1SNL w P 1");
-		//	Move m = make_move(SQ5D, SQ5E, W_KING);
-		//	bool is_suicide = pos.is_king_suiside(WHITE, move_to(m),move_from(m));
-		//	cout << (is_suicide)<< endl;
-		//}
-		//else if(token=="legal1")
-		//{
-		//	//falseになるはず
-		//	pos.set("sfen lns1kgsnl/1r1p3b1/ppp1gpppp/9/9/4R4/PPPPPPPPP/1B7/LNSGKGSNL w p 1");
-		//	Move m = make_move(SQ5C, SQ6C,W_GOLD);
-		//	bool legal = pos.is_legal(m);
-		//	cout << legal << endl;
-		//}
-		//else if (token == "legal2")
-		//{
-		//	//trueになるはず
-		//	pos.set("sfen lns1kgsnl/1r2p2b1/ppp1gpppp/9/9/4R4/PPPPPPPPP/1B7/LNSGKGSNL w p 1");
-		//	Move m = make_move(SQ5C, SQ6C, W_GOLD);
-		//	bool legal = pos.is_legal(m);
-		//	cout << legal << endl;
-		//}
-		//else if (token == "mpick") {
-		//	movepicker mp(pos);
-		//	Move m;
-		//	StateInfo si;
-		//	while ((m = mp.return_nextmove()) != MOVE_NONE) {
-		//		cout << m << endl;
-		//		pos.do_move(m, &si);
-		//		pos.undo_move();
-		//	}
-		//}
-		//else if (token == "2jyuu") {
-		//	pos.set(nijyuuoute);
-		//	movepicker mp(pos);
-		//	Move m;
-		//	while ((m = mp.return_nextmove()) != MOVE_NONE) {
-		//		cout << m << " " << pos.is_legal(m) << endl;
-		//	}
-		//}
-		//else if (token == "oute") {
-		//	pos.set(oute);
-		//	movepicker mp(pos);
-		//	Move m;
-		//	while ((m = mp.return_nextmove()) != MOVE_NONE) {
-		//		cout << m << " " << pos.is_legal(m) << endl;
-		//	}
-		//}
-		//else if (token == "ks") {
-		//	pos.set(suicide);
-		//	movepicker mp(pos);
-		//	Move m=make_move(SQ4H,SQ3G,B_KING);
-		//	cout << m << " " << pos.is_legal(m) << endl;
-		//	check_move(m);
-		//	/*while ((m = mp.return_nextmove()) != MOVE_NONE) {
-		//		cout << m << " " << pos.is_legal(m) << endl;
-		//	}*/
-		//}
-		else if (token == "random") {
-			wrap_randomwalker();
-		}
-		else if (token=="nyugyoku") {
-			/*
-			position sfen l1sgkg2l/7K1/+S+NP1+B+Rppp/1pp6/p8/9/PP1PPPPPP/9/LNSG1GSNL b RBN3P 1
-			position sfen K3kg2+L/1+S+N4+RG/+S+N+P3+Bp+L/1pp6/p8/9/PP1PPPPPP/9/LNSG1GSNL b RB5P 1
-			position sfen K3k3+L/1+S+N4+RG/+S+N+P+B3p+L/1pp6/p8/9/PP1PPPPPP/9/LNSG1GSNL b RBG5P 201
-			*/
-			cout << pos.is_nyugyoku() << endl;
-		}
-		else if (token == "qc") {
-			cout << pos << endl;
-			ExtMove moves_[600], *end;
-			end = moves_;
-			end = test_quietcheck(pos, moves_);
-			for (ExtMove* i = moves_; i < end; i++) {
-				check_move(i->move);
-				
-			}
-			
-		}
-		else if (token == "smove") {
-
-			string move;
-			is >> move;
-			Sfen2Move(move, pos);
-		}
-		else if (token == "test") {
-			StateInfo si;
-			ExtMove moves_[600],*end;
-			end = moves_;
-
-			cout << pos << endl;
-			end = test_move_generation(pos, moves_);
-
-			for (ExtMove* i = moves_; i < end; i++) {
-				check_move(i->move);
-				pos.do_move(i->move, &si);
-				cout << pos << endl;
-				pos.undo_move();
-				cout << pos << endl;
-			}
-		}
-		else if (token == "cappro") {
-			StateInfo si;
-			pos.set(capturepromote);
-			const Move m = make_movepromote(SQ8H, SQ3C, BISHOP);
-			cout << pos << endl;
-			pos.do_move(m, &si);
-			cout << pos << endl;
-			pos.undo_move();
-			cout << pos << endl;
-
-		}
-		else if (token == "drop") {
-			StateInfo si;
-			pos.set(drop);
-			Move m = make_drop(SQ7G, PAWN);
-			cout << pos << endl;
-			pos.do_move(m, &si);
-			cout << pos << endl;
-			pos.undo_move();
-			cout << pos << endl;
-		}
-		else if (token == "eval") {
-			cout << Eval::eval(pos) << endl;;
-		}
-		else if (token == "csa") {
-			string csa;
-			is >> csa;
-			cout << CSA2Move(csa, pos) << endl;
-		}
-		else if (token == "komaw") {
-			Eval::komawari_check();
-
-		}
-		else if (token == "mcheck") {
-			Move m;
-			string ms;
-			is >> ms;
-			m = Move(stoi(ms));
-			check_move(m);
-
-		}
-		else if (token == "debug1") {
-			pos.set(debug1);
-			cout << pos << endl;
-			pos.check_longeffect();
-		}
-		else if (token == "debug2") {
-			pos.set(debug2);
-			cout << pos << endl;
-			pos.check_longeffect();
-		}
-		//sfenの生成
-		else if (token == "sfen") {
-			cout << pos.make_sfen() << endl;
-		}
-		else if(token=="xor"){
-			int sq;
-			is >> sq;
-			cout << (pos.occ_all() ^= SquareBB[sq]) << endl;
-			cout << (pos.occ_all() ^ SquareBB[hihumin_eye(Square(sq))]) << endl;
-		}
-		else if (token == "and") {
-			int sq;
-			is >> sq;
-			cout << (pos.occ_all() & SquareBB[sq]) << endl;
-			//cout << (pos.occ_all() &= SquareBB[hihumin_eye(Square(sq))]) << endl;
-		}
-		else if (token == "andnot") {
-			int sq;
-			is >> sq;
-			//cout << (pos.occ_all().andnot(SquareBB[sq])) << endl;
-			cout << (pos.occ_all()&~(SquareBB[sq])) << endl;
-			//cout << (pos.occ_all() ^ SquareBB[hihumin_eye(Square(sq))]) << endl;
-		}
-		else if (token == "or") {
-			int sq;
-			is >> sq;
-			cout << (pos.occ_all() |= SquareBB[sq]) << endl;
-			cout << (pos.occ_all() | SquareBB[hihumin_eye(Square(sq))]) << endl;
-		}
-		else if(token=="not"){
-			cout << (~pos.occ_all()) << endl;
-			//cout << (pos.occ_all() ^ SquareBB[hihumin_eye(Square(sq))]) << endl;
-		}
-		else if (token == "islegal") {
-			string smove;
-			Move m;
-			is >> smove;
-			m = Sfen2Move(smove, pos);
-			cout << pos.is_legal(m) << endl;
-		}
-		else if (token == "nihu") {
-			pos.set(nuhu);
-			cout << pos << endl;
-			cout<<pos.pawnbb(BLACK)<<endl;
-			cout<<pos.pawnbb(WHITE)<<endl;
-		}
-		else if (token == "m") {
-
-			cout << pos << endl;
-
-			ExtMove moves_[600];
-			ExtMove *end = moves_;
-			
-
-			if (pos.is_incheck()) {
-				end = moves_;
-				end = move_eversion(pos, moves_);
-			}
-			else {
-				end = moves_;
-				end = move_generation<Cap_Propawn>(pos, moves_);
-				end = move_generation<Quiet>(pos, end);
-				end = move_generation<Drop>(pos, end);
-			}
-			
-			const ptrdiff_t count = end - moves_;
-			std::cout << "num of moves = " << count << std::endl;
-			for (int i = 0; i < count; ++i) {
-				std::cout << moves_[i].move << ", " << " islegal:" << pos.is_legal(moves_[i].move);
-				check_move(moves_[i].move);
-				//cout<< " islegal:"<<pos.is_legal(moves_[i].move);
-			}
-			std::cout << std::endl;
-
-		}
-		else if (token == "sym") {
-
-
-			for (Square sq = SQ_ZERO; sq < SQ_NUM; sq++) {
-				cout << sq << " sym " << sym_rl_sq(sq)<<endl;
-			}
-
-			auto elist = pos.evallist();
-
-			for (int i = 0; i < 40; i++) {
-				cout <<" elist"<<endl<< elist.bplist_fb[i] << endl;
-				//cout << "sym " <<endl<< Eval::sym_rightleft(elist.bplist_fb[i]) << endl;
-			}
-		}
-		else if (token == "null") {
-			cout << pos << endl;
-			StateInfo si;
-			pos.do_nullmove(&si);
-			cout << pos << endl;
-			pos.undo_nullmove();
-			cout << pos << endl;
-		}
-		else if (token == "ce") {
-			pos.check_effectocc256();
-		}
-		else if (token == "ce2") {
-			cout << pos << endl;
-			pos.check_longeffect256();
-		}
-		else if(token=="see"){
-			/*pos.set("sfen lnsgkg1nl/1r4sb1/ppppppppp/7P1/9/2P6/PP1PPPP1P/1B5R1/LNSGKGSNL b - 1");
-			const Move m = make_move(SQ2D, SQ2C, PAWN);*/
-			/*pos.set("sfen lnsgkg1nl/1r4sb1/ppppppppp/6P2/7N1/2P4P1/PP1PPP2P/1B4R2/LNSGKGS1L b - 1");
-			const Move m = make_move(SQ3D, SQ3C, PAWN);*/
-			/*pos.set("sfen 3k4r/2b3+N2/4p1Ss1/2PN4G/lP1p1Ppp1/L3GbPPP/p+pNPG1N2/2LRS4/PgSK2+p1L w 3p 1");
-			Move m = make_move(SQ8I, SQ7I, W_GOLD);*/
-
-			pos.set("sfen pn1r2+S+N1/2r+N1k1Gs/l1g4p1/Ppps1pP1l/6pPP/lP2P2bp/2P3+bG1/+p2P1P1+l1/+pN3K1g1 b s 1");
-			Move m = make_movepromote(SQ3D, SQ3C, PAWN);
-			cout << pos << endl;
-			check_move(m);
-			/*cout << "see sign" << pos.see_sign(m) << endl;
-			cout << "see "<<pos.see(m) << endl;*/
-			cout << "seege:" << pos.see_ge(m, Value(0)) << endl;
-		}
-		else if (token == "occ") {
-			pos.check_occbitboard();
-		}
-#ifdef REIN
-		else if (token == "psfen") {
-			pos.pack_haffman_sfen();
-		}
-#endif
-		else if (token=="mate") {
-			cout << pos << endl << endl;
-			cout << pos.mate1ply() << endl;;
-		}
-#ifdef HAVE_AVX2
-		else if (token=="avx") {
-			Value avx = Eval::eval_allPP_AVX2(pos);
-			Value v = Eval::eval_PP(pos);
-			cout << "avx:" << avx << " eval:" << v << endl;
-		}
-#endif
-		else if (token == "cstm") {
-			pos.change_stm();
-		}
-		else if (token == "bplist") {
-			pos.evallist().print_bplist();
-		}
-		else if (token == "list") {
-			pos.check_bplist();
-		}
-		else if (token == "prog") {
-//			cout<<fixed<<Progress::prog_scale*Progress::calc_prog(pos)<<endl;
-		}
-		else if (token == "pl") {
-#ifdef  Prog_LEARN
-			string yn;
-			cout << "do you really wanna learning prog? [y/n]  ";
-			cin >> yn;
-			if (yn != "y") { cout << "OK I do not  learning"; break; }
-			//Eval::learner();
-			Progress::learner();
-#endif
-#ifndef  Prog_LEARN
-			cout << "not learning mode" << endl;
-#endif
-		}
-#if defined(REIN) || defined(MAKETEACHER)
-		else if (token == "haff") {
-			bool haff[256];
-			pos.pack_haffman_sfen();
-			memcpy(haff, pos.packed_sfen, sizeof(haff));
-			Position pos_haffman;
-			pos_haffman.unpack_haffman_sfen(haff);
-			ASSERT(pos_haffman == pos);
-
-		}
-#endif
-#ifdef LEARN
-		else if (token == "ij") {
-			Eval::param_sym_ij();
-		}
-#endif
-#if defined(MAKEBOOK)
-		else if (token == "makebook") {
-
-			string yn;
-			cout << "do you really wanna makebook? [y/n]  ";
-			cin >> yn;
-			if (yn != "y") { cout << "OK I do not makebook"; break; }
-			BOOK::makebook();
-		}
-#endif
-
+//		else if (token == "ebb") { pos.check_effecttoBB(); }
+//		else if (token == "pbb") { pos.print_existpawnBB(); }
+//		else if (token == "testpbb") {
+//			StateInfo si;
+//			pos.set("sfen lnsgkgsnl/1r5b1/ppppppppp/P8/9/9/1PPPPPPPP/1B5R1/LNSGKGSNL b - 1");
+//			Move m = make_movepromote(SQ9D, SQ9C,PAWN);
+//			cout << pos << endl;
+//			pos.do_move(m, &si);
+//			cout << pos << endl;
+//			pos.print_existpawnBB();
+//			pos.undo_move();
+//			cout << pos << endl;
+//			pos.print_existpawnBB();
+//		}
+//		else if (token == "uchihu") {
+//			//打ち歩詰めの局面
+//			/*pos.set("sfen ln6n/s2RSR3/ppp1p1ppp/gb2k2bl/g2p1p2s/4G4/PPPP1PPPP/9/LN1GK1SNL b P 1");
+//			bool uchihu= pos.is_uchihu(BLACK, SQ5E);
+//			cout << uchihu << endl;*/
+//
+//			pos.set("sfen lnG1kgRnl/7b1/pppp+Bpppp/9/9/9/PPPP1PPPP/7R1/LNSGKGSNL b 2S2P 1");
+//			bool buchihu = pos.is_uchihu(BLACK, SQ5B);
+//			cout << buchihu << endl;
+//
+//			pos.set("sfen lnGskgRnl/7b1/pppp+Bpppp/9/9/9/PPPP1PPPP/7R1/LNSGKGSNL b S2P 1");
+//			 buchihu = pos.is_uchihu(BLACK, SQ5B);
+//			cout << buchihu << endl;
+//
+//		}
+//		else if (token=="suicide") {
+//			pos.set("sfen ln6n/s2RSR3/ppp1p1ppp/gb2k2bl/g2p1p2s/4G4/PPPP1PPPP/9/LN1GK1SNL w P 1");
+//			Move m = make_move(SQ5D, SQ5E, W_KING);
+//			bool is_suicide = pos.is_king_suiside(WHITE, move_to(m),move_from(m));
+//			cout << (is_suicide)<< endl;
+//		}
+//		else if(token=="legal1")
+//		{
+//			//falseになるはず
+//			pos.set("sfen lns1kgsnl/1r1p3b1/ppp1gpppp/9/9/4R4/PPPPPPPPP/1B7/LNSGKGSNL w p 1");
+//			Move m = make_move(SQ5C, SQ6C,W_GOLD);
+//			bool legal = pos.is_legal(m);
+//			cout << legal << endl;
+//		}
+//		else if (token == "legal2")
+//		{
+//			//trueになるはず
+//			pos.set("sfen lns1kgsnl/1r2p2b1/ppp1gpppp/9/9/4R4/PPPPPPPPP/1B7/LNSGKGSNL w p 1");
+//			Move m = make_move(SQ5C, SQ6C, W_GOLD);
+//			bool legal = pos.is_legal(m);
+//			cout << legal << endl;
+//		}
+//		else if (token == "mpick") {
+//			movepicker mp(pos);
+//			Move m;
+//			StateInfo si;
+//			while ((m = mp.return_nextmove()) != MOVE_NONE) {
+//				cout << m << endl;
+//				pos.do_move(m, &si);
+//				pos.undo_move();
+//			}
+//		}
+//		else if (token == "2jyuu") {
+//			pos.set(nijyuuoute);
+//			movepicker mp(pos);
+//			Move m;
+//			while ((m = mp.return_nextmove()) != MOVE_NONE) {
+//				cout << m << " " << pos.is_legal(m) << endl;
+//			}
+//		}
+//		else if (token == "oute") {
+//			pos.set(oute);
+//			movepicker mp(pos);
+//			Move m;
+//			while ((m = mp.return_nextmove()) != MOVE_NONE) {
+//				cout << m << " " << pos.is_legal(m) << endl;
+//			}
+//		}
+//		else if (token == "ks") {
+//			pos.set(suicide);
+//			movepicker mp(pos);
+//			Move m=make_move(SQ4H,SQ3G,B_KING);
+//			cout << m << " " << pos.is_legal(m) << endl;
+//			check_move(m);
+//			/*while ((m = mp.return_nextmove()) != MOVE_NONE) {
+//				cout << m << " " << pos.is_legal(m) << endl;
+//			}*/
+//		}
+//		else if (token == "random") {
+//			wrap_randomwalker();
+//		}
+//		else if (token=="nyugyoku") {
+//			/*
+//			position sfen l1sgkg2l/7K1/+S+NP1+B+Rppp/1pp6/p8/9/PP1PPPPPP/9/LNSG1GSNL b RBN3P 1
+//			position sfen K3kg2+L/1+S+N4+RG/+S+N+P3+Bp+L/1pp6/p8/9/PP1PPPPPP/9/LNSG1GSNL b RB5P 1
+//			position sfen K3k3+L/1+S+N4+RG/+S+N+P+B3p+L/1pp6/p8/9/PP1PPPPPP/9/LNSG1GSNL b RBG5P 201
+//			*/
+//			cout << pos.is_nyugyoku() << endl;
+//		}
+//		else if (token == "qc") {
+//			cout << pos << endl;
+//			ExtMove moves_[600], *end;
+//			end = moves_;
+//			end = test_quietcheck(pos, moves_);
+//			for (ExtMove* i = moves_; i < end; i++) {
+//				check_move(i->move);
+//				
+//			}
+//			
+//		}
+//		else if (token == "smove") {
+//
+//			string move;
+//			is >> move;
+//			Sfen2Move(move, pos);
+//		}
+//		else if (token == "test") {
+//			StateInfo si;
+//			ExtMove moves_[600],*end;
+//			end = moves_;
+//
+//			cout << pos << endl;
+//			end = test_move_generation(pos, moves_);
+//
+//			for (ExtMove* i = moves_; i < end; i++) {
+//				check_move(i->move);
+//				pos.do_move(i->move, &si);
+//				cout << pos << endl;
+//				pos.undo_move();
+//				cout << pos << endl;
+//			}
+//		}
+//		else if (token == "cappro") {
+//			StateInfo si;
+//			pos.set(capturepromote);
+//			const Move m = make_movepromote(SQ8H, SQ3C, BISHOP);
+//			cout << pos << endl;
+//			pos.do_move(m, &si);
+//			cout << pos << endl;
+//			pos.undo_move();
+//			cout << pos << endl;
+//
+//		}
+//		else if (token == "drop") {
+//			StateInfo si;
+//			pos.set(drop);
+//			Move m = make_drop(SQ7G, PAWN);
+//			cout << pos << endl;
+//			pos.do_move(m, &si);
+//			cout << pos << endl;
+//			pos.undo_move();
+//			cout << pos << endl;
+//		}
+//		else if (token == "eval") {
+//			cout << Eval::eval(pos) << endl;;
+//		}
+//		else if (token == "csa") {
+//			string csa;
+//			is >> csa;
+//			cout << CSA2Move(csa, pos) << endl;
+//		}
+//		else if (token == "komaw") {
+//			Eval::komawari_check();
+//
+//		}
+//		else if (token == "mcheck") {
+//			Move m;
+//			string ms;
+//			is >> ms;
+//			m = Move(stoi(ms));
+//			check_move(m);
+//
+//		}
+//		else if (token == "debug1") {
+//			pos.set(debug1);
+//			cout << pos << endl;
+//			pos.check_longeffect();
+//		}
+//		else if (token == "debug2") {
+//			pos.set(debug2);
+//			cout << pos << endl;
+//			pos.check_longeffect();
+//		}
+//		//sfenの生成
+//		else if (token == "sfen") {
+//			cout << pos.make_sfen() << endl;
+//		}
+//		else if(token=="xor"){
+//			int sq;
+//			is >> sq;
+//			cout << (pos.occ_all() ^= SquareBB[sq]) << endl;
+//			cout << (pos.occ_all() ^ SquareBB[hihumin_eye(Square(sq))]) << endl;
+//		}
+//		else if (token == "and") {
+//			int sq;
+//			is >> sq;
+//			cout << (pos.occ_all() & SquareBB[sq]) << endl;
+//			//cout << (pos.occ_all() &= SquareBB[hihumin_eye(Square(sq))]) << endl;
+//		}
+//		else if (token == "andnot") {
+//			int sq;
+//			is >> sq;
+//			//cout << (pos.occ_all().andnot(SquareBB[sq])) << endl;
+//			cout << (pos.occ_all()&~(SquareBB[sq])) << endl;
+//			//cout << (pos.occ_all() ^ SquareBB[hihumin_eye(Square(sq))]) << endl;
+//		}
+//		else if (token == "or") {
+//			int sq;
+//			is >> sq;
+//			cout << (pos.occ_all() |= SquareBB[sq]) << endl;
+//			cout << (pos.occ_all() | SquareBB[hihumin_eye(Square(sq))]) << endl;
+//		}
+//		else if(token=="not"){
+//			cout << (~pos.occ_all()) << endl;
+//			//cout << (pos.occ_all() ^ SquareBB[hihumin_eye(Square(sq))]) << endl;
+//		}
+//		else if (token == "islegal") {
+//			string smove;
+//			Move m;
+//			is >> smove;
+//			m = Sfen2Move(smove, pos);
+//			cout << pos.is_legal(m) << endl;
+//		}
+//		else if (token == "nihu") {
+//			pos.set(nuhu);
+//			cout << pos << endl;
+//			cout<<pos.pawnbb(BLACK)<<endl;
+//			cout<<pos.pawnbb(WHITE)<<endl;
+//		}
+//		else if (token == "m") {
+//
+//			cout << pos << endl;
+//
+//			ExtMove moves_[600];
+//			ExtMove *end = moves_;
+//			
+//
+//			if (pos.is_incheck()) {
+//				end = moves_;
+//				end = move_eversion(pos, moves_);
+//			}
+//			else {
+//				end = moves_;
+//				end = move_generation<Cap_Propawn>(pos, moves_);
+//				end = move_generation<Quiet>(pos, end);
+//				end = move_generation<Drop>(pos, end);
+//			}
+//			
+//			const ptrdiff_t count = end - moves_;
+//			std::cout << "num of moves = " << count << std::endl;
+//			for (int i = 0; i < count; ++i) {
+//				std::cout << moves_[i].move << ", " << " islegal:" << pos.is_legal(moves_[i].move);
+//				check_move(moves_[i].move);
+//				//cout<< " islegal:"<<pos.is_legal(moves_[i].move);
+//			}
+//			std::cout << std::endl;
+//
+//		}
+//		else if (token == "sym") {
+//
+//
+//			for (Square sq = SQ_ZERO; sq < SQ_NUM; sq++) {
+//				cout << sq << " sym " << sym_rl_sq(sq)<<endl;
+//			}
+//
+//			auto elist = pos.evallist();
+//
+//			for (int i = 0; i < 40; i++) {
+//				cout <<" elist"<<endl<< elist.bplist_fb[i] << endl;
+//				//cout << "sym " <<endl<< Eval::sym_rightleft(elist.bplist_fb[i]) << endl;
+//			}
+//		}
+//		else if (token == "null") {
+//			cout << pos << endl;
+//			StateInfo si;
+//			pos.do_nullmove(&si);
+//			cout << pos << endl;
+//			pos.undo_nullmove();
+//			cout << pos << endl;
+//		}
+//		else if (token == "ce") {
+//			pos.check_effectocc256();
+//		}
+//		else if (token == "ce2") {
+//			cout << pos << endl;
+//			pos.check_longeffect256();
+//		}
+//		else if(token=="see"){
+//			/*pos.set("sfen lnsgkg1nl/1r4sb1/ppppppppp/7P1/9/2P6/PP1PPPP1P/1B5R1/LNSGKGSNL b - 1");
+//			const Move m = make_move(SQ2D, SQ2C, PAWN);*/
+//			/*pos.set("sfen lnsgkg1nl/1r4sb1/ppppppppp/6P2/7N1/2P4P1/PP1PPP2P/1B4R2/LNSGKGS1L b - 1");
+//			const Move m = make_move(SQ3D, SQ3C, PAWN);*/
+//			/*pos.set("sfen 3k4r/2b3+N2/4p1Ss1/2PN4G/lP1p1Ppp1/L3GbPPP/p+pNPG1N2/2LRS4/PgSK2+p1L w 3p 1");
+//			Move m = make_move(SQ8I, SQ7I, W_GOLD);*/
+//
+//			pos.set("sfen pn1r2+S+N1/2r+N1k1Gs/l1g4p1/Ppps1pP1l/6pPP/lP2P2bp/2P3+bG1/+p2P1P1+l1/+pN3K1g1 b s 1");
+//			Move m = make_movepromote(SQ3D, SQ3C, PAWN);
+//			cout << pos << endl;
+//			check_move(m);
+//			/*cout << "see sign" << pos.see_sign(m) << endl;
+//			cout << "see "<<pos.see(m) << endl;*/
+//			cout << "seege:" << pos.see_ge(m, Value(0)) << endl;
+//		}
+//		else if (token == "occ") {
+//			pos.check_occbitboard();
+//		}
+//#ifdef REIN
+//		else if (token == "psfen") {
+//			pos.pack_haffman_sfen();
+//		}
+//#endif
+//		else if (token=="mate") {
+//			cout << pos << endl << endl;
+//			cout << pos.mate1ply() << endl;;
+//		}
+//#ifdef HAVE_AVX2
+//		else if (token=="avx") {
+//			Value avx = Eval::eval_allPP_AVX2(pos);
+//			Value v = Eval::eval_PP(pos);
+//			cout << "avx:" << avx << " eval:" << v << endl;
+//		}
+//#endif
+//		else if (token == "cstm") {
+//			pos.change_stm();
+//		}
+//		else if (token == "bplist") {
+//			pos.evallist().print_bplist();
+//		}
+//		else if (token == "list") {
+//			pos.check_bplist();
+//		}
+//		else if (token == "prog") {
+////			cout<<fixed<<Progress::prog_scale*Progress::calc_prog(pos)<<endl;
+//		}
+//		else if (token == "pl") {
+//#ifdef  Prog_LEARN
+//			string yn;
+//			cout << "do you really wanna learning prog? [y/n]  ";
+//			cin >> yn;
+//			if (yn != "y") { cout << "OK I do not  learning"; break; }
+//			//Eval::learner();
+//			Progress::learner();
+//#endif
+//#ifndef  Prog_LEARN
+//			cout << "not learning mode" << endl;
+//#endif
+//		}
+//#if defined(REIN) || defined(MAKETEACHER)
+//		else if (token == "haff") {
+//			bool haff[256];
+//			pos.pack_haffman_sfen();
+//			memcpy(haff, pos.packed_sfen, sizeof(haff));
+//			Position pos_haffman;
+//			pos_haffman.unpack_haffman_sfen(haff);
+//			ASSERT(pos_haffman == pos);
+//
+//		}
+//#endif
+//#ifdef LEARN
+//		else if (token == "ij") {
+//			Eval::param_sym_ij();
+//		}
+//#endif
+//#if defined(MAKEBOOK)
+//		else if (token == "makebook") {
+//
+//			string yn;
+//			cout << "do you really wanna makebook? [y/n]  ";
+//			cin >> yn;
+//			if (yn != "y") { cout << "OK I do not makebook"; break; }
+//			BOOK::makebook();
+//		}
+//#endif
 #endif
 	} while (token != "quit");
 

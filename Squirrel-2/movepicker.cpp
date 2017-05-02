@@ -58,13 +58,18 @@ void movepicker::generatemove()
 	ExtMove* goodQuiet;
 	switch (st)
 	{
-	case Start_Multicut:
-		st = STOP;
-		break;
+	//case Start_Multicut:
+	//	st = STOP;
+	//	break;
+	//case Gen_Malticut:
+	//	end_ = move_generation<Cap_Propawn>(pos_, move_);
+	//	capturepropawn_score();
+	//	//insertion_sort(move_, end_);
+	//	break;
 	case START_Normal:
 		st = STOP;
 		break;
-	case CAP_PRO_PAWN:case Gen_Malticut:case Gen_Probcut:
+	case CAP_PRO_PAWN:case Gen_Probcut:
 		end_=move_generation<Cap_Propawn>(pos_, move_);
 		capturepropawn_score();
 		//insertion_sort(move_, end_);
@@ -159,13 +164,13 @@ Move movepicker::return_nextmove(bool skipQuiets)
 
 		switch (st)
 		{
-		case Start_Multicut:
-			break;
-		case Gen_Malticut:
-			//m = current_++->move;
-			m = pick_best(current_++, end_);
-			return m;
-			break;
+		//case Start_Multicut:
+		//	break;
+		//case Gen_Malticut:
+		//	//m = current_++->move;
+		//	m = pick_best(current_++, end_);
+		//	return m;
+		//	break;
 		case Start_Probcut:
 			++current_;
 			return ttMove;

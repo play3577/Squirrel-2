@@ -158,6 +158,8 @@ inline double dsigmoid(const double x) {
 #else
 //bonanza®‚Ìx‚Ì”ÍˆÍ‚ği‚Á‚½sigmoidŠÖ”
 
+
+#if 0
 inline double sigmoid(const double x) {
 #ifdef REIN
 	double a = 1;
@@ -180,7 +182,7 @@ inline double dsigmoid(const double x) {
 	return a*sigmoid(x) * (1.0 - sigmoid(x));
 }
 
-#endif
+
 
 inline double win_sig(const double x) {
 	const double a = 1.0 / 600.0;
@@ -194,6 +196,8 @@ inline double win_dsig(const double x) {
 
 
 inline double normal_dist(double mean, double stddiv);
+#endif
+#endif
 
 #ifdef REIN
 #else

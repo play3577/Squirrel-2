@@ -6,7 +6,7 @@
 #include <iomanip>//setw(6)‚Ìˆ×
 
 
-
+#if 0
 std::ostream & operator<<(std::ostream & os, const Game & game)
 {
 	cout << "this game info" << endl
@@ -72,3 +72,4 @@ bool GameDataStream::read_onegame(Game * game)
 
 	return true;
 }
+#endif
