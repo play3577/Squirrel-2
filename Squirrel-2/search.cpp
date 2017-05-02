@@ -536,7 +536,7 @@ Value MainThread::think() {
 	}
 
 	//‚±‚±‚Ébook‚ğ’T‚·ƒR[ƒh‚ğ“ü‚ê‚é
-	if (Options["usebook"] == true && limit.is_inponder == false) {
+	if (Options["usebook"] == true && rootpos.ply_from_startpos<15&& limit.is_inponder == false) {
 
 		const string sfen = rootpos.make_sfen();
 		auto bookentry = book.find(sfen);
