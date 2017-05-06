@@ -6,7 +6,7 @@
 #include <iomanip>//setw(6)‚Ìˆ×
 
 
-#if 0
+#ifdef MISC
 std::ostream & operator<<(std::ostream & os, const Game & game)
 {
 	cout << "this game info" << endl

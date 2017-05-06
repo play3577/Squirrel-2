@@ -359,6 +359,17 @@ struct teacher_data {
 	string sfen;//ハフマン失敗しまくったのでstringで行く。
 	int16_t teacher_value;
 	//teacher_data() {};
+	/*
+	elmo式を使うならここに勝率
+	qhapak式で教師手よりも価値の高い差し手を低くするためには差し手を含めなければならない
+
+	勝敗を入れることで
+	数手先だけの局所最適化が防げる（NDFの金沢さん）
+	評価値と勝率がかけ離れている戦型も学習がちゃんとできるようになる（かパックの澤田さん）
+	*/
+	//Color winner;
+	//Move move;
+
 	teacher_data(/*const bool *haff,*/const string sfen_, Value teachervalue) {
 		//memcpy(haffman, haff, sizeof(haffman));
 		sfen = sfen_;
@@ -400,7 +411,7 @@ int lock_index_inclement__() {
 int maxthreadnum__;
 
 void renewal_PP_rein(dJValue &data);
-
+void renewal_PP_nozomi(dJValue &data);//nozomiさんに教わった方法
 //ランダム開始局面から1手ランダムにささせるために使う
 void do_randommove(Position& pos, StateInfo* s, std::mt19937& mt);
 
@@ -523,6 +534,8 @@ void make_teacher_body(const int number) {
 
 			//探索前にthreadを初期化しておく
 			th.set(pos);
+			//技巧NDFは深さ固定ではなく秒数固定。
+			//秒数固定のほうが同じ差し手にならないのでいいらしい。
 			th.l_depth = 6;
 			th.l_alpha = -Value_Infinite;
 			th.l_beta = Value_Infinite;
@@ -622,7 +635,7 @@ void do_randommove(Position& pos, StateInfo* s, std::mt19937& mt) {
 #if defined(LEARN) && defined(REIN)
 //定数
 int read_teacher_counter = 0;
-int batchsize = 1000000;
+int batchsize = 1000000;//nozomiさんはminbatch100万でいいって言ってた
 double object_func = 0;
 
 //ok
@@ -734,21 +747,21 @@ void reinforce_learn() {
 		値の更新の方法を勉強しないといけない...手元にadadeltaの論文があるしこれをつかうか？？
 		*/
 
+//nozomiさん曰く次元下げはしないほうがいいとのこと。
+//#ifdef JIGENSAGE
+//		lowdim_.clear();
+//		lower__dimPP(lowdim_, sum_gradJ);
+//		sum_gradJ.clear();
+//		weave_lowdim_to_gradj(sum_gradJ, lowdim_);
+//#endif
 
-#ifdef JIGENSAGE
-		lowdim_.clear();
-		lower__dimPP(lowdim_, sum_gradJ);
-		sum_gradJ.clear();
-		weave_lowdim_to_gradj(sum_gradJ, lowdim_);
-#endif
 
 
 
-#if 1
-		renewal_PP_rein(sum_gradJ);
-#else
-		renewal_PP(sum_gradJ);
-#endif
+		//renewal_PP_rein(sum_gradJ);
+		renewal_PP_nozomi(sum_gradJ);
+
+
 		Eval::param_sym_ij();
 		write_PP();
 		read_PP();
@@ -762,6 +775,7 @@ void reinforce_learn() {
 
 /*
 それ以前にunpacksfenは通常に動作している？？
+あの辺バグってたし、今後のためにsfenで出力することにした
 */
 void reinforce_learn_pharse1(const int index) {
 
@@ -792,13 +806,13 @@ void reinforce_learn_pharse1(const int index) {
 		
 		*/
 		//const Value shallow_v = Eval::eval(pos);
-#if 0
+#if 1
 		th.set(pos);
 		th.l_alpha = -Value_Infinite;
 		th.l_beta = Value_Infinite;
 		th.l_depth = 2;
 		//Eval::eval(pos);
-		th.think();
+		Value shallow_serch_value=th.think();
 #endif
 		//tanuki-さんの本を参考に目的関数の微分を作成。勝率の差の二乗を目的関数としている。勝率の式はponanzaそのままでうちで使えるかどうかは微妙。
 		/*double win_teacher = sigmoid(double(teacher) / double(600)), win_shallow = sigmoid(double(shallow_v) / double(600));
@@ -823,7 +837,7 @@ void reinforce_learn_pharse1(const int index) {
 
 	
 		//一手読みをさせた場合はこの局面ではなくpvの末端の特徴量を更新しなければならない！！！！！！！！！！！！！
-#if 0
+#if 1
 		int ii = 0;
 		for (Move m : th.pv) { pos.do_move(m, &si[ii]); ii++; }
 		//teachervalueはrootから見た点数なのでshallowもrootから見た点数に変換
@@ -832,10 +846,10 @@ void reinforce_learn_pharse1(const int index) {
 		目的関数の形はこれでいいのか？？
 		いまは交差エントロピー
 		*/
-		Value shallow_v = (rootColor == pos.sidetomove()) ? Eval::eval(pos) : -Eval::eval(pos);
+		Value shallow_v = (rootColor == pos.sidetomove()) ? Eval::eval(pos) : -Eval::eval(pos);//ここ探索で帰ってきた値にすべき？
 		double win_teacher = sigmoid(double(teacher) / double(600)), win_shallow = sigmoid(double(shallow_v) / double(600));
-		//double diffsig = win_shallow - win_teacher;//交差エントロピー
-		double diffsig = dsigmoid(double(shallow_v) / double(600))*(win_shallow - win_teacher) / double(300);//勝率の差の2条（これ正直言って係数が変わるだけなんだよなぁ無意味か..?まあやってみるadadeltaの更新幅が変わるのでやってみる）
+		double diffsig = win_shallow - win_teacher;//交差エントロピー これのほうがいいってnozomiさんが言ってた
+		//double diffsig = dsigmoid(double(shallow_v) / double(600))*(win_shallow - win_teacher) / double(300);//勝率の差の2条（これ正直言って係数が変わるだけなんだよなぁ無意味か..?まあやってみるadadeltaの更新幅が変わるのでやってみる）
 		object_func += int(shallow_v - teacher)*int(shallow_v - teacher);
 		diffsig = (rootColor == BLACK ? diffsig : -diffsig);//+bpp-wppの関係
 
@@ -881,6 +895,38 @@ void renewal_PP_rein(dJValue &data) {
 		}
 	}
 }
+/*
+wcsc27でnozomiさんに教えていただいた方法。
+勾配の方向に1だけ動かす！！！！！！！！
+KPPなどに局所解はあまりないというのが見解としてわかったらしいので0~2までの範囲で動かす値を変えるなんてしなくていいみたい。
+なんか昔はハイパーパラメータいろいろ弄ったらしいがここに落ち着いたようだ...
+*/
+void renewal_PP_nozomi(dJValue &data) {
+
+	std::random_device rd;
+	std::mt19937 mt(rd());
+
+
+	int h;
+	
+	h = 1;
+
+	//対称性はdJの中に含まれているのでここでは考えなくていい
+	for (BonaPiece i = f_hand_pawn; i < fe_end2; i++) {
+		for (BonaPiece j = f_hand_pawn; j < fe_end2; j++) {
+
+			int inc = h*sign(data.absolute_PP[i][j]);
+			if (abs(PP[i][j] + inc) < INT16_MAX) {
+				PP[i][j] += inc;
+			}
+
+		}
+	}
+	//書き出した後読み込むことで値を更新する　ここで32回も書き出し書き込みを行うのは無駄最後にまとめて行う
+
+
+}
+
 
 
 void check_teacherdata() {

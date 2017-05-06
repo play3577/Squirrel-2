@@ -70,20 +70,16 @@ struct Parse2Data {
 void renewal_PP(dJValue &data) {
 
 
-#ifdef AA
-#else
+
 	std::random_device rd;
 	std::mt19937 mt(rd());
 
-#endif
 	
 	int h;
 
-#ifdef AA
-	h = 1;
-#else
+	//hはループの内部で変えたほうがいいか？
 	h = std::abs(int(mt())) % 3;
-#endif
+
 	//こんなんでいいのか？
 	//
 

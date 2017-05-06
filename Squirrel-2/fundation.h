@@ -17,8 +17,8 @@
 #define ASSERT(x) {if (!(x)){std::cout << "\nError!!\n" << "info string file:" << __FILE__ << " line:" << __LINE__ <<" "<< #x<< std::endl;_ASSERT(x);}}
 #endif
 #ifndef _DEBUG
-//#define ASSERT(X) { if (!(X)){std::cout << "\nError!!\n" << "info string file:" << __FILE__ << " line:" << __LINE__ <<" "<< #X<< std::endl; *(int*)1 =0;} }
-#define ASSERT(x) ((void)0)//すべてをかなぐり捨てて速度を出したいとき用
+#define ASSERT(X) { if (!(X)){std::cout << "\nError!!\n" << "info string file:" << __FILE__ << " line:" << __LINE__ <<" "<< #X<< std::endl; *(int*)1 =0;} }
+//#define ASSERT(x) ((void)0)//すべてをかなぐり捨てて速度を出したいとき用
 #endif
 
 #define UNREACHABLE ASSERT(0)
@@ -33,13 +33,15 @@
 #define SENNICHI
 
 
+#define MISC//使わない機能をコメントアウトする時はこれをundefinedにすればいい
+
 //---------------------------------学習関連
 
-//#define LEARN
+#define LEARN
 //#define MAKESTARTPOS
 //#define MAKETEACHER
 //#define Prog_LEARN
-//#define REIN
+#define REIN
 
 #define USETT
 

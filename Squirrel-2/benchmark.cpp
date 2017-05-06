@@ -6,7 +6,7 @@
 #include "progress.h"
 //指し手生成速度計測
 //計測方法が他のソフトと違うと比較できないので他のソフトに合わせる。
-#ifdef _DEBUG
+#ifdef MISC
 void speed_genmove(const Position & pos)
 {
 	cout << pos << endl;
@@ -152,4 +152,4 @@ void randomwalker(Position & pos, int maxdepth)
 		
 	}//指し手のwhile
 }
-#endif
+#endif//misc

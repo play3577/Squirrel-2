@@ -159,7 +159,7 @@ inline double dsigmoid(const double x) {
 //bonanza®‚Ìx‚Ì”ÍˆÍ‚ği‚Á‚½sigmoidŠÖ”
 
 
-#if 0
+#ifdef MISC
 inline double sigmoid(const double x) {
 #ifdef REIN
 	double a = 1;
