@@ -1291,7 +1291,6 @@ string Position::make_sfen()const
 		}
 	}
 	
-	//sfen += " 1";
 	sfen += " ";
 	sfen+=itos(ply_from_startpos);
 

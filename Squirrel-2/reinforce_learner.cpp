@@ -433,7 +433,7 @@ void make_teacher()
 	出てこないきょくめんばかりだった可能性が大なので定跡から読み込ませる
 	*/
 	//ifstream f("C:/sp_db/startpos.db");
-	ifstream f("C:/book2/joseki/R2800_30te.db");
+	ifstream f("C:/book2/standard_book.db");
 	string s;
 	while (!f.eof()) {
 		getline(f, s);
@@ -518,6 +518,7 @@ void make_teacher_body(const int number) {
 	StateInfo s_start;
 	ExtMove moves[600], *end;
 	Thread th;
+	th.cleartable();
 	end = moves;
 
 	for (int g = lock_index_inclement__(); g < startpos_db.size(); g = lock_index_inclement__()) {
@@ -526,7 +527,7 @@ void make_teacher_body(const int number) {
 		if (startposdb_string.size() < 10) { continue; }//文字列の長さがありえないほど短いのはエラーであるので使わない
 		pos.set(startposdb_string);//random開始局面集から一つ取り出してsetする。（このランダム開始局面は何回も出てくるのでここから一手動かしたほうがいい）
 		do_randommove(pos, &s_start, mt);//random初期局面から1手ランダムに進めておく
-		th.cleartable();
+		//th.cleartable();//毎回は死ぬほど遅い
 
 		random_probability = 1.0;
 
@@ -534,6 +535,7 @@ void make_teacher_body(const int number) {
 
 			//探索前にthreadを初期化しておく
 			th.set(pos);
+			th.cleartable();
 			//技巧NDFは深さ固定ではなく秒数固定。
 			//秒数固定のほうが同じ差し手にならないのでいいらしい。
 			th.l_depth = 6;
@@ -542,12 +544,13 @@ void make_teacher_body(const int number) {
 			Value v = th.think();//探索を実行する
 			if (abs(v) > 3000) { goto NEXT_STARTPOS; }//評価値が3000を超えてしまった場合は次の局面へ移る
 
-			pos.pack_haffman_sfen();
+			//pos.pack_haffman_sfen();
 			//root局面のhaffman符号を用意しておく
 		/*	bool HaffmanrootPos[256];
 			memcpy(HaffmanrootPos, pos.packed_sfen, sizeof(HaffmanrootPos));*/
 			string sfen_rootpos = pos.make_sfen();
 			//------------------------------PVの末端のノードに移ってそこでの静止探索の値を求めteacher_dataに格納
+#if 0
 			StateInfo si2[64];
 			int pv_depth = 0;
 			const Color rootColor = pos.sidetomove();//HaffmanrootPosの手番
@@ -559,14 +562,15 @@ void make_teacher_body(const int number) {
 			}
 			//rootから見た評価値を格納する
 			const Value deepvalue = (rootColor==pos.sidetomove()) ? Eval::eval(pos):-Eval::eval(pos);
-
-			teacher_data td(/*HaffmanrootPos,*/sfen_rootpos, deepvalue);
+#endif
+			teacher_data td(/*HaffmanrootPos,*/sfen_rootpos, /*deepvalue*/v);
 			//teacher_data td(pos.make_sfen(), v);
 			teachers[number].push_back(td);
-
+#if 0
 			for (int jj = 0; jj < pv_depth; jj++) {
 				pos.undo_move();
 			}
+#endif
 			//---------------------------------------------------------------------------
 			//次の差し手を選別。(合法手が選ばれるまでなんども繰り返す必要がある)
 			memset(moves, 0, sizeof(moves));//初期化
@@ -636,7 +640,7 @@ void do_randommove(Position& pos, StateInfo* s, std::mt19937& mt) {
 //定数
 int read_teacher_counter = 0;
 int batchsize = 1000000;//nozomiさんはminbatch100万でいいって言ってた
-double object_func = 0;
+double loss = 0;
 
 //ok
 //参考　http://gurigumi.s349.xrea.com/programming/binary.html
@@ -725,7 +729,7 @@ void reinforce_learn() {
 	//学習開始(readteacherdataでバッチサイズだけ棋譜を読み込んでミニバッチ学習を行う)
 	while (read_teacherdata(f)) {
 
-		object_func = 0;
+		loss = 0;
 
 		sum_gradJ.clear();
 		for (dJValue& dJ : gradJs) { dJ.clear(); }
@@ -758,14 +762,14 @@ void reinforce_learn() {
 
 
 
-		//renewal_PP_rein(sum_gradJ);
-		renewal_PP_nozomi(sum_gradJ);
+		renewal_PP_rein(sum_gradJ);
+		//renewal_PP_nozomi(sum_gradJ);
 
 
 		Eval::param_sym_ij();
 		write_PP();
 		read_PP();
-		cout << "object func:" << object_func << endl;
+		cout << "loss:" << loss << endl;
 	}
 
 	f.close();
@@ -781,6 +785,7 @@ void reinforce_learn_pharse1(const int index) {
 
 	Position pos;
 	Thread th;
+	th.cleartable();
 	StateInfo si[100];
 	/*ExtMove moves[600], *end;
 	end = moves;*/
@@ -806,51 +811,31 @@ void reinforce_learn_pharse1(const int index) {
 		
 		*/
 		//const Value shallow_v = Eval::eval(pos);
-#if 1
+#if 0
 		th.set(pos);
+		//th.cleartable();//毎回は死ぬほど遅い
 		th.l_alpha = -Value_Infinite;
 		th.l_beta = Value_Infinite;
 		th.l_depth = 2;
 		//Eval::eval(pos);
 		Value shallow_serch_value=th.think();
+		if (abs(shallow_serch_value) > 3000||shallow_serch_value==0) { continue; }
 #endif
-		//tanuki-さんの本を参考に目的関数の微分を作成。勝率の差の二乗を目的関数としている。勝率の式はponanzaそのままでうちで使えるかどうかは微妙。
-		/*double win_teacher = sigmoid(double(teacher) / double(600)), win_shallow = sigmoid(double(shallow_v) / double(600));
-		double diffsig = dsigmoid(double(shallow_v) / double(600))*(win_shallow - win_teacher) / double(300);
-		object_func += (win_teacher - win_shallow)*(win_teacher - win_shallow);
-		*/
-
-
-		//double win_teacher = sigmoid(double(teacher) / double(600)), win_shallow = sigmoid(double(shallow_v) / double(600));
-		//double diffsig = win_shallow - win_teacher;
-		//object_func += int(shallow_v - teacher)*int(shallow_v - teacher);
-
-		/*double diffsig = 2*(shallow_v - teacher);
-		object_func += int(shallow_v - teacher)*int(shallow_v - teacher);*/
-
-
-		/*目的関数がこの形ではないのでこれでは何をしているのかわからない！！！！！
-		*/
-		//Value diff = shallow_v - teacher;
-		//object_func += int(diff)*int(diff);
-		//double diffsig = dsigmoid(diff);
-
+		
 	
 		//一手読みをさせた場合はこの局面ではなくpvの末端の特徴量を更新しなければならない！！！！！！！！！！！！！
-#if 1
+#if 0
 		int ii = 0;
-		for (Move m : th.pv) { pos.do_move(m, &si[ii]); ii++; }
-		//teachervalueはrootから見た点数なのでshallowもrootから見た点数に変換
+		for (Move m : th.pv) { pos.do_move(m, &si[ii]); ii++; }//pvの末端へ移動
 #endif
-		/*
-		目的関数の形はこれでいいのか？？
-		いまは交差エントロピー
-		*/
-		Value shallow_v = (rootColor == pos.sidetomove()) ? Eval::eval(pos) : -Eval::eval(pos);//ここ探索で帰ってきた値にすべき？
-		double win_teacher = sigmoid(double(teacher) / double(600)), win_shallow = sigmoid(double(shallow_v) / double(600));
+		
+		pos.state()->bpp = pos.state()->wpp = Value_error;//差分計算を無効にしてみる
+		//rootから見た点数に変換する（teacherもrootから見た評価値のはず）
+		Value shallow_v = (rootColor == pos.sidetomove()) ? Eval::eval(pos) : -Eval::eval(pos);//ここ探索で帰ってきた値にすべき？（よくなかった）
+		double win_teacher = win_sig(teacher);
+		double win_shallow = win_sig(shallow_v);
 		double diffsig = win_shallow - win_teacher;//交差エントロピー これのほうがいいってnozomiさんが言ってた
-		//double diffsig = dsigmoid(double(shallow_v) / double(600))*(win_shallow - win_teacher) / double(300);//勝率の差の2条（これ正直言って係数が変わるだけなんだよなぁ無意味か..?まあやってみるadadeltaの更新幅が変わるのでやってみる）
-		object_func += int(shallow_v - teacher)*int(shallow_v - teacher);
+		loss += diffsig*diffsig;
 		diffsig = (rootColor == BLACK ? diffsig : -diffsig);//+bpp-wppの関係
 
 		gradJs[index].update_dJ(pos, -diffsig);
@@ -860,15 +845,41 @@ void reinforce_learn_pharse1(const int index) {
 
 }
 
+double PP_double[fe_end2][fe_end2] = {0,0};
+
 constexpr double row = 0.95, epsiron = 0.0001;
 double lastEg[fe_end2][fe_end2] = { 0.0 }, last_Edeltax[fe_end2][fe_end2] = { 0.0 };
 double RMS(const double a) { return sqrt(a + epsiron); }
+
+//
+//void PP_to_doublePP() {
+//
+//	for (BonaPiece i = f_hand_pawn; i < fe_end2; i++) {
+//		for (BonaPiece j = f_hand_pawn; j < fe_end2; j++) {
+//
+//			PP_double[i][j] = double(PP[i][j]);
+//		}
+//	}
+//
+//
+//}
+//
+//
+//void doublePP_to_PP() {
+//
+//	for (BonaPiece i = f_hand_pawn; i < fe_end2; i++) {
+//		for (BonaPiece j = f_hand_pawn; j < fe_end2; j++) {
+//
+//			PP[i][j] = int32_t(PP_double[i][j]);
+//		}
+//	}
+//}
 
 //Adadeltaを試してみる
 void renewal_PP_rein(dJValue &data) {
 
 
-
+	//PP_to_doublePP();
 	//対称性はdJの中に含まれているのでここでは考えなくていい
 	/*
 	目的関数は小さくなったのだが、くっそ弱くなった。
@@ -879,27 +890,42 @@ void renewal_PP_rein(dJValue &data) {
 		for (BonaPiece j = f_hand_pawn; j < fe_end2; j++) {
 
 
+			
+			PP_double[i][j] = double(PP[i][j]);
+
 			double gt = data.absolute_PP[i][j];
 			double gt2 = gt*gt;
 			double Egt = lastEg[i][j] = (row)*lastEg[i][j] + (1 - row)*gt2;
 			double delta_x = gt*RMS(last_Edeltax[i][j]) /RMS(Egt);
 			last_Edeltax[i][j] = (row)*last_Edeltax[i][j] + (1 - row)*delta_x;
-			//int inc = h*sign(data.absolute_PP[i][j]);
 
 			//FV_SCALEでいいのか？
-			int add = int(delta_x)*FV_SCALE;//clampか何かしたほうがいいか？
-			if (abs(PP[i][j] + add) < INT16_MAX) {
-				PP[i][j] += add;
+			//int add = int(delta_x)*FV_SCALE;//clampか何かしたほうがいいか？(というかPPをいったんdoubleに変換してそれをintに戻すほうがいいか？？)
+			//if (abs(PP[i][j] + add) < INT16_MAX) {
+			//	PP[i][j] += add;
+			//}
+
+			//この方法ではパラメータが全然動いていなかったう～～～～んオンライン学習でも始めるか？？
+			if (abs(PP_double[i][j] + delta_x) < INT16_MAX) {
+				PP_double[i][j] += delta_x;
 			}
+
+
+			PP[i][j] = int32_t(PP_double[i][j]);
 
 		}
 	}
+	//doublePP_to_PP();
+
 }
 /*
 wcsc27でnozomiさんに教えていただいた方法。
 勾配の方向に1だけ動かす！！！！！！！！
 KPPなどに局所解はあまりないというのが見解としてわかったらしいので0~2までの範囲で動かす値を変えるなんてしなくていいみたい。
 なんか昔はハイパーパラメータいろいろ弄ったらしいがここに落ち着いたようだ...
+
+この方法は大量に棋譜があって何回もiterationを回せるのならいいのかもしれないがそうではないうちではちゃんと収束まで持ち込めなくてうまくいかないのかも...
+それでも目的関数を下って行ってくれているのなら強くなるはずか...う～～んそう考えるとなんで強くならないのかわからない....
 */
 void renewal_PP_nozomi(dJValue &data) {
 
