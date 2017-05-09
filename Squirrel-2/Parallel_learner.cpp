@@ -4,7 +4,7 @@
 
 
 #include "learner.h"
-#ifdef LEARN
+#if defined(LEARN) 
 #include <random>
 #include <vector>
 #include <time.h>       /* time_t, struct tm, time, localtime */
@@ -31,8 +31,6 @@ using namespace std;
 
 #define SOFTKIFU
 
-//浅い探索結果と深い探索の結果の誤差が少なくなるような損失項を入れる
-#define DEAP_LEARN
 
 
 /*
@@ -821,43 +819,6 @@ void learnphase2body(int number)
 					}
 					pos.undo_move();
 				}
-#if 0
-				//深い評価値と浅い評価値の差から学習(技巧を参考)
-				//うまくいくかはわからない
-				for (size_t i = 0; i < minfo_list.size(); i++) {
-					if (minfo_list[i].pv.size() < 1) { continue; }
-
-					const Move m = minfo_list[i].move;
-					StateInfo si2[64];
-					int depth = 0;
-					pos.do_move(m, &si2[depth++]);
-					//double sign_ = (pos.sidetomove() == BLACK) ? 1.0 : -1.0;//＋bpp-wppの関係
-					double sign_ = (rootColor == BLACK) ? 1.0 : -1.0;//＋bpp-wppの関係
-					double c = 1.0 / minfo_list[i].pv.size();
-					double score_shallow = -Eval::eval(pos);//rootから一手進めた局面なのでrootcolorから見た得点に変更するためには-をするだけでいい
-					double score_deep = deepscore[i];//ここにはrootcolorから見た評価値が格納されている
-					double win_shallow = win_sig(score_shallow);
-					double win_deep = win_sig(score_deep);
-					//目的関数は(score_shallow-score_deep)*(win_shallow-win_deep)
-					//こうすることで（「生の評価値の誤差」と「予想勝率の誤差」の双方を、バランスよく最小化するように配慮している）みたい
-					double delta_shallow = sign_*c*(win_dsig(win_shallow)*(score_shallow - score_deep) + (win_shallow - win_deep));//scoreは微分不可
-					double delta_deep=sign_*c*(win_dsig(win_deep)*(score_deep - score_shallow) + (win_deep - win_shallow));
-					
-					//親局面に対して
-					parse2Datas[number].gradJ.update_dJ(pos, -delta_shallow);
-					pos.undo_move();
-					//末端ノードの値を浅いほうに近づけるのはいかがなものかと思うので廃止
-					//for (int k = 0; k < minfo_list[i].pv.size(); k++) {
-					//	pos.do_move(m, &si2[depth++]);
-					//}
-					////末端ノードに対して
-					//parse2Datas[number].gradJ.update_dJ(pos, -delta_deep);
-					//for (int d = 0; d < depth; d++) {
-					//	pos.undo_move();
-					//}
-					ocilation_error += (score_shallow - score_deep)*(score_shallow - score_deep);
-				}
-#endif
 
 			}//勾配計算
 		skip_calc:;
@@ -958,7 +919,7 @@ void weave_eachPP(dJValue& newgradJ, const lowerDimPP& lowdim, const BonaPiece b
 	/*
 	ばらまいたgradをかき集めてくる
 	*/
-#if 0
+#if 1
 	if (f_pawn <= i) {
 		const Piece pci = (bp2piece.bp_to_piece(bpwithoutsq(i)));
 		const Piece pti = piece_type(pci);

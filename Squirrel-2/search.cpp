@@ -692,6 +692,9 @@ Value Thread::think() {
 
 	//	Eval::eval(rootpos);
 
+#ifdef USETT
+	TT.new_search();
+#endif // USETT
 
 
 	while (++rootdepth <maxdepth && !signals.stop) {
@@ -727,6 +730,8 @@ Value Thread::think() {
 
 		*/
 		if (rootdepth > 20 && abs(bestvalue) > Value_mate_in_maxply) { goto ID_END; }
+
+
 
 
 		if (signals.stop) {
@@ -1344,11 +1349,9 @@ end_multicut:
 	//i‚à‚µ‘OŒü‚«Ž}Ø‚è‚ªo—ˆ‚Ä‚µ‚Ü‚Á‚½‚ç‚±‚Ìƒm[ƒh‚Å‹l‚ñ‚Å‚µ‚Ü‚¤j
 moves_loop:
 	
-#ifndef  LEARN
-
+#ifdef USETT
 #define EXTENSION
-
-#endif // ! LEARN
+#endif
 	const CounterMoveStats* cmh = (ss - 1)->counterMoves;
 	const CounterMoveStats* fmh = (ss - 2)->counterMoves;
 	const CounterMoveStats* fmh2 = (ss - 4)->counterMoves;
@@ -2516,7 +2519,7 @@ Value lqsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
 		futilitybase = bestvalue + 128;
 	}
 
-	movepicker mp(pos, move_to(pos.state()->lastmove), MOVE_NONE);
+	movepicker mp(pos, move_to(pos.state()->lastmove), MOVE_NONE,depth,ss);
 	while ((move = mp.return_nextmove()) != MOVE_NONE) {
 		//
 		//#ifdef LEARN
@@ -2558,7 +2561,7 @@ Value lqsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
 		movecount++;
 
 		pos.do_move(move, &si, givescheck);
-		value = -qsearch<NT>(pos, ss + 1, -beta, -alpha, depth - ONE_PLY);
+		value = -lqsearch<NT>(pos, ss + 1, -beta, -alpha, depth - ONE_PLY);
 		pos.undo_move();
 
 		if (value > bestvalue) {

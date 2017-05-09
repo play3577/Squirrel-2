@@ -96,7 +96,7 @@ namespace Eval {
 
 		auto prev = now->previous;
 		//‘SŒvŽZ‚µ‚È‚¯‚ê‚Î‚È‚ç‚È‚¢
-		if(prev->sumBKPP == Value_error||prev->sumWKPP == Value_error||prev->sumKKP == Value_error) {
+		if(prev==nullptr||prev->sumBKPP == Value_error||prev->sumWKPP == Value_error||prev->sumKKP == Value_error) {
 			return eval_KPP(pos);
 		}
 		
@@ -159,7 +159,6 @@ namespace Eval {
 					}
 
 					if (moveduniform2 != Eval::Num_Uniform) {
-						ASSERT(is_ok(capturedpiece));
 						//wkpp‚È‚Ì‚Åˆø‚­‚Ì‚ª+‘«‚·‚Ì‚ª-
 						for (i = 0; i < moveduniform2; ++i) {
 							wKPP += kpp[wksq][oldbp2_fw][now_list_fw[i]];
@@ -192,7 +191,7 @@ namespace Eval {
 
 					//“®‚¢‚½‹î‚ª2‚Â‚ ‚ê‚Îbkpp‚à·•ªŒvŽZ
 					if (moveduniform2 != Eval::Num_Uniform) {
-						ASSERT(is_ok(capturedpiece));
+						//ASSERT(is_ok(capturedpiece));
 						for (i = 0; i < moveduniform2; ++i) {
 							bKPP -= kpp[bksq][oldbp2_fb][now_list_fb[i]];
 							bKPP += kpp[bksq][newbp2_fb][now_list_fb[i]];
@@ -309,6 +308,7 @@ namespace Eval {
 			const Piece movedpiece = now->DirtyPiece[0];
 			const Piece capturedpiece = now->DirtyPiece[1];
 				*/
+#ifdef DIFFTEST
 				{
 					eval_KPP(pos);
 					if (KKP != pos.state()->sumKKP || bKPP != pos.state()->sumBKPP || wKPP != pos.state()->sumWKPP) {
@@ -331,7 +331,7 @@ namespace Eval {
 						ASSERT(0);
 					}
 				}
-
+#endif
 
 			}
 

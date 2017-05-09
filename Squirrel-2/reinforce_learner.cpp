@@ -36,7 +36,16 @@ packedsfenのほうがいいかもしれないがまずはsfenで作成する
 評価関数がよくないからか,あんまり質のいい開始局面は生成できなかった。
 depth2では評価値100以内だが他では1000超えてしまうみたいな...(TTをonにしたらきれいになった)
 */
-#define TEACHERPATH "C:/teacher/teacherd5.txt"
+//#define MAKETEST
+
+
+#ifdef MAKETEST
+#define TEACHERPATH "C:/teacher/teacherd5_exteintion_tansakuchi_test.txt"
+#else
+#define TEACHERPATH "C:/teacher/teacherd5_exteintion_pvmove.txt"
+#endif
+
+
 
 #ifdef MAKESTARTPOS
 string Position::random_startpos()
@@ -370,16 +379,24 @@ struct teacher_data {
 	//Color winner;
 	//Move move;
 
-	teacher_data(/*const bool *haff,*/const string sfen_, Value teachervalue) {
+	//teacher_data(/*const bool *haff,*/const string sfen_,const Value teachervalue,const Move m) {
+	//	//memcpy(haffman, haff, sizeof(haffman));
+	//	sfen = sfen_;
+	//	teacher_value = (int16_t)teachervalue;
+	//	move = m;
+	//}
+	teacher_data(/*const bool *haff,*/const string sfen_, const Value teachervalue) {
 		//memcpy(haffman, haff, sizeof(haffman));
 		sfen = sfen_;
 		teacher_value = (int16_t)teachervalue;
+		//move = MOVE_NONE;
 	}
 	teacher_data(){}
 };
 inline std::ostream& operator<<(std::ostream& os, const teacher_data& td) {
 	os <<td.sfen<<endl;
 	os << td.teacher_value << endl;
+	//os << td.move << endl;
 	return os;
 }
 
@@ -473,12 +490,17 @@ void make_teacher()
 
 		//teacherの作成
 		index__ = 0;
+
+#define MALTI
+#ifdef  MALTI
 		for (int k = 0; k < maxthreadnum__ - 1; ++k) {
 			threads[k] = std::thread([k] {make_teacher_body(k); });
-		}
+	}
+#endif 
 		make_teacher_body(maxthreadnum__ - 1);
+#ifdef  MALTI
 		for (auto& th : threads) { th.join(); }
-
+#endif
 		//thread毎のteacherをmerge
 		int h = 0;
 		for each (vector<teacher_data> tdv in teachers)
@@ -521,27 +543,34 @@ void make_teacher_body(const int number) {
 	th.cleartable();
 	end = moves;
 
-	for (int g = lock_index_inclement__(); g < startpos_db.size(); g = lock_index_inclement__()) {
+	for (int g = lock_index_inclement__();
+#ifdef MAKETEST
+		g<100;
+#else
+		g < startpos_db.size(); 
+#endif
+		g = lock_index_inclement__()) {
 
 		string startposdb_string = startpos_db[g];
 		if (startposdb_string.size() < 10) { continue; }//文字列の長さがありえないほど短いのはエラーであるので使わない
 		pos.set(startposdb_string);//random開始局面集から一つ取り出してsetする。（このランダム開始局面は何回も出てくるのでここから一手動かしたほうがいい）
 		do_randommove(pos, &s_start, mt);//random初期局面から1手ランダムに進めておく
-		//th.cleartable();//毎回は死ぬほど遅い
+		th.cleartable();
 
 		random_probability = 1.0;
 
 		for (int i = 0; i < 256; i++) {
 
 			//探索前にthreadを初期化しておく
+			Eval::eval(pos);//差分計算でバグを出さないために計算しておく
 			th.set(pos);
-			th.cleartable();
+			//th.cleartable();//毎回やるとおそい
 			//技巧NDFは深さ固定ではなく秒数固定。
 			//秒数固定のほうが同じ差し手にならないのでいいらしい。
 			th.l_depth = 6;
 			th.l_alpha = -Value_Infinite;
 			th.l_beta = Value_Infinite;
-			Value v = th.think();//探索を実行する
+			Value v = th.think();//探索を実行する これは手番側から見た評価値である
 			if (abs(v) > 3000) { goto NEXT_STARTPOS; }//評価値が3000を超えてしまった場合は次の局面へ移る
 
 			//pos.pack_haffman_sfen();
@@ -550,7 +579,10 @@ void make_teacher_body(const int number) {
 			memcpy(HaffmanrootPos, pos.packed_sfen, sizeof(HaffmanrootPos));*/
 			string sfen_rootpos = pos.make_sfen();
 			//------------------------------PVの末端のノードに移ってそこでの静止探索の値を求めteacher_dataに格納
-#if 0
+			/*--------------------------------------------------------------------------------------------------------
+			pvの末端に移動をしなかった場合deepvalueが探索の値とかけ離れてしまうということが起こった！これで少しはましになる
+			--------------------------------------------------------------------------------------------------------*/
+#if 1
 			StateInfo si2[64];
 			int pv_depth = 0;
 			const Color rootColor = pos.sidetomove();//HaffmanrootPosの手番
@@ -561,12 +593,13 @@ void make_teacher_body(const int number) {
 				pos.do_move(m, &si2[pv_depth++]);
 			}
 			//rootから見た評価値を格納する
+			pos.state()->bpp = pos.state()->wpp = Value_error;//差分計算を無効にしてみる
 			const Value deepvalue = (rootColor==pos.sidetomove()) ? Eval::eval(pos):-Eval::eval(pos);
 #endif
-			teacher_data td(/*HaffmanrootPos,*/sfen_rootpos, /*deepvalue*/v);
-			//teacher_data td(pos.make_sfen(), v);
+			teacher_data td(/*HaffmanrootPos,*/sfen_rootpos, deepvalue);
+			//teacher_data td(pos.make_sfen(), v/*,th.RootMoves[0].move*/);
 			teachers[number].push_back(td);
-#if 0
+#if 1
 			for (int jj = 0; jj < pv_depth; jj++) {
 				pos.undo_move();
 			}
@@ -599,7 +632,7 @@ void make_teacher_body(const int number) {
 			}
 			//差し手で次の局面に移動する。
 			pos.do_move(m, &si[i]);
-			Eval::eval(pos);//差分計算でバグを出さないために計算しておく
+			
 		}
 	NEXT_STARTPOS:;
 	}
@@ -636,7 +669,7 @@ void do_randommove(Position& pos, StateInfo* s, std::mt19937& mt) {
 
 #endif
 
-#if defined(LEARN) && defined(REIN)
+#if defined(REIN) || defined(MAKETEACHER)
 //定数
 int read_teacher_counter = 0;
 int batchsize = 1000000;//nozomiさんはminbatch100万でいいって言ってた
@@ -656,18 +689,21 @@ bool read_teacherdata(ifstream& f) {
 	teacher_data t;
 	int i = 0;
 	if (f.eof()) { return false; }
-	while (!f.eof()&&i<batchsize) {
+	while (!f.eof() && i<batchsize) {
 		/*f.seekg(read_teacher_counter * sizeof(teacher_data));
 		f.read((char*)&t, sizeof(teacher_data));
 
 		sum_teachers.push_back(t);
 		read_teacher_counter++;*/
-		std::string line,sfen;
+		std::string line, sfen;
 		Value v;
+		Move m;
 		if (!getline(f, line)) { break; };
 		sfen = line;
 		if (!getline(f, line)) { break; };
 		v = (Value)stoi(line);
+		
+		
 		teacher_data td(sfen, v);
 		sum_teachers.push_back(td);
 		i++;
@@ -683,6 +719,9 @@ bool read_teacherdata(ifstream& f) {
 	cout << pos << endl;
 	cout << pos.occ_all() << endl;*/
 }
+
+#endif
+#if defined(LEARN) && defined(REIN)
 
 
 dJValue sum_gradJ;
@@ -762,8 +801,8 @@ void reinforce_learn() {
 
 
 
-		renewal_PP_rein(sum_gradJ);
-		//renewal_PP_nozomi(sum_gradJ);
+		//renewal_PP_rein(sum_gradJ);//nanがいっぱい入っていてちゃんと値の更新ができていなかったので強さが変わらなかった疑惑。
+		renewal_PP_nozomi(sum_gradJ);//こっちは確実に値がついていると考えられる。
 
 
 		Eval::param_sym_ij();
@@ -820,11 +859,7 @@ void reinforce_learn_pharse1(const int index) {
 		//Eval::eval(pos);
 		Value shallow_serch_value=th.think();
 		if (abs(shallow_serch_value) > 3000||shallow_serch_value==0) { continue; }
-#endif
-		
-	
-		//一手読みをさせた場合はこの局面ではなくpvの末端の特徴量を更新しなければならない！！！！！！！！！！！！！
-#if 0
+
 		int ii = 0;
 		for (Move m : th.pv) { pos.do_move(m, &si[ii]); ii++; }//pvの末端へ移動
 #endif
@@ -832,10 +867,13 @@ void reinforce_learn_pharse1(const int index) {
 		pos.state()->bpp = pos.state()->wpp = Value_error;//差分計算を無効にしてみる
 		//rootから見た点数に変換する（teacherもrootから見た評価値のはず）
 		Value shallow_v = (rootColor == pos.sidetomove()) ? Eval::eval(pos) : -Eval::eval(pos);//ここ探索で帰ってきた値にすべき？（よくなかった）
-		double win_teacher = win_sig(teacher);
-		double win_shallow = win_sig(shallow_v);
-		double diffsig = win_shallow - win_teacher;//交差エントロピー これのほうがいいってnozomiさんが言ってた
-		loss += diffsig*diffsig;
+		//double win_teacher = win_sig(teacher);
+		//double win_shallow = win_sig(shallow_v);
+		//double diffsig = win_shallow - win_teacher;//交差エントロピー これのほうがいいってnozomiさんが言ってた
+		double diffsig = shallow_v - teacher;
+		
+		//loss += diffsig*diffsig;
+		loss += pow(diffsig, 2);
 		diffsig = (rootColor == BLACK ? diffsig : -diffsig);//+bpp-wppの関係
 
 		gradJs[index].update_dJ(pos, -diffsig);
@@ -900,15 +938,20 @@ void renewal_PP_rein(dJValue &data) {
 			last_Edeltax[i][j] = (row)*last_Edeltax[i][j] + (1 - row)*delta_x;
 
 			//FV_SCALEでいいのか？
-			//int add = int(delta_x)*FV_SCALE;//clampか何かしたほうがいいか？(というかPPをいったんdoubleに変換してそれをintに戻すほうがいいか？？)
-			//if (abs(PP[i][j] + add) < INT16_MAX) {
-			//	PP[i][j] += add;
-			//}
-
-			//この方法ではパラメータが全然動いていなかったう～～～～んオンライン学習でも始めるか？？
-			if (abs(PP_double[i][j] + delta_x) < INT16_MAX) {
-				PP_double[i][j] += delta_x;
+			/*
+			こっちのほうが強くなったと思ったが配列にnanが入っていて値が動いていないだけだった
+			
+			*/
+			if (delta_x == NAN) { continue; }
+			int add = int(delta_x)*FV_SCALE;//clampか何かしたほうがいいか？(というかPPをいったんdoubleに変換してそれをintに戻すほうがいいか？？)
+			if (abs(PP[i][j] + add) < INT16_MAX) {
+				PP[i][j] += add;
 			}
+
+			////この方法ではパラメータが全然動いていなかったう～～～～んオンライン学習でも始めるか？？
+			//if (abs(PP_double[i][j] + delta_x) < INT16_MAX) {
+			//	PP_double[i][j] += delta_x;
+			//}
 
 
 			PP[i][j] = int32_t(PP_double[i][j]);
@@ -955,21 +998,47 @@ void renewal_PP_nozomi(dJValue &data) {
 
 
 
+#endif
+
+
+#if defined(REIN) || defined(MAKETEACHER)
+
 void check_teacherdata() {
 
-//	Position pos;
+	//	Position pos;
 	Position pos__;
+	Thread th;
+	th.cleartable();
 
 	ifstream f(TEACHERPATH);
 	if (!f) { cout << "cantopen" << TEACHERPATH << endl; UNREACHABLE; }
 	uint64_t count = 0;
 
-	while (read_teacherdata(f)) {
+	bool firsttime = true;
 
+	while (read_teacherdata(f)||firsttime) {
+
+		firsttime = false;
 		for (int g = lock_index_inclement__(); g < sum_teachers.size(); g = lock_index_inclement__()) {
 			count++;
 			auto data = sum_teachers[g];
-			pos__.set(sum_teachers[g].sfen);
+			pos__.set(data.sfen);
+			th.set(pos__);
+			th.l_depth = 6;
+			th.l_alpha = -Value_Infinite;
+			th.l_beta = Value_Infinite;
+			Value v = th.think();//探索を実行する
+
+								 //tableの値の付き方が変わってたりするかもしれないので100は許容する（それでも大きいが）
+			if (abs(v - (Value)data.teacher_value) > 200) {
+				cout << "position " << data.sfen << endl;
+				cout << "nowsearched:" << v << " data:" << data.teacher_value << endl;
+				//ASSERT(0);
+			}
+			else {
+				cout << "ok teacher" << endl;
+			}
+
 			//pos__.unpack_haffman_sfen(data.haffman);
 			//ASSERT(pos == pos__);
 		}
@@ -977,8 +1046,4 @@ void check_teacherdata() {
 	}
 
 }
-
 #endif
-
-
-

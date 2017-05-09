@@ -222,11 +222,28 @@ void go(Position& pos, istringstream& is/*, Thread& th*/) {
 #ifdef TEST
 	cout << limit << endl;
 #endif
+
+
+#ifdef  EVAL_KPP
+	Eval::eval_KPP(pos);
+#else
+
+
+
 #ifdef HAVE_AVX2
 	Eval::eval_allPP_AVX2(pos);
 #else
 	Eval::eval_PP(pos);
 #endif
+
+
+
+
+#endif //  EVAL_KPP
+
+
+
+
 #ifndef LEARN
 	Threads.start_thinking(pos);
 #endif // !LEARN
@@ -483,6 +500,8 @@ void USI::loop()
 			if (yn != "y") { cout << "OK I do not  learning"; break; }
 			reinforce_learn();
 		}
+#endif
+#if defined(REIN) || defined(MAKETEACHER)
 		else if (token == "hafft") {
 			check_teacherdata();
 		}

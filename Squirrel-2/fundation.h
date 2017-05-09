@@ -41,7 +41,7 @@
 //#define MAKESTARTPOS
 //#define MAKETEACHER
 //#define Prog_LEARN
-#define REIN
+//#define REIN
 
 #define USETT
 
@@ -64,7 +64,9 @@
 #define  USETMP
 //#define DIFFTEST
 //#define EVAL_NONDIFF
-//#define EVAL_KPP
+
+
+#define EVAL_KPP
 
 #ifndef EVAL_KPP
 #define EVAL_PP

@@ -1077,7 +1077,7 @@ namespace Eval {
 			ASSERT(inversebonapiece(bplist_fw[i]) == bplist_fb[i]);
 		}
 	}
-#if 0
+#ifdef MISC
 	std::ostream & operator<<(std::ostream & os, const Eval::BonaPiece bp)
 	{
 		//bp<fe_handend‚Å‚ ‚ê‚Î‚»‚ê‚ÍŽè‹î
@@ -1334,7 +1334,7 @@ namespace Eval {
 	}
 
 
-#ifdef LEARN
+#if defined(LEARN) && defined(EVAL_PP)
 	void Eval::param_sym_ij() {
 
 		
@@ -1369,7 +1369,14 @@ namespace Eval {
 	}
 #endif
 
+#if defined(LEARN) && defined(EVAL_KPP)
+	void Eval::param_sym_ij() {
 
+
+
+
+	}
+#endif
 	/*
 	https://twitter.com/uuunuuun1/status/850891787874951168
 	SM‚Ågcc‚ÅR+40

@@ -307,6 +307,10 @@ namespace Eval {
 
 	//•]‰¿’lŒvZ
 	Value eval(const Position& pos);
+
+	//bonapiece‚Ì¶‰E‚ğ”½“]‚³‚¹‚éŠÖ”
+	BonaPiece sym_rightleft(const BonaPiece bp);
+
 #ifdef EVAL_PP
 	Value eval_PP(const Position& pos);
 
@@ -326,8 +330,6 @@ namespace Eval {
 	void write_PP();
 
 	void param_sym_ij();
-	//bonapiece‚Ì¶‰E‚ğ”½“]‚³‚¹‚éŠÖ”
-	 BonaPiece sym_rightleft(const BonaPiece bp);
 
 
 
@@ -347,7 +349,11 @@ namespace Eval {
 	void read_KPP();
 	void write_KPP();
 
+
+
 	inline void init() { read_KPP(); }
+
+	void param_sym_ij();
 #endif //  EVAL_KPP
 
 	constexpr Value tempo = Value(40);

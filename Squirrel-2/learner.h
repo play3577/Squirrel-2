@@ -37,7 +37,14 @@ namespace Eval {
 	
 }
 
-#ifndef EVAL_PROG
+
+#define JIGENSAGE//okã≠Ç≠Ç»Ç¡ÇƒÇΩ
+
+#define LR//okã≠Ç≠Ç»Ç¡ÇƒÇΩ
+
+
+#if defined(EVAL_PP)
+#if !defined(EVAL_PROG)
 struct lowerDimPP
 {
 	double absolute_pp[fe_end2][fe_end2];//ê‚ëŒPPÅ@
@@ -69,9 +76,6 @@ struct lowerDimPP
 };
 #endif
 
-#define JIGENSAGE//okã≠Ç≠Ç»Ç¡ÇƒÇΩ
-
-#define LR//okã≠Ç≠Ç»Ç¡ÇƒÇΩ
 
 
 
@@ -245,7 +249,28 @@ struct  dJValue
 
 
 #endif
+#elif defined(EVAL_KPP)
 
+struct lowerDimPP
+{
+	
+
+	void clear() {
+		memset(this, 0, sizeof(*this));
+	}
+};
+
+struct  dJValue
+{
+	
+
+
+	void clear() { memset(this, 0, sizeof(*this)); }
+
+
+};
+
+#endif
 
 
 int sign(const double d);
