@@ -66,12 +66,12 @@
 //#define EVAL_NONDIFF
 
 
-#define EVAL_KPP
+//#define EVAL_KPP
 
 #ifndef EVAL_KPP
 #define EVAL_PP
 #endif // !EVAL_KPP
-//#define EVAL_PROG
+
 
 //--------------------------------’èÕì¬ƒ‚[ƒh‚ğƒIƒ“‚É‚·‚é‚©
 //#define MAKEBOOK

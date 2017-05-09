@@ -112,18 +112,12 @@ void USI::init_option(OptionMap &o,string engine_name)
 	o["use_defined_time"] << USIOption(true);
 	o["defined_time"] << USIOption(1000,100,100000);
 #ifdef  EVAL_KPP
-	/*o["KPP"] << USIOption("c:/yaneeval/kpp16ap.bin");
-	o["KKP"] << USIOption("c:/yaneeval/kkp32ap.bin");*/
-
-	o["KPP"] << USIOption("c:/eval_KPP/fv_kpp.bin");
-	o["KKP"] << USIOption("c:/eval_KPP/fv_kkp.bin");
+	o["KPP"] << USIOption("c:/yaneeval/kpp16ap.bin");
+	o["KKP"] << USIOption("c:/yaneeval/kkp32ap.bin");
 #endif //  EVAL_KPP
-#ifdef EVAL_PROG
-	o["eval_o"] << USIOption("c:/book2/Eval_p/fv_PPo.bin");
-	o["eval_f"] << USIOption("c:/book2/Eval_p/fv_PPf.bin");
-#else
+
 	o["eval"] << USIOption("c:/book2/fv_PP.bin");
-#endif
+
 
 }
 

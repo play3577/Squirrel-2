@@ -43,7 +43,6 @@ int main() {
 
 //	Progress::read_KP();
 	USI::init_option(Options,ename2);
-	//Eval::initialize_PP();
 	bitboard_init();
 	init_occ256();
 	Eval::init();
@@ -52,7 +51,7 @@ int main() {
 #ifndef LEARN
 	Threads.init();
 #endif
-	
+	//Eval::initialize_PP();
 	/*if (Options["usebook"] == true) {
 		BOOK::init();
 	}*/

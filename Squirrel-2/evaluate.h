@@ -321,9 +321,7 @@ namespace Eval {
 
 	//２駒関係(32bitの精度で持っておいたほうが強くなると思う)
 	extern int32_t PP[fe_end2][fe_end2];
-#ifdef EVAL_PROG
-	extern int32_t PP_F[fe_end2][fe_end2];//終盤用
-#endif
+
 
 
 	void read_PP();
@@ -335,7 +333,7 @@ namespace Eval {
 
 	inline void init() { read_PP(); }
 #endif
-	void initialize_PP();
+
 #ifdef  EVAL_KPP
 
 	const int FV_SCALE_KKP = 512;
@@ -350,7 +348,6 @@ namespace Eval {
 	void write_KPP();
 
 
-	
 
 	inline void init() { read_KPP(); }
 

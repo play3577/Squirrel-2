@@ -50,9 +50,9 @@ xpp
 KPE次元下げ 
 効きを与えている駒が何であろうがその効きのあるsquareと駒のcolorが同じならばそこにも値を与える。
 */
-#if defined(JIGENSAGE)
+
 lowerDimPP lowdimPP;
-#endif
+
 
 
 
@@ -65,7 +65,7 @@ struct Parse2Data {
 };
 
 
-void renewal_fv(dJValue &data) {
+void renewal_PP(dJValue &data) {
 
 
 
@@ -80,7 +80,7 @@ void renewal_fv(dJValue &data) {
 
 	//こんなんでいいのか？
 	//
-#ifdef EVAL_PP
+
 	//対称性はdJの中に含まれているのでここでは考えなくていい
 	for (BonaPiece i = f_hand_pawn; i < fe_end2; i++) {
 		for (BonaPiece j = f_hand_pawn; j < fe_end2; j++) {
@@ -102,21 +102,10 @@ void renewal_fv(dJValue &data) {
 #endif
 			int inc = h*sign(data.absolute_PP[i][j]);
 			PP[i][j] += inc;
-#ifdef EVAL_PROG
-			int inc2 = h*sign(data.absolute_PPF[i][j]);
-			PP_F[i][j] += inc2;
-#endif
+
 
 		}
 	}
-#elif defined(EVAL_KPP)
-
-
-
-
-#endif
-
-
 }
 
 
@@ -214,14 +203,8 @@ double concordance() {
 			th.l_depth = 3;
 
 			//差分計算でバグらないようにするため
-#ifdef EVAL_PROG
-			Progress::calc_prog(pos);
-#endif
-#ifdef EVAL_PP
-			eval_PP(pos);
-#elif defined(EVAL_KPP)
-			eval_KPP(pos);
-#endif
+
+			eval(pos);
 			Value  score = th.think();
 			if (th.pv[0] == teacher_move) { num_concordance_move++; }
 			th.pv.clear();
@@ -516,14 +499,8 @@ void learnphase1body(int number) {
 				didmoves++;
 				pos.do_move(m, &si[ply]);
 				//差分計算のためにここでもevalを呼んで置いたほうがいいか？？？まあvalue_errorになっているのでこのままでもバグはないとは思うが　早くpharse1おわるか？？
-#ifdef EVAL_PROG
-				Progress::calc_prog(pos);
-#endif
-#ifdef EVAL_PP
-				eval_PP(pos);
-#elif defined(EVAL_KPP)
-				eval_KPP(pos);
-#endif
+
+				eval(pos);
 
 				th.set(pos);
 				/*---------------------------------------------------------------------------------------------------------
@@ -644,19 +621,15 @@ void learnphase2() {
 		weave_lowdim_to_gradj(sum_parse2Datas.gradJ, lowdimPP);
 #endif
 
-		renewal_fv(sum_parse2Datas.gradJ);
+		renewal_PP(sum_parse2Datas.gradJ);
 	}
 
 	//書き出し読み込みをここで行って値の更新
 #ifndef test_learn
 	Eval::param_sym_ij();
-#ifdef EVAL_PP
 	write_PP();
 	read_PP();
-#elif defined(EVAL_KPP)
-	write_KPP();
-	read_KPP();
-#endif
+	
 #endif
 
 	
@@ -855,8 +828,6 @@ void learnphase2body(int number)
 }
 
 
-#ifdef EVAL_PP
-#ifndef  EVAL_PROG
 
 void lowdim_each_PP(lowerDimPP & lowdim, const dJValue& gradJ, const BonaPiece bp1, const BonaPiece bp2) {
 	if (bp1 == bp2) { return; }//一致する場所はevaluateで見ないのでgradJも0になっている。これは無視していい。
@@ -974,59 +945,6 @@ void weave_eachPP(dJValue& newgradJ, const lowerDimPP& lowdim, const BonaPiece b
 	//newgradJ.dJ[bp1][bp2] += lowdim.absolute_p[i];
 	//newgradJ.dJ[bp1][bp2] += lowdim.absolute_p[j];
 }
-#else
-
-void lowdim_each_PP(lowerDimPP & lowdim, const dJValue& gradJ, const BonaPiece bp1, const BonaPiece bp2) {
-	if (bp1 == bp2) { return; }//一致する場所はevaluateで見ないのでgradJも0になっている。これは無視していい。
-
-							   //iとjの前後によって違う場所を参照してしまうのを防ぐ。
-	BonaPiece i = std::max(bp1, bp2), j = std::min(bp1, bp2);
-
-	const double grado = gradJ.absolute_PP[bp1][bp2];
-	const double gradf = gradJ.absolute_PPF[bp1][bp2];
-
-
-	//相対PP
-	if (bp2sq(i) != Error_SQ&&bp2sq(j) != Error_SQ) {
-		Piece pci = (bp2piece.bp_to_piece(bpwithoutsq(i)));//iの駒は先手の駒に変換させられているのでptでいい
-		Piece pcj = bp2piece.bp_to_piece(bpwithoutsq(j));//jにいるのが味方の駒か相手の駒かは重要になってくるので含めなければならない。
-		Square sq1 = bp2sq(i), sq2 = bp2sq(j);//bp1,bp2の駒の位置
-		lowdim.relative_pp[pci][pcj][sqtofile(sq1) - sqtofile(sq2) + 8][sqtorank(sq1) - sqtorank(sq2) + 8] += grado;
-		lowdim.relative_ppF[pci][pcj][sqtofile(sq1) - sqtofile(sq2) + 8][sqtorank(sq1) - sqtorank(sq2) + 8] += gradf;
-	}
-
-
-	//絶対PP
-	lowdim.absolute_pp[i][j] += grado;
-	lowdim.absolute_ppF[i][j] += gradf;
-
-
-}
-
-void weave_eachPP(dJValue& newgradJ, const lowerDimPP& lowdim, const BonaPiece bp1, const BonaPiece bp2) {
-
-	if (bp1 == bp2) { return; }//一致する場所はevaluateで見ないのでgradJも0になっている。これは無視していい。
-
-	//iとjの前後によって違う場所を参照してしまうのを防ぐ。
-	BonaPiece i = std::max(bp1, bp2), j = std::min(bp1, bp2);
-
-
-	//相対PP(平行移動)
-	if (bp2sq(i) != Error_SQ&&bp2sq(j) != Error_SQ) {
-		Piece pci = (bp2piece.bp_to_piece(bpwithoutsq(i)));//iの駒は先手の駒に変換させられているのでptでいい
-		Piece pcj = bp2piece.bp_to_piece(bpwithoutsq(j));//jにいるのが味方の駒か相手の駒かは重要になってくるので含めなければならない。
-		Square sq1 = bp2sq(i), sq2 = bp2sq(j);//bp1,bp2の駒の位置
-
-		newgradJ.absolute_PP[bp1][bp2] += lowdim.relative_pp[pci][pcj][sqtofile(sq1) - sqtofile(sq2) + 8][sqtorank(sq1) - sqtorank(sq2) + 8];
-		newgradJ.absolute_PPF[bp1][bp2] += lowdim.relative_ppF[pci][pcj][sqtofile(sq1) - sqtofile(sq2) + 8][sqtorank(sq1) - sqtorank(sq2) + 8];
-	}
-
-	//絶対PP
-	newgradJ.absolute_PP[bp1][bp2] += lowdim.absolute_pp[i][j];
-	newgradJ.absolute_PPF[bp1][bp2] += lowdim.absolute_ppF[i][j];
-}
-#endif // ! EVAL_PROG
-
 
 
 
@@ -1050,6 +968,5 @@ void weave_lowdim_to_gradj(dJValue& newgradJ, const lowerDimPP& lowdim) {
 		}
 	}
 }
-#endif
 
 #endif//learn

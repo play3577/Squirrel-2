@@ -74,9 +74,6 @@ struct StateInfo
 #ifdef EVAL_PP
 	int32_t bpp=Value_error,wpp=Value_error;
 
-#ifdef EVAL_PROG
-	int32_t bppf = Value_error, wppf = Value_error;
-#endif
 
 #elif EVAL_KPP 1
 	int sumKKP=Value_error;
@@ -95,9 +92,7 @@ struct StateInfo
 	void clear_stPP() {
 #ifdef EVAL_PP
 		bpp = Value_error; wpp = Value_error;
-#ifdef EVAL_PROG
-		 bppf = Value_error, wppf = Value_error;
-#endif
+
 
 #elif EVAL_KPP 1
 		sumKKP = Value_error;
