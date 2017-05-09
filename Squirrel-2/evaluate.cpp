@@ -14,8 +14,9 @@ namespace Eval {
 	Bp2Piece bp2piece;
 
 	//三角テーブルにすべきか....??
+#ifdef EVAL_PP
 	ALIGNED(32) int32_t PP[fe_end2][fe_end2];
-
+#endif
 #ifdef EVAL_PROG
 	ALIGNED(32) int32_t PP_F[fe_end2][fe_end2];
 #endif
@@ -1370,13 +1371,56 @@ namespace Eval {
 #endif
 
 #if defined(LEARN) && defined(EVAL_KPP)
+
+	//KPPのpp対称
+	//この対称性を持たせないと評価関数差分計算にエラーが起こる
 	void Eval::param_sym_ij() {
+		bool check_KPP[82][fe_end][fe_end] = { false };
+		bool check_KKP[82][82][fe_end+1] = { false };
+	
+		for (Square ksq = SQ_ZERO; ksq <= Square(82); ksq++) {
+			//KPP-----------------------------------------------------------
+			for (BonaPiece bp1 = BONA_PIECE_ZERO; bp1 < fe_end; bp1++) {
+				for (BonaPiece bp2 = BONA_PIECE_ZERO; bp2 < fe_end; bp2++) {
 
+					if (check_KPP[ksq][bp1][bp2] == false) {
+						check_KPP[ksq][bp1][bp2] = check_KPP[ksq][bp2][bp1] = true;
+						int16_t a = kpp[ksq][bp1][bp2], b = kpp[ksq][bp2][bp1];
+						kpp[ksq][bp1][bp2] = kpp[ksq][bp2][bp1] = (a + b) / 2;
+					}
+				}
+			}
+			//KKP-----------------------------------------------------------
+			for (Square ksq2 = SQ_ZERO; ksq2 <= Square(82); ksq2++) {
+				for (BonaPiece bp3 = BONA_PIECE_ZERO; bp3 < fe_end + 1; bp3++) {
 
-
-
+					if (check_KKP[ksq][ksq2][bp3] == false) {
+						check_KKP[ksq][ksq2][bp3] = check_KKP[ksq2][ksq][bp3] = true;
+						int32_t c = kkp[ksq][ksq2][bp3], d = kkp[ksq2][ksq][bp3];
+						kkp[ksq][ksq2][bp3] = kkp[ksq2][ksq][bp3] = (c + d) / 2;
+					}
+				}
+			}
+		}
+		write_KPP();
+		read_KPP();
 	}
+
+	
 #endif
+
+	/*void Eval::initialize_PP()
+	{
+		string YorN;
+		cout << "do you really wanna initialize feature vector? [y/n]" << endl;
+		cin >> YorN;
+
+		if (YorN != "y") { cout << "I don't initialize." << endl; return; }
+		memset(kpp, 0, sizeof(kpp));
+		memset(kkp, 0, sizeof(kkp));
+		write_KPP();
+		cout << "initialize param PP!" << endl;
+	}*/
 	/*
 	https://twitter.com/uuunuuun1/status/850891787874951168
 	SMでgccでR+40

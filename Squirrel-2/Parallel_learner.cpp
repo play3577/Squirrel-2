@@ -50,9 +50,9 @@ xpp
 KPE次元下げ 
 効きを与えている駒が何であろうがその効きのあるsquareと駒のcolorが同じならばそこにも値を与える。
 */
-
+#if defined(JIGENSAGE)
 lowerDimPP lowdimPP;
-
+#endif
 
 
 
@@ -65,7 +65,7 @@ struct Parse2Data {
 };
 
 
-void renewal_PP(dJValue &data) {
+void renewal_fv(dJValue &data) {
 
 
 
@@ -80,7 +80,7 @@ void renewal_PP(dJValue &data) {
 
 	//こんなんでいいのか？
 	//
-
+#ifdef EVAL_PP
 	//対称性はdJの中に含まれているのでここでは考えなくていい
 	for (BonaPiece i = f_hand_pawn; i < fe_end2; i++) {
 		for (BonaPiece j = f_hand_pawn; j < fe_end2; j++) {
@@ -109,6 +109,14 @@ void renewal_PP(dJValue &data) {
 
 		}
 	}
+#elif defined(EVAL_KPP)
+
+
+
+
+#endif
+
+
 }
 
 
@@ -209,7 +217,11 @@ double concordance() {
 #ifdef EVAL_PROG
 			Progress::calc_prog(pos);
 #endif
+#ifdef EVAL_PP
 			eval_PP(pos);
+#elif defined(EVAL_KPP)
+			eval_KPP(pos);
+#endif
 			Value  score = th.think();
 			if (th.pv[0] == teacher_move) { num_concordance_move++; }
 			th.pv.clear();
@@ -507,7 +519,11 @@ void learnphase1body(int number) {
 #ifdef EVAL_PROG
 				Progress::calc_prog(pos);
 #endif
+#ifdef EVAL_PP
 				eval_PP(pos);
+#elif defined(EVAL_KPP)
+				eval_KPP(pos);
+#endif
 
 				th.set(pos);
 				/*---------------------------------------------------------------------------------------------------------
@@ -628,15 +644,19 @@ void learnphase2() {
 		weave_lowdim_to_gradj(sum_parse2Datas.gradJ, lowdimPP);
 #endif
 
-		renewal_PP(sum_parse2Datas.gradJ);
+		renewal_fv(sum_parse2Datas.gradJ);
 	}
 
 	//書き出し読み込みをここで行って値の更新
 #ifndef test_learn
 	Eval::param_sym_ij();
+#ifdef EVAL_PP
 	write_PP();
 	read_PP();
-	
+#elif defined(EVAL_KPP)
+	write_KPP();
+	read_KPP();
+#endif
 #endif
 
 	
@@ -834,6 +854,8 @@ void learnphase2body(int number)
 
 }
 
+
+#ifdef EVAL_PP
 #ifndef  EVAL_PROG
 
 void lowdim_each_PP(lowerDimPP & lowdim, const dJValue& gradJ, const BonaPiece bp1, const BonaPiece bp2) {
@@ -1028,5 +1050,6 @@ void weave_lowdim_to_gradj(dJValue& newgradJ, const lowerDimPP& lowdim) {
 		}
 	}
 }
+#endif
 
 #endif//learn

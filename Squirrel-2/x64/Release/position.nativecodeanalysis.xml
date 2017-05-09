@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<DEFECTS>
+  <DEFECT>
+    <SFA>
+      <FILEPATH>c:\users\daruma\documents\squirrel-2\squirrel-2\</FILEPATH>
+      <FILENAME>position.cpp</FILENAME>
+      <LINE>52</LINE>
+      <COLUMN>13</COLUMN>
+    </SFA>
+    <DEFECTCODE>6330</DEFECTCODE>
+    <DESCRIPTION>'char' が _Param_(1) として渡されました。'unsigned char' が 'isdigit' への呼び出しに必要です。</DESCRIPTION>
+    <FUNCTION>Position::set</FUNCTION>
+    <DECORATED>?set@Position@@QEAAXV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@@Z</DECORATED>
+    <FUNCLINE>21</FUNCLINE>
+    <PATH></PATH>
+  </DEFECT>
+  <DEFECT>
+    <SFA>
+      <FILEPATH>c:\users\daruma\documents\squirrel-2\squirrel-2\</FILEPATH>
+      <FILENAME>position.cpp</FILENAME>
+      <LINE>101</LINE>
+      <COLUMN>13</COLUMN>
+    </SFA>
+    <DEFECTCODE>6330</DEFECTCODE>
+    <DESCRIPTION>'char' が _Param_(1) として渡されました。'unsigned char' が 'isdigit' への呼び出しに必要です。</DESCRIPTION>
+    <FUNCTION>Position::set</FUNCTION>
+    <DECORATED>?set@Position@@QEAAXV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@@Z</DECORATED>
+    <FUNCLINE>21</FUNCLINE>
+    <PATH></PATH>
+  </DEFECT>
+</DEFECTS>

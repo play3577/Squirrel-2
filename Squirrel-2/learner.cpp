@@ -158,7 +158,7 @@ void update_dJ(const Position pos, const double diff) {
 
 #define USE_PENALTY
 //パラメーターの更新のための関数
-void renewal_PP() {
+void renewal_fv() {
 
 	std::random_device rd;
 	std::mt19937 mt(rd());
@@ -483,7 +483,7 @@ void Eval::learner()
 		//num_parse2回パラメーターを更新する。コレで-64から+64の範囲内でパラメーターが動くことになる。
 		//bonanzaではこの32回の間にdJが罰金項によってどんどんゼロに近づけられている。
 		for (int i = 0; i < num_parse2; i++) {
-			renewal_PP();
+			renewal_fv();
 		}
 		//書き出し読み込みをここで行って値の更新
 

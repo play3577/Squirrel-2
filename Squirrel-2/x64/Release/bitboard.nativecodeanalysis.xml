@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<DEFECTS>
+  <DEFECT>
+    <SFA>
+      <FILEPATH>c:\users\daruma\documents\squirrel-2\squirrel-2\</FILEPATH>
+      <FILENAME>bitboard.cpp</FILENAME>
+      <LINE>428</LINE>
+      <COLUMN>10</COLUMN>
+    </SFA>
+    <DEFECTCODE>6246</DEFECTCODE>
+    <DESCRIPTION>'to' のローカル宣言は、外部スコープの同じ名前の宣言を隠します。追加情報については、行 '261' ('c:\users\daruma\documents\squirrel-2\squirrel-2\bitboard.cpp') の以前の宣言を参照してください。</DESCRIPTION>
+    <FUNCTION>bitboard_init</FUNCTION>
+    <DECORATED>?bitboard_init@@YAXXZ</DECORATED>
+    <FUNCLINE>159</FUNCLINE>
+    <PATH>
+      <SFA>
+        <FILEPATH>c:\users\daruma\documents\squirrel-2\squirrel-2\</FILEPATH>
+        <FILENAME>bitboard.cpp</FILENAME>
+        <LINE>261</LINE>
+        <COLUMN>10</COLUMN>
+      </SFA>
+    </PATH>
+  </DEFECT>
+  <DEFECT>
+    <SFA>
+      <FILEPATH>c:\users\daruma\documents\squirrel-2\squirrel-2\</FILEPATH>
+      <FILENAME>bitboard.cpp</FILENAME>
+      <LINE>567</LINE>
+      <COLUMN>14</COLUMN>
+    </SFA>
+    <DEFECTCODE>6246</DEFECTCODE>
+    <DESCRIPTION>'to' のローカル宣言は、外部スコープの同じ名前の宣言を隠します。追加情報については、行 '261' ('c:\users\daruma\documents\squirrel-2\squirrel-2\bitboard.cpp') の以前の宣言を参照してください。</DESCRIPTION>
+    <FUNCTION>bitboard_init</FUNCTION>
+    <DECORATED>?bitboard_init@@YAXXZ</DECORATED>
+    <FUNCLINE>159</FUNCLINE>
+    <PATH>
+      <SFA>
+        <FILEPATH>c:\users\daruma\documents\squirrel-2\squirrel-2\</FILEPATH>
+        <FILENAME>bitboard.cpp</FILENAME>
+        <LINE>261</LINE>
+        <COLUMN>10</COLUMN>
+      </SFA>
+    </PATH>
+  </DEFECT>
+</DEFECTS>

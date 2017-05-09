@@ -10,11 +10,11 @@ namespace Eval {
 
 	void write_PP();
 
-	void initialize_PP();
+	
 
 
 	//パラメーターの更新のための関数
-	//void renewal_PP(const Position& pos, const double **dJ);
+	//void renewal_fv(const Position& pos, const double **dJ);
 
 	void learner();
 
@@ -38,9 +38,9 @@ namespace Eval {
 }
 
 
-#define JIGENSAGE//ok強くなってた
+//#define JIGENSAGE//ok強くなってた
 
-#define LR//ok強くなってた
+//#define LR//ok強くなってた
 
 
 #if defined(EVAL_PP)
@@ -250,23 +250,73 @@ struct  dJValue
 
 #endif
 #elif defined(EVAL_KPP)
-
+/*
+KPP用
+*/
 struct lowerDimPP
 {
-	
+	double absolute_kpp[82][fe_end][fe_end];//絶対KPP
+	double absolute_kkp[82][82][fe_end + 1];//絶対KKP
 
-	void clear() {
-		memset(this, 0, sizeof(*this));
-	}
+	double relative_kpp[82][PC_ALL][PC_ALL][17][17];//相対KPP	相対的になっているのはPPだけKPの方も相対的にできる
+	double relative_kkp[82][82][PC_ALL][17];//相対kkp　		相対的になっているのはKPだけKKの方も相対的にできる やっぱ３駒関係はめんどくさいなぁ
+
+
+
+	void clear() {memset(this, 0, sizeof(*this));}
 };
 
 struct  dJValue
 {
-	
-
+	double kpp[82][fe_end][fe_end];
+	double kkp[82][82][fe_end + 1];
 
 	void clear() { memset(this, 0, sizeof(*this)); }
 
+	void add(dJValue& data) {
+		for (Square ksq = SQ_ZERO; ksq <= Square(82); ksq++) {
+			//KPP-----------------------------------------------------------
+			for (BonaPiece bp1 = BONA_PIECE_ZERO; bp1 < fe_end; bp1++) {
+				for (BonaPiece bp2 = BONA_PIECE_ZERO; bp2 < fe_end; bp2++) {
+					kpp[ksq][bp1][bp2] += data.kpp[ksq][bp1][bp2];
+				}
+			}
+			//KKP-----------------------------------------------------------
+			for (Square ksq2 = SQ_ZERO; ksq2 <= Square(82); ksq2++) {
+				for (BonaPiece bp3 = BONA_PIECE_ZERO; bp3 < fe_end+1; bp3++) {
+					kkp[ksq][ksq2][bp3] += data.kkp[ksq][ksq2][bp3];
+				}
+			}
+		}
+	}
+
+
+	void update_dJ(const Position& pos, const double diff) {
+
+		const auto list1 = pos.evallist();
+
+		const BonaPiece *list_fb = list1.bplist_fb, *list_fw = list1.bplist_fw;
+		const Square bksq = pos.ksq(BLACK), wksq = pos.ksq(WHITE);
+
+		int i, j;
+		BonaPiece bp1_fb, bp1_fw,bp2_fb,bp2_fw;
+
+		//------------------------------------------左右対称とpp対称は後で持たせる
+		for (i = 0; i < 38; i++) {
+
+			bp1_fb = list_fb[i];
+			bp1_fw = list_fw[i];
+			kkp[bksq][wksq][bp1_fb]+=diff;
+
+			for (j = 0; j < i; j++) {
+				bp2_fb = list_fb[j];
+				bp2_fw = list_fw[j];
+				kpp[bksq][bp1_fb][bp2_fb]+=diff;
+				kpp[wksq][bp1_fw][bp2_fw]-=diff;
+			}
+		}
+
+	}
 
 };
 
@@ -283,7 +333,7 @@ void learnphase1body(int number);
 void learnphase2();
 void learnphase2body(int number);
 
-void renewal_PP(dJValue &data);
+void renewal_fv(dJValue &data);
 
 
 void lower__dimPP(lowerDimPP& lowdim, const dJValue& gradJ);

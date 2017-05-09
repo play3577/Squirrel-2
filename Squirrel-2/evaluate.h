@@ -335,7 +335,7 @@ namespace Eval {
 
 	inline void init() { read_PP(); }
 #endif
-
+	void initialize_PP();
 #ifdef  EVAL_KPP
 
 	const int FV_SCALE_KKP = 512;
@@ -350,6 +350,7 @@ namespace Eval {
 	void write_KPP();
 
 
+	
 
 	inline void init() { read_KPP(); }
 
