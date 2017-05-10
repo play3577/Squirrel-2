@@ -80,7 +80,7 @@ void renewal_PP(dJValue &data) {
 
 	//‚±‚ñ‚È‚ñ‚Å‚¢‚¢‚Ì‚©H
 	//
-
+#if defined(EVAL_PP)
 	//‘ÎÌ«‚ÍdJ‚Ì’†‚ÉŠÜ‚Ü‚ê‚Ä‚¢‚é‚Ì‚Å‚±‚±‚Å‚Íl‚¦‚È‚­‚Ä‚¢‚¢
 	for (BonaPiece i = f_hand_pawn; i < fe_end2; i++) {
 		for (BonaPiece j = f_hand_pawn; j < fe_end2; j++) {
@@ -106,6 +106,22 @@ void renewal_PP(dJValue &data) {
 
 		}
 	}
+#elif defined(EVAL_KPP)
+	for (Square ksq = SQ_ZERO; ksq <= Square(82); ksq++) {
+		//KPP-----------------------------------------------------------
+		//for (BonaPiece bp1 = BONA_PIECE_ZERO; bp1 < fe_end; bp1++) {
+		//	for (BonaPiece bp2 = BONA_PIECE_ZERO; bp2 < fe_end; bp2++) {
+		//		kpp[ksq][bp1][bp2] += h*sign(data.absolute_KPP[ksq][bp1][bp2]);
+		//	}
+		//}
+		////KKP-----------------------------------------------------------
+		//for (Square ksq2 = SQ_ZERO; ksq2 <= Square(82); ksq2++) {
+		//	for (BonaPiece bp3 = BONA_PIECE_ZERO; bp3 < fe_end + 1; bp3++) {
+		//		kkp[ksq][ksq2][bp3] += h*sign(data.absolute_KKP[ksq][ksq2][bp3]);
+		//	}
+		//}
+	}
+#endif
 }
 
 
