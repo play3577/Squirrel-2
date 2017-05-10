@@ -627,8 +627,8 @@ void learnphase2() {
 	//書き出し読み込みをここで行って値の更新
 #ifndef test_learn
 	Eval::param_sym_ij();
-	write_PP();
-	read_PP();
+	write_FV();
+	read_FV();
 	
 #endif
 
@@ -828,7 +828,8 @@ void learnphase2body(int number)
 }
 
 
-
+//------------------------------------PP次元sゲ------------------------------------------------------------------------------------------------------------
+#ifdef EVAL_PP
 void lowdim_each_PP(lowerDimPP & lowdim, const dJValue& gradJ, const BonaPiece bp1, const BonaPiece bp2) {
 	if (bp1 == bp2) { return; }//一致する場所はevaluateで見ないのでgradJも0になっている。これは無視していい。
 
@@ -968,5 +969,6 @@ void weave_lowdim_to_gradj(dJValue& newgradJ, const lowerDimPP& lowdim) {
 		}
 	}
 }
-
+#endif
+//-------------------------------------------------------------------------------------------------------------------------
 #endif//learn

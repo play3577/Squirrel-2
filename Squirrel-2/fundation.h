@@ -37,7 +37,7 @@
 
 //---------------------------------äwèKä÷òA
 
-//#define LEARN
+#define LEARN
 //#define MAKESTARTPOS
 //#define MAKETEACHER
 //#define Prog_LEARN
@@ -66,7 +66,7 @@
 //#define EVAL_NONDIFF
 
 
-//#define EVAL_KPP
+#define EVAL_KPP
 
 #ifndef EVAL_KPP
 #define EVAL_PP

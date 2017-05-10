@@ -8,7 +8,7 @@
 using namespace Eval;
 namespace Eval {
 
-	void write_PP();
+	void write_FV();
 
 	void initialize_PP();
 
@@ -38,9 +38,9 @@ namespace Eval {
 }
 
 
-#define JIGENSAGE//ok‹­‚­‚È‚Á‚Ä‚½
+//#define JIGENSAGE//ok‹­‚­‚È‚Á‚Ä‚½
 
-#define LR//ok‹­‚­‚È‚Á‚Ä‚½
+//#define LR//ok‹­‚­‚È‚Á‚Ä‚½
 
 
 #if defined(EVAL_PP)
@@ -134,7 +134,7 @@ struct  dJValue
 
 struct lowerDimPP
 {
-	
+	int dummy;
 
 	void clear() {
 		memset(this, 0, sizeof(*this));
@@ -143,7 +143,8 @@ struct lowerDimPP
 
 struct  dJValue
 {
-	
+	double absolute_KPP[82][fe_end][fe_end];
+	double absolute_KKP[82][82][fe_end+1];
 
 
 	void clear() { memset(this, 0, sizeof(*this)); }

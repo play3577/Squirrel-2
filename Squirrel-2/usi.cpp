@@ -164,9 +164,9 @@ void is_ready() {
 		TT.resize((int)Options["USI_Hash"]);
 #endif
 #ifdef EVAL_PP
-		Eval::read_PP();
+		Eval::read_FV();
 #elif EVAL_KPP 1
-		Eval::read_KPP();
+		Eval::read_FV();
 #endif
 		if (bool(Options["usebook"]) == true) {
 			BOOK::init();

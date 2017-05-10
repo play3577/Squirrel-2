@@ -324,14 +324,14 @@ namespace Eval {
 
 
 
-	void read_PP();
-	void write_PP();
+	void read_FV();
+	void write_FV();
 
 	void param_sym_ij();
 
 
 
-	inline void init() { read_PP(); }
+	inline void init() { read_FV(); }
 #endif
 
 #ifdef  EVAL_KPP
@@ -344,12 +344,12 @@ namespace Eval {
 	Value eval_KPP(const Position& pos);
 	Value eval_diff_KPP(const Position& pos);
 
-	void read_KPP();
-	void write_KPP();
+	void read_FV();
+	void write_FV();
 
 
 
-	inline void init() { read_KPP(); }
+	inline void init() { read_FV(); }
 
 	void param_sym_ij();
 #endif //  EVAL_KPP

@@ -13,7 +13,7 @@ namespace Eval {
 
 
 
-	void read_KPP() {
+	void read_FV() {
 		FILE* fp = std::fopen(Options["KPP"].str().c_str(), "rb");
 		if (fp == NULL) { ASSERT(0); }
 		std::fread(&kpp, sizeof(kpp), 1, fp);
@@ -27,7 +27,7 @@ namespace Eval {
 
 	}
 
-	void write_KPP() {
+	void write_FV() {
 
 		FILE* fp = std::fopen(Options["KPP"].str().c_str(), "wb");
 		std::fwrite(&kpp, sizeof(kpp), 1, fp);

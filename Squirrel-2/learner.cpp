@@ -49,7 +49,7 @@ bool swapmove(ExtMove* moves, const int num, const Move m) {
 	return false;
 }
 #ifdef EVAL_PP
-void Eval::write_PP()
+void Eval::write_FV()
 {
 
 	// ファイルへの書き出し（ここパスをusioptionで変更できるようにする。）
@@ -60,7 +60,7 @@ void Eval::write_PP()
 
 }
 
-void Eval::read_PP() {
+void Eval::read_FV() {
 
 	//ここパスをusioptionで変更できるようにする。
 	FILE* fp = std::fopen(Options["eval"].str().c_str(), "rb");
@@ -78,28 +78,36 @@ void Eval::read_PP() {
 
 
 //PPを乱数で初期化する
-//void Eval::initialize_PP()
-//{
-//	string YorN;
-//	cout << "do you really wanna initialize feature vector? [y/n]" << endl;
-//	cin >> YorN;
-//
-//	if (YorN != "y") { cout << "I don't initialize." << endl; return; }
-//	memset(PP, 0, sizeof(PP));
-//	//std::random_device rd;
-//	//std::mt19937 mt(rd());
-//	////初期化は対称性を考えながらせねばならない(というか乱数で初期化する必要あるか？？)
-//	//for (BonaPiece bp1 = f_hand_pawn; bp1 < fe_end2; bp1++) {
-//	//	for (BonaPiece bp2 = f_hand_pawn; bp2 < bp1; bp2++) {
-//
-//	//		int a = int32_t(mt()) % 100;
-//	//		PP[bp1][bp2]=PP[bp2][bp1]= a;
-//
-//	//	}
-//	//}
-//	write_PP();
-//	cout << "initialize param PP!" << endl;
-//}
+void Eval::initialize_PP()
+{
+	string YorN;
+	cout << "do you really wanna initialize feature vector? [y/n]" << endl;
+	cin >> YorN;
+
+	if (YorN != "y") { cout << "I don't initialize." << endl; return; }
+
+#ifdef EVAL_PP
+	memset(PP, 0, sizeof(PP));
+	//std::random_device rd;
+	//std::mt19937 mt(rd());
+	////初期化は対称性を考えながらせねばならない(というか乱数で初期化する必要あるか？？)
+	//for (BonaPiece bp1 = f_hand_pawn; bp1 < fe_end2; bp1++) {
+	//	for (BonaPiece bp2 = f_hand_pawn; bp2 < bp1; bp2++) {
+
+	//		int a = int32_t(mt()) % 100;
+	//		PP[bp1][bp2]=PP[bp2][bp1]= a;
+
+	//	}
+	//}
+	write_FV();
+#elif defined(EVAL_KPP) 
+	memset(kpp, 0, sizeof(kpp));
+	memset(kkp, 0, sizeof(kkp));
+	write_FV();
+#endif
+	
+	cout << "initialize param PP!" << endl;
+}
 
 
 #if 0
@@ -457,8 +465,8 @@ void Eval::learner()
 		}
 		//書き出し読み込みをここで行って値の更新
 
-		write_PP();
-		read_PP();
+		write_FV();
+		read_FV();
 
 		//ここで統計情報を表示できればいいんだけれど...
 		std::cout << "iteration" << iteration<<"/maxiteration :"<<numiteration << " objfunc" << objective_function << " elasped " << (now() - limit.starttime + 1) / (1000 * 60) << " min"<< std::endl;

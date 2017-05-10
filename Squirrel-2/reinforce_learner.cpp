@@ -806,8 +806,8 @@ void reinforce_learn() {
 
 
 		Eval::param_sym_ij();
-		write_PP();
-		read_PP();
+		write_FV();
+		read_FV();
 		cout << "loss:" << loss << endl;
 	}
 
