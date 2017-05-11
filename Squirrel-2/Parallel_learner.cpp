@@ -207,7 +207,9 @@ double concordance() {
 			//棋譜の差し手は合法手か？
 			if (is_ok(teacher_move) == false) { cout << "is not ok" << endl; goto ERROR_OCCURED; }
 			if (!swapmove(moves, int(num_moves), teacher_move)) {
+				//cantswapが多すぎる気がしたので
 				cout << "cant swap" << endl;
+				cout << "teachermove:" << endl; check_move(teacher_move); cout << pos << endl;
 				goto ERROR_OCCURED;
 			}
 			if (pos.is_legal(teacher_move) == false||!pos.pseudo_legal(teacher_move)) { cout << "teacher ilegal" << endl; goto ERROR_OCCURED; }
@@ -985,6 +987,77 @@ void weave_lowdim_to_gradj(dJValue& newgradJ, const lowerDimPP& lowdim) {
 		}
 	}
 }
+#elif defined(EVAL_KPP)
+
+void lowdim_each_KKP(lowerDimPP & lowdim, const dJValue& gradJ, const Square ksq, const Square ksq2, const BonaPiece bp) {
+
+	if (ksq == ksq2) { return; }
+
+	const Square k1 = std::max(ksq, ksq2), k2 = std::min(ksq, ksq2);
+
+	const double grad = gradJ.absolute_KKP[ksq][ksq2][bp];
+
+	//相対KKP 相対はK1とP   K2とP に対して行うことができる (さすがにKKに対してはまずい気がする)　（う～～んこの方法3駒の場合はうまくいかないような気がしてきた...）
+	//bpが盤上の駒だった場合
+	if (bp >= f_pawn) {
+		const Piece pc = bp2piece.bp_to_piece(bpwithoutsq(bp));
+		const Square sq = bp2sq(bp);
+
+
+
+	}
+
+}
+
+
+
+
+
+void lower__dimPP(lowerDimPP & lowdim, const dJValue& gradJ)
+{
+	for (Square ksq = SQ_ZERO; ksq < Square(82); ksq++) {
+		//KPP-----------------------------------------------------------
+		for (BonaPiece bp1 = BONA_PIECE_ZERO; bp1 < fe_end; bp1++) {
+			for (BonaPiece bp2 = BONA_PIECE_ZERO; bp2 < fe_end; bp2++) {
+				
+			}
+		}
+		//KKP-----------------------------------------------------------
+		for (Square ksq2 = SQ_ZERO; ksq2 < Square(82); ksq2++) {
+			for (BonaPiece bp3 = BONA_PIECE_ZERO; bp3 < fe_end + 1; bp3++) {
+				lowdim_each_KKP(lowdim, gradJ, ksq, ksq2, bp3);
+			}
+		}
+	}
+}
+
+void weave_lowdim_to_gradj(dJValue& newgradJ, const lowerDimPP& lowdim) 
+{
+	for (Square ksq = SQ_ZERO; ksq < Square(82); ksq++) {
+		//KPP-----------------------------------------------------------
+		for (BonaPiece bp1 = BONA_PIECE_ZERO; bp1 < fe_end; bp1++) {
+			for (BonaPiece bp2 = BONA_PIECE_ZERO; bp2 < fe_end; bp2++) {
+
+			}
+		}
+		//KKP-----------------------------------------------------------
+		for (Square ksq2 = SQ_ZERO; ksq2 < Square(82); ksq2++) {
+			for (BonaPiece bp3 = BONA_PIECE_ZERO; bp3 < fe_end + 1; bp3++) {
+
+			}
+		}
+	}
+
+}
+
+
 #endif
+
+
+
+
+
+
+
 //-------------------------------------------------------------------------------------------------------------------------
 #endif//learn

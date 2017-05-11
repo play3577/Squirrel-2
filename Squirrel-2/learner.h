@@ -38,9 +38,9 @@ namespace Eval {
 }
 
 
-//#define JIGENSAGE//ok強くなってた
+//#define JIGENSAGE
 
-//#define LR//ok強くなってた
+#define LR
 
 
 #if defined(EVAL_PP)
@@ -134,12 +134,12 @@ struct  dJValue
 
 struct lowerDimPP
 {
-	//float absolute_KPP[82][fe_end][fe_end];
-	//float absolute_KKP[82][82][fe_end + 1];
+	float absolute_KPP[82][fe_end][fe_end];
+	float absolute_KKP[82][82][fe_end + 1];
 
-	//float relative_KPP[82][PC_ALL][PC_ALL][17][17];//相対KPP	相対的になっているのはPPだけKPの方も相対的にできる
-	//float relative_KKP[82][82][PC_ALL][17];//相対kkp　		相対的になっているのはKPだけKKの方も相対的にできる やっぱ３駒関係はめんどくさいなぁ
-
+	float relative_KPP[82][PC_ALL][PC_ALL][17][17];//相対KPP	相対的になっているのはPPだけKPの方も相対的にできる
+	float relative_KKP[82][82][PC_ALL][17][17];//相対kkp　		相対的になっているのはKPだけKKの方も相対的にできる やっぱ３駒関係はめんどくさいなぁ
+	//float relative_KK_P[17][17][fe_end + 1];//これはさすがに関係が壊れすぎるか？？
 
 	void clear() {
 		memset(this, 0, sizeof(*this));
@@ -161,7 +161,10 @@ struct  dJValue
 			//KPP-----------------------------------------------------------
 			for (BonaPiece bp1 = BONA_PIECE_ZERO; bp1 < fe_end; bp1++) {
 				for (BonaPiece bp2 = BONA_PIECE_ZERO; bp2 < fe_end; bp2++) {
-					if (abs(absolute_KPP[ksq][bp1][bp2] + data.absolute_KPP[ksq][bp1][bp2]) < FLT_MAX) { absolute_KPP[ksq][bp1][bp2] += data.absolute_KPP[ksq][bp1][bp2]; }
+					if (abs(absolute_KPP[ksq][bp1][bp2] + data.absolute_KPP[ksq][bp1][bp2]) < FLT_MAX) { 
+						absolute_KPP[ksq][bp1][bp2] += data.absolute_KPP[ksq][bp1][bp2];
+						
+					}
 				}
 			}
 			//KKP-----------------------------------------------------------
@@ -188,14 +191,80 @@ struct  dJValue
 
 			bp1_fb = list_fb[i];
 			bp1_fw = list_fw[i];
-			if (abs(absolute_KKP[bksq][wksq][bp1_fb] + diff) < FLT_MAX) {absolute_KKP[bksq][wksq][bp1_fb] += diff;}
+			if (abs(absolute_KKP[bksq][wksq][bp1_fb] + diff) < FLT_MAX) {
+				absolute_KKP[bksq][wksq][bp1_fb] += diff;
+				absolute_KKP[wksq][bksq][bp1_fb] += diff;//KK対象
+
+#ifdef LR
+				/*---------------------------------------------------------------------------
+				KKP 左右対称
+				Pが盤上の駒：　K K P すべて　左右反転する
+				Pが持ち駒の時: K K   に対して左右反転する　（これでいいよね？いいよね？？）
+				-----------------------------------------------------------------------------*/
+				//3コマともに盤上にある場合
+				if (bp1_fb >= f_pawn) {
+					absolute_KKP[sym_rl_sq(bksq)][sym_rl_sq(wksq)][sym_rightleft(bp1_fb)] += diff;
+					absolute_KKP[sym_rl_sq(wksq)][sym_rl_sq(bksq)][sym_rightleft(bp1_fb)] += diff;
+				}
+				else {
+					absolute_KKP[sym_rl_sq(bksq)][sym_rl_sq(wksq)][(bp1_fb)] += diff;
+					absolute_KKP[sym_rl_sq(wksq)][sym_rl_sq(bksq)][(bp1_fb)] += diff;
+				}
+#endif
+			}
 
 			for (j = 0; j < i; j++) {
 				bp2_fb = list_fb[j];
 				bp2_fw = list_fw[j];
 				if (abs(absolute_KPP[bksq][bp1_fb][bp2_fb] + diff) < FLT_MAX) {
 					absolute_KPP[bksq][bp1_fb][bp2_fb] += diff;
+					absolute_KPP[bksq][bp2_fb][bp1_fb] += diff;//PP対象
+
 					absolute_KPP[wksq][bp1_fw][bp2_fw] -= diff;
+					absolute_KPP[wksq][bp2_fw][bp1_fw] -= diff;
+#ifdef LR 
+					/*------------------------------
+					KPP 左右対称
+					PPが盤上　K P P すべてを左右反転させる
+					Pが盤上 Pが持ち駒 K P だけを左右反転させる
+					PPが持ち駒 Kだけを反転させる      （これでいいよね？いいよね？？）
+					--------------------------------*/
+					if (bp1_fb >= f_pawn) {
+						//iが盤上
+						if (bp2_fb >= f_pawn) {
+							//両方とも盤上
+							absolute_KPP[sym_rl_sq(bksq)][sym_rightleft(bp1_fb)][sym_rightleft(bp2_fb)] += diff;
+							absolute_KPP[sym_rl_sq(wksq)][sym_rightleft(bp1_fw)][sym_rightleft(bp2_fw)] -= diff;
+							absolute_KPP[sym_rl_sq(bksq)][sym_rightleft(bp2_fb)][sym_rightleft(bp1_fb)] += diff;
+							absolute_KPP[sym_rl_sq(wksq)][sym_rightleft(bp2_fw)][sym_rightleft(bp1_fw)] -= diff;
+						}
+						else {
+							//bp2が持ち駒
+							absolute_KPP[sym_rl_sq(bksq)][sym_rightleft(bp1_fb)][(bp2_fb)] += diff;
+							absolute_KPP[sym_rl_sq(wksq)][sym_rightleft(bp1_fw)][(bp2_fw)] -= diff;
+							absolute_KPP[sym_rl_sq(bksq)][(bp2_fb)][sym_rightleft(bp1_fb)] += diff;
+							absolute_KPP[sym_rl_sq(wksq)][(bp2_fw)][sym_rightleft(bp1_fw)] -= diff;
+						}
+					}
+					else {
+						//iが持ち駒
+						if (bp2_fb >= f_pawn) {
+							//jが盤上
+							absolute_KPP[sym_rl_sq(bksq)][(bp1_fb)][sym_rightleft(bp2_fb)] += diff;
+							absolute_KPP[sym_rl_sq(wksq)][(bp1_fw)][sym_rightleft(bp2_fw)] -= diff;
+							absolute_KPP[sym_rl_sq(bksq)][sym_rightleft(bp2_fb)][(bp1_fb)] += diff;
+							absolute_KPP[sym_rl_sq(wksq)][sym_rightleft(bp2_fw)][(bp1_fw)] -= diff;
+						}
+						else {
+							//両方持ち駒
+							absolute_KPP[sym_rl_sq(bksq)][(bp1_fb)][(bp2_fb)] += diff;
+							absolute_KPP[sym_rl_sq(wksq)][(bp1_fw)][(bp2_fw)] -= diff;
+							absolute_KPP[sym_rl_sq(bksq)][(bp2_fb)][(bp1_fb)] += diff;
+							absolute_KPP[sym_rl_sq(wksq)][(bp2_fw)][(bp1_fw)] -= diff;
+						}
+					}
+
+#endif
 				}
 			}
 		}
