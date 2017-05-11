@@ -107,7 +107,7 @@ void renewal_PP(dJValue &data) {
 		}
 	}
 #elif defined(EVAL_KPP)
-	for (Square ksq = SQ_ZERO; ksq <= Square(82); ksq++) {
+	for (Square ksq = SQ_ZERO; ksq < Square(82); ksq++) {
 		//KPP-----------------------------------------------------------
 		for (BonaPiece bp1 = BONA_PIECE_ZERO; bp1 < fe_end; bp1++) {
 			for (BonaPiece bp2 = BONA_PIECE_ZERO; bp2 < fe_end; bp2++) {
@@ -115,7 +115,7 @@ void renewal_PP(dJValue &data) {
 			}
 		}
 		//KKP-----------------------------------------------------------
-		for (Square ksq2 = SQ_ZERO; ksq2 <= Square(82); ksq2++) {
+		for (Square ksq2 = SQ_ZERO; ksq2 < Square(82); ksq2++) {
 			for (BonaPiece bp3 = BONA_PIECE_ZERO; bp3 < fe_end + 1; bp3++) {
 				kkp[ksq][ksq2][bp3] += h*sign(data.absolute_KKP[ksq][ksq2][bp3]);
 			}
@@ -152,7 +152,7 @@ std::vector<Game> games;
 std::vector<Game> testset;
 
 
-#define Test_icchiritu
+//#define Test_icchiritu
 
 
 /*
@@ -754,7 +754,7 @@ void learnphase2body(int number)
 					StateInfo si2[64];
 					int j = 0;
 					//‹³ŽtŽè‚ÆPV‚Å‹Ç–Ê‚ð‚·‚·‚ß‚é
-					if (pos.is_legal(minfo_list[i].move) == false) { ASSERT(0); }
+					if (pos.is_legal(minfo_list[i].move) == false) { cout << endl << pos << endl << minfo_list[i].move << endl; cout << games[g].black_P << " " << games[g].white_P; continue;  ASSERT(0); }
 					pos.do_move(minfo_list[i].move, &si[ply]);
 
 					for (Move m : minfo_list[i].pv) {

@@ -134,11 +134,11 @@ struct  dJValue
 
 struct lowerDimPP
 {
-	float absolute_KPP[82][fe_end][fe_end];
-	float absolute_KKP[82][82][fe_end + 1];
+	//float absolute_KPP[82][fe_end][fe_end];
+	//float absolute_KKP[82][82][fe_end + 1];
 
-	float relative_KPP[82][PC_ALL][PC_ALL][17][17];//相対KPP	相対的になっているのはPPだけKPの方も相対的にできる
-	float relative_KKP[82][82][PC_ALL][17];//相対kkp　		相対的になっているのはKPだけKKの方も相対的にできる やっぱ３駒関係はめんどくさいなぁ
+	//float relative_KPP[82][PC_ALL][PC_ALL][17][17];//相対KPP	相対的になっているのはPPだけKPの方も相対的にできる
+	//float relative_KKP[82][82][PC_ALL][17];//相対kkp　		相対的になっているのはKPだけKKの方も相対的にできる やっぱ３駒関係はめんどくさいなぁ
 
 
 	void clear() {
@@ -152,22 +152,22 @@ struct  dJValue
 
 	float  absolute_KPP[82][fe_end][fe_end];
 	float  absolute_KKP[82][82][fe_end+1];
-	int a;
+	
 
 	void clear() { memset(this, 0, sizeof(*this)); }
 
 	void add(dJValue& data) {
-		for (Square ksq = SQ_ZERO; ksq <= Square(82); ksq++) {
+		for (Square ksq = SQ_ZERO; ksq < Square(82); ksq++) {
 			//KPP-----------------------------------------------------------
 			for (BonaPiece bp1 = BONA_PIECE_ZERO; bp1 < fe_end; bp1++) {
 				for (BonaPiece bp2 = BONA_PIECE_ZERO; bp2 < fe_end; bp2++) {
-					absolute_KPP[ksq][bp1][bp2] += data.absolute_KPP[ksq][bp1][bp2];
+					if (abs(absolute_KPP[ksq][bp1][bp2] + data.absolute_KPP[ksq][bp1][bp2]) < FLT_MAX) { absolute_KPP[ksq][bp1][bp2] += data.absolute_KPP[ksq][bp1][bp2]; }
 				}
 			}
 			//KKP-----------------------------------------------------------
-			for (Square ksq2 = SQ_ZERO; ksq2 <= Square(82); ksq2++) {
+			for (Square ksq2 = SQ_ZERO; ksq2 < Square(82); ksq2++) {
 				for (BonaPiece bp3 = BONA_PIECE_ZERO; bp3 < fe_end + 1; bp3++) {
-					absolute_KKP[ksq][ksq2][bp3] += data.absolute_KKP[ksq][ksq2][bp3];
+					if (abs(absolute_KKP[ksq][ksq2][bp3] + data.absolute_KKP[ksq][ksq2][bp3]) < FLT_MAX) { absolute_KKP[ksq][ksq2][bp3] += data.absolute_KKP[ksq][ksq2][bp3]; }
 				}
 			}
 		}
@@ -188,13 +188,15 @@ struct  dJValue
 
 			bp1_fb = list_fb[i];
 			bp1_fw = list_fw[i];
-			absolute_KKP[bksq][wksq][bp1_fb] += diff;
+			if (abs(absolute_KKP[bksq][wksq][bp1_fb] + diff) < FLT_MAX) {absolute_KKP[bksq][wksq][bp1_fb] += diff;}
 
 			for (j = 0; j < i; j++) {
 				bp2_fb = list_fb[j];
 				bp2_fw = list_fw[j];
-				absolute_KPP[bksq][bp1_fb][bp2_fb] += diff;
-				absolute_KPP[wksq][bp1_fw][bp2_fw] -= diff;
+				if (abs(absolute_KPP[bksq][bp1_fb][bp2_fb] + diff) < FLT_MAX) {
+					absolute_KPP[bksq][bp1_fb][bp2_fb] += diff;
+					absolute_KPP[wksq][bp1_fw][bp2_fw] -= diff;
+				}
 			}
 		}
 

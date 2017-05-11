@@ -1177,9 +1177,34 @@ namespace Eval {
 #if defined(LEARN) && defined(EVAL_KPP)
 	void Eval::param_sym_ij() {
 
+		bool check_KPP[82][fe_end][fe_end] = { false };
+		bool check_KKP[82][82][fe_end + 1] = { false };
 
+		for (Square ksq = SQ_ZERO; ksq < Square(82); ksq++) {
+			//KPP-----------------------------------------------------------
+			for (BonaPiece bp1 = BONA_PIECE_ZERO; bp1 < fe_end; bp1++) {
+				for (BonaPiece bp2 = BONA_PIECE_ZERO; bp2 < fe_end; bp2++) {
 
+					if (check_KPP[ksq][bp1][bp2] == false) {
+						check_KPP[ksq][bp1][bp2] = check_KPP[ksq][bp2][bp1] = true;
+						int16_t a = kpp[ksq][bp1][bp2], b = kpp[ksq][bp2][bp1];
+						kpp[ksq][bp1][bp2] = kpp[ksq][bp2][bp1] = (a + b) / 2;
+					}
+				}
+			}
+			//KKP-----------------------------------------------------------
+			for (Square ksq2 = SQ_ZERO; ksq2 < Square(82); ksq2++) {
+				for (BonaPiece bp3 = BONA_PIECE_ZERO; bp3 < fe_end + 1; bp3++) {
 
+					if (check_KKP[ksq][ksq2][bp3] == false) {
+						check_KKP[ksq][ksq2][bp3] = check_KKP[ksq2][ksq][bp3] = true;
+						int32_t c = kkp[ksq][ksq2][bp3], d = kkp[ksq2][ksq][bp3];
+						kkp[ksq][ksq2][bp3] = kkp[ksq2][ksq][bp3] = (c + d) / 2;
+					}
+				}
+			}
+		}
+		
 	}
 #endif
 	/*
