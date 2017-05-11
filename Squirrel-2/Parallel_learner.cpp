@@ -50,9 +50,9 @@ xpp
 KPE次元下げ 
 効きを与えている駒が何であろうがその効きのあるsquareと駒のcolorが同じならばそこにも値を与える。
 */
-
-lowerDimPP lowdimPP;
-
+//#ifdef JIGENSAGE
+//lowerDimPP lowdimPP;
+//#endif
 
 
 
@@ -603,6 +603,12 @@ void learnphase1body(int number) {
 //この値の更新の方法だとパラメーターを移動させてる間にPVが変わってしまったときに対応できないので他の方法で値の更新をしたいのだが...
 void learnphase2() {
 	
+#ifdef JIGENSAGE
+	//でかすぎてコンパイルできないので動的確保するしかない
+	//lowerDimPP lowdimPP;
+	auto lowdimPP = unique_ptr<lowerDimPP>(new lowerDimPP);
+#endif
+
 	vector<std::thread> threads(maxthreadnum - 1);//maxthreadnum-1だけstd::threadをたてる。
 	cout <<endl<< "parse2" << endl;
 	//num_parse2回パラメーターを更新する。コレで-64から+64の範囲内でパラメーターが動くことになる。
@@ -633,10 +639,11 @@ void learnphase2() {
 		for (auto& th : threads) { th.join(); }
 
 #ifdef JIGENSAGE
-		lowdimPP.clear();
-		lower__dimPP(lowdimPP, sum_parse2Datas.gradJ);
+		//この記法でビルドは通ったがちゃんと動くかは微妙...
+		lowdimPP->clear();
+		lower__dimPP(*lowdimPP, sum_parse2Datas.gradJ);
 		sum_parse2Datas.clear();
-		weave_lowdim_to_gradj(sum_parse2Datas.gradJ, lowdimPP);
+		weave_lowdim_to_gradj(sum_parse2Datas.gradJ, *lowdimPP);
 #endif
 
 		renewal_PP(sum_parse2Datas.gradJ);
@@ -989,6 +996,8 @@ void weave_lowdim_to_gradj(dJValue& newgradJ, const lowerDimPP& lowdim) {
 }
 #elif defined(EVAL_KPP)
 
+//---------------------------------------------3コマ関係の次元下げ
+
 void lowdim_each_KKP(lowerDimPP & lowdim, const dJValue& gradJ, const Square ksq, const Square ksq2, const BonaPiece bp) {
 
 	if (ksq == ksq2) { return; }
@@ -997,33 +1006,103 @@ void lowdim_each_KKP(lowerDimPP & lowdim, const dJValue& gradJ, const Square ksq
 
 	const double grad = gradJ.absolute_KKP[ksq][ksq2][bp];
 
-	//相対KKP 相対はK1とP   K2とP に対して行うことができる (さすがにKKに対してはまずい気がする)　（う～～んこの方法3駒の場合はうまくいかないような気がしてきた...）
+	//絶対KKP
+	lowdim.absolute_KKP[k1][k2][bp] += grad;
+	//絶対KP
+	lowdim.absolute_KP[k1][bp] += grad;
+	lowdim.absolute_KP[k2][bp] += grad;
+
+	//相対KKP
+	//相対はK1とP   K2とP に対して行うことができる (さすがにKKに対してはまずい気がする)　
+	//う～～んこの方法3駒の場合はうまくいかないような気がしてきた...）
 	//bpが盤上の駒だった場合
 	if (bp >= f_pawn) {
 		const Piece pc = bp2piece.bp_to_piece(bpwithoutsq(bp));
 		const Square sq = bp2sq(bp);
+		//k1に対して
+		lowdim.relative_KKP[k1][k2][pc][sqtofile(k1) - sqtofile(sq) + 8][sqtorank(k1) - sqtorank(sq) + 8] += grad;
+		//k2に対して
+		lowdim.relative_KKP[k1][k2][pc][sqtofile(k2) - sqtofile(sq) + 8][sqtorank(k2) - sqtorank(sq) + 8] += grad;
+	}
 
+}
 
+void lowdim_each_KPP(lowerDimPP & lowdim, const dJValue& gradJ, const Square ksq, const BonaPiece bp1, const BonaPiece bp2) {
 
+	if (bp1 == bp2) { return; }//一致する場所はevaluateで見ないのでgradJも0になっている。これは無視していい。
+	const BonaPiece i = std::max(bp1, bp2), j = std::min(bp1, bp2);
+
+	const double grad = gradJ.absolute_KPP[ksq][bp1][bp2];
+
+	//絶対KPP
+	lowdim.absolute_KPP[ksq][i][j] += grad;
+	//絶対PP
+	lowdim.absolute_PP[i][j] += grad;
+
+	//ijともに盤上になる
+	if (i >= f_pawn&&j >= f_pawn) {
+		const Piece pci = (bp2piece.bp_to_piece(bpwithoutsq(i)));
+		const Piece pcj = bp2piece.bp_to_piece(bpwithoutsq(j));
+		const Square sq1 = bp2sq(i), sq2 = bp2sq(j);
+		//PPに対する相対位置
+		lowdim.relative_KPP[ksq][pci][pcj][sqtofile(sq1) - sqtofile(sq2) + 8][sqtorank(sq1) - sqtorank(sq2) + 8] += grad;
+	}
+
+}
+
+//------------------------------------------3コマ関係の次元下げ織り込み--------------------------------------------------------------
+void weave_eachKKP(dJValue& newgradJ, const lowerDimPP& lowdim, const Square ksq, Square ksq2, const BonaPiece bp) {
+
+	if (ksq == ksq2) { return; }
+	const Square k1 = std::max(ksq, ksq2), k2 = std::min(ksq, ksq2);
+
+	newgradJ.absolute_KKP[ksq][ksq2][bp] += lowdim.absolute_KKP[k1][k2][bp];//絶対KKP
+	newgradJ.absolute_KKP[ksq][ksq2][bp] += lowdim.absolute_KP[k1][bp];
+	newgradJ.absolute_KKP[ksq][ksq2][bp] += lowdim.absolute_KP[k2][bp];
+
+	if (bp >= f_pawn) {
+
+		const Piece pc = bp2piece.bp_to_piece(bpwithoutsq(bp));
+		const Square sq = bp2sq(bp);
+
+		newgradJ.absolute_KKP[ksq][ksq2][bp] += lowdim.relative_KKP[k1][k2][pc][sqtofile(k1) - sqtofile(sq) + 8][sqtorank(k1) - sqtorank(sq) + 8];
+		newgradJ.absolute_KKP[ksq][ksq2][bp] += lowdim.relative_KKP[k1][k2][pc][sqtofile(k2) - sqtofile(sq) + 8][sqtorank(k2) - sqtorank(sq) + 8];
 	}
 
 }
 
 
 
+void weave_eachKPP(dJValue& newgradJ, const lowerDimPP& lowdim,const Square ksq, const BonaPiece bp1, const BonaPiece bp2) {
+
+	if (bp1 == bp2) { return; }//一致する場所はevaluateで見ないのでgradJも0になっている。これは無視していい。
+	const BonaPiece i = std::max(bp1, bp2), j = std::min(bp1, bp2);
+
+	newgradJ.absolute_KPP[ksq][bp1][bp2] += lowdim.absolute_KPP[ksq][i][j];//絶対KPP
+	newgradJ.absolute_KPP[ksq][bp1][bp2] += lowdim.absolute_PP[i][j];//絶対PP
+																	 //ijともに盤上になる
+	if (i >= f_pawn&&j >= f_pawn) {
+		const Piece pci = (bp2piece.bp_to_piece(bpwithoutsq(i)));
+		const Piece pcj = bp2piece.bp_to_piece(bpwithoutsq(j));
+		const Square sq1 = bp2sq(i), sq2 = bp2sq(j);
+		//PPに対する相対位置
+		newgradJ.absolute_KPP[ksq][bp1][bp2] += lowdim.relative_KPP[ksq][pci][pcj][sqtofile(sq1) - sqtofile(sq2) + 8][sqtorank(sq1) - sqtorank(sq2) + 8];
+	}
+
+}
 
 
 void lower__dimPP(lowerDimPP & lowdim, const dJValue& gradJ)
 {
-	for (Square ksq = SQ_ZERO; ksq < Square(82); ksq++) {
+	for (Square ksq = SQ_ZERO; ksq < Square(81); ksq++) {
 		//KPP-----------------------------------------------------------
 		for (BonaPiece bp1 = BONA_PIECE_ZERO; bp1 < fe_end; bp1++) {
 			for (BonaPiece bp2 = BONA_PIECE_ZERO; bp2 < fe_end; bp2++) {
-				
+				lowdim_each_KPP(lowdim, gradJ, ksq, bp1, bp2);
 			}
 		}
 		//KKP-----------------------------------------------------------
-		for (Square ksq2 = SQ_ZERO; ksq2 < Square(82); ksq2++) {
+		for (Square ksq2 = SQ_ZERO; ksq2 < Square(81); ksq2++) {
 			for (BonaPiece bp3 = BONA_PIECE_ZERO; bp3 < fe_end + 1; bp3++) {
 				lowdim_each_KKP(lowdim, gradJ, ksq, ksq2, bp3);
 			}
@@ -1033,17 +1112,17 @@ void lower__dimPP(lowerDimPP & lowdim, const dJValue& gradJ)
 
 void weave_lowdim_to_gradj(dJValue& newgradJ, const lowerDimPP& lowdim) 
 {
-	for (Square ksq = SQ_ZERO; ksq < Square(82); ksq++) {
+	for (Square ksq = SQ_ZERO; ksq < Square(81); ksq++) {
 		//KPP-----------------------------------------------------------
 		for (BonaPiece bp1 = BONA_PIECE_ZERO; bp1 < fe_end; bp1++) {
 			for (BonaPiece bp2 = BONA_PIECE_ZERO; bp2 < fe_end; bp2++) {
-
+				weave_eachKPP(newgradJ, lowdim, ksq, bp1, bp2);
 			}
 		}
 		//KKP-----------------------------------------------------------
-		for (Square ksq2 = SQ_ZERO; ksq2 < Square(82); ksq2++) {
+		for (Square ksq2 = SQ_ZERO; ksq2 < Square(81); ksq2++) {
 			for (BonaPiece bp3 = BONA_PIECE_ZERO; bp3 < fe_end + 1; bp3++) {
-
+				weave_eachKKP(newgradJ, lowdim, ksq, ksq2, bp3);
 			}
 		}
 	}

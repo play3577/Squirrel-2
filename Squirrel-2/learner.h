@@ -38,7 +38,7 @@ namespace Eval {
 }
 
 
-//#define JIGENSAGE
+#define JIGENSAGE
 
 #define LR
 
@@ -138,7 +138,11 @@ struct lowerDimPP
 	float absolute_KKP[82][82][fe_end + 1];
 
 	float relative_KPP[82][PC_ALL][PC_ALL][17][17];//相対KPP	相対的になっているのはPPだけKPの方も相対的にできる
+	float absolute_PP[fe_end][fe_end];//PP
+
+
 	float relative_KKP[82][82][PC_ALL][17][17];//相対kkp　		相対的になっているのはKPだけKKの方も相対的にできる やっぱ３駒関係はめんどくさいなぁ
+	float absolute_KP[82][fe_end + 1];//KP
 	//float relative_KK_P[17][17][fe_end + 1];//これはさすがに関係が壊れすぎるか？？
 
 	void clear() {
