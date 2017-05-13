@@ -1178,7 +1178,7 @@ namespace Eval {
 	void Eval::param_sym_ij() {
 
 		bool check_KPP[82][fe_end][fe_end] = { false };
-		bool check_KKP[82][82][fe_end + 1] = { false };
+		//bool check_KKP[82][82][fe_end + 1] = { false };
 
 		for (Square ksq = SQ_ZERO; ksq < Square(82); ksq++) {
 			//KPP-----------------------------------------------------------
@@ -1193,7 +1193,7 @@ namespace Eval {
 				}
 			}
 			//KKP-----------------------------------------------------------
-			for (Square ksq2 = SQ_ZERO; ksq2 < Square(82); ksq2++) {
+			/*for (Square ksq2 = SQ_ZERO; ksq2 < Square(82); ksq2++) {
 				for (BonaPiece bp3 = BONA_PIECE_ZERO; bp3 < fe_end + 1; bp3++) {
 
 					if (check_KKP[ksq][ksq2][bp3] == false) {
@@ -1202,7 +1202,7 @@ namespace Eval {
 						kkp[ksq][ksq2][bp3] = kkp[ksq2][ksq][bp3] = (c + d) / 2;
 					}
 				}
-			}
+			}*/
 		}
 		
 	}

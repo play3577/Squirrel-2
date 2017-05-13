@@ -987,7 +987,7 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 
 //mate
 #ifdef MATEONE
-	if (!RootNode && !incheck) {
+	if (!RootNode && !incheck/*&&!TThit*/) {
 		Move mate;
 		if ((mate=pos.mate1ply())!=MOVE_NONE) {
 #ifdef MATETEST
@@ -1927,7 +1927,7 @@ Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
 	}
 #endif
 #ifdef MATEONE
-	if (!incheck&&depth<DEPTH_QS_CHECKS) {
+	if (!incheck/*&&!TThit*/&&depth<DEPTH_QS_CHECKS) {
 		Move mate;
 		if ((mate=pos.mate1ply())!=MOVE_NONE) {
 #ifdef MATETEST

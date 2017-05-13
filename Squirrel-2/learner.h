@@ -185,10 +185,12 @@ struct  dJValue
 		const auto list1 = pos.evallist();
 
 		const BonaPiece *list_fb = list1.bplist_fb, *list_fw = list1.bplist_fw;
-		const Square bksq = pos.ksq(BLACK), wksq = pos.ksq(WHITE);
+		const Square bksq = pos.ksq(BLACK), wksq = hihumin_eye(pos.ksq(WHITE));//wkp一二三んアイするのわすれてた。ということは一二三んアイ次元下げも可能？？
 
 		int i, j;
 		BonaPiece bp1_fb, bp1_fw, bp2_fb, bp2_fw;
+
+		absolute_KKP[bksq][wksq][fe_end] += diff;//KK
 
 		//------------------------------------------左右対称とpp対称は後で持たせる
 		for (i = 0; i < 38; i++) {
@@ -197,7 +199,7 @@ struct  dJValue
 			bp1_fw = list_fw[i];
 			if (abs(absolute_KKP[bksq][wksq][bp1_fb] + diff) < FLT_MAX) {
 				absolute_KKP[bksq][wksq][bp1_fb] += diff;
-				absolute_KKP[wksq][bksq][bp1_fb] += diff;//KK対象
+				absolute_KKP[hihumin_eye(wksq)][hihumin_eye(bksq)][bp1_fw] -= diff;//これよくないのかもしれないな
 
 #ifdef LR
 				/*---------------------------------------------------------------------------
@@ -208,11 +210,11 @@ struct  dJValue
 				//3コマともに盤上にある場合
 				if (bp1_fb >= f_pawn) {
 					absolute_KKP[sym_rl_sq(bksq)][sym_rl_sq(wksq)][sym_rightleft(bp1_fb)] += diff;
-					absolute_KKP[sym_rl_sq(wksq)][sym_rl_sq(bksq)][sym_rightleft(bp1_fb)] += diff;
+					absolute_KKP[sym_rl_sq(hihumin_eye(wksq))][sym_rl_sq(hihumin_eye(bksq))][sym_rightleft(bp1_fw)] -= diff;
 				}
 				else {
 					absolute_KKP[sym_rl_sq(bksq)][sym_rl_sq(wksq)][(bp1_fb)] += diff;
-					absolute_KKP[sym_rl_sq(wksq)][sym_rl_sq(bksq)][(bp1_fb)] += diff;
+					absolute_KKP[sym_rl_sq(hihumin_eye(wksq))][sym_rl_sq(hihumin_eye(bksq))][(bp1_fw)] -= diff;
 				}
 #endif
 			}
