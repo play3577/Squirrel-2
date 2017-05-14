@@ -217,7 +217,7 @@ double concordance() {
 			
 #ifdef EVAL_KPP
 			eval_KPP(pos);
-#elif EVAL_PP
+#elif defined(EVAL_PP)
 			eval_PP(pos);
 #endif
 			th.set(pos);
@@ -526,7 +526,7 @@ void learnphase1body(int number) {
 
 #ifdef EVAL_KPP
 				eval_KPP(pos);
-#elif EVAL_PP
+#elif defined(EVAL_PP)
 				eval_PP(pos);
 #endif
 
@@ -759,6 +759,9 @@ void learnphase2body(int number)
 					//evalPP‚ÍƒRƒ}Š„‚è‚ðl‚¦‚Ä‚¢‚È‚©‚Á‚½‚µvalue‚ð”½“]‚³‚¹‚Ä‚È‚©‚Á‚½IIeval‚ð‚Â‚©‚¤‚×‚«‚¾‚Á‚½
 #ifdef EVAL_KPP
 					pos.state()->sumBKPP = Value_error; pos.state()->previous->sumBKPP = Value_error;
+#elif defined(EVAL_PP)
+					pos.state()->bpp = pos.state()->wpp = Value_error;//·•ªŒvŽZ‚ð–³Œø‚É‚µ‚Ä‚Ý‚é
+					pos.state()->previous->bpp = Value_error;
 #endif
 					teachervalue = (rootColor == pos.sidetomove())? Eval::eval(pos) : -eval(pos);
 					deepscore[0] = teachervalue;
@@ -811,6 +814,10 @@ void learnphase2body(int number)
 #ifdef EVAL_KPP
 					//·•ªŒvŽZ‚Í‚Å‚«‚È‚¢
 					pos.state()->sumBKPP = Value_error; pos.state()->previous->sumBKPP = Value_error;
+#elif defined(EVAL_PP)
+					pos.state()->bpp = pos.state()->wpp = Value_error;//·•ªŒvŽZ‚ð–³Œø‚É‚µ‚Ä‚Ý‚é
+					pos.state()->previous->bpp = Value_error;
+
 #endif
 					const Value score = (rootColor == pos.sidetomove()) ? Eval::eval(pos) : -eval(pos);
 					deepscore[i] = score;

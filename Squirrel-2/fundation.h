@@ -37,11 +37,11 @@
 
 //---------------------------------学習関連
 
-#define LEARN
-//#define MAKESTARTPOS
-//#define MAKETEACHER
-//#define Prog_LEARN
-//#define REIN
+#define LEARN      //学習（これ単体だとぼなぜぞ）
+//#define MAKESTARTPOS //初期局面データ作成
+//#define MAKETEACHER  //教師データ作成
+//#define Prog_LEARN  //進行度学習
+//#define REIN      //強化学習
 
 
 //学習中にTTをONにするとleafnodeにさかのぼれなくなる

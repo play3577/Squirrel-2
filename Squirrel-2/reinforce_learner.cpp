@@ -593,7 +593,12 @@ void make_teacher_body(const int number) {
 				pos.do_move(m, &si2[pv_depth++]);
 			}
 			//rootから見た評価値を格納する
+#ifdef EVAL_KPP
+			pos.state()->sumBKPP = Value_error; pos.state()->previous->sumBKPP = Value_error;
+#elif defined(EVAL_PP)
 			pos.state()->bpp = pos.state()->wpp = Value_error;//差分計算を無効にしてみる
+			pos.state()->previous->bpp = Value_error;
+#endif
 			const Value deepvalue = (rootColor==pos.sidetomove()) ? Eval::eval(pos):-Eval::eval(pos);
 #endif
 			teacher_data td(/*HaffmanrootPos,*/sfen_rootpos, deepvalue);
@@ -864,7 +869,13 @@ void reinforce_learn_pharse1(const int index) {
 		for (Move m : th.pv) { pos.do_move(m, &si[ii]); ii++; }//pvの末端へ移動
 #endif
 		
+#ifdef EVAL_KPP
+		pos.state()->sumBKPP = Value_error; pos.state()->previous->sumBKPP = Value_error;
+#elif defined(EVAL_PP)
 		pos.state()->bpp = pos.state()->wpp = Value_error;//差分計算を無効にしてみる
+		pos.state()->previous->bpp = Value_error;
+		//previousをvalueerrorにするのを忘れていた
+#endif
 		//rootから見た点数に変換する（teacherもrootから見た評価値のはず）
 		Value shallow_v = (rootColor == pos.sidetomove()) ? Eval::eval(pos) : -Eval::eval(pos);//ここ探索で帰ってきた値にすべき？（よくなかった）
 		//double win_teacher = win_sig(teacher);
@@ -914,6 +925,7 @@ double RMS(const double a) { return sqrt(a + epsiron); }
 //}
 
 //Adadeltaを試してみる
+#if 0
 void renewal_PP_rein(dJValue &data) {
 
 
@@ -961,6 +973,7 @@ void renewal_PP_rein(dJValue &data) {
 	//doublePP_to_PP();
 
 }
+#endif
 /*
 wcsc27でnozomiさんに教えていただいた方法。
 勾配の方向に1だけ動かす！！！！！！！！
@@ -972,14 +985,12 @@ KPPなどに局所解はあまりないというのが見解としてわかったらしいので0~2までの範囲で
 */
 void renewal_PP_nozomi(dJValue &data) {
 
-	std::random_device rd;
-	std::mt19937 mt(rd());
 
 
 	int h;
 	
 	h = 1;
-
+#ifdef EVAL_PP
 	//対称性はdJの中に含まれているのでここでは考えなくていい
 	for (BonaPiece i = f_hand_pawn; i < fe_end2; i++) {
 		for (BonaPiece j = f_hand_pawn; j < fe_end2; j++) {
@@ -992,7 +1003,31 @@ void renewal_PP_nozomi(dJValue &data) {
 		}
 	}
 	//書き出した後読み込むことで値を更新する　ここで32回も書き出し書き込みを行うのは無駄最後にまとめて行う
+#elif defined(EVAL_KPP)
+	for (Square ksq = SQ_ZERO; ksq < Square(81); ksq++) {
+		//KPP-----------------------------------------------------------
+		for (BonaPiece bp1 = BONA_PIECE_ZERO; bp1 < fe_end; bp1++) {
+			for (BonaPiece bp2 = BONA_PIECE_ZERO; bp2 < fe_end; bp2++) {
+				int inc = h*sign(data.absolute_KPP[ksq][bp1][bp2]);
+				if (abs(kpp[ksq][bp1][bp2] + inc) < INT16_MAX) {
+					kpp[ksq][bp1][bp2] += inc;
+				}
+			}
+		}
+		//KKP-----------------------------------------------------------
+		for (Square ksq2 = SQ_ZERO; ksq2 < Square(81); ksq2++) {
+			for (BonaPiece bp3 = BONA_PIECE_ZERO; bp3 < fe_end + 1; bp3++) {
 
+				int inc = h*sign(data.absolute_KKP[ksq][ksq2][bp3]);
+				if (abs(kpp[ksq][ksq2][bp3] + inc) < INT16_MAX) {
+					kpp[ksq][ksq][bp3] += inc;
+				}
+
+			}
+		}
+	}
+
+#endif
 
 }
 
