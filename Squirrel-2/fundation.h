@@ -43,8 +43,9 @@
 //#define Prog_LEARN
 //#define REIN
 
-#define USETT
 
+//ŠwK’†‚ÉTT‚ğON‚É‚·‚é‚Æleafnode‚É‚³‚©‚Ì‚Ú‚ê‚È‚­‚È‚é
+//TT‚ÉŠi”[‚³‚ê‚Ä‚¢‚émove‚Å‚³‚©‚Ì‚Ú‚ê‚é‚©‚à‚µ‚ê‚È‚¢‚ªƒGƒ“ƒgƒŠ‚ª”j‰ó‚³‚ê‚Ä‚é‚©‚à‚µ‚ê‚È‚¢‚Ì‚Å
 #ifndef LEARN
 #define USETT
 #endif

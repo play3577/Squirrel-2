@@ -215,6 +215,11 @@ double concordance() {
 			if (pos.is_legal(teacher_move) == false||!pos.pseudo_legal(teacher_move)) { cout << "teacher ilegal" << endl; goto ERROR_OCCURED; }
 			//探索を行ってpv[0]がteachermoveか確認する。
 			
+#ifdef EVAL_KPP
+			eval_KPP(pos);
+#elif EVAL_PP
+			eval_PP(pos);
+#endif
 			th.set(pos);
 			th.l_alpha = -Value_Infinite;
 			th.l_beta = Value_Infinite;
@@ -222,7 +227,7 @@ double concordance() {
 
 			//差分計算でバグらないようにするため
 
-			eval(pos);
+			
 			Value  score = th.think();
 			if (th.pv[0] == teacher_move) { num_concordance_move++; }
 			th.pv.clear();
@@ -518,7 +523,12 @@ void learnphase1body(int number) {
 				pos.do_move(m, &si[ply]);
 				//差分計算のためにここでもevalを呼んで置いたほうがいいか？？？まあvalue_errorになっているのでこのままでもバグはないとは思うが　早くpharse1おわるか？？
 
-				eval(pos);
+
+#ifdef EVAL_KPP
+				eval_KPP(pos);
+#elif EVAL_PP
+				eval_PP(pos);
+#endif
 
 				th.set(pos);
 				/*---------------------------------------------------------------------------------------------------------
@@ -747,6 +757,9 @@ void learnphase2body(int number)
 						j++;
 					}
 					//evalPPはコマ割りを考えていなかったしvalueを反転させてなかった！！evalをつかうべきだった
+#ifdef EVAL_KPP
+					pos.state()->sumBKPP = Value_error; pos.state()->previous->sumBKPP = Value_error;
+#endif
 					teachervalue = (rootColor == pos.sidetomove())? Eval::eval(pos) : -eval(pos);
 					deepscore[0] = teachervalue;
 					for (int jj = 0; jj < j; jj++) {
@@ -795,6 +808,10 @@ void learnphase2body(int number)
 					https://twitter.com/daruma3940/status/801638488130994177
 					*/
 					//評価値と教師手の差分を取る。
+#ifdef EVAL_KPP
+					//差分計算はできない
+					pos.state()->sumBKPP = Value_error; pos.state()->previous->sumBKPP = Value_error;
+#endif
 					const Value score = (rootColor == pos.sidetomove()) ? Eval::eval(pos) : -eval(pos);
 					deepscore[i] = score;
 					const Value diff = score - teachervalue;

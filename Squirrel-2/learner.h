@@ -38,7 +38,7 @@ namespace Eval {
 }
 
 
-#define JIGENSAGE
+//#define JIGENSAGE
 
 #define LR
 
@@ -180,7 +180,9 @@ struct  dJValue
 		}
 	}
 
-	void update_dJ(const Position& pos, const double diff) {
+	void update_dJ(const Position& pos, const double diff_) {
+
+		float diff = diff_ / FV_SCALE;
 
 		const auto list1 = pos.evallist();
 
