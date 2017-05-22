@@ -40,11 +40,29 @@ namespace Eval {
 
 //#define JIGENSAGE
 
-#define LR
+//#define LR
 
 
 #if defined(EVAL_PP)
 
+
+/*
+次元下げされた要素。
+PP（p0,p1）=PP絶対(左右対称、手番対称)+PP相対(平行移動、手番対称)
+
+次元下げとは例えばPPでは
+一つ目のbonapieceをx,もう一つのbonapieceをyとしたときに
+その(x,y)に対応する値を
+(x,y)だけでなく(x-y)のように引数が減った次元の低い配列の値も用いることである。
+相対位置のことを考えるとx-yというのがどういうことかわかりやすい。
+
+まだ試していない次元下げ
+p
+ypp
+xpp
+KPE次元下げ
+効きを与えている駒が何であろうがその効きのあるsquareと駒のcolorが同じならばそこにも値を与える。
+*/
 struct lowerDimPP
 {
 	double absolute_pp[fe_end2][fe_end2];//絶対PP　
@@ -53,7 +71,7 @@ struct lowerDimPP
 	double relative_xpp[PC_ALL][PC_ALL][17][17][File_Num];//x座標固定
 														  //double absolute_p[fe_end2];//絶対P これはたぶんダメ
 
-														  //どれだけ小さい値でも値が付いていればPPを動かすのでペナルティが重要になってくるか....
+	//どれだけ小さい値でも値が付いていればPPを動かすのでペナルティが重要になってくるか....
 	double absolute_pe[fe_end2][ColorALL][SQ_NUM][SQ_NUM];//[bonap][効きの原因となった駒の色][効きのあるマス][効きの原因となる駒の位置]  ppeだとなんの次元下げにもならないのでpe　駒の位置も追加する
 
 	void clear() {
@@ -201,9 +219,10 @@ struct  dJValue
 			bp1_fw = list_fw[i];
 			if (abs(absolute_KKP[bksq][wksq][bp1_fb] + diff) < FLT_MAX) {
 				absolute_KKP[bksq][wksq][bp1_fb] += diff;
+#ifdef LR
 				absolute_KKP[hihumin_eye(wksq)][hihumin_eye(bksq)][bp1_fw] -= diff;//これよくないのかもしれないな
 
-#ifdef LR
+
 				/*---------------------------------------------------------------------------
 				KKP 左右対称
 				Pが盤上の駒：　K K P すべて　左右反転する

@@ -17,8 +17,7 @@ packedsfen‚Ì‚Ù‚¤‚ª‚¢‚¢‚©‚à‚µ‚ê‚È‚¢‚ª‚Ü‚¸‚Ísfen‚Åì¬‚·‚é
 
 ‚Ü‚¸‰¤è‚ª‚©‚©‚Á‚Ä‚¢‚È‚¢‚±‚Æ
 ‚»‚Ì‹Ç–Ê‚Ì•]‰¿’l‚ª500‚ğ’´‚¦‚È‚¢‚±‚Æi‚à‚µ‚­‚Íis“x‚ğg‚Á‚Ä˜”Õ‚Å‚ ‚é‚±‚Æ‚ğŠm”F‚µ‚Ä‚à‚¢‚¢‚©‚àj
-
-
+ƒ‰ƒCƒuƒ‰ƒŠ‹K§‚Éˆø‚Á‚©‚©‚ç‚È‚¢‚Ì‚È‚ç‚â‚Ë‚¤‚ç‰Šú‹Ç–ÊW‚ğg‚¤‚×‚«‚©HHH
 
 ...‚Ü‚ ‚±‚ê‚®‚ç‚¢‚©HH
 
@@ -40,7 +39,7 @@ depth2‚Å‚Í•]‰¿’l100ˆÈ“à‚¾‚ª‘¼‚Å‚Í1000’´‚¦‚Ä‚µ‚Ü‚¤‚İ‚½‚¢‚È...(TT‚ğon‚É‚µ‚½‚ç‚«‚ê‚
 
 
 #ifdef MAKETEST
-#define TEACHERPATH "C:/teacher/teacherd5_exteintion_tansakuchi_test.txt"
+#define TEACHERPATH "C:/teacher/teacherd3_test.txt"
 #else
 #define TEACHERPATH "C:/teacher/teacherd5_exteintion_pvmove.txt"
 #endif
@@ -365,7 +364,7 @@ void make_startpos_detabase()
 struct teacher_data {
 
 	//bool haffman[256];
-	string sfen;//ƒnƒtƒ}ƒ“¸”s‚µ‚Ü‚­‚Á‚½‚Ì‚Åstring‚Ås‚­B
+	string sfen;//ƒnƒtƒ}ƒ“¸”s‚µ‚Ü‚­‚Á‚½‚Ì‚Åstring‚Ås‚­B@‘å‰ïI‚í‚Á‚ÄŠÔ‚à‚Å‚«‚½‚µƒnƒtƒ}ƒ“•ÏŠ·ŠÖ”‚ÌƒfƒoƒbƒO‚·‚é‚©...
 	int16_t teacher_value;
 	//teacher_data() {};
 	/*
@@ -562,15 +561,19 @@ void make_teacher_body(const int number) {
 		for (int i = 0; i < 256; i++) {
 
 			//’Tõ‘O‚Éthread‚ğ‰Šú‰»‚µ‚Ä‚¨‚­
-			Eval::eval(pos);//·•ªŒvZ‚ÅƒoƒO‚ğo‚³‚È‚¢‚½‚ß‚ÉŒvZ‚µ‚Ä‚¨‚­
+			Eval::eval_PP(pos);//·•ªŒvZ‚ÅƒoƒO‚ğo‚³‚È‚¢‚½‚ß‚ÉŒvZ‚µ‚Ä‚¨‚­
+
+			
+
 			th.set(pos);
-			//th.cleartable();//–ˆ‰ñ‚â‚é‚Æ‚¨‚»‚¢
+			//th.cleartable();//–ˆ‰ñ‚â‚é‚Æ‚¨‚»‚¢‚ª‚â‚Á‚½•û‚ª‚¢‚¢‚Ì‚¾‚ë‚¤‚©HH
+
 			//‹ZINDF‚Í[‚³ŒÅ’è‚Å‚Í‚È‚­•b”ŒÅ’èB
 			//•b”ŒÅ’è‚Ì‚Ù‚¤‚ª“¯‚¶·‚µè‚É‚È‚ç‚È‚¢‚Ì‚Å‚¢‚¢‚ç‚µ‚¢B
-			th.l_depth = 6;
+			th.l_depth = 4;
 			th.l_alpha = -Value_Infinite;
 			th.l_beta = Value_Infinite;
-			Value v = th.think();//’Tõ‚ğÀs‚·‚é ‚±‚ê‚Íè”Ô‘¤‚©‚çŒ©‚½•]‰¿’l‚Å‚ ‚é
+			Value v = th.think();//’Tõ‚ğÀs‚·‚é ‚±‚ê‚Íè”Ô‘¤‚©‚çŒ©‚½•]‰¿’l‚Å‚ ‚é “Ç‚İ”²‚¯‚ªŒƒ‚µ‚¢‚©‚à‚µ‚ê‚È‚¢‚Ì‚Å}Š ‚è‚ğ—}‚¦‚½’Tõ‚ğs‚¤‚×‚«‚©H
 			if (abs(v) > 3000) { goto NEXT_STARTPOS; }//•]‰¿’l‚ª3000‚ğ’´‚¦‚Ä‚µ‚Ü‚Á‚½ê‡‚ÍŸ‚Ì‹Ç–Ê‚ÖˆÚ‚é
 
 			//pos.pack_haffman_sfen();
@@ -597,7 +600,7 @@ void make_teacher_body(const int number) {
 			pos.state()->sumBKPP = Value_error; pos.state()->previous->sumBKPP = Value_error;
 #elif defined(EVAL_PP)
 			pos.state()->bpp = pos.state()->wpp = Value_error;//·•ªŒvZ‚ğ–³Œø‚É‚µ‚Ä‚İ‚é
-			pos.state()->previous->bpp = Value_error;
+			pos.state()->previous->bpp =pos.state()->previous->wpp= Value_error;
 #endif
 			const Value deepvalue = (rootColor==pos.sidetomove()) ? Eval::eval(pos):-Eval::eval(pos);
 #endif
@@ -873,7 +876,7 @@ void reinforce_learn_pharse1(const int index) {
 		pos.state()->sumBKPP = Value_error; pos.state()->previous->sumBKPP = Value_error;
 #elif defined(EVAL_PP)
 		pos.state()->bpp = pos.state()->wpp = Value_error;//·•ªŒvZ‚ğ–³Œø‚É‚µ‚Ä‚İ‚é
-		pos.state()->previous->bpp = Value_error;
+		pos.state()->previous->bpp=pos.state()->previous->wpp = Value_error;
 		//previous‚ğvalueerror‚É‚·‚é‚Ì‚ğ–Y‚ê‚Ä‚¢‚½
 #endif
 		//root‚©‚çŒ©‚½“_”‚É•ÏŠ·‚·‚éiteacher‚àroot‚©‚çŒ©‚½•]‰¿’l‚Ì‚Í‚¸j
@@ -1038,6 +1041,10 @@ void renewal_PP_nozomi(dJValue &data) {
 
 #if defined(REIN) || defined(MAKETEACHER)
 
+/*
+–ˆ‰ñclear table‚·‚é‚Æ‚Ù‚Æ‚ñ‚Ç‚Ì•]‰¿’l‚ÌŒë·‚Í”ñí‚É¬‚³‚¢”ÍˆÍ‚Éû‚Ü‚Á‚½.¬‚³‚¢‚â‚Â‚Í1‚à·‚ª‚È‚¢
+‚µ‚©‚µ–ˆ‰ñ‰Šú‰»‚µ‚Ä’Tõ‚ğs‚¤‚ÆŠÔ‚ğ”n­‚İ‚½‚¢‚ÉH‚¤...‚Ü‚ –ˆ‰ñ‰Šú‰»‚Í‹³tƒf[ƒ^ì¬‚É‚Í‚µ‚È‚­‚Ä‚¢‚¢‚¾‚ë‚¤B
+*/
 void check_teacherdata() {
 
 	//	Position pos;
@@ -1058,14 +1065,15 @@ void check_teacherdata() {
 			count++;
 			auto data = sum_teachers[g];
 			pos__.set(data.sfen);
+			th.cleartable();
 			th.set(pos__);
-			th.l_depth = 6;
+			th.l_depth = 4;
 			th.l_alpha = -Value_Infinite;
 			th.l_beta = Value_Infinite;
 			Value v = th.think();//’Tõ‚ğÀs‚·‚é
 
 								 //table‚Ì’l‚Ì•t‚«•û‚ª•Ï‚í‚Á‚Ä‚½‚è‚·‚é‚©‚à‚µ‚ê‚È‚¢‚Ì‚Å100‚Í‹–—e‚·‚éi‚»‚ê‚Å‚à‘å‚«‚¢‚ªj
-			if (abs(v - (Value)data.teacher_value) > 200) {
+			if (abs(v - (Value)data.teacher_value) > 1) {
 				cout << "position " << data.sfen << endl;
 				cout << "nowsearched:" << v << " data:" << data.teacher_value << endl;
 				//ASSERT(0);

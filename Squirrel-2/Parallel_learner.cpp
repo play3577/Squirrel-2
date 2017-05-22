@@ -26,30 +26,13 @@ using namespace std;
 
 #define LOG
 
-
+#define USED_POSKEY
 
 
 #define SOFTKIFU
 
 
 
-/*
-次元下げされた要素。
-PP（p0,p1）=PP絶対(左右対称、手番対称)+PP相対(平行移動、手番対称)
-
-次元下げとは例えばPPでは
-一つ目のbonapieceをx,もう一つのbonapieceをyとしたときに
-その(x,y)に対応する値を
-(x,y)だけでなく(x-y)のように引数が減った次元の低い配列の値も用いることである。
-相対位置のことを考えるとx-yというのがどういうことかわかりやすい。
-
-まだ試していない次元下げ
-p
-ypp
-xpp
-KPE次元下げ 
-効きを与えている駒が何であろうがその効きのあるsquareと駒のcolorが同じならばそこにも値を与える。
-*/
 //#ifdef JIGENSAGE
 //lowerDimPP lowdimPP;
 //#endif
@@ -150,6 +133,13 @@ Parse2Data sum_parse2Datas;
 std::vector<Parse2Data> parse2Datas;
 std::vector<Game> games;
 std::vector<Game> testset;
+#ifdef USED_POSKEY
+//一度iteration内で出てきた局面は同じiteration内では使わないようにするためのvector.findを使って同じのがあるか見つける
+//sfenのほうがhash被りがないためいいかもしれないが,文字列比較だと遅い気がするので...
+std::vector<Key> UsedposKey;
+#endif
+
+
 
 
 //#define Test_icchiritu
@@ -162,8 +152,10 @@ std::vector<Game> testset;
 学習用の寄付で一致率を図る。学習を進めると過学習を起こすはずであるのでそれで学習にバグがないかどうか確かめる
 
 一致率測定中に差分計算にバグが出ることが発覚した。
-どこが悪い？？
+どこが悪い？？ →修正した。
 
+正確な一致率を図ろうと思ったら序盤の16手ぐらいは無視する、
+終盤20手ぐらいは水平線効果なので無視するといったことは必要か？
 */
 double concordance() {
 	/*std::random_device rd;
@@ -253,8 +245,20 @@ double concordance() {
 double objective_function = 0;
 double ocilation_error = 0.0;
 int maxthreadnum;
-int numgames;
+int numgames;//バッチサイズ
 int num_parse2;
+
+//root mean square error。これを使えば異なるサイズのミニバッチどうしの比較ができる。
+double RMS() {
+	return pow(objective_function / double(numgames), 0.5);
+}
+
+
+//正則化項の微分。3駒関係ほどの特徴の数になると正則化をかけなければover-fittingしてしまうと考えられる。λをどれぐらいにすればいいのかわからん...
+double regularization(int32_t x) {
+	return (double(abs(x)) / 500);
+}
+
 void Eval::parallel_learner() {
 
 	//初期化
@@ -468,6 +472,7 @@ void learnphase1body(int number) {
 			minfo_list.clear();
 
 #if 1
+			//ここ進行度が8割以上の場合学習に使わないのではなくて、手数（例えば最後の16手は使わないなど）にしたほうがいいのかもしれない
 			if ((float(ply) / float(thisgame.moves.size())) > 0.8) {
 				//cout <<"progress:"<< (float(ply) / float(thisgame.moves.size()))<<" ply:"<<ply<<" maxply:"<< thisgame.moves.size() <<  " progress over 90%" << endl;
 				goto ERROR_OCCURED;
@@ -614,7 +619,7 @@ void learnphase1body(int number) {
 void learnphase2() {
 	
 #ifdef JIGENSAGE
-	//でかすぎてコンパイルできないので動的確保するしかない
+	//KPPだとでかすぎてコンパイルできないので動的確保するしかない
 	//lowerDimPP lowdimPP;
 	auto lowdimPP = unique_ptr<lowerDimPP>(new lowerDimPP);
 #endif
@@ -777,6 +782,7 @@ void learnphase2body(int number)
 
 
 					StateInfo si2[64];
+
 					int j = 0;
 					//教師手とPVで局面をすすめる
 					if (pos.is_legal(minfo_list[i].move) == false) { cout << endl << pos << endl << minfo_list[i].move << endl; cout << games[g].black_P << " " << games[g].white_P; continue;  ASSERT(0); }

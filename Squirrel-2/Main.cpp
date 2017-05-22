@@ -1,3 +1,11 @@
+/*
+このソフトはStockFishをベースとして
+様々なソフトを参考に作成させていただいております。
+
+作者の皆様に感謝します
+*/
+
+
 #include "fundation.h"
 #include "Bitboard.h"
 #include "position.h"

@@ -5,9 +5,11 @@
 #include "position.h"
 
 #include <utility>
-
-
-
+/*
+bonanza 見たらevah_hashというものがあった
+確かにwpp,bppをそういうのに格納すれば評価は早くなると思うが
+keyが被ってしまうと悲惨な結果が起こる。どうすればhashが被らないようにできるのだろうか？
+*/
 
 namespace Eval {
 
@@ -651,7 +653,156 @@ namespace Eval {
 		const Eval::BonaPiece newbp1_fw = list.bplist_fw[now->dirtyuniform[0]];
 		const Eval::BonaPiece newbp2_fw = list.bplist_fw[now->dirtyuniform[1]];
 
+		//このif 0の部分の方法はよくないと思っていたが
+		//一気に計算して足しすぎ引きすぎを後から補正するという方針はAVX2を使って計算したい場合には向いているのかもしれないな...
+#if 0
+		Eval::BonaPiece old_list_fb[40];
+		Eval::BonaPiece old_list_fw[40];
+		//========================
+		//oldlistの作成
+		//========================
+		//ここのコピーに時間がかかりそうなんだよなぁ(memcopyでコピーするか)
+		memcpy(old_list_fb, now_list_fb, sizeof(old_list_fb));
+		memcpy(old_list_fw, now_list_fw, sizeof(old_list_fw));
+		old_list_fb[moveduniform1] = oldbp1_fb;
+		old_list_fw[moveduniform1] = oldbp1_fw;
+		if (moveduniform2 != Num_Uniform) {
+			old_list_fb[moveduniform2] = oldbp2_fb;
+			old_list_fw[moveduniform2] = oldbp2_fw;
+		}
+		//assertに引っかかった局面でもlistはちゃんと生成できていた（fwを確認してなかった！！）（fwも上手く行っていた）
+		//======================================
+		//アルゴリズム考え直す必要があるか....？いくら考えてもコレしか思いつかない。
+		//======================================
+		/*
 
+		ABCD
+		ABCD
+		BA CA CB DA DB DC ①
+		ABED
+		ABED
+		BA EA EB DA DB DE　②
+		①-(CA CB CD CC)+(EA EB ED EE)=②
+		AEFD
+		AEFD
+		EA FA FE DA DE DF ③
+		①-(BA BC BD BB  CA CB CC CD)+BC+(EA EF ED EE FA FE FD FF)-EF=③
+
+		やっぱりコレでうまくいっているはずなのだ...
+		*/
+		//動いた駒が一つ
+		//---------------------動いた駒が一つの時も差分計算ミスってる？
+		if (moveduniform2 == Num_Uniform) {
+			ASSERT(is_ok(oldbp1_fb));
+			ASSERT(is_ok(oldbp1_fw));
+			ASSERT(is_ok(newbp1_fb));
+			ASSERT(is_ok(newbp1_fw));
+			ASSERT(is_ok(moveduniform1));
+			//差分計算の実行
+			//for (int i = 0; i < 40; i++) {
+			//	//dirtyになってしまった分bPPから引く
+			//	bPP -= PP[oldbp1_fb][old_list_fb[i]];//ここでpp[old1][old1]を引きすぎる。
+			//	wPP += PP[oldbp1_fw][old_list_fw[i]];//ここでpp[old1][old1]を足しすぎる。
+			//	//新しいbPPのぶんを足す
+			//	bPP += PP[newbp1_fb][now_list_fb[i]];//ここでpp[new1][new1]を足しすぎる
+			//	wPP -= PP[newbp1_fw][now_list_fw[i]];//ここでpp[new1][new1]を引きすぎる。
+			//}
+			//２つに分けることでpp[i][i]がかぶらないようにする
+			for (int i = 0; i < moveduniform1; i++) {
+				//dirtyになってしまった分bPPから引く
+				bPP -= PP[oldbp1_fb][old_list_fb[i]];//ここでpp[old1][old1]を引きすぎる。
+				wPP += PP[oldbp1_fw][old_list_fw[i]];//ここでpp[old1][old1]を足しすぎる。
+													 //新しいbPPのぶんを足す
+				bPP += PP[newbp1_fb][now_list_fb[i]];//ここでpp[new1][new1]を足しすぎる
+				wPP -= PP[newbp1_fw][now_list_fw[i]];//ここでpp[new1][new1]を引きすぎる。
+			}
+			for (int i = moveduniform1 + 1; i < 40; i++) {
+				//dirtyになってしまった分bPPから引く
+				bPP -= PP[oldbp1_fb][old_list_fb[i]];//ここでpp[old1][old1]を引きすぎる。
+				wPP += PP[oldbp1_fw][old_list_fw[i]];//ここでpp[old1][old1]を足しすぎる。
+													 //新しいbPPのぶんを足す
+				bPP += PP[newbp1_fb][now_list_fb[i]];//ここでpp[new1][new1]を足しすぎる
+				wPP -= PP[newbp1_fw][now_list_fw[i]];//ここでpp[new1][new1]を引きすぎる。
+			}
+			/*
+			ここで引きすぎ、足しすぎを補正しなければならないがPP[i][i]=0であるはずなのでこの場合補正は必要ない
+			*/
+			//まあ一応確認しておく。
+			ASSERT(PP[oldbp1_fb][oldbp1_fb] == 0);
+			ASSERT(PP[oldbp1_fw][oldbp1_fw] == 0);
+			ASSERT(PP[newbp1_fb][newbp1_fb] == 0);
+			ASSERT(PP[newbp1_fw][newbp1_fw] == 0);
+		}
+		else {
+			ASSERT(is_ok(oldbp1_fb));
+			ASSERT(is_ok(oldbp1_fw));
+			ASSERT(is_ok(newbp1_fb));
+			ASSERT(is_ok(newbp1_fw));
+			ASSERT(is_ok(oldbp2_fb));
+			ASSERT(is_ok(oldbp2_fw));
+			ASSERT(is_ok(newbp2_fb));
+			ASSERT(is_ok(newbp2_fw));
+			ASSERT(is_ok(moveduniform1));
+			ASSERT(is_ok(moveduniform2));
+			//動いた駒が２つ
+			//for (int i = 0; i < 40; i++) {
+			//	//dirtyになってしまった分を引く
+			//	bPP -= PP[oldbp1_fb][old_list_fb[i]];//ここでpp[old1][old1]　pp[old1][old2]を引いている
+			//	bPP -= PP[oldbp2_fb][old_list_fb[i]];//ここでpp[old2][old2]　pp[old2][old1]を引きすぎる。
+			//	wPP += PP[oldbp1_fw][old_list_fw[i]];//ここでpp[old1][old1]　pp[old1][old2]を足している。
+			//	wPP += PP[oldbp2_fw][old_list_fw[i]];//ここでpp[old2][old2]　pp[old2][old1]を足しすぎる。
+			//	//新しい分を足す
+			//	bPP += PP[newbp1_fb][now_list_fb[i]];//ここでpp[new1][new1]  pp[new1][new2]を足してる
+			//	bPP += PP[newbp2_fb][now_list_fb[i]];//ここでpp[new2][new2]　pp[new2][new1]を足しすぎる
+			//	wPP -= PP[newbp1_fw][now_list_fw[i]];//ここでpp[new1][new1]  pp[new1][new2]を引いてる
+			//	wPP -= PP[newbp2_fw][now_list_fw[i]];//ここでpp[new2][new2]  pp[new2][new1]を引きすぎ
+			//}
+			////引き過ぎを補正する
+			//bPP += PP[oldbp1_fb][oldbp2_fb];
+			//wPP -= PP[oldbp1_fw][oldbp2_fw];
+			////足し過ぎを補正する
+			//bPP -= PP[newbp1_fb][newbp2_fb];
+			//wPP += PP[newbp1_fw][newbp2_fw];
+			for (int i = 0; i < moveduniform1; i++) {
+				//dirtyになってしまった分を引く
+				bPP -= PP[oldbp1_fb][old_list_fb[i]];//　pp[old1][old2]を引いている
+				bPP -= PP[oldbp2_fb][old_list_fb[i]];//
+				wPP += PP[oldbp1_fw][old_list_fw[i]];//ここでpp[old1][old2]を足している。
+				wPP += PP[oldbp2_fw][old_list_fw[i]];//
+													 //新しい分を足す
+				bPP += PP[newbp1_fb][now_list_fb[i]];//ここでpp[new1][new1]  pp[new1][new2]を足してる
+				bPP += PP[newbp2_fb][now_list_fb[i]];//
+				wPP -= PP[newbp1_fw][now_list_fw[i]];//ここでpp[new1][new1]  pp[new1][new2]を引いてる
+				wPP -= PP[newbp2_fw][now_list_fw[i]];//
+			}
+			for (int i = moveduniform1 + 1; i < 40; i++) {
+				//dirtyになってしまった分を引く
+				bPP -= PP[oldbp1_fb][old_list_fb[i]];//ここでpp[old1][old1]　pp[old1][old2]を引いている
+				bPP -= PP[oldbp2_fb][old_list_fb[i]];//
+				wPP += PP[oldbp1_fw][old_list_fw[i]];//ここでpp[old1][old1]　pp[old1][old2]を足している。
+				wPP += PP[oldbp2_fw][old_list_fw[i]];//
+													 //新しい分を足す
+				bPP += PP[newbp1_fb][now_list_fb[i]];//ここでpp[new1][new1]  pp[new1][new2]を足してる
+				bPP += PP[newbp2_fb][now_list_fb[i]];//
+				wPP -= PP[newbp1_fw][now_list_fw[i]];//ここでpp[new1][new1]  pp[new1][new2]を引いてる
+				wPP -= PP[newbp2_fw][now_list_fw[i]];//
+			}
+			//対称性があるはず。
+			ASSERT(PP[oldbp1_fb][oldbp2_fb] == PP[oldbp2_fb][oldbp1_fb]);
+			ASSERT(PP[oldbp1_fw][oldbp2_fw] == PP[oldbp2_fw][oldbp1_fw]);
+			ASSERT(PP[newbp1_fb][newbp2_fb] == PP[newbp2_fb][newbp1_fb]);
+			ASSERT(PP[newbp1_fw][newbp2_fw] == PP[newbp2_fw][newbp1_fw]);
+			//まあ一応確認しておく。
+			ASSERT(PP[oldbp1_fb][oldbp1_fb] == 0);
+			ASSERT(PP[oldbp1_fw][oldbp1_fw] == 0);
+			ASSERT(PP[newbp1_fb][newbp1_fb] == 0);
+			ASSERT(PP[newbp1_fw][newbp1_fw] == 0);
+			ASSERT(PP[oldbp2_fb][oldbp2_fb] == 0);
+			ASSERT(PP[oldbp2_fw][oldbp2_fw] == 0);
+			ASSERT(PP[newbp2_fb][newbp2_fb] == 0);
+			ASSERT(PP[newbp2_fw][newbp2_fw] == 0);
+		}//2つ駒が動いた
+#endif
 #if 1
 #define ADD_PP(oldbp,oldwp,newbp,newwp){ \
 		bPP -= PP[oldbp][now_list_fb[i]];\

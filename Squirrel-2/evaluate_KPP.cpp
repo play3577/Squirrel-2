@@ -10,9 +10,6 @@ namespace Eval {
 	int16_t kpp[82][fe_end][fe_end];
 	int32_t kkp[82][82][fe_end + 1];
 
-
-
-
 	void read_FV() {
 		FILE* fp = std::fopen(Options["KPP"].str().c_str(), "rb");
 		if (fp == NULL) { ASSERT(0); }
