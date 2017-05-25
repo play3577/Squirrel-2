@@ -1,3 +1,5 @@
+#define _CRT_SECURE_NO_WARNINGS
+
 #include "reinforce_learner.h"
 #include "position.h"
 #include "Thread.h"
@@ -5,8 +7,7 @@
 #include "makemove.h"
 #include "learner.h"
 #include <random>
-
-
+#include <time.h>
 #include <omp.h>
 /*
 ‚±‚±‚Å‚Íƒ‰ƒ“ƒ_ƒ€‚É‰Šú‹Ç–Ê‚ğ—pˆÓ‚µsfen•¶š—ñ‚É•ÏŠ·‚µAƒtƒ@ƒCƒ‹‚É‘‚«o‚·B
@@ -41,10 +42,10 @@ depth2‚Å‚Í•]‰¿’l100ˆÈ“à‚¾‚ª‘¼‚Å‚Í1000’´‚¦‚Ä‚µ‚Ü‚¤‚İ‚½‚¢‚È...(TT‚ğon‚É‚µ‚½‚ç‚«‚ê‚
 #ifdef MAKETEST
 #define TEACHERPATH "C:/teacher/teacherd3_test.txt"
 #else
-#define TEACHERPATH "C:/teacher/teacherd5_exteintion_pvmove.txt"
+#define TEACHERPATH "C:/teacher/teacherd4.txt"
 #endif
 
-
+#define DEPTH 5
 
 #ifdef MAKESTARTPOS
 string Position::random_startpos()
@@ -440,7 +441,7 @@ void do_randommove(Position& pos, StateInfo* s, std::mt19937& mt);
 ----------------------------------------------------------------------------*/
 void make_teacher()
 {
-	int maxnum;
+	int64_t maxnum;
 	cout << "maxnum:";
 	cin >> maxnum;
 
@@ -550,6 +551,7 @@ void make_teacher_body(const int number) {
 #endif
 		g = lock_index_inclement__()) {
 
+		for (int i = 0; i <500; i++) si[i].clear();
 		string startposdb_string = startpos_db[g];
 		if (startposdb_string.size() < 10) { continue; }//•¶š—ñ‚Ì’·‚³‚ª‚ ‚è‚¦‚È‚¢‚Ù‚Ç’Z‚¢‚Ì‚ÍƒGƒ‰[‚Å‚ ‚é‚Ì‚Åg‚í‚È‚¢
 		pos.set(startposdb_string);//randomŠJn‹Ç–ÊW‚©‚çˆê‚Âæ‚èo‚µ‚Äset‚·‚éBi‚±‚Ìƒ‰ƒ“ƒ_ƒ€ŠJn‹Ç–Ê‚Í‰½‰ñ‚ào‚Ä‚­‚é‚Ì‚Å‚±‚±‚©‚çˆêè“®‚©‚µ‚½‚Ù‚¤‚ª‚¢‚¢j
@@ -570,12 +572,14 @@ void make_teacher_body(const int number) {
 
 			//‹ZINDF‚Í[‚³ŒÅ’è‚Å‚Í‚È‚­•b”ŒÅ’èB
 			//•b”ŒÅ’è‚Ì‚Ù‚¤‚ª“¯‚¶·‚µè‚É‚È‚ç‚È‚¢‚Ì‚Å‚¢‚¢‚ç‚µ‚¢B
-			th.l_depth = 4;
+			th.l_depth = DEPTH;
 			th.l_alpha = -Value_Infinite;
 			th.l_beta = Value_Infinite;
 			Value v = th.think();//’Tõ‚ğÀs‚·‚é ‚±‚ê‚Íè”Ô‘¤‚©‚çŒ©‚½•]‰¿’l‚Å‚ ‚é “Ç‚İ”²‚¯‚ªŒƒ‚µ‚¢‚©‚à‚µ‚ê‚È‚¢‚Ì‚Å}Š ‚è‚ğ—}‚¦‚½’Tõ‚ğs‚¤‚×‚«‚©H
 			if (abs(v) > 3000) { goto NEXT_STARTPOS; }//•]‰¿’l‚ª3000‚ğ’´‚¦‚Ä‚µ‚Ü‚Á‚½ê‡‚ÍŸ‚Ì‹Ç–Ê‚ÖˆÚ‚é
-
+			/*if (th.pv.size() > 6) {
+				cout << th.pv.size() << endl;
+			}*/
 			//pos.pack_haffman_sfen();
 			//root‹Ç–Ê‚Ìhaffman•„†‚ğ—pˆÓ‚µ‚Ä‚¨‚­
 		/*	bool HaffmanrootPos[256];
@@ -585,8 +589,9 @@ void make_teacher_body(const int number) {
 			/*--------------------------------------------------------------------------------------------------------
 			pv‚Ì––’[‚ÉˆÚ“®‚ğ‚µ‚È‚©‚Á‚½ê‡deepvalue‚ª’Tõ‚Ì’l‚Æ‚©‚¯—£‚ê‚Ä‚µ‚Ü‚¤‚Æ‚¢‚¤‚±‚Æ‚ª‹N‚±‚Á‚½I‚±‚ê‚Å­‚µ‚Í‚Ü‚µ‚É‚È‚é
 			--------------------------------------------------------------------------------------------------------*/
-#if 1
+#if 0
 			StateInfo si2[64];
+			for (int i = 0; i <64; i++) si2[i].clear();
 			int pv_depth = 0;
 			const Color rootColor = pos.sidetomove();//HaffmanrootPos‚Ìè”Ô
 
@@ -604,10 +609,10 @@ void make_teacher_body(const int number) {
 #endif
 			const Value deepvalue = (rootColor==pos.sidetomove()) ? Eval::eval(pos):-Eval::eval(pos);
 #endif
-			teacher_data td(/*HaffmanrootPos,*/sfen_rootpos, deepvalue);
-			//teacher_data td(pos.make_sfen(), v/*,th.RootMoves[0].move*/);
+			//teacher_data td(/*HaffmanrootPos,*/sfen_rootpos, deepvalue);
+			teacher_data td(pos.make_sfen(), v/*,th.RootMoves[0].move*/);
 			teachers[number].push_back(td);
-#if 1
+#if 0
 			for (int jj = 0; jj < pv_depth; jj++) {
 				pos.undo_move();
 			}
@@ -751,12 +756,51 @@ void reinforce_learn() {
 	//read_teacherdata();//‚±‚±‚Å‹³tƒf[ƒ^‚ğ“Ç‚İ‚Ş
 
 
+
+#ifdef LOG
+	std::string str, filepath;
+	time_t rawtime;
+	struct tm * timeinfo;
+	time(&rawtime);
+	timeinfo = localtime(&rawtime);
+	str = asctime(timeinfo);
+
+	size_t hoge;
+	while ((hoge = str.find_first_of(" ")) != string::npos) {
+		str.erase(hoge, 1);
+	}
+	while ((hoge = str.find_first_of("\n")) != string::npos) {
+		str.erase(hoge, 1);
+	}
+	while ((hoge = str.find_first_of(":")) != string::npos) {
+		str.erase(hoge, 1);
+	}
+
+#if defined(_MSC_VER)
+	filepath = "c:/book2/log/" + str + "rein.txt";
+#endif
+#if defined(__unix__) 
+	filepath = "/home/daruma/fvPP/" + str + ".txt";
+#endif
+	//filepath = "c:/book2/log/" + str + ".txt";
+	ofstream ofs(filepath);
+	if (ofs.fail()) { cout << "log fileError"; }
+
+#endif
+
+
+
+
 	ifstream f(TEACHERPATH);
 	if (!f) { cout << "cantopen" << TEACHERPATH << endl; UNREACHABLE; }
 
 	
 	std::random_device rd;
 	std::mt19937 g_mt(rd());
+
+
+
+
 
 
 	//gradJŠi”[ŒÉ—pˆÓ
@@ -817,8 +861,9 @@ void reinforce_learn() {
 		write_FV();
 		read_FV();
 		cout << "loss:" << loss << endl;
+		ofs << "loss " << loss << endl;
 	}
-
+	ofs.close();
 	f.close();
 	cout << "finish rein" << endl;
 }
@@ -834,6 +879,7 @@ void reinforce_learn_pharse1(const int index) {
 	Thread th;
 	th.cleartable();
 	StateInfo si[100];
+	for (int i = 0; i <100; i++) si[i].clear();
 	/*ExtMove moves[600], *end;
 	end = moves;*/
 
@@ -870,17 +916,44 @@ void reinforce_learn_pharse1(const int index) {
 
 		int ii = 0;
 		for (Move m : th.pv) { pos.do_move(m, &si[ii]); ii++; }//pv‚Ì––’[‚ÖˆÚ“®
+#elif 0
+		th.set(pos);
+		//th.cleartable();//–ˆ‰ñ‚Í€‚Ê‚Ù‚Ç’x‚¢
+		th.l_alpha = -Value_Infinite;
+		th.l_beta = Value_Infinite;
+		Value shallow_serch_value = th.Qsearch();
+		//if (abs(shallow_serch_value) > 3000 ) { continue; }
+
+		int ii = 0;
+		//ASSERT(th.pv[0]==th.RootMoves[0].move) ‚¤``‚ñ‚¿‚á‚ñ‚ÆPV‚ğì‚ê‚Ä‚é‚©‰ö‚µ‚¢‚È...
+
+
+		//for (Move m : th.pv) {
+		//	if (!pos.pseudo_legal(m) || !pos.is_legal(m)) {
+		//		cout << pos << endl;
+		//		th.print_pv(0, shallow_serch_value);
+		//		ASSERT(0);
+		//	}
+		//	pos.do_move(m, &si[ii]); ii++; 
+		//}//pv‚Ì––’[‚ÖˆÚ“®
+
+
+
 #endif
 		
 #ifdef EVAL_KPP
 		pos.state()->sumBKPP = Value_error; pos.state()->previous->sumBKPP = Value_error;
 #elif defined(EVAL_PP)
 		pos.state()->bpp = pos.state()->wpp = Value_error;//·•ªŒvZ‚ğ–³Œø‚É‚µ‚Ä‚İ‚é
-		pos.state()->previous->bpp=pos.state()->previous->wpp = Value_error;
+		if (pos.state()->previous != nullptr) { pos.state()->previous->bpp = pos.state()->previous->wpp = Value_error; }
 		//previous‚ğvalueerror‚É‚·‚é‚Ì‚ğ–Y‚ê‚Ä‚¢‚½
 #endif
-		//root‚©‚çŒ©‚½“_”‚É•ÏŠ·‚·‚éiteacher‚àroot‚©‚çŒ©‚½•]‰¿’l‚Ì‚Í‚¸j
+		//root‚©‚çŒ©‚½“_”‚É•ÏŠ·‚·‚éiteacher‚àroot‚©‚çŒ©‚½•]‰¿’l‚Ì‚Í‚¸j]
+
+
 		Value shallow_v = (rootColor == pos.sidetomove()) ? Eval::eval(pos) : -Eval::eval(pos);//‚±‚±’Tõ‚Å‹A‚Á‚Ä‚«‚½’l‚É‚·‚×‚«Hi‚æ‚­‚È‚©‚Á‚½j
+		//Value shallow_v = shallow_serch_value;
+
 		//double win_teacher = win_sig(teacher);
 		//double win_shallow = win_sig(shallow_v);
 		//double diffsig = win_shallow - win_teacher;//Œğ·ƒGƒ“ƒgƒƒs[ ‚±‚ê‚Ì‚Ù‚¤‚ª‚¢‚¢‚Á‚Änozomi‚³‚ñ‚ªŒ¾‚Á‚Ä‚½
@@ -1067,7 +1140,7 @@ void check_teacherdata() {
 			pos__.set(data.sfen);
 			th.cleartable();
 			th.set(pos__);
-			th.l_depth = 4;
+			th.l_depth = DEPTH;
 			th.l_alpha = -Value_Infinite;
 			th.l_beta = Value_Infinite;
 			Value v = th.think();//’Tõ‚ğÀs‚·‚é

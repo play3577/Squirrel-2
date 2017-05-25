@@ -82,7 +82,7 @@ struct StateInfo
 #endif
 
 
-	int32_t bkp = Value_error, wkp = Value_error;//進行度
+	//int32_t bkp = Value_error, wkp = Value_error;//進行度
 
 	//動いた駒0 取られた駒1
 	Eval::BonaPiece dirtybonap_fb[2];
@@ -100,7 +100,7 @@ struct StateInfo
 		sumWKPP = Value_error;
 #endif
 
-		bkp = Value_error; wkp = Value_error;
+		//bkp = Value_error; wkp = Value_error;
 	}
 
 	void clear() {

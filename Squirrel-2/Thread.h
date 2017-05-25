@@ -202,7 +202,7 @@ public:
 	void set(Position pos);
 	int rdepth() { return rootdepth; }
 	Value think();
-
+	Value Qsearch();
 	ExtMove* find_rootmove(const Move object) {
 		for (ExtMove* i = RootMoves; i < end; i++) {
 			if (i->move == object) { return i; }

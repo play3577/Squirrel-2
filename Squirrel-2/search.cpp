@@ -717,27 +717,27 @@ Value Thread::think() {
 #endif
 
 
-		ASSERT(abs(bestvalue) < Value_Infinite);
+ASSERT(abs(bestvalue) < Value_Infinite);
 
-		sort_RootMove();
+sort_RootMove();
 
-		/*
-		mateを発見した時63回ループを回ろうとして制限時間を超えてしまうことが起こりうる
-		（この前の大会でそれで負けてしまった。）
-		のでここはmateを見つけたらすぐに返す実装にする
+/*
+mateを発見した時63回ループを回ろうとして制限時間を超えてしまうことが起こりうる
+（この前の大会でそれで負けてしまった。）
+のでここはmateを見つけたらすぐに返す実装にする
 
-		しかし誤mateかもしれないので20までは探索させる
+しかし誤mateかもしれないので20までは探索させる
 
-		*/
-		if (rootdepth > 20 && abs(bestvalue) > Value_mate_in_maxply) { goto ID_END; }
-
-
+*/
+if (rootdepth > 20 && abs(bestvalue) > Value_mate_in_maxply) { goto ID_END; }
 
 
-		if (signals.stop) {
-			//cout << "signals stop" << endl;
-			break;
-		}
+
+
+if (signals.stop) {
+	//cout << "signals stop" << endl;
+	break;
+}
 
 	}//end of 反復深化
 	sort_RootMove();
@@ -749,6 +749,83 @@ ID_END:
 	return bestvalue;
 }
 
+
+
+Value Thread::Qsearch() {
+
+	Stack stack[MAX_PLY + 7], *ss = stack + 5;
+	std::memset(ss - 5, 0, 8 * sizeof(Stack));//まえ8つだけ初期化する？？
+
+
+	Move PV_[MAX_PLY + 1];
+	ss->pv = PV_;
+	Value bestvalue, alpha, beta, delta;
+	pv.clear();
+
+	bool findbook = false;
+
+	if (end == RootMoves) {
+
+		return Value_Mated;
+	}
+
+	Move pondermove;
+
+
+
+	bestvalue = delta = alpha = -Value_Infinite;
+	beta = Value_Infinite;
+	rootdepth = 0;
+	int maxdepth;
+
+	seldepth = 0;
+
+	//時間制御
+	signals.stop = false;
+	this->resetCalls = false;
+	this->call_count = 0;
+
+	//cout << limit.endtime << endl;
+#if defined(LEARN) || defined(MAKEBOOK)
+	maxdepth = l_depth;//この値-1が実際に探索される深さ
+	alpha = this->l_alpha;
+	beta = this->l_beta;
+
+#else
+	maxdepth = MAX_DEPTH;
+#endif // !LEARN
+
+
+	//	Eval::eval(rootpos);
+
+#ifdef USETT
+	TT.new_search();
+#endif // USETT
+
+
+	bool isincheck = rootpos.is_incheck();
+	//qsearch<NT,true>(pos, ss + 1, -beta, -alpha, depth - ONE_PLY)
+	if (isincheck) {
+		bestvalue = qsearch<PV, true>(rootpos, ss, alpha, beta, DEPTH_ZERO);
+	}
+	else {
+		bestvalue = qsearch<PV, false>(rootpos, ss, alpha, beta, DEPTH_ZERO);
+	}
+	for (Move* m = (ss)->pv; *m != MOVE_NONE; ++m) {
+		this->pv.push_back(*m);
+	}
+	//print_pv(DEPTH_ZERO, bestvalue);
+	/*if (pv.size() > 2){
+		cout << pv.size() << endl;
+		print_pv(DEPTH_ZERO, bestvalue);
+	}*/
+	//cout << pv.size() << endl;
+	//sort_RootMove();
+ID_END:
+
+	//学習時は時間でreturn 0をしたりすることはないのでbestmoveにはちゃんと値が入っているはず
+	return bestvalue;
+}
 #endif
 
 
@@ -1861,7 +1938,7 @@ Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
 		//評価値がalpha超え、かつ合法手がない場合のflagとして用いる。
 		oldAlpha = alpha; 
 		(ss + 1)->pv = pv;
-		ss->pv[0] = MOVE_NONE;
+		ss->pv[0] = MOVE_NONE;//ここでエラーが出る
 	}
 	ss->currentMove = bestMove = MOVE_NONE;
 	ss->ply = (ss - 1)->ply + 1;

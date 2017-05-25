@@ -24,7 +24,7 @@ using namespace std;
 
 //#define test_learn
 
-#define LOG
+
 
 #define USED_POSKEY
 
@@ -136,7 +136,7 @@ std::vector<Game> testset;
 #ifdef USED_POSKEY
 //一度iteration内で出てきた局面は同じiteration内では使わないようにするためのvector.findを使って同じのがあるか見つける
 //sfenのほうがhash被りがないためいいかもしれないが,文字列比較だと遅い気がするので...
-std::vector<Key> UsedposKey;
+//std::vector<Key> UsedposKey;
 #endif
 
 
@@ -354,7 +354,7 @@ void Eval::parallel_learner() {
 	}
 
 #if defined(_MSC_VER)
-	filepath = "c:/book2/log/" + str + ".txt";
+	filepath = "c:/book2/log/" + str + "bonamethod.txt";
 #endif
 #if defined(__unix__) 
 	filepath = "/home/daruma/fvPP/" + str + ".txt";
@@ -449,6 +449,7 @@ void learnphase1body(int number) {
 	StateInfo si[500];
 	ExtMove moves[600], *end;
 	vector<MoveInfo> minfo_list;
+	
 	Thread th;
 	end = moves;
 
@@ -467,6 +468,7 @@ void learnphase1body(int number) {
 		auto thisgame = games[g];
 		pos.set_hirate();
 		th.cleartable();
+		//UsedPosKey.clear();
 		for (int ply = 0; ply < (thisgame.moves.size() - 1); ply++) {
 			diddepth = ply;
 			minfo_list.clear();
@@ -492,6 +494,7 @@ void learnphase1body(int number) {
 
 			//棋譜の差し手を指し手リストの一番最初に持ってくる。
 			Move teacher_move = thisgame.moves[ply];
+
 			//if (pos.is_legal(teacher_move) == false) { goto ERROR_OCCURED; }
 			//合法てリストに教師手が入っていなければここから先おかしくなってしまうのでこの棋譜を使っての学週はここで中断
 
@@ -682,8 +685,8 @@ void learnphase2body(int number)
 	Position pos;
 	StateInfo si[500];
 
-	
-
+	vector<Key> UsedPosKey;
+	UsedPosKey.clear();
 	//ExtMove moves[600], *end;
 	vector<MoveInfo> minfo_list;
 	Thread th;
@@ -698,6 +701,9 @@ void learnphase2body(int number)
 	for (int g = lock_index_inclement(); g < numgames; g = lock_index_inclement()) {
 
 		for (int i = 0; i <500; i++) si[i].clear();
+
+		
+
 
 		didmoves = 0;
 		Move teacher_move;
@@ -740,6 +746,17 @@ void learnphase2body(int number)
 					}
 				}
 				teacher_move = thisgame.moves[ply];
+
+				//同じ局面が現れたら無視する（スレッド別で持っているがまあ仕方ないか....）
+				if (std::find(UsedPosKey.begin(), UsedPosKey.end(), pos.key())!=UsedPosKey.end()) {
+					teacher_move = thisgame.moves[ply];
+					goto skip_calc;
+				}
+				else {
+					UsedPosKey.push_back(pos.key());
+				}
+
+
 				ASSERT(teacher_move == minfo_list[0].move);
 				Value teachervalue;
 				Value deepscore[600] = { Value(0) };
