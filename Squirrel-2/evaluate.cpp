@@ -3,7 +3,7 @@
 #include "evaluate.h"
 #include "progress.h"
 #include "position.h"
-
+#include "eval_hash.h"
 #include <utility>
 /*
 bonanza Œ©‚½‚çevah_hash‚Æ‚¢‚¤‚à‚Ì‚ª‚ ‚Á‚½
@@ -278,6 +278,34 @@ namespace Eval {
 		Value material= pos.state()->material;
 
 #ifndef EVAL_NONDIFF
+
+#ifdef EVALHASH
+		bool found=false;
+		EHASH_Entry* tte;
+		tte=EHASH.probe(pos.key(), found);
+		if (found) {
+			pos.state()->bpp = tte->bpp();
+			pos.state()->wpp = tte->wpp();
+			
+			int bpp = pos.state()->bpp;
+			int wpp = pos.state()->wpp;
+#ifdef DIFFTEST
+			
+			eval_PP(pos);
+			if (/*pp != eval_PP(pos)*/
+				bpp != pos.state()->bpp ||
+				wpp != pos.state()->wpp) {
+				cout << " diff " << Value((bpp + wpp) / FV_SCALE) << " evalfull " << eval_PP(pos) << endl;;
+				cout << "bpp " << bpp << " " << pos.state()->bpp << endl;;
+				cout << "wpp " << wpp << " " << pos.state()->wpp << endl;;
+			}
+#endif
+			ASSERT(((bpp + wpp) / FV_SCALE) < INT16_MAX);
+			return Value((bpp + wpp) / FV_SCALE);
+		}
+#endif
+
+
 		//ŒvŽZÏ‚Ý
 		if (pos.state()->bpp != Value_error) {
 			ASSERT(pos.state()->wpp != Value_error);
@@ -359,6 +387,9 @@ namespace Eval {
 		//}
 
 		//ASSERT(material == eval_material(pos));
+#ifdef EVALHASH
+		if(!found) tte->save(pos.key(), pos.state()->bpp, pos.state()->wpp);
+#endif
 
 #ifdef USETMP
 		return (pos.sidetomove() == BLACK) ? value+tempo: -value+tempo;

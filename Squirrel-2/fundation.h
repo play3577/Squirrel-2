@@ -68,7 +68,7 @@
 //-----------------------------•]‰¿ŠÖ”ŠÖ˜A
 
 #define  USETMP
-//#define DIFFTEST
+#define DIFFTEST
 //#define EVAL_NONDIFF
 
 

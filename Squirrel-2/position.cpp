@@ -131,14 +131,14 @@ void Position::set(std::string sfen)
 		st->checker = effect_toBB(opposite(sidetomove_), ksq(sidetomove_));
 
 	}
-
+	init_hash();
 	st->material = Eval::eval_material(*this);
 
 	list.makebonaPlist(*this);
 	//list.print_bplist();
 	Eval::eval(*this);
 //	Progress::calc_prog(*this);
-	init_hash();
+	
 	//cout << *this << endl;
 	
 	//list.print_bplist();

@@ -671,7 +671,7 @@ public:
 	bool pseudo_legal(const Move m) const;
 	//zoblisthashŠÖ˜A
 	void init_hash();
-	inline Key key() {
+	inline Key key()const {
 		return Key(st->board_ + st->hands_);
 	}
 

@@ -162,6 +162,7 @@
     <ClInclude Include="bitop.h" />
     <ClInclude Include="book.h" />
     <ClInclude Include="evaluate.h" />
+    <ClInclude Include="eval_hash.h" />
     <ClInclude Include="fundation.h" />
     <ClInclude Include="game_database.h" />
     <ClInclude Include="Hash.h" />
@@ -187,6 +188,7 @@
     <ClCompile Include="bitop.cpp" />
     <ClCompile Include="evaluate.cpp" />
     <ClCompile Include="evaluate_KPP.cpp" />
+    <ClCompile Include="eval_hash.cpp" />
     <ClCompile Include="fundation.cpp" />
     <ClCompile Include="game_database.cpp" />
     <ClCompile Include="Hash.cpp" />

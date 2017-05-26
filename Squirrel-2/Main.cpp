@@ -19,6 +19,7 @@
 #include "book.h"
 #include "occupied_m256.h"
 #include "progress.h"
+#include "eval_hash.h"
 
 #include <iostream>
 #include <string>
@@ -56,6 +57,9 @@ int main() {
 	Eval::init();
 	Zoblist::init();
 	search_init();
+#ifdef EVALHASH
+	EHASH.resize(64);
+#endif
 #ifndef LEARN
 	Threads.init();
 #endif
@@ -66,6 +70,7 @@ int main() {
 #ifdef USETT
 	TT.resize(64);
 #endif
+
 	//bitboard_debug();
 
 #ifdef TEST
