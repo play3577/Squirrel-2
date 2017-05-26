@@ -40,12 +40,12 @@ depth2‚Å‚Í•]‰¿’l100ˆÈ“à‚¾‚ª‘¼‚Å‚Í1000’´‚¦‚Ä‚µ‚Ü‚¤‚Ý‚½‚¢‚È...(TT‚ðon‚É‚µ‚½‚ç‚«‚ê‚
 
 
 #ifdef MAKETEST
-#define TEACHERPATH "C:/teacher/teacherd3_test.txt"
+string TEACHERPATH = "C:/teacher/teacherd3_test.txt";
 #else
-#define TEACHERPATH "C:/teacher/teacherd4.txt"
+string TEACHERPATH = "C:/teacher/teacherd6.txt";
 #endif
 
-#define DEPTH 5
+#define DEPTH 7
 
 #ifdef MAKESTARTPOS
 string Position::random_startpos()
@@ -445,6 +445,13 @@ void make_teacher()
 	cout << "maxnum:";
 	cin >> maxnum;
 
+	cout << "have G volume?[Y/N]" << endl;
+	string haveg;
+	cin >> haveg;
+	if (haveg == "Y" || haveg == "y") {
+		TEACHERPATH[0] = 'G';
+	}
+	cout << TEACHERPATH << endl;
 	//ŠJŽn‹Ç–Êƒf[ƒ^ƒx[ƒX“Ç‚Ýž‚Ý
 	/*
 	o‚Ä‚±‚È‚¢‚«‚å‚­‚ß‚ñ‚Î‚©‚è‚¾‚Á‚½‰Â”\«‚ª‘å‚È‚Ì‚Å’èÕ‚©‚ç“Ç‚Ýž‚Ü‚¹‚é
@@ -755,8 +762,13 @@ void reinforce_learn() {
 
 	//read_teacherdata();//‚±‚±‚Å‹³Žtƒf[ƒ^‚ð“Ç‚Ýž‚Þ
 
-
-
+	cout << "have G volume?[Y/N]" << endl;
+	string haveg;
+	cin >> haveg;
+	if (haveg == "Y"||haveg=="y") {
+		TEACHERPATH[0] = 'G';
+	}
+	cout << TEACHERPATH << endl;
 #ifdef LOG
 	std::string str, filepath;
 	time_t rawtime;
@@ -900,8 +912,6 @@ void reinforce_learn_pharse1(const int index) {
 		iÃŽ~’Tõ‚ÉrecaptureˆÈŠO‚ð“ü‚ê‚½‚çŽã‚­‚È‚Á‚½‚ª‚ ‚ê‚ÍƒoƒO‚ª‚ ‚Á‚½‚©‚ç‚È‚Ì‚©‚à‚µ‚ê‚È‚¢‚È...‚à‚¤ˆê‰ñŽŽ‚µ‚Ä‚Ý‚½‚Ù‚¤‚ª‚¢‚¢‚©j
 
 		1Žè’Tõ‚®‚ç‚¢‚Í‚µ‚½‚Ù‚¤‚ª‚¢‚¢‚Ì‚©‚à‚µ‚ê‚È‚¢
-
-		
 		*/
 		//const Value shallow_v = Eval::eval(pos);
 #if 0
@@ -954,10 +964,15 @@ void reinforce_learn_pharse1(const int index) {
 		Value shallow_v = (rootColor == pos.sidetomove()) ? Eval::eval(pos) : -Eval::eval(pos);//‚±‚±’Tõ‚Å‹A‚Á‚Ä‚«‚½’l‚É‚·‚×‚«Hi‚æ‚­‚È‚©‚Á‚½j
 		//Value shallow_v = shallow_serch_value;
 
-		//double win_teacher = win_sig(teacher);
-		//double win_shallow = win_sig(shallow_v);
-		//double diffsig = win_shallow - win_teacher;//Œð·ƒGƒ“ƒgƒƒs[ ‚±‚ê‚Ì‚Ù‚¤‚ª‚¢‚¢‚Á‚Änozomi‚³‚ñ‚ªŒ¾‚Á‚Ä‚½
-		double diffsig = shallow_v - teacher;
+		double win_teacher = win_sig(teacher);
+		double win_shallow = win_sig(shallow_v);
+		double diffsig = win_shallow - win_teacher;//Œð·ƒGƒ“ƒgƒƒs[ ‚±‚ê‚Ì‚Ù‚¤‚ª‚¢‚¢‚Á‚Änozomi‚³‚ñ‚ªŒ¾‚Á‚Ä‚½
+
+		/*
+		PP‚Ì•]‰¿’l‚ÌŒX‚«•û‚©‚ç‚µ‚Äponanza‚ÌŸ—¦‚ÌŽ®‚ÍŽg‚¦‚È‚¢‚ÆŽv‚Á‚Ä•]‰¿’l‚Ì·‚¾‚¯‚É‚µ‚Ä‚¢‚½‚ªA
+		‚±‚Ì•û–@‚¾‚Æ·‚ª‘å‚«‚·‚¬‚é‚Æ‚±‚ë‚Ì’l‚ªŽx”z“I‚É‚È‚Á‚Ä‚µ‚Ü‚¤‚Ì‚Å‚â‚Í‚èŸ—¦‚É•ÏŠ·‚·‚×‚«‚©HH
+		*/
+		//double diffsig = shallow_v - teacher;
 		
 		//loss += diffsig*diffsig;
 		loss += pow(diffsig, 2);
@@ -969,39 +984,39 @@ void reinforce_learn_pharse1(const int index) {
 
 
 }
-
+#if 0
 double PP_double[fe_end2][fe_end2] = {0,0};
 
 constexpr double row = 0.95, epsiron = 0.0001;
 double lastEg[fe_end2][fe_end2] = { 0.0 }, last_Edeltax[fe_end2][fe_end2] = { 0.0 };
 double RMS(const double a) { return sqrt(a + epsiron); }
 
-//
-//void PP_to_doublePP() {
-//
-//	for (BonaPiece i = f_hand_pawn; i < fe_end2; i++) {
-//		for (BonaPiece j = f_hand_pawn; j < fe_end2; j++) {
-//
-//			PP_double[i][j] = double(PP[i][j]);
-//		}
-//	}
-//
-//
-//}
-//
-//
-//void doublePP_to_PP() {
-//
-//	for (BonaPiece i = f_hand_pawn; i < fe_end2; i++) {
-//		for (BonaPiece j = f_hand_pawn; j < fe_end2; j++) {
-//
-//			PP[i][j] = int32_t(PP_double[i][j]);
-//		}
-//	}
-//}
+
+void PP_to_doublePP() {
+
+	for (BonaPiece i = f_hand_pawn; i < fe_end2; i++) {
+		for (BonaPiece j = f_hand_pawn; j < fe_end2; j++) {
+
+			PP_double[i][j] = double(PP[i][j]);
+		}
+	}
+
+
+}
+
+
+void doublePP_to_PP() {
+
+	for (BonaPiece i = f_hand_pawn; i < fe_end2; i++) {
+		for (BonaPiece j = f_hand_pawn; j < fe_end2; j++) {
+
+			PP[i][j] = int32_t(PP_double[i][j]);
+		}
+	}
+}
 
 //Adadelta‚ðŽŽ‚µ‚Ä‚Ý‚é
-#if 0
+
 void renewal_PP_rein(dJValue &data) {
 
 

@@ -40,17 +40,19 @@
 
 //---------------------------------学習関連
 
-#define LEARN      //学習（これ単体だとぼなぜぞ）
+//#define LEARN      //学習（これ単体だとぼなぜぞ）
 //#define MAKESTARTPOS //初期局面データ作成
-#define MAKETEACHER  //教師データ作成
+//#define MAKETEACHER  //教師データ作成
 //#define Prog_LEARN  //進行度学習
 //#define REIN      //強化学習
+#ifdef MAKETEACHER
 #define USETT
-
+#endif
 //学習中にTTをONにするとleafnodeにさかのぼれなくなる
 //TTに格納されているmoveでさかのぼれるかもしれないがエントリが破壊されてるかもしれないので
 #ifndef LEARN
 #define USETT
+#define EVALHASH
 #endif
 #ifdef USETT
 #define PREFETCH
