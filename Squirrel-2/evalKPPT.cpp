@@ -55,8 +55,8 @@ namespace Eval {
 		const Square bksq = pos.ksq(BLACK);
 		const Square wksq = pos.ksq(WHITE);
 
-		auto listfb = pos.evallist().bplist_fb;//bplist_fbの先頭
-		auto listfw = pos.evallist().bplist_fw;
+		auto* listfb = pos.evallist().bplist_fb;//bplist_fbの先頭
+		auto* listfw = pos.evallist().bplist_fw;
 
 		const auto* ppbkpp = KPP[bksq];//bkppへのポインタへのポインタ
 		const auto* ppwkpp = KPP[hihumin_eye(wksq)];
@@ -72,11 +72,14 @@ namespace Eval {
 		sum.p[1][1] = 0;
 		sum.p[2] = KK[bksq][wksq];
 		//loop 開始を i = 1 からにして、i = 0 の分のKKPを先に足す。
-		sum.p[2] += KKP[bksq][wksq][listfb[0]];
-		for (i = 1; i < 38; ++i) {
+
+		//sum.p[2] += KKP[bksq][wksq][listfb[0]];
+
+		for (i = 0; i < 38; ++i) {
 			
 			bp1fb = listfb[i];
 			bp1fw = listfw[i];
+			ASSERT(bp1fb < fe_end&&bp1fw < fe_end);
 			const auto* pbkpp = ppbkpp[bp1fb];
 			const auto* pwkpp = ppwkpp[bp1fw];
 
@@ -91,12 +94,16 @@ namespace Eval {
 			sum.p[2] += KKP[bksq][wksq][bp1fb];
 
 		}
-		return Value();
+
+		sum.p[2][0] += pos.state()->material*FV_SCALE;
+
+		cout << sum << endl;
+		return Value(sum.sum(pos.sidetomove())/FV_SCALE);
 	}
 
 	Value eval(const Position & pos)
 	{
-		return Value();
+		return eval_ALLKPPT(pos);
 	}
 
 }
