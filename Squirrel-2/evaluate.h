@@ -1,9 +1,9 @@
 #pragma once
 #include "fundation.h"
-
+#include <utility>
 #include <algorithm>
 #include <unordered_map>
-
+#include <array>
 
 
 using namespace std;
@@ -15,8 +15,23 @@ namespace Eval {
 	//あまり大きすぎるとパラメーターが変わりにくいのでbonanza6の値で合わせる
 	const int32_t FV_SCALE = 32;
 
-	//コマ割はやねうら王（やねうら王のコマ割はbonanza6）
 	enum :int16_t {
+#ifdef EVAL_APERYWCSC26
+		PawnValue = 90,
+		LanceValue = 315,
+		KnightValue = 405,
+		SilverValue = 495,
+		GoldValue = 540,
+		BishopValue = 855,
+		RookValue = 990,
+		ProPawnValue = 540,
+		ProLanceValue = 540,
+		ProKnightValue = 540,
+		ProSilverValue = 540,
+		HorseValue = 945,
+		DragonValue = 1395,
+		KingValue = 15000,
+#else
 		PawnValue = 86,
 		LanceValue = 227,
 		KnightValue = 256,
@@ -31,6 +46,7 @@ namespace Eval {
 		UnicornValue = 826,
 		DragonValue = 942,
 		KingValue = 15000,
+#endif
 	};
 
 	extern int16_t piece_value[PC_ALL];
@@ -47,7 +63,7 @@ namespace Eval {
 	{
 		
 		BONA_PIECE_ZERO = 0, 
-
+#ifndef EVAL_KPPT
 		 // --- 手駒
 		 f_hand_pawn = BONA_PIECE_ZERO + 1,
 		 e_hand_pawn = f_hand_pawn + 18,
@@ -64,7 +80,23 @@ namespace Eval {
 		 f_hand_rook = e_hand_bishop + 2,
 		 e_hand_rook = f_hand_rook + 2,
 		 fe_hand_end = e_hand_rook + 2,
-
+#elif defined(EVAL_KPPT)
+		f_hand_pawn = 0, // 0
+		e_hand_pawn = f_hand_pawn + 19,
+		f_hand_lance = e_hand_pawn + 19,
+		e_hand_lance = f_hand_lance + 5,
+		f_hand_knight = e_hand_lance + 5,
+		e_hand_knight = f_hand_knight + 5,
+		f_hand_silver = e_hand_knight + 5,
+		e_hand_silver = f_hand_silver + 5,
+		f_hand_gold = e_hand_silver + 5,
+		e_hand_gold = f_hand_gold + 5,
+		f_hand_bishop = e_hand_gold + 5,
+		e_hand_bishop = f_hand_bishop + 3,
+		f_hand_rook = e_hand_bishop + 3,
+		e_hand_rook = f_hand_rook + 3,
+		fe_hand_end = e_hand_rook + 3,
+#endif
 		 f_pawn = fe_hand_end,
 		 e_pawn = f_pawn + 81,
 		 f_lance = e_pawn + 81,
@@ -353,6 +385,69 @@ namespace Eval {
 
 	void param_sym_ij();
 #endif //  EVAL_KPP
+
+#ifdef EVAL_KPPT
+	/*
+	この辺りはApery、やねうら王参考
+	*/
+
+	template <typename Tl, typename Tr>
+	inline std::array<Tl, 2> operator += (std::array<Tl, 2>& lhs, const std::array<Tr, 2>& rhs) {
+		lhs[0] += rhs[0];
+		lhs[1] += rhs[1];
+		return lhs;
+	}
+	template <typename Tl, typename Tr>
+	inline std::array<Tl, 2> operator -= (std::array<Tl, 2>& lhs, const std::array<Tr, 2>& rhs) {
+		lhs[0] -= rhs[0];
+		lhs[1] -= rhs[1];
+		return lhs;
+	}
+
+	//これBonapieceの配列の一が違うので全部直さないといけない！！！！
+	extern std::array<int16_t, 2> KPP[SQ_NUM][fe_end][fe_end];
+	extern std::array<int32_t, 2> KKP[SQ_NUM][SQ_NUM][fe_end];
+	extern std::array<int32_t, 2> KK[SQ_NUM][SQ_NUM];
+	
+	struct EvalSum {
+
+		union 
+		{
+			/*
+			p[0][0]が手番に関係ないbkppp[0][1]が手番ボーナス
+			p[1]　　　がwkpp
+			p[2][0]が手番に関係ないkk kkp material*FVSCALE p2[2][1]がkk kkp の手番ボーナス
+			*/ 
+			std::array<std::array<int32_t, 2>, 3> p;
+			uint64_t data[3];//まあ学習部の実装確認するだけだしehashを使う予定はないのでこれでいいだろう
+		};
+
+		int32_t sum(const Color c)const {
+			// NDF(2014)の手番評価の手法。(from やねうら王)
+			// cf. http://www.computer-shogi.org/wcsc24/appeal/NineDayFever/NDF.txt
+
+			const int32_t eval_except_turn = p[0][0] - p[1][0] + p[2][0];//bpp-wpp+kkp+kk+(material*FVScale)
+			const int32_t eval_turn_bonus = p[0][1] + p[1][1] + p[2][1];//bpp+wpp+kkp+kk
+			return (c == BLACK ? eval_except_turn : -eval_except_turn) + eval_turn_bonus;
+
+		}
+
+		bool is_evaluated()const { return p[0][0] != VALUE_NOT_EVALUATED; }
+	};
+
+	static std::ostream& operator<<(std::ostream& os, const EvalSum& sum)
+	{
+		os << "sum BKPP = " << sum.p[0][0] << " + " << sum.p[0][1] << std::endl;
+		os << "sum WKPP = " << sum.p[1][0] << " + " << sum.p[1][1] << std::endl;
+		os << "sum KK   = " << sum.p[2][0] << " + " << sum.p[2][1] << std::endl;
+		return os;
+	}
+
+	void read_FV();
+	void write_FV();
+	Value eval_ALLKPPT(const Position& pos);
+	inline void init() { read_FV(); }
+#endif
 
 	constexpr Value tempo = Value(40);
 };

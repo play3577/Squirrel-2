@@ -970,7 +970,7 @@ void reinforce_learn_pharse1(const int index) {
 
 		/*
 		PPの評価値の傾き方からしてponanzaの勝率の式は使えないと思って評価値の差だけにしていたが、
-		この方法だと差が大きすぎるところの値が支配的になってしまうのでやはり勝率に変換すべきか？？
+		そのままの評価値だと差が大きすぎるところの値が支配的になってしまうのでやはり勝率に変換すべきか？？
 		*/
 		//double diffsig = shallow_v - teacher;
 		

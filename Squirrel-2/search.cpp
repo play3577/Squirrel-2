@@ -6,6 +6,7 @@
 #include "book.h"
 #include <random>
 #include "TimeManeger.h"
+#include "eval_hash.h"
 /*
 がうるさんのコメント
 
@@ -1616,6 +1617,9 @@ moves_loop:
 		//これ早くなるんだろうか？？
 #ifdef PREFETCH
 		TT.prefetch(pos.key_after_move(move));
+#ifdef EVALHASH
+		EHASH.prefetch(pos.key_after_move(move));
+#endif
 #endif
 		/*
 		domoveの直前でlegalチェック
@@ -2189,6 +2193,9 @@ Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
 		//これ早くなるんだろうか？？
 #ifdef PREFETCH
 		TT.prefetch(pos.key_after_move(move));
+#ifdef EVALHASH
+		EHASH.prefetch(pos.key_after_move(move));
+#endif
 #endif
 
 

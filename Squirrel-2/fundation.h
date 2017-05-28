@@ -52,7 +52,7 @@
 //TTに格納されているmoveでさかのぼれるかもしれないがエントリが破壊されてるかもしれないので
 #ifndef LEARN
 #define USETT
-#define EVALHASH
+//#define EVALHASH
 #endif
 #ifdef USETT
 #define PREFETCH
@@ -68,13 +68,13 @@
 //-----------------------------評価関数関連
 
 #define  USETMP
-#define DIFFTEST
+//#define DIFFTEST
 //#define EVAL_NONDIFF
-
+#define EVAL_APERYWCSC26
 
 //#define EVAL_KPP
-
-#ifndef EVAL_KPP
+#define EVAL_KPPT
+#if !defined(EVAL_KPP) && !defined(EVAL_KPPT)
 #define EVAL_PP
 #endif // !EVAL_KPP
 
@@ -229,6 +229,7 @@ enum Value :int{
 	Value_Infinite = 32761,
 	Value_error = INT_MIN,
 	
+	VALUE_NOT_EVALUATED = 32761,
 	//駒の価値
 	/*Hiyoko_value = 100,
 	Zou_value = 150,

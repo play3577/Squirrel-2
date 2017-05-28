@@ -118,10 +118,15 @@ void USI::init_option(OptionMap &o,string engine_name)
 
 	o["KPP"] << USIOption("c:/eval_KPP/fv_kpp.bin");
 	o["KKP"] << USIOption("c:/eval_KPP/fv_kkp.bin");
-
+#elif defined(EVAL_PP)
+	o["eval"] << USIOption("c:/book2/fv_PP.bin");
+#elif defined(EVAL_KPPT)
+	o["KPP"] << USIOption("C:/evalKPPT/Apery26/KPP_synthesized.bin");
+	o["KKP"] << USIOption("C:/evalKPPT/Apery26/KKP_synthesized.bin");
+	o["KK"] << USIOption("C:/evalKPPT/Apery26/KK_synthesized.bin");
 #endif //  EVAL_KPP
 
-	o["eval"] << USIOption("c:/book2/fv_PP.bin");
+	
 
 
 }
@@ -230,16 +235,17 @@ void go(Position& pos, istringstream& is/*, Thread& th*/) {
 	Eval::eval_KPP(pos);
 #else
 
+#ifdef EVAL_PP
 
-
-#ifdef HAVE_AVX2
-	Eval::eval_allPP_AVX2(pos);
-#else
-	Eval::eval_PP(pos);
+	#ifdef HAVE_AVX2
+		Eval::eval_allPP_AVX2(pos);
+	#else
+		Eval::eval_PP(pos);
+	#endif
 #endif
-
-
-
+#ifdef EVAL_KPPT
+		Eval::eval_ALLKPPT(pos);
+#endif
 
 #endif //  EVAL_KPP
 

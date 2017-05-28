@@ -11,6 +11,9 @@ key‚ª”í‚Á‚Ä‚µ‚Ü‚¤‚Æ”ßŽS‚ÈŒ‹‰Ê‚ª‹N‚±‚éB‚Ç‚¤‚·‚ê‚Îhash‚ª”í‚ç‚È‚¢‚æ‚¤‚É‚Å‚«‚é‚Ì‚¾‚
 
 ‚»‚µ‚Ä‚Æ‚è‚ ‚¦‚¸PP‚Ìê‡‚ÌEHASH‚ðì¬‚·‚é
 
+
+ŽÀ‘•‚ª‚æ‚­‚È‚¢‚Ì‚©‚»‚ê‚Æ‚à
+2‹î‚Ìê‡‚Í·•ª‚ÅŒvŽZ‚·‚é‚Ù‚¤‚ªhash‚ðŽg‚¤‚æ‚è‘‚¢‚Ì‚©
 */
 #ifdef EVAL_PP
 struct EHASH_Entry

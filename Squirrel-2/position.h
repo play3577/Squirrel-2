@@ -75,7 +75,7 @@ struct StateInfo
 	int32_t bpp=Value_error,wpp=Value_error;
 
 
-#elif EVAL_KPP 1
+#elif defined(EVAL_KPP) 
 	int sumKKP=Value_error;
 	int sumBKPP=Value_error;
 	int sumWKPP=Value_error;
@@ -94,7 +94,7 @@ struct StateInfo
 		bpp = Value_error; wpp = Value_error;
 
 
-#elif EVAL_KPP 1
+#elif defined(EVAL_KPP) 
 		sumKKP = Value_error;
 		sumBKPP = Value_error;
 		sumWKPP = Value_error;

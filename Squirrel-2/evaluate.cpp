@@ -301,7 +301,9 @@ namespace Eval {
 			}
 #endif
 			ASSERT(((bpp + wpp) / FV_SCALE) < INT16_MAX);
-			return Value((bpp + wpp) / FV_SCALE);
+			//ここmaterialとtempoいれるの忘れてる！！！！！
+			pp=Value((bpp + wpp) / FV_SCALE);
+			goto FIND_HASH;
 		}
 #endif
 
@@ -375,7 +377,11 @@ namespace Eval {
 			UNREACHABLE;
 		}*/
 		//pp = eval_PP(pos);
+#ifdef EVALHASH
+		tte->save(pos.key(), pos.state()->bpp, pos.state()->wpp);
+#endif
 
+FIND_HASH:
 		value = material + pp;
 
 		//コレは確認済み
@@ -387,9 +393,6 @@ namespace Eval {
 		//}
 
 		//ASSERT(material == eval_material(pos));
-#ifdef EVALHASH
-		if(!found) tte->save(pos.key(), pos.state()->bpp, pos.state()->wpp);
-#endif
 
 #ifdef USETMP
 		return (pos.sidetomove() == BLACK) ? value+tempo: -value+tempo;
@@ -1354,6 +1357,7 @@ namespace Eval {
 		write_FV();
 		read_FV();
 	}
+	
 #endif
 
 #if defined(LEARN) && defined(EVAL_KPP)

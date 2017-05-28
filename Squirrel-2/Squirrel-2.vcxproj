@@ -186,6 +186,7 @@
     <ClCompile Include="benchmark.cpp" />
     <ClCompile Include="Bitboard.cpp" />
     <ClCompile Include="bitop.cpp" />
+    <ClCompile Include="evalKPPT.cpp" />
     <ClCompile Include="evaluate.cpp" />
     <ClCompile Include="evaluate_KPP.cpp" />
     <ClCompile Include="eval_hash.cpp" />

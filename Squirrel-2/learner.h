@@ -304,7 +304,7 @@ struct  dJValue
 
 #endif
 
-
+#ifdef LEARN
 int sign(const double d);
 
 bool swapmove(ExtMove* moves, const int num, const Move m);
@@ -320,3 +320,4 @@ void renewal_PP(dJValue &data);
 
 void lower__dimPP(lowerDimPP& lowdim, const dJValue& gradJ);
 void weave_lowdim_to_gradj(dJValue& newgradJ, const lowerDimPP& lowdim);
+#endif
