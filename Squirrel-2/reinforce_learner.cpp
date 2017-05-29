@@ -996,19 +996,22 @@ void reinforce_learn_pharse1(const int index) {
 
 		double win_teacher = win_sig(teacher);
 		double win_shallow = win_sig(shallow_v);
-		double diffsig = win_shallow - win_teacher;//交差エントロピー これのほうがいいってnozomiさんが言ってた
+		double diffsig_ = win_shallow - win_teacher;//交差エントロピー これのほうがいいってnozomiさんが言ってた
 
 		/*
 		PPの評価値の傾き方からしてponanzaの勝率の式は使えないと思って評価値の差だけにしていたが、
 		そのままの評価値だと差が大きすぎるところの値が支配的になってしまうのでやはり勝率に変換すべきか？？
 		*/
-		//double diffsig = shallow_v - teacher;
+		//double diffsig_ = shallow_v - teacher;
 		
-		//loss += diffsig*diffsig;
-		loss += pow(diffsig, 2);
-		diffsig = (rootColor == BLACK ? diffsig : -diffsig);//+bpp-wppの関係
-
-		gradJs[index].update_dJ(pos, -diffsig);
+		//loss += diffsig_*diffsig_;
+		loss += pow(diffsig_, 2);
+		//double diffsig= (rootColor == BLACK ? diffsig_ : -diffsig_);
+		//gradJs[index].update_dJ(pos, -diffsig);
+		double diffsig_withoutturn = (rootColor == BLACK ? diffsig_ : -diffsig_);//+bpp-wppの関係
+		double diffsig_turn = diffsig_;
+		std::array<float, 2> diffsig = { -diffsig_withoutturn,(rootColor == pos.sidetomove() ? -diffsig_turn : diffsig_turn) };
+		gradJs[index].update_dJ(pos, diffsig);
 
 	}
 
@@ -1098,7 +1101,7 @@ void renewal_PP_rein(dJValue &data) {
 /*
 wcsc27でnozomiさんに教えていただいた方法。
 勾配の方向に1だけ動かす！！！！！！！！
-KPPなどに局所解はあまりないというのが見解としてわかったらしいので0~2までの範囲で動かす値を変えるなんてしなくていいみたい。
+kppなどに局所解はあまりないというのが見解としてわかったらしいので0~2までの範囲で動かす値を変えるなんてしなくていいみたい。
 なんか昔はハイパーパラメータいろいろ弄ったらしいがここに落ち着いたようだ...
 
 この方法は大量に棋譜があって何回もiterationを回せるのならいいのかもしれないがそうではないうちではちゃんと収束まで持ち込めなくてうまくいかないのかも...
@@ -1126,7 +1129,7 @@ void renewal_PP_nozomi(dJValue &data) {
 	//書き出した後読み込むことで値を更新する　ここで32回も書き出し書き込みを行うのは無駄最後にまとめて行う
 #elif defined(EVAL_KPP)
 	for (Square ksq = SQ_ZERO; ksq < Square(81); ksq++) {
-		//KPP-----------------------------------------------------------
+		//kpp-----------------------------------------------------------
 		for (BonaPiece bp1 = BONA_PIECE_ZERO; bp1 < fe_end; bp1++) {
 			for (BonaPiece bp2 = BONA_PIECE_ZERO; bp2 < fe_end; bp2++) {
 				int inc = h*sign(data.absolute_KPP[ksq][bp1][bp2]);
@@ -1135,7 +1138,7 @@ void renewal_PP_nozomi(dJValue &data) {
 				}
 			}
 		}
-		//KKP-----------------------------------------------------------
+		//kkp-----------------------------------------------------------
 		for (Square ksq2 = SQ_ZERO; ksq2 < Square(81); ksq2++) {
 			for (BonaPiece bp3 = BONA_PIECE_ZERO; bp3 < fe_end + 1; bp3++) {
 
@@ -1147,6 +1150,37 @@ void renewal_PP_nozomi(dJValue &data) {
 			}
 		}
 	}
+#elif defined(EVAL_KPPT)
+
+	int inc;
+	for (Square ksq = SQ_ZERO; ksq < SQ_NUM; ksq++) {
+		//kpp-----------------------------------------------------------
+		for (BonaPiece bp1 = BONA_PIECE_ZERO; bp1 < fe_end; bp1++) {
+			for (BonaPiece bp2 = BONA_PIECE_ZERO; bp2 < fe_end; bp2++) {
+				inc = h*sign(data.kpp[ksq][bp1][bp2][0]);
+				KPP[ksq][bp1][bp2][0]+=inc;
+				inc = h*sign(data.kpp[ksq][bp1][bp2][1]);
+				KPP[ksq][bp1][bp2][1] += inc;
+			}
+		}
+		//kkp  &kk -----------------------------------------------------------
+		for (Square ksq2 = SQ_ZERO; ksq2 < SQ_NUM; ksq2++) {
+
+			inc = h*sign(data.kk[ksq][ksq2][0]);
+			KK[ksq][ksq2][0] +=inc;
+			inc = h*sign(data.kk[ksq][ksq2][1]);
+			KK[ksq][ksq2][1] += inc;
+
+			for (BonaPiece bp3 = BONA_PIECE_ZERO; bp3 < fe_end; bp3++) {
+				inc=h*sign(data.kkp[ksq][ksq2][bp3][0]);
+				KKP[ksq][ksq2][bp3][0] += inc;
+				inc = h*sign(data.kkp[ksq][ksq2][bp3][1]);
+				KKP[ksq][ksq2][bp3][1] += inc;
+			}
+		}
+	}
+
+
 
 #endif
 

@@ -1367,7 +1367,7 @@ FIND_HASH:
 		//bool check_KKP[82][82][fe_end + 1] = { false };
 
 		for (Square ksq = SQ_ZERO; ksq < Square(82); ksq++) {
-			//KPP-----------------------------------------------------------
+			//kpp-----------------------------------------------------------
 			for (BonaPiece bp1 = BONA_PIECE_ZERO; bp1 < fe_end; bp1++) {
 				for (BonaPiece bp2 = BONA_PIECE_ZERO; bp2 < fe_end; bp2++) {
 
@@ -1378,7 +1378,7 @@ FIND_HASH:
 					}
 				}
 			}
-			//KKP-----------------------------------------------------------
+			//kkp-----------------------------------------------------------
 			/*for (Square ksq2 = SQ_ZERO; ksq2 < Square(82); ksq2++) {
 				for (BonaPiece bp3 = BONA_PIECE_ZERO; bp3 < fe_end + 1; bp3++) {
 
@@ -1391,6 +1391,30 @@ FIND_HASH:
 			}*/
 		}
 		
+	}
+#endif
+
+#if defined(LEARN) && defined(EVAL_KPPT)
+	void Eval::param_sym_ij() {
+
+		//bool check_KPP[82][fe_end][fe_end] = { false };
+
+		//for (Square ksq = SQ_ZERO; ksq < SQ_NUM; ksq++) {
+		//	//kpp-----------------------------------------------------------
+		//	for (BonaPiece bp1 = BONA_PIECE_ZERO; bp1 < fe_end; bp1++) {
+		//		for (BonaPiece bp2 = BONA_PIECE_ZERO; bp2 < fe_end; bp2++) {
+
+		//			if (check_KPP[ksq][bp1][bp2] == false) {
+		//				check_KPP[ksq][bp1][bp2] = check_KPP[ksq][bp2][bp1] = true;
+		//				std::array<int16_t, 2> a = KPP[ksq][bp1][bp2], b = KPP[ksq][bp2][bp1];
+		//				KPP[ksq][bp1][bp2] = KPP[ksq][bp2][bp1] = (a + b) / 2;
+		//			}
+		//		}
+		//	}
+		//}
+		
+		
+
 	}
 #endif
 	/*

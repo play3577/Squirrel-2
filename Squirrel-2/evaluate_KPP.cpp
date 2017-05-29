@@ -47,16 +47,16 @@ namespace Eval {
 		int i, j;
 
 		BonaPiece k0, k1;
-		int32_t bKPP, wKPP, KKP;
+		int32_t bKPP, wKPP, kkp;
 
-		KKP = kkp[bksq][wksq][fe_end];
+		kkp = kkp[bksq][wksq][fe_end];
 		bKPP = 0;
 		wKPP = 0;
 		for (i = 0; i < 38; i++) {
 
 			k0 = list_fb[i];
 			k1 = list_fw[i];
-			KKP += kkp[bksq][wksq][k0];
+			kkp += kkp[bksq][wksq][k0];
 
 			for (j = 0; j < i; j++) {
 				bKPP += kpp[bksq][k0][list_fb[j]];
@@ -66,10 +66,10 @@ namespace Eval {
 
 		pos.state()->sumBKPP = bKPP;
 		pos.state()->sumWKPP = wKPP;
-		pos.state()->sumKKP = KKP;
+		pos.state()->sumKKP = kkp;
 
 
-		return Value((bKPP + wKPP + KKP / FV_SCALE_KKP) / FV_SCALE);
+		return Value((bKPP + wKPP + kkp / FV_SCALE_KKP) / FV_SCALE);
 
 
 	}
@@ -80,12 +80,12 @@ namespace Eval {
 
 		auto now = pos.state();
 
-		int KKP, bKPP, wKPP;
+		int kkp, bKPP, wKPP;
 
 		//すでに計算されていた
 		if (now->sumBKPP != Value_error&&now->sumWKPP != Value_error&&now->sumKKP != Value_error) {
 
-			KKP = now->sumKKP;
+			kkp = now->sumKKP;
 			bKPP = now->sumBKPP;
 			wKPP = now->sumWKPP;
 			goto DIFFEND;
@@ -99,7 +99,7 @@ namespace Eval {
 		
 		//ここから差分計算開始！！
 		{
-			KKP = prev->sumKKP;
+			kkp = prev->sumKKP;
 			bKPP = prev->sumBKPP;
 			wKPP = prev->sumWKPP;
 			int k0, k1, k2, k3;
@@ -143,12 +143,12 @@ namespace Eval {
 
 					bKPP = 0;
 
-					KKP = kkp[bksq][wksq][fe_end];
+					kkp = kkp[bksq][wksq][fe_end];
 
 					for (i = 0; i < 38; i++) {
 						k0 = now_list_fb[i];
 
-						KKP += kkp[bksq][wksq][k0];
+						kkp += kkp[bksq][wksq][k0];
 
 						for (j = 0; j < i; j++) {
 							bKPP += kpp[bksq][k0][now_list_fb[j]];
@@ -174,13 +174,13 @@ namespace Eval {
 				else {
 					ASSERT(movedpiece == W_KING);
 					wKPP = 0;
-					KKP= kkp[bksq][wksq][fe_end];
+					kkp= kkp[bksq][wksq][fe_end];
 					
-					//白側とKKPを全計算 
+					//白側とkkpを全計算 
 					for (i = 0; i < 38; ++i) {
-						k0 = now_list_fb[i];//k0はKKPで使う
+						k0 = now_list_fb[i];//k0はkkpで使う
 						k1 = now_list_fw[i];
-						KKP += kkp[bksq][wksq][k0];
+						kkp += kkp[bksq][wksq][k0];
 						for (j = 0; j < i; j++) {
 							wKPP -= kpp[wksq][k1][now_list_fw[j]];
 						}
@@ -221,8 +221,8 @@ namespace Eval {
 					k3 = newbp1_fw;
 
 					//kkp差分
-					KKP -= kkp[bksq][wksq][k0];
-					KKP += kkp[bksq][wksq][k2];
+					kkp -= kkp[bksq][wksq][k0];
+					kkp += kkp[bksq][wksq][k2];
 
 					//kpp差分 
 					for (i = 0; i < moveduniform1; ++i) {
@@ -232,7 +232,7 @@ namespace Eval {
 						ADD_BWKPP(k0, k1, k2, k3);
 					}
 				}
-				//2つ駒が動いた。この場合のKPP差分がめんどくさい
+				//2つ駒が動いた。この場合のkpp差分がめんどくさい
 				else {
 
 					//kpp差分計算の都合上moveduniform1を先に持ってくる
@@ -250,10 +250,10 @@ namespace Eval {
 					m3 = newbp2_fw;
 
 					//kkp差分
-					KKP -= kkp[bksq][wksq][k0];
-					KKP += kkp[bksq][wksq][k2];
-					KKP -= kkp[bksq][wksq][m0];
-					KKP += kkp[bksq][wksq][m2];
+					kkp -= kkp[bksq][wksq][k0];
+					kkp += kkp[bksq][wksq][k2];
+					kkp -= kkp[bksq][wksq][m0];
+					kkp += kkp[bksq][wksq][m2];
 
 					//kpp差分
 					for (i = 0; i < moveduniform1; ++i)
@@ -308,10 +308,10 @@ namespace Eval {
 #ifdef DIFFTEST
 				{
 					eval_KPP(pos);
-					if (KKP != pos.state()->sumKKP || bKPP != pos.state()->sumBKPP || wKPP != pos.state()->sumWKPP) {
+					if (kkp != pos.state()->sumKKP || bKPP != pos.state()->sumBKPP || wKPP != pos.state()->sumWKPP) {
 
 						cout << pos << endl;
-						cout << "KKP " << KKP << ":" << pos.state()->sumKKP << " bkpp " << bKPP << ":" << pos.state()->sumBKPP << " wkpp " << wKPP << ":" << pos.state()->sumWKPP << endl;
+						cout << "KKP " << kkp << ":" << pos.state()->sumKKP << " bkpp " << bKPP << ":" << pos.state()->sumBKPP << " wkpp " << wKPP << ":" << pos.state()->sumWKPP << endl;
 						/*cout << oldbp1_fb << endl;
 						cout << oldbp1_fw << endl;
 						cout << oldbp2_fb << endl;
@@ -332,14 +332,14 @@ namespace Eval {
 
 			}
 
-			now->sumKKP = KKP;
+			now->sumKKP = kkp;
 			now->sumBKPP = bKPP;
 			now->sumWKPP = wKPP;
 
 		}//差分計算
 		
 	DIFFEND:;
-		return (Value)((bKPP + wKPP + KKP / FV_SCALE_KKP) / FV_SCALE);
+		return (Value)((bKPP + wKPP + kkp / FV_SCALE_KKP) / FV_SCALE);
 
 	}
 

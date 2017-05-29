@@ -4,7 +4,7 @@
 
 
 #include "learner.h"
-#if defined(LEARN) 
+#if defined(LEARN) && !defined(REIN)
 #include <random>
 #include <vector>
 #include <time.h>       /* time_t, struct tm, time, localtime */
@@ -91,13 +91,13 @@ void renewal_PP(dJValue &data) {
 	}
 #elif defined(EVAL_KPP)
 	for (Square ksq = SQ_ZERO; ksq < Square(82); ksq++) {
-		//KPP-----------------------------------------------------------
+		//kpp-----------------------------------------------------------
 		for (BonaPiece bp1 = BONA_PIECE_ZERO; bp1 < fe_end; bp1++) {
 			for (BonaPiece bp2 = BONA_PIECE_ZERO; bp2 < fe_end; bp2++) {
 				kpp[ksq][bp1][bp2] += h*sign(data.absolute_KPP[ksq][bp1][bp2]);
 			}
 		}
-		//KKP-----------------------------------------------------------
+		//kkp-----------------------------------------------------------
 		for (Square ksq2 = SQ_ZERO; ksq2 < Square(82); ksq2++) {
 			for (BonaPiece bp3 = BONA_PIECE_ZERO; bp3 < fe_end + 1; bp3++) {
 				kkp[ksq][ksq2][bp3] += h*sign(data.absolute_KKP[ksq][ksq2][bp3]);
@@ -622,7 +622,7 @@ void learnphase1body(int number) {
 void learnphase2() {
 	
 #ifdef JIGENSAGE
-	//KPPだとでかすぎてコンパイルできないので動的確保するしかない
+	//kppだとでかすぎてコンパイルできないので動的確保するしかない
 	//lowerDimPP lowdimPP;
 	auto lowdimPP = unique_ptr<lowerDimPP>(new lowerDimPP);
 #endif
@@ -1053,13 +1053,13 @@ void lowdim_each_KKP(lowerDimPP & lowdim, const dJValue& gradJ, const Square ksq
 
 	const double grad = gradJ.absolute_KKP[ksq][ksq2][bp];
 
-	//絶対KKP
+	//絶対kkp
 	lowdim.absolute_KKP[k1][k2][bp] += grad;
 	//絶対KP
 	lowdim.absolute_KP[k1][bp] += grad;
 	lowdim.absolute_KP[k2][bp] += grad;
 
-	//相対KKP
+	//相対kkp
 	//相対はK1とP   K2とP に対して行うことができる (さすがにKKに対してはまずい気がする)　
 	//う～～んこの方法3駒の場合はうまくいかないような気がしてきた...）
 	//bpが盤上の駒だった場合
@@ -1081,7 +1081,7 @@ void lowdim_each_KPP(lowerDimPP & lowdim, const dJValue& gradJ, const Square ksq
 
 	const double grad = gradJ.absolute_KPP[ksq][bp1][bp2];
 
-	//絶対KPP
+	//絶対kpp
 	lowdim.absolute_KPP[ksq][i][j] += grad;
 	//絶対PP
 	lowdim.absolute_PP[i][j] += grad;
@@ -1103,7 +1103,7 @@ void weave_eachKKP(dJValue& newgradJ, const lowerDimPP& lowdim, const Square ksq
 	if (ksq == ksq2) { return; }
 	const Square k1 = std::max(ksq, ksq2), k2 = std::min(ksq, ksq2);
 
-	newgradJ.absolute_KKP[ksq][ksq2][bp] += lowdim.absolute_KKP[k1][k2][bp];//絶対KKP
+	newgradJ.absolute_KKP[ksq][ksq2][bp] += lowdim.absolute_KKP[k1][k2][bp];//絶対kkp
 	newgradJ.absolute_KKP[ksq][ksq2][bp] += lowdim.absolute_KP[k1][bp];
 	newgradJ.absolute_KKP[ksq][ksq2][bp] += lowdim.absolute_KP[k2][bp];
 
@@ -1125,7 +1125,7 @@ void weave_eachKPP(dJValue& newgradJ, const lowerDimPP& lowdim,const Square ksq,
 	if (bp1 == bp2) { return; }//一致する場所はevaluateで見ないのでgradJも0になっている。これは無視していい。
 	const BonaPiece i = std::max(bp1, bp2), j = std::min(bp1, bp2);
 
-	newgradJ.absolute_KPP[ksq][bp1][bp2] += lowdim.absolute_KPP[ksq][i][j];//絶対KPP
+	newgradJ.absolute_KPP[ksq][bp1][bp2] += lowdim.absolute_KPP[ksq][i][j];//絶対kpp
 	newgradJ.absolute_KPP[ksq][bp1][bp2] += lowdim.absolute_PP[i][j];//絶対PP
 																	 //ijともに盤上になる
 	if (i >= f_pawn&&j >= f_pawn) {
@@ -1142,13 +1142,13 @@ void weave_eachKPP(dJValue& newgradJ, const lowerDimPP& lowdim,const Square ksq,
 void lower__dimPP(lowerDimPP & lowdim, const dJValue& gradJ)
 {
 	for (Square ksq = SQ_ZERO; ksq < Square(81); ksq++) {
-		//KPP-----------------------------------------------------------
+		//kpp-----------------------------------------------------------
 		for (BonaPiece bp1 = BONA_PIECE_ZERO; bp1 < fe_end; bp1++) {
 			for (BonaPiece bp2 = BONA_PIECE_ZERO; bp2 < fe_end; bp2++) {
 				lowdim_each_KPP(lowdim, gradJ, ksq, bp1, bp2);
 			}
 		}
-		//KKP-----------------------------------------------------------
+		//kkp-----------------------------------------------------------
 		for (Square ksq2 = SQ_ZERO; ksq2 < Square(81); ksq2++) {
 			for (BonaPiece bp3 = BONA_PIECE_ZERO; bp3 < fe_end + 1; bp3++) {
 				lowdim_each_KKP(lowdim, gradJ, ksq, ksq2, bp3);
@@ -1160,13 +1160,13 @@ void lower__dimPP(lowerDimPP & lowdim, const dJValue& gradJ)
 void weave_lowdim_to_gradj(dJValue& newgradJ, const lowerDimPP& lowdim) 
 {
 	for (Square ksq = SQ_ZERO; ksq < Square(81); ksq++) {
-		//KPP-----------------------------------------------------------
+		//kpp-----------------------------------------------------------
 		for (BonaPiece bp1 = BONA_PIECE_ZERO; bp1 < fe_end; bp1++) {
 			for (BonaPiece bp2 = BONA_PIECE_ZERO; bp2 < fe_end; bp2++) {
 				weave_eachKPP(newgradJ, lowdim, ksq, bp1, bp2);
 			}
 		}
-		//KKP-----------------------------------------------------------
+		//kkp-----------------------------------------------------------
 		for (Square ksq2 = SQ_ZERO; ksq2 < Square(81); ksq2++) {
 			for (BonaPiece bp3 = BONA_PIECE_ZERO; bp3 < fe_end + 1; bp3++) {
 				weave_eachKKP(newgradJ, lowdim, ksq, ksq2, bp3);

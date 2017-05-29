@@ -126,8 +126,8 @@ void USI::init_option(OptionMap &o,string engine_name)
 	o["defined_time"] << USIOption(1000,100,100000);
 #ifdef  EVAL_KPP
 	
-	/*o["KPP"] << USIOption("c:/yaneeval/kpp16ap.bin");
-	o["KKP"] << USIOption("c:/yaneeval/kkp32ap.bin");*/
+	/*o["kpp"] << USIOption("c:/yaneeval/kpp16ap.bin");
+	o["kkp"] << USIOption("c:/yaneeval/kkp32ap.bin");*/
 
 	o["KPP"] << USIOption("c:/eval_KPP/fv_kpp.bin");
 	o["KKP"] << USIOption("c:/eval_KPP/fv_kkp.bin");
@@ -469,7 +469,7 @@ void USI::loop()
 		//学習用コマンド”アイ”ではなく"エル"
 		else if (token == "l") {
 
-#ifdef LEARN
+#if defined(LEARN) && !defined(REIN) 
 			string yn;
 			cout << "do you really wanna learning fv? [y/n]  " ;
 			cin >> yn;

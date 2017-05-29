@@ -73,7 +73,7 @@
 #define EVAL_APERYWCSC26
 
 //#define EVAL_KPP
-//#define EVAL_KPPT
+#define EVAL_KPPT
 #if !defined(EVAL_KPP) && !defined(EVAL_KPPT)
 #define EVAL_PP
 #endif // !EVAL_KPP

@@ -71,9 +71,9 @@ namespace Eval {
 		sum.p[1][0] = 0;
 		sum.p[1][1] = 0;
 		sum.p[2] = KK[bksq][wksq];
-		//loop 開始を i = 1 からにして、i = 0 の分のKKPを先に足す。
+		//loop 開始を i = 1 からにして、i = 0 の分のkkpを先に足す。
 
-		//sum.p[2] += KKP[bksq][wksq][listfb[0]];
+		//sum.p[2] += kkp[bksq][wksq][listfb[0]];
 
 		for (i = 0; i < 38; ++i) {
 			

@@ -450,7 +450,7 @@ namespace Eval {
 		bool is_evaluated()const { return p[0][0] != VALUE_NOT_EVALUATED; }
 	};
 
-	static std::ostream& operator<<(std::ostream& os, const EvalSum& sum)
+	inline std::ostream& operator<<(std::ostream& os, const EvalSum& sum)
 	{
 		os << "sum BKPP = " << sum.p[0][0] << " + " << sum.p[0][1] << std::endl;
 		os << "sum WKPP = " << sum.p[1][0] << " + " << sum.p[1][1] << std::endl;
@@ -462,6 +462,7 @@ namespace Eval {
 	void write_FV();
 	Value eval_ALLKPPT(const Position& pos);
 	inline void init() { read_FV(); }
+	void param_sym_ij();
 #endif
 
 	constexpr Value tempo = Value(40);
