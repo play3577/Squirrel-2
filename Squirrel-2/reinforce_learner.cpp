@@ -9,6 +9,7 @@
 #include <random>
 #include <time.h>
 #include <omp.h>
+#include <fstream>
 /*
 ‚±‚±‚Å‚Íƒ‰ƒ“ƒ_ƒ€‚É‰Šú‹Ç–Ê‚ğ—pˆÓ‚µsfen•¶š—ñ‚É•ÏŠ·‚µAƒtƒ@ƒCƒ‹‚É‘‚«o‚·B
 packedsfen‚Ì‚Ù‚¤‚ª‚¢‚¢‚©‚à‚µ‚ê‚È‚¢‚ª‚Ü‚¸‚Ísfen‚Åì¬‚·‚é
@@ -42,7 +43,8 @@ depth2‚Å‚Í•]‰¿’l100ˆÈ“à‚¾‚ª‘¼‚Å‚Í1000’´‚¦‚Ä‚µ‚Ü‚¤‚İ‚½‚¢‚È...(TT‚ğon‚É‚µ‚½‚ç‚«‚ê‚
 #ifdef MAKETEST
 string TEACHERPATH = "C:/teacher/teacherd3_test.txt";
 #else
-string TEACHERPATH = "C:/teacher/teacherd6.txt";
+//string TEACHERPATH = "C:/teacher/teacherd6.txt";
+string TEACHERPATH = "G:/201705260520D8AperyWCSC26/ALN_79_0.bin";
 #endif
 
 #define DEPTH 7
@@ -365,7 +367,8 @@ void make_startpos_detabase()
 struct teacher_data {
 
 	//bool haffman[256];
-	string sfen;//ƒnƒtƒ}ƒ“¸”s‚µ‚Ü‚­‚Á‚½‚Ì‚Åstring‚Ås‚­B@‘å‰ïI‚í‚Á‚ÄŠÔ‚à‚Å‚«‚½‚µƒnƒtƒ}ƒ“•ÏŠ·ŠÖ”‚ÌƒfƒoƒbƒO‚·‚é‚©...
+	PackedSfen haffman;
+	//string sfen;//ƒnƒtƒ}ƒ“¸”s‚µ‚Ü‚­‚Á‚½‚Ì‚Åstring‚Ås‚­B@‘å‰ïI‚í‚Á‚ÄŠÔ‚à‚Å‚«‚½‚µƒnƒtƒ}ƒ“•ÏŠ·ŠÖ”‚ÌƒfƒoƒbƒO‚·‚é‚©...
 	int16_t teacher_value;
 	//teacher_data() {};
 	/*
@@ -385,16 +388,17 @@ struct teacher_data {
 	//	teacher_value = (int16_t)teachervalue;
 	//	move = m;
 	//}
-	teacher_data(/*const bool *haff,*/const string sfen_, const Value teachervalue) {
-		//memcpy(haffman, haff, sizeof(haffman));
-		sfen = sfen_;
+	teacher_data(const PackedSfen *ps,const string sfen_, const Value teachervalue) {
+		memcpy(&haffman, ps, sizeof(haffman));
+		//sfen = sfen_;
 		teacher_value = (int16_t)teachervalue;
 		//move = MOVE_NONE;
 	}
 	teacher_data(){}
 };
+static_assert(sizeof(teacher_data) == 34, "34");
 inline std::ostream& operator<<(std::ostream& os, const teacher_data& td) {
-	os <<td.sfen<<endl;
+	//os <<td.sfen<<endl;
 	os << td.teacher_value << endl;
 	//os << td.move << endl;
 	return os;
@@ -702,7 +706,7 @@ double loss = 0;
 ifstream‚ğŠO•”‚©‚çQÆ“n‚µ‚·‚é‚±‚Æ‚É‚·‚é
 
 */
-bool read_teacherdata(ifstream& f) {
+bool read_teacherdata(fstream& f) {
 	sum_teachers.clear();
 	//ifstream f(TEACHERPATH);
 	if (!f) { cout << "cantopen" << TEACHERPATH << endl; UNREACHABLE; }
@@ -710,12 +714,14 @@ bool read_teacherdata(ifstream& f) {
 	int i = 0;
 	if (f.eof()) { return false; }
 	while (!f.eof() && i<batchsize) {
-		/*f.seekg(read_teacher_counter * sizeof(teacher_data));
+		f.seekg(read_teacher_counter * sizeof(teacher_data));
 		f.read((char*)&t, sizeof(teacher_data));
 
 		sum_teachers.push_back(t);
-		read_teacher_counter++;*/
-		std::string line, sfen;
+		read_teacher_counter++;
+		i++;
+
+		/*std::string line, sfen;
 		Value v;
 		Move m;
 		if (!getline(f, line)) { break; };
@@ -727,7 +733,7 @@ bool read_teacherdata(ifstream& f) {
 		teacher_data td(sfen, v);
 		sum_teachers.push_back(td);
 		i++;
-		read_teacher_counter++;
+		read_teacher_counter++;*/
 	}
 	cout << "read teacher counter>>" << read_teacher_counter << endl;
 	bool is_eof = f.eof();
@@ -803,8 +809,9 @@ void reinforce_learn() {
 
 
 
-	ifstream f(TEACHERPATH);
-	if (!f) { cout << "cantopen" << TEACHERPATH << endl; UNREACHABLE; }
+	fstream f;
+	f.open(TEACHERPATH,ios::in|ios::binary);
+	//if (f) { cout << "cantopen" << TEACHERPATH << endl; UNREACHABLE; }
 
 	
 	std::random_device rd;
@@ -900,8 +907,8 @@ void reinforce_learn_pharse1(const int index) {
 		auto teacher_data = sum_teachers[g];
 		const Value teacher = (Value)teacher_data.teacher_value;
 		const Color rootColor = pos.sidetomove();
-		//pos.unpack_haffman_sfen(teacher_data.haffman);
-		pos.set(teacher_data.sfen);
+		pos.unpack_haffman_sfen(teacher_data.haffman);
+		//pos.set(teacher_data.sfen);
 		
 		/*
 		http://www2.computer-shogi.org/wcsc27/appeal/Apery/appeal_wcsc27.html
@@ -1120,7 +1127,7 @@ void renewal_PP_nozomi(dJValue &data) {
 
 #endif
 
-}
+};
 
 
 
@@ -1140,7 +1147,9 @@ void check_teacherdata() {
 	Thread th;
 	th.cleartable();
 
-	ifstream f(TEACHERPATH);
+	
+	fstream f;
+	f.open(TEACHERPATH, ios::in | ios::binary);
 	if (!f) { cout << "cantopen" << TEACHERPATH << endl; UNREACHABLE; }
 	uint64_t count = 0;
 
@@ -1152,7 +1161,8 @@ void check_teacherdata() {
 		for (int g = lock_index_inclement__(); g < sum_teachers.size(); g = lock_index_inclement__()) {
 			count++;
 			auto data = sum_teachers[g];
-			pos__.set(data.sfen);
+			//pos__.set(data.sfen);
+			pos__.unpack_haffman_sfen(data.haffman);
 			th.cleartable();
 			th.set(pos__);
 			th.l_depth = DEPTH;
@@ -1162,7 +1172,7 @@ void check_teacherdata() {
 
 								 //table‚Ì’l‚Ì•t‚«•û‚ª•Ï‚í‚Á‚Ä‚½‚è‚·‚é‚©‚à‚µ‚ê‚È‚¢‚Ì‚Å100‚Í‹–—e‚·‚éi‚»‚ê‚Å‚à‘å‚«‚¢‚ªj
 			if (abs(v - (Value)data.teacher_value) > 1) {
-				cout << "position " << data.sfen << endl;
+				//cout << "position " << data.sfen << endl;
 				cout << "nowsearched:" << v << " data:" << data.teacher_value << endl;
 				//ASSERT(0);
 			}
@@ -1176,5 +1186,5 @@ void check_teacherdata() {
 		cout << count << endl;
 	}
 
-}
+};
 #endif

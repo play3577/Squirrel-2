@@ -301,6 +301,9 @@ struct  dJValue
 	}
 
 };
+#elif defined(EVAL_KPPT)
+	
+
 
 #endif
 

@@ -5,6 +5,8 @@
 
 //これらはうまくいってるっぽい
 #if defined(REIN) || defined(MAKETEACHER)
+
+
 /*
 no_piece,B_PAWN=1, B_LANCE, B_KNIGHT, B_SILVER, B_BISHOP, B_ROOK, B_GOLD, B_KING,
 B_PRO_PAWN, B_PRO_LANCE, B_PRO_NIGHT, B_PRO_SILVER, B_UNICORN, B_DRAGON,
@@ -115,6 +117,7 @@ void Position::pack_haffman_sfen(){
 
 	//手番
 	sidetomove() != BLACK ? psfen += "1" : psfen += "0";
+
 	//玉の位置
 	string s="0000000"+ itos((int)binary(ksq(BLACK)));
 	string s2 = s.substr(s.size() - 7, s.size() - 1);
@@ -131,7 +134,7 @@ void Position::pack_haffman_sfen(){
 		//const int promote = (int)is_promote_piece(pc);
 		const int promote = (piece_type(pc)>KING);
 
-		if (piece_type(pc) == KING) { continue; }
+		if (pc == B_KING||pc==W_KING) { continue; }
 		//if (pt == KING) { continue; }//玉のいるマスはこのパートには含めない。
 
 		if (pc == NO_PIECE) { psfen += "0"; }
@@ -273,6 +276,7 @@ void	Position::unpack_haffman_sfen(bool *psfen_){
 			for (Piece  i = NO_PIECE; i < KING; i++) {
 
 				if (spiece == board_unhaffman_str[(int)i]) {
+
 					if (i == GOLD) {
 						c = (Color)psfen[index++];
 
@@ -371,4 +375,252 @@ FINISH:;
 
 	//return nsfen;
 }
+
+
+//Aperywcsc26テストをするためにはやねうら王の形式に合わせる必要がある....
+//なんかフルスクラッチの学習部のテストをするためにフルスクラッチじゃなくなる必要があるのは何ともいえんなぁ..............................
+struct BitStream {
+
+private:
+	int bitcursor;//書き出すbit位置
+	uint8_t *data;//書き込むデータへのポインタ
+public:
+	void reset_cursor() { bitcursor = 0; }
+
+	int ret_cursor()const { return bitcursor; }
+	uint8_t* ret_data()const { return data; }
+
+	void set_data(uint8_t* data_) { data = data_; reset_cursor(); }
+
+	void write_one_bit(const int b) {
+		if (b)
+			data[bitcursor / 8] |= 1 << (bitcursor & 7);
+
+		++bitcursor;
+	}
+
+	int read_one_bit()
+	{
+		int b = (data[bitcursor / 8] >> (bitcursor & 7)) & 1;
+		++bitcursor;
+
+		return b;
+	}
+	void write_n_bit(int d, int n)
+	{
+		for (int i = 0; i < n; ++i)
+			write_one_bit(d & (1 << i));
+	}
+
+	int read_n_bit(int n)
+	{
+		int result = 0;
+		for (int i = 0; i < n; ++i)
+			result |= read_one_bit() ? (1 << i) : 0;
+
+		return result;
+	}
+};
+
+struct HuffmanedPiece
+{
+	int code; // どうコード化されるか
+	int bits; // 何bit専有するのか
+};
+
+HuffmanedPiece huffman_table[] =
+{
+	{ 0x00,1 }, // NO_PIECE
+	{ 0x01,2 }, // PAWN
+	{ 0x03,4 }, // LANCE
+	{ 0x0b,4 }, // KNIGHT
+	{ 0x07,4 }, // SILVER
+	{ 0x1f,6 }, // BISHOP
+	{ 0x3f,6 }, // ROOK
+	{ 0x0f,5 }, // GOLD
+};
+
+
+struct SfenPacker {
+
+	BitStream stream;
+
+	Piece read_board_piece() {
+		Piece p;
+
+		int code = 0, bits = 0;
+
+		//streamから1bit読みだしてbitsに追加してそれがhaffman codeと一致するか確認する
+		while (true)
+		{
+			
+			code |= stream.read_one_bit() << bits;
+			++bits;
+
+			ASSERT(bits <= 6);
+
+			for (p = NO_PIECE; p < KING; ++p) {
+				if (huffman_table[p].code == code&&huffman_table[p].bits == bits) {
+					goto Found;
+				}
+			}
+		}
+	Found:;
+		if (p == NO_PIECE) { return p; }
+		bool ispromote = (p == GOLD) ? false : stream.read_one_bit();
+
+		Color c = (Color)stream.read_one_bit();
+
+		return add_color(p + (ispromote ? PROMOTE : NO_PIECE), c);
+	}
+
+	Piece read_hand_piece() {
+		Piece p;
+
+		int code = 0, bits = 0;
+
+		//streamから1bit読みだしてbitsに追加してそれがhaffman codeと一致するか確認する
+		while (true)
+		{
+
+			code |= stream.read_one_bit() << bits;
+			++bits;
+
+			ASSERT(bits <= 6);
+
+			for (p = PAWN; p < KING; ++p) {
+				if ((huffman_table[p].code>>1) == code&&(huffman_table[p].bits-1) == bits) {
+					goto Found;
+				}
+			}
+		}
+	Found:;
+		ASSERT(p != NO_PIECE);
+		if (p != GOLD) { stream.read_one_bit(); }
+
+		Color c = (Color)stream.read_one_bit();
+
+		return add_color(p, c);
+	}
+
+	void write_board_piece(const Piece pc) {
+		const Piece p = rowpiece(piece_type(pc));
+		auto c = huffman_table[p];
+		stream.write_n_bit(c.code, c.bits);
+		if (pc == NO_PIECE) { return; }
+
+		if (p != GOLD) {
+			stream.write_one_bit((PROMOTE&pc) ? 1 : 0);
+		}
+		stream.write_one_bit(piece_color(pc));
+
+	}
+	void write_hand_piece(const Piece pc) {
+		ASSERT(pc != NO_PIECE);
+		const Piece p= rowpiece(piece_type(pc));
+		auto c = huffman_table[p];
+		stream.write_n_bit(c.code >> 1, c.bits - 1);
+		// 金以外は手駒であっても不成を出力して、盤上の駒のbit数-1を保つ
+		if (p != GOLD) {
+			stream.write_one_bit(false);
+		}
+		// 先後フラグ
+		stream.write_one_bit(piece_color(pc));
+	}
+};
+
+void Position::unpack_haffman_sfen(const PackedSfen & sfen)
+{
+	SfenPacker packer;
+	auto& stream = packer.stream;
+
+	stream.set_data((uint8_t*)&sfen);
+	clear();//局面を初期化する
+
+	//-------------------------------------------------------------------------手番
+	sidetomove_ = (Color)stream.read_one_bit();
+
+	//--------------------------------------------------------------------------玉
+	const Square bksq = (Square)stream.read_n_bit(7);
+	const Square wksq = (Square)stream.read_n_bit(7);
+	ASSERT(is_ok(bksq) && is_ok(wksq));
+	pcboard[bksq] = B_KING;
+	occupied[BLACK] |= SquareBB[bksq];
+	occupiedPt[BLACK][KING] |= SquareBB[bksq];
+	set_occ256(bksq);
+	st->ksq_[BLACK] = bksq;
+
+	pcboard[wksq] = W_KING;
+	occupied[WHITE] |= SquareBB[wksq];
+	occupiedPt[WHITE][KING] |= SquareBB[wksq];
+	set_occ256(wksq);
+	st->ksq_[WHITE] = wksq;
+
+
+	//-----------------------------------------------------------------------------盤上
+	Piece pc;
+	for (Square sq = SQ_ZERO; sq < SQ_NUM; sq++) {
+		if (pcboard[sq] == B_KING || pcboard[sq] == W_KING) {
+			continue;
+		}
+		pc= packer.read_board_piece();
+		if (pc == NO_PIECE) { continue; }
+
+		const Piece pt = piece_type(pc);
+		const Color c = piece_color(pc);
+		pcboard[sq] = pc;
+		occupied[c] |= SquareBB[sq];
+		occupiedPt[c][pt] |= SquareBB[sq];
+		set_occ256(sq);
+
+		ASSERT(stream.ret_cursor() <= 256);
+	}
+		
+	//-----------------------------------------------------------------------------手駒
+	while (stream.ret_cursor() != 256) {
+
+		pc = packer.read_hand_piece();
+		const Piece pt = piece_type(pc);
+		const Color c = piece_color(pc);
+		makehand(hands[c], pt, num_pt(hand(c), pt) + 1);
+	}
+
+
+	//-----------------------------------------------------------------------------初期化に付随する設定
+
+
+	init_existpawnBB();
+
+	//手番側に王手がかかっているかどうかだけ初期化すればいい。（相手側に王手がかかっていたら一手で試合が終わるしそんなんUSIで入ってこやんやろ）
+	if (is_effect_to(opposite(sidetomove_), ksq(sidetomove_))) {
+		st->inCheck = true;
+		st->checker = effect_toBB(opposite(sidetomove_), ksq(sidetomove_));
+
+	}
+
+	st->material = Eval::eval_material(*this);
+
+	list.makebonaPlist(*this);
+	Eval::eval(*this);
+	init_hash();
+	//cout << *this << endl;
+
+	//list.print_bplist();
+	//cout << occ256 << endl;
+	ply_from_startpos = 1;
+
+#ifdef CHECKPOS
+
+	//check_eboard();
+	//check_occbitboard();
 #endif
+	set_check_info(st);
+
+
+
+}
+
+
+#endif
+
+

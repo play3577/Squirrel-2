@@ -19,6 +19,10 @@ using namespace std;
 
 struct Thread;
 
+
+struct PackedSfen { uint8_t data[32]; };
+
+
 /*
 千日手に関する情報を格納する
 positionコマンド内のdo_move()で局面を進めるときに作成する。
@@ -712,8 +716,8 @@ public:
 
 	//ハフマン符号化
 	void pack_haffman_sfen();
-	void	unpack_haffman_sfen(bool *sfen);
-
+	void unpack_haffman_sfen(bool *sfen);
+	void unpack_haffman_sfen(const PackedSfen &sfen);
 	//一手詰
 	Move mate1ply();
 	bool cancapture_checkpiece(Square to);

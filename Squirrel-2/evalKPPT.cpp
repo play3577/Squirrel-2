@@ -97,7 +97,7 @@ namespace Eval {
 
 		sum.p[2][0] += pos.state()->material*FV_SCALE;
 
-		cout << sum << endl;
+	//	cout << sum << endl;
 		return Value(sum.sum(pos.sidetomove())/FV_SCALE);
 	}
 
