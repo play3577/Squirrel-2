@@ -154,7 +154,8 @@ public:
 #ifdef SENNICHI
 	vector<ReputationInfo> reputaion_infos;
 #endif
-	bool packed_sfen[256];
+	//bool packed_sfen[256];
+	PackedSfen data;
 
 	void change_stm() { sidetomove_ = opposite(sidetomove_); }
 

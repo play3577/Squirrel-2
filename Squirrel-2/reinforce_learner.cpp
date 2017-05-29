@@ -370,6 +370,10 @@ struct teacher_data {
 	PackedSfen haffman;
 	//string sfen;//ハフマン失敗しまくったのでstringで行く。　大会終わって時間もできたしハフマン変換関数のデバッグするか...
 	int16_t teacher_value;
+	uint16_t move;
+	uint16_t gameply;
+	bool isWin;
+	uint8_t padding;
 	//teacher_data() {};
 	/*
 	elmo式を使うならここに勝率
@@ -396,7 +400,7 @@ struct teacher_data {
 	}
 	teacher_data(){}
 };
-static_assert(sizeof(teacher_data) == 34, "34");
+static_assert(sizeof(teacher_data) == 40, "40");
 inline std::ostream& operator<<(std::ostream& os, const teacher_data& td) {
 	//os <<td.sfen<<endl;
 	os << td.teacher_value << endl;
@@ -706,6 +710,7 @@ double loss = 0;
 ifstreamを外部から参照渡しすることにする
 
 */
+#if 0
 bool read_teacherdata(fstream& f) {
 	sum_teachers.clear();
 	//ifstream f(TEACHERPATH);
@@ -745,7 +750,25 @@ bool read_teacherdata(fstream& f) {
 	cout << pos << endl;
 	cout << pos.occ_all() << endl;*/
 }
-
+#elif 1
+bool read_teacherdata(fstream& f) {
+	sum_teachers.clear();
+	sum_teachers.reserve(batchsize);
+	//ifstream f(TEACHERPATH);
+	teacher_data t;
+	
+	while (sum_teachers.size() < batchsize) {
+		//これ同じものをひたすらpushbackするだけじゃないのか？？
+		if (f.read((char*)&t, sizeof(teacher_data))) {
+			sum_teachers.push_back(t);
+		}
+		else {
+			return false;
+		}
+	}
+	return true;
+}
+#endif
 #endif
 #if defined(LEARN) && defined(REIN)
 
@@ -1163,6 +1186,7 @@ void check_teacherdata() {
 			auto data = sum_teachers[g];
 			//pos__.set(data.sfen);
 			pos__.unpack_haffman_sfen(data.haffman);
+			cout << pos__ << endl;
 			th.cleartable();
 			th.set(pos__);
 			th.l_depth = DEPTH;

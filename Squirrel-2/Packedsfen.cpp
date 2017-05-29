@@ -108,7 +108,7 @@ int64_t decimal(int64_t binary) {
 	}
 	return decimal;
 }
-
+#if 0
 //バイナリデータとして書き込むのかなぁ？？
 void Position::pack_haffman_sfen(){
 
@@ -183,7 +183,7 @@ void Position::pack_haffman_sfen(){
 
 	//return psfen;
 }
-
+#endif
 string board_unhaffman_str[KING] = {
 	"0",//空き
 	"10",//PAWN
@@ -387,7 +387,8 @@ private:
 public:
 	void reset_cursor() { bitcursor = 0; }
 
-	int ret_cursor()const { return bitcursor; }
+	//ret_cursorだとreset_cursorと区別がつかないのでgetにする
+	int get_cursor()const { return bitcursor; }
 	uint8_t* ret_data()const { return data; }
 
 	void set_data(uint8_t* data_) { data = data_; reset_cursor(); }
@@ -573,11 +574,11 @@ void Position::unpack_haffman_sfen(const PackedSfen & sfen)
 		occupiedPt[c][pt] |= SquareBB[sq];
 		set_occ256(sq);
 
-		ASSERT(stream.ret_cursor() <= 256);
+		ASSERT(stream.get_cursor() <= 256);
 	}
 		
 	//-----------------------------------------------------------------------------手駒
-	while (stream.ret_cursor() != 256) {
+	while (stream.get_cursor() != 256) {
 
 		pc = packer.read_hand_piece();
 		const Piece pt = piece_type(pc);
@@ -616,8 +617,44 @@ void Position::unpack_haffman_sfen(const PackedSfen & sfen)
 #endif
 	set_check_info(st);
 
+}
 
+void Position::pack_haffman_sfen() {
+	memset(&data, 0, 32);
+	SfenPacker packer;
+	auto& stream = packer.stream;
+	stream.set_data((uint8_t*)&data);
 
+	//手番
+	stream.write_one_bit(sidetomove());
+	//玉
+	stream.write_n_bit(ksq(BLACK), 7);
+	stream.write_n_bit(ksq(WHITE), 7);
+
+	//盤面
+	for (Square sq = SQ_ZERO; sq < SQ_NUM; sq++) {
+		const Piece pc = pcboard[sq];
+		if (piece_type(pc) == KING) { continue; }
+		else {
+			packer.write_board_piece(pc);
+		}
+	}
+
+	//手駒
+	for (Color c = BLACK; c < ColorALL; c++) {
+		const Hand hand_ = hand(c);
+		for (Piece pt = PAWN; pt < KING; pt++) {
+
+			int num = num_pt(hand_, pt);
+			if (num != 0) {
+
+				for (int n = 0; n < num; n++) {
+					packer.write_hand_piece(add_color(pt, c));
+				}
+			}
+		}
+	}
+	ASSERT(packer.stream.get_cursor() == 256);
 }
 
 
