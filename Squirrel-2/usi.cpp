@@ -17,6 +17,7 @@
 #include <iostream>
 #include <string>
 #include <sstream>
+#include <filesystem>
 
 using namespace std;
 using namespace USI;
@@ -867,6 +868,26 @@ void USI::loop()
 		else if (token == "ij") {
 			Eval::param_sym_ij();
 		}
+		else if (token == "file") {
+			//OK
+
+
+			//参考：　http://qiita.com/episteme/items/0e3c2ee8a8c03780f01e
+			namespace sys = std::tr2::sys;
+			vector<string> list;
+			sys::path p("G:/201705260520D8AperyWCSC26");
+			std::for_each(sys::recursive_directory_iterator(p), sys::recursive_directory_iterator(),
+				[&](const sys::path& p) {
+				if (sys::is_regular_file(p)) { // ファイルなら...
+					if (p.filename().string().find("bin") != string::npos) {
+						list.push_back(p.string());
+					}
+				}
+			});
+			for (string l : list) {
+				cout << l << endl;
+			}
+		}
 #endif
 #if defined(MAKEBOOK)
 		else if (token == "makebook") {
@@ -877,6 +898,7 @@ void USI::loop()
 			if (yn != "y") { cout << "OK I do not makebook"; break; }
 			BOOK::makebook();
 		}
+
 #endif
 #endif
 #endif //MISC

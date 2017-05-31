@@ -42,7 +42,7 @@ namespace Eval {
 
 //#define JIGENSAGE
 
-//#define LR
+#define LR
 
 
 #if defined(EVAL_PP)

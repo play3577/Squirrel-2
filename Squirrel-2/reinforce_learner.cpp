@@ -10,6 +10,8 @@
 #include <time.h>
 #include <omp.h>
 #include <fstream>
+#include <filesystem>
+namespace sys = std::tr2::sys;
 /*
 ‚±‚±‚Å‚Íƒ‰ƒ“ƒ_ƒ€‚É‰Šú‹Ç–Ê‚ğ—pˆÓ‚µsfen•¶š—ñ‚É•ÏŠ·‚µAƒtƒ@ƒCƒ‹‚É‘‚«o‚·B
 packedsfen‚Ì‚Ù‚¤‚ª‚¢‚¢‚©‚à‚µ‚ê‚È‚¢‚ª‚Ü‚¸‚Ísfen‚Åì¬‚·‚é
@@ -44,7 +46,7 @@ depth2‚Å‚Í•]‰¿’l100ˆÈ“à‚¾‚ª‘¼‚Å‚Í1000’´‚¦‚Ä‚µ‚Ü‚¤‚İ‚½‚¢‚È...(TT‚ğon‚É‚µ‚½‚ç‚«‚ê‚
 string TEACHERPATH = "C:/teacher/teacherd3_test.txt";
 #else
 //string TEACHERPATH = "C:/teacher/teacherd6.txt";
-string TEACHERPATH = "G:/201705260520D8AperyWCSC26/ALN_79_0.bin";
+string TEACHERPATH = "G:/201705260520D8AperyWCSC26";
 #endif
 
 #define DEPTH 7
@@ -414,6 +416,9 @@ vector<teacher_data> sum_teachers;
 
 
 
+vector<string> teacher_list;
+int listcounter = 0;
+
 //==========================================================================
 //                               maltithread‚ÌrandamŠJn‹Ç–Êdatabase‚Ìindex‚Æ‚©‹³tƒf[ƒ^‚Ìindex‚Æ‚©‚Ég‚¤
 
@@ -763,7 +768,11 @@ bool read_teacherdata(fstream& f) {
 			sum_teachers.push_back(t);
 		}
 		else {
-			return false;
+			f.close();
+			listcounter++;
+			if (listcounter >= teacher_list.size()) { return false; }
+			f.open(teacher_list[listcounter], ios::in | ios::binary);
+			cout << "teacher " << teacher_list[listcounter] << endl;
 		}
 	}
 	return true;
@@ -829,11 +838,24 @@ void reinforce_learn() {
 
 #endif
 
-
+	
+	
+	sys::path p(TEACHERPATH);
+	std::for_each(sys::recursive_directory_iterator(p), sys::recursive_directory_iterator(),
+		[&](const sys::path& p) {
+		if (sys::is_regular_file(p)) { // ƒtƒ@ƒCƒ‹‚È‚ç...
+			if (p.filename().string().find("bin") != string::npos) {
+				teacher_list.push_back(p.string());
+			}
+		}
+	});
+	for (string l : teacher_list) {
+		cout << l << endl;
+	}
 
 
 	fstream f;
-	f.open(TEACHERPATH,ios::in|ios::binary);
+	f.open(teacher_list[0],ios::in|ios::binary);
 	//if (f) { cout << "cantopen" << TEACHERPATH << endl; UNREACHABLE; }
 
 	
@@ -929,10 +951,12 @@ void reinforce_learn_pharse1(const int index) {
 
 		auto teacher_data = sum_teachers[g];
 		const Value teacher = (Value)teacher_data.teacher_value;
-		const Color rootColor = pos.sidetomove();
+		
 		pos.unpack_haffman_sfen(teacher_data.haffman);
 		//pos.set(teacher_data.sfen);
 		
+
+		const Color rootColor = pos.sidetomove();//rootcolor‚ğpos set‚ğ‚·‚é‘O‚É—pˆÓ‚µ‚Ä‚µ‚Ü‚Á‚Ä‚¢‚½I
 		/*
 		http://www2.computer-shogi.org/wcsc27/appeal/Apery/appeal_wcsc27.html
 		Šî–{“I‚É‚Í6è“Ç‚İ‚Å”\‰­‹Ç–Ê‚É“_”‚ğ•t‚¯A‚»‚ê‚ç‚ğ0~1è“Ç‚İ(Ã~’Tõ‚ÍŠ®‘S‚És‚¤)‚Å“_”‚ğ‹ß•t‚¯‚é‚æ‚¤‚ÉƒIƒ“ƒ‰ƒCƒ“ŠwK‚ğs‚¢‚Ü‚·
@@ -956,7 +980,7 @@ void reinforce_learn_pharse1(const int index) {
 
 		int ii = 0;
 		for (Move m : th.pv) { pos.do_move(m, &si[ii]); ii++; }//pv‚Ì––’[‚ÖˆÚ“®
-#elif 0
+#elif 1
 		th.set(pos);
 		//th.cleartable();//–ˆ‰ñ‚Í€‚Ê‚Ù‚Ç’x‚¢
 		th.l_alpha = -Value_Infinite;
@@ -965,17 +989,17 @@ void reinforce_learn_pharse1(const int index) {
 		//if (abs(shallow_serch_value) > 3000 ) { continue; }
 
 		int ii = 0;
-		//ASSERT(th.pv[0]==th.RootMoves[0].move) ‚¤``‚ñ‚¿‚á‚ñ‚ÆPV‚ğì‚ê‚Ä‚é‚©‰ö‚µ‚¢‚È...
+		//ASSERT(th.pv[0]==th.RootMoves[0].move) //‚¤``‚ñ‚¿‚á‚ñ‚ÆPV‚ğì‚ê‚Ä‚é‚©‰ö‚µ‚¢‚È...
 
 
-		//for (Move m : th.pv) {
-		//	if (!pos.pseudo_legal(m) || !pos.is_legal(m)) {
-		//		cout << pos << endl;
-		//		th.print_pv(0, shallow_serch_value);
-		//		ASSERT(0);
-		//	}
-		//	pos.do_move(m, &si[ii]); ii++; 
-		//}//pv‚Ì––’[‚ÖˆÚ“®
+		for (Move m : th.pv) {
+			if (!pos.pseudo_legal(m) || !pos.is_legal(m)) {
+				cout << pos << endl;
+				th.print_pv(0, shallow_serch_value);
+				ASSERT(0);
+			}
+			pos.do_move(m, &si[ii]); ii++; 
+		}//pv‚Ì––’[‚ÖˆÚ“®
 
 
 
@@ -991,8 +1015,8 @@ void reinforce_learn_pharse1(const int index) {
 		//root‚©‚çŒ©‚½“_”‚É•ÏŠ·‚·‚éiteacher‚àroot‚©‚çŒ©‚½•]‰¿’l‚Ì‚Í‚¸j]
 
 
-		Value shallow_v = (rootColor == pos.sidetomove()) ? Eval::eval(pos) : -Eval::eval(pos);//‚±‚±’Tõ‚Å‹A‚Á‚Ä‚«‚½’l‚É‚·‚×‚«Hi‚æ‚­‚È‚©‚Á‚½j
-		//Value shallow_v = shallow_serch_value;
+		//Value shallow_v = (rootColor == pos.sidetomove()) ? Eval::eval(pos) : -Eval::eval(pos);//‚±‚±’Tõ‚Å‹A‚Á‚Ä‚«‚½’l‚É‚·‚×‚«Hi‚æ‚­‚È‚©‚Á‚½j
+		Value shallow_v = shallow_serch_value;
 
 		double win_teacher = win_sig(teacher);
 		double win_shallow = win_sig(shallow_v);
@@ -1002,17 +1026,22 @@ void reinforce_learn_pharse1(const int index) {
 		PP‚Ì•]‰¿’l‚ÌŒX‚«•û‚©‚ç‚µ‚Äponanza‚ÌŸ—¦‚Ì®‚Íg‚¦‚È‚¢‚Æv‚Á‚Ä•]‰¿’l‚Ì·‚¾‚¯‚É‚µ‚Ä‚¢‚½‚ªA
 		‚»‚Ì‚Ü‚Ü‚Ì•]‰¿’l‚¾‚Æ·‚ª‘å‚«‚·‚¬‚é‚Æ‚±‚ë‚Ì’l‚ªx”z“I‚É‚È‚Á‚Ä‚µ‚Ü‚¤‚Ì‚Å‚â‚Í‚èŸ—¦‚É•ÏŠ·‚·‚×‚«‚©HH
 		*/
-		//double diffsig_ = shallow_v - teacher;
+		//double diffsig_ = (shallow_v - teacher);
 		
 		//loss += diffsig_*diffsig_;
-		loss += pow(diffsig_, 2);
-		//double diffsig= (rootColor == BLACK ? diffsig_ : -diffsig_);
-		//gradJs[index].update_dJ(pos, -diffsig);
+		loss += pow(int(shallow_v - teacher), 2);
+
+		
+
+#ifdef EVAL_KPPT
 		double diffsig_withoutturn = (rootColor == BLACK ? diffsig_ : -diffsig_);//+bpp-wpp‚ÌŠÖŒW
 		double diffsig_turn = diffsig_;
 		std::array<float, 2> diffsig = { -diffsig_withoutturn,(rootColor == pos.sidetomove() ? -diffsig_turn : diffsig_turn) };
 		gradJs[index].update_dJ(pos, diffsig);
-
+#else
+		double diffsig = (rootColor == BLACK ? diffsig_ : -diffsig_);
+		gradJs[index].update_dJ(pos, -diffsig);
+#endif
 	}
 
 
@@ -1196,6 +1225,10 @@ void renewal_PP_nozomi(dJValue &data) {
 /*
 –ˆ‰ñclear table‚·‚é‚Æ‚Ù‚Æ‚ñ‚Ç‚Ì•]‰¿’l‚ÌŒë·‚Í”ñí‚É¬‚³‚¢”ÍˆÍ‚Éû‚Ü‚Á‚½.¬‚³‚¢‚â‚Â‚Í1‚à·‚ª‚È‚¢
 ‚µ‚©‚µ–ˆ‰ñ‰Šú‰»‚µ‚Ä’Tõ‚ğs‚¤‚ÆŠÔ‚ğ”n­‚İ‚½‚¢‚ÉH‚¤...‚Ü‚ –ˆ‰ñ‰Šú‰»‚Í‹³tƒf[ƒ^ì¬‚É‚Í‚µ‚È‚­‚Ä‚¢‚¢‚¾‚ë‚¤B
+
+
+
+AperyWCSC26‚Ì‹³tƒf[ƒ^ƒtƒ@ƒCƒ‹“Ç‚İ‚İ‚ÉŠÔˆá‚¢‚Í‚È‚©‚Á‚½
 */
 void check_teacherdata() {
 
@@ -1203,6 +1236,8 @@ void check_teacherdata() {
 	Position pos__;
 	Thread th;
 	th.cleartable();
+
+	ofstream ofs("C:/Users/daruma/Desktop/SQcheckteacher.txt");
 
 	
 	fstream f;
@@ -1220,7 +1255,8 @@ void check_teacherdata() {
 			auto data = sum_teachers[g];
 			//pos__.set(data.sfen);
 			pos__.unpack_haffman_sfen(data.haffman);
-			cout << pos__ << endl;
+			//cout << pos__ << endl;
+#if 0
 			th.cleartable();
 			th.set(pos__);
 			th.l_depth = DEPTH;
@@ -1237,12 +1273,16 @@ void check_teacherdata() {
 			else {
 				cout << "ok teacher" << endl;
 			}
-
+#else
+			ofs << pos__.make_sfen() << " " << data.teacher_value << endl;
+			if (count > 1000) { goto END; }
+#endif
 			//pos__.unpack_haffman_sfen(data.haffman);
 			//ASSERT(pos == pos__);
 		}
 		cout << count << endl;
 	}
-
+END:;
+	ofs.close();
 };
 #endif
