@@ -1,5 +1,7 @@
 #define _CRT_SECURE_NO_WARNINGS
 
+
+//#define USEPACKEDSFEN
 #include "reinforce_learner.h"
 #include "position.h"
 #include "Thread.h"
@@ -45,8 +47,11 @@ depth2‚Å‚Í•]‰¿’l100ˆÈ“à‚¾‚ª‘¼‚Å‚Í1000’´‚¦‚Ä‚µ‚Ü‚¤‚İ‚½‚¢‚È...(TT‚ğon‚É‚µ‚½‚ç‚«‚ê‚
 #ifdef MAKETEST
 string TEACHERPATH = "C:/teacher/teacherd3_test.txt";
 #else
-//string TEACHERPATH = "C:/teacher/teacherd6.txt";
-string TEACHERPATH = "G:/201705260520D8AperyWCSC26";
+	#ifdef  USEPACKEDSFEN
+		string TEACHERPATH = "G:/201705260520D8AperyWCSC26";
+	#else
+		string TEACHERPATH = "G:/teacher";
+	#endif
 #endif
 
 #define DEPTH 7
@@ -369,8 +374,12 @@ void make_startpos_detabase()
 struct teacher_data {
 
 	//bool haffman[256];
+#ifdef  USEPACKEDSFEN
 	PackedSfen haffman;
-	//string sfen;//ƒnƒtƒ}ƒ“¸”s‚µ‚Ü‚­‚Á‚½‚Ì‚Åstring‚Ås‚­B@‘å‰ïI‚í‚Á‚ÄŠÔ‚à‚Å‚«‚½‚µƒnƒtƒ}ƒ“•ÏŠ·ŠÖ”‚ÌƒfƒoƒbƒO‚·‚é‚©...
+#else
+	string sfen;//ƒnƒtƒ}ƒ“¸”s‚µ‚Ü‚­‚Á‚½‚Ì‚Åstring‚Ås‚­B@‘å‰ïI‚í‚Á‚ÄŠÔ‚à‚Å‚«‚½‚µƒnƒtƒ}ƒ“•ÏŠ·ŠÖ”‚ÌƒfƒoƒbƒO‚·‚é‚©...
+#endif
+	//
 	int16_t teacher_value;
 	uint16_t move;
 	uint16_t gameply;
@@ -394,17 +403,28 @@ struct teacher_data {
 	//	teacher_value = (int16_t)teachervalue;
 	//	move = m;
 	//}
-	teacher_data(const PackedSfen *ps,const string sfen_, const Value teachervalue) {
+#ifdef  USEPACKEDSFEN
+	teacher_data(const PackedSfen *ps, const Value teachervalue) {
 		memcpy(&haffman, ps, sizeof(haffman));
 		//sfen = sfen_;
 		teacher_value = (int16_t)teachervalue;
 		//move = MOVE_NONE;
 	}
+#else
+	teacher_data( const string sfen_, const Value teachervalue) {
+		
+		sfen = sfen_;
+		teacher_value = (int16_t)teachervalue;
+		
+}
+#endif
 	teacher_data(){}
 };
 static_assert(sizeof(teacher_data) == 40, "40");
 inline std::ostream& operator<<(std::ostream& os, const teacher_data& td) {
-	//os <<td.sfen<<endl;
+#ifndef  USEPACKEDSFEN
+	os <<td.sfen<<endl;
+#endif
 	os << td.teacher_value << endl;
 	//os << td.move << endl;
 	return os;
@@ -604,12 +624,15 @@ void make_teacher_body(const int number) {
 			//root‹Ç–Ê‚Ìhaffman•„†‚ğ—pˆÓ‚µ‚Ä‚¨‚­
 		/*	bool HaffmanrootPos[256];
 			memcpy(HaffmanrootPos, pos.packed_sfen, sizeof(HaffmanrootPos));*/
-			string sfen_rootpos = pos.make_sfen();
+			string sfen_rootpos = pos.make_sfen();//root‹Ç–Ê‚Ìsfen
+			pos.pack_haffman_sfen();
 			//------------------------------PV‚Ì––’[‚Ìƒm[ƒh‚ÉˆÚ‚Á‚Ä‚»‚±‚Å‚ÌÃ~’Tõ‚Ì’l‚ğ‹‚ßteacher_data‚ÉŠi”[
 			/*--------------------------------------------------------------------------------------------------------
 			pv‚Ì––’[‚ÉˆÚ“®‚ğ‚µ‚È‚©‚Á‚½ê‡deepvalue‚ª’Tõ‚Ì’l‚Æ‚©‚¯—£‚ê‚Ä‚µ‚Ü‚¤‚Æ‚¢‚¤‚±‚Æ‚ª‹N‚±‚Á‚½I‚±‚ê‚Å­‚µ‚Í‚Ü‚µ‚É‚È‚é
 			--------------------------------------------------------------------------------------------------------*/
-#if 0
+//#define GOLEAF
+			Value deepvalue = v;
+#if defined(GOLEAF)
 			StateInfo si2[64];
 			for (int i = 0; i <64; i++) si2[i].clear();
 			int pv_depth = 0;
@@ -621,18 +644,23 @@ void make_teacher_body(const int number) {
 				pos.do_move(m, &si2[pv_depth++]);
 			}
 			//root‚©‚çŒ©‚½•]‰¿’l‚ğŠi”[‚·‚é
-#ifdef EVAL_KPP
+	#ifdef EVAL_KPP
 			pos.state()->sumBKPP = Value_error; pos.state()->previous->sumBKPP = Value_error;
-#elif defined(EVAL_PP)
+	#elif defined(EVAL_PP)
 			pos.state()->bpp = pos.state()->wpp = Value_error;//·•ªŒvZ‚ğ–³Œø‚É‚µ‚Ä‚İ‚é
 			pos.state()->previous->bpp =pos.state()->previous->wpp= Value_error;
-#endif
-			const Value deepvalue = (rootColor==pos.sidetomove()) ? Eval::eval(pos):-Eval::eval(pos);
+	#endif
+			deepvalue = (rootColor==pos.sidetomove()) ? Eval::eval(pos):-Eval::eval(pos);
 #endif
 			//teacher_data td(/*HaffmanrootPos,*/sfen_rootpos, deepvalue);
-			teacher_data td(pos.make_sfen(), v/*,th.RootMoves[0].move*/);
+#ifdef  USEPACKEDSFEN
+			teacher_data td(&pos.data, deepvalue/*,th.RootMoves[0].move*/);
+#else
+			teacher_data td(sfen_rootpos, deepvalue);
+#endif
+			
 			teachers[number].push_back(td);
-#if 0
+#if  defined(GOLEAF)
 			for (int jj = 0; jj < pv_depth; jj++) {
 				pos.undo_move();
 			}
@@ -715,7 +743,7 @@ double loss = 0;
 ifstream‚ğŠO•”‚©‚çQÆ“n‚µ‚·‚é‚±‚Æ‚É‚·‚é
 
 */
-#if 0
+#if !defined(USEPACKEDSFEN)
 bool read_teacherdata(fstream& f) {
 	sum_teachers.clear();
 	//ifstream f(TEACHERPATH);
@@ -723,15 +751,15 @@ bool read_teacherdata(fstream& f) {
 	teacher_data t;
 	int i = 0;
 	if (f.eof()) { return false; }
-	while (!f.eof() && i<batchsize) {
-		f.seekg(read_teacher_counter * sizeof(teacher_data));
+	while (!f.eof() && sum_teachers.size()<batchsize) {
+		/*f.seekg(read_teacher_counter * sizeof(teacher_data));
 		f.read((char*)&t, sizeof(teacher_data));
 
 		sum_teachers.push_back(t);
 		read_teacher_counter++;
-		i++;
+		i++;*/
 
-		/*std::string line, sfen;
+		std::string line, sfen;
 		Value v;
 		Move m;
 		if (!getline(f, line)) { break; };
@@ -743,7 +771,7 @@ bool read_teacherdata(fstream& f) {
 		teacher_data td(sfen, v);
 		sum_teachers.push_back(td);
 		i++;
-		read_teacher_counter++;*/
+		read_teacher_counter++;
 	}
 	cout << "read teacher counter>>" << read_teacher_counter << endl;
 	bool is_eof = f.eof();
@@ -755,7 +783,7 @@ bool read_teacherdata(fstream& f) {
 	cout << pos << endl;
 	cout << pos.occ_all() << endl;*/
 }
-#elif 1
+#else
 bool read_teacherdata(fstream& f) {
 	sum_teachers.clear();
 	sum_teachers.reserve(batchsize);
@@ -844,9 +872,15 @@ void reinforce_learn() {
 	std::for_each(sys::recursive_directory_iterator(p), sys::recursive_directory_iterator(),
 		[&](const sys::path& p) {
 		if (sys::is_regular_file(p)) { // ƒtƒ@ƒCƒ‹‚È‚ç...
+#ifdef  USEPACKEDSFEN
 			if (p.filename().string().find("bin") != string::npos) {
 				teacher_list.push_back(p.string());
 			}
+#else
+			if (p.filename().string().find("txt") != string::npos) {
+				teacher_list.push_back(p.string());
+			}
+#endif
 		}
 	});
 	for (string l : teacher_list) {
@@ -952,9 +986,11 @@ void reinforce_learn_pharse1(const int index) {
 		auto teacher_data = sum_teachers[g];
 		const Value teacher = (Value)teacher_data.teacher_value;
 		
+#ifdef  USEPACKEDSFEN
 		pos.unpack_haffman_sfen(teacher_data.haffman);
-		//pos.set(teacher_data.sfen);
-		
+#else
+		pos.set(teacher_data.sfen);
+#endif
 
 		const Color rootColor = pos.sidetomove();//rootcolor‚ğpos set‚ğ‚·‚é‘O‚É—pˆÓ‚µ‚Ä‚µ‚Ü‚Á‚Ä‚¢‚½I
 		/*
@@ -1253,8 +1289,12 @@ void check_teacherdata() {
 		for (int g = lock_index_inclement__(); g < sum_teachers.size(); g = lock_index_inclement__()) {
 			count++;
 			auto data = sum_teachers[g];
-			//pos__.set(data.sfen);
+		
+#ifdef USEPACKEDSFEN
 			pos__.unpack_haffman_sfen(data.haffman);
+#else
+			pos__.set(data.sfen);
+#endif
 			//cout << pos__ << endl;
 #if 0
 			th.cleartable();
