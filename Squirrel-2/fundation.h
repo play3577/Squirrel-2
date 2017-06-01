@@ -42,9 +42,10 @@
 
 #define LEARN      //学習（これ単体だとぼなぜぞ）
 //#define MAKESTARTPOS //初期局面データ作成
-#define MAKETEACHER  //教師データ作成
+//#define MAKETEACHER  //教師データ作成
 //#define Prog_LEARN  //進行度学習
-//#define REIN      //強化学習
+#define REIN      //強化学習
+
 #ifdef MAKETEACHER
 #define USETT
 #endif

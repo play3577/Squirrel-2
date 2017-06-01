@@ -485,6 +485,27 @@ void make_teacher()
 		TEACHERPATH[0] = 'G';
 	}
 	cout << TEACHERPATH << endl;
+
+
+	std::string day;
+	time_t rawtime;
+	struct tm * timeinfo;
+	time(&rawtime);
+	timeinfo = localtime(&rawtime);
+	day = asctime(timeinfo);
+
+	size_t hoge;
+	while ((hoge = day.find_first_of(" ")) != string::npos) {
+		day.erase(hoge, 1);
+	}
+	while ((hoge = day.find_first_of("\n")) != string::npos) {
+		day.erase(hoge, 1);
+	}
+	while ((hoge = day.find_first_of(":")) != string::npos) {
+		day.erase(hoge, 1);
+	}
+
+
 	//開始局面データベース読み込み
 	/*
 	出てこないきょくめんばかりだった可能性が大なので定跡から読み込ませる
@@ -554,7 +575,8 @@ void make_teacher()
 		/*
 		読み込むときはvector一つ分とってきて、それをpushbackしていけばいいと考えられるのだが
 		*/
-		ofstream of(TEACHERPATH,ios::app);
+		string teacher_ = TEACHERPATH + "/"+day+"depth"+itos(DEPTH-1)+".txt";
+		ofstream of(teacher_,ios::app);
 		if (!of) { UNREACHABLE; }
 		//of.write(reinterpret_cast<const char*>(&sum_teachers[0]), sum_teachers.size() * sizeof(teacher_data));
 		for (auto& td : sum_teachers) {
@@ -791,7 +813,6 @@ bool read_teacherdata(fstream& f) {
 	teacher_data t;
 	
 	while (sum_teachers.size() < batchsize) {
-		//これ同じものをひたすらpushbackするだけじゃないのか？？
 		if (f.read((char*)&t, sizeof(teacher_data))) {
 			sum_teachers.push_back(t);
 		}
@@ -860,7 +881,7 @@ void reinforce_learn() {
 #if defined(__unix__) 
 	filepath = "/home/daruma/fvPP/" + str + ".txt";
 #endif
-	//filepath = "c:/book2/log/" + str + ".txt";
+	//filepath = "c:/book2/log/" + day + ".txt";
 	ofstream ofs(filepath);
 	if (ofs.fail()) { cout << "log fileError"; }
 
