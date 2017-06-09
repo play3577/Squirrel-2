@@ -202,11 +202,11 @@
     <ClCompile Include="occupied.cpp" />
     <ClCompile Include="occupied_m256.cpp" />
     <ClCompile Include="Packedsfen.cpp" />
-    <ClCompile Include="Parallel_learner.cpp" />
+    <ClCompile Include="bonanzamathod.cpp" />
     <ClCompile Include="position.cpp" />
     <ClCompile Include="ProgLearner.cpp" />
     <ClCompile Include="progress.cpp" />
-    <ClCompile Include="reinforce_learner.cpp" />
+    <ClCompile Include="rootstrap.cpp" />
     <ClCompile Include="search.cpp" />
     <ClCompile Include="book.cpp" />
     <ClCompile Include="Thread.cpp" />

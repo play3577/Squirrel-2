@@ -54,7 +54,7 @@ string TEACHERPATH = "C:/teacher/teacherd3_test.txt";
 	#endif
 #endif
 
-#define DEPTH 7
+#define DEPTH 9
 
 #ifdef MAKESTARTPOS
 string Position::random_startpos()
@@ -486,7 +486,7 @@ void make_teacher()
 	}
 	cout << TEACHERPATH << endl;
 
-
+/*
 	std::string day;
 	time_t rawtime;
 	struct tm * timeinfo;
@@ -504,7 +504,7 @@ void make_teacher()
 	while ((hoge = day.find_first_of(":")) != string::npos) {
 		day.erase(hoge, 1);
 	}
-
+*/
 
 	//開始局面データベース読み込み
 	/*
@@ -575,7 +575,7 @@ void make_teacher()
 		/*
 		読み込むときはvector一つ分とってきて、それをpushbackしていけばいいと考えられるのだが
 		*/
-		string teacher_ = TEACHERPATH + "/"+day+"depth"+itos(DEPTH-1)+".txt";
+		string teacher_ = TEACHERPATH + "/"+"iteration4"+"depth"+itos(DEPTH-1)+".txt";
 		ofstream of(teacher_,ios::app);
 		if (!of) { UNREACHABLE; }
 		//of.write(reinterpret_cast<const char*>(&sum_teachers[0]), sum_teachers.size() * sizeof(teacher_data));
@@ -622,7 +622,7 @@ void make_teacher_body(const int number) {
 
 		random_probability = 1.0;
 
-		for (int i = 0; i < 256; i++) {
+		for (int i = 0; i < 300; i++) {
 
 			//探索前にthreadを初期化しておく
 			Eval::eval_PP(pos);//差分計算でバグを出さないために計算しておく
@@ -652,7 +652,7 @@ void make_teacher_body(const int number) {
 			/*--------------------------------------------------------------------------------------------------------
 			pvの末端に移動をしなかった場合deepvalueが探索の値とかけ離れてしまうということが起こった！これで少しはましになる
 			--------------------------------------------------------------------------------------------------------*/
-//#define GOLEAF
+//#define GOLEAF//USETTしてるのでGLEAFはできない
 			Value deepvalue = v;
 #if defined(GOLEAF)
 			StateInfo si2[64];
@@ -772,14 +772,23 @@ bool read_teacherdata(fstream& f) {
 	if (!f) { cout << "cantopen" << TEACHERPATH << endl; UNREACHABLE; }
 	teacher_data t;
 	int i = 0;
-	if (f.eof()) { return false; }
-	while (!f.eof() && sum_teachers.size()<batchsize) {
+	
+	while (/*!f.eof() &&*/ sum_teachers.size()<batchsize) {
 		/*f.seekg(read_teacher_counter * sizeof(teacher_data));
 		f.read((char*)&t, sizeof(teacher_data));
 
 		sum_teachers.push_back(t);
 		read_teacher_counter++;
 		i++;*/
+
+		if (f.eof()) {
+
+			f.close();
+			listcounter++;
+			if (listcounter >= teacher_list.size()) { return false; }
+			f.open(teacher_list[listcounter], ios::in);
+			cout << "teacher " << teacher_list[listcounter] << endl;
+		}
 
 		std::string line, sfen;
 		Value v;
@@ -796,14 +805,14 @@ bool read_teacherdata(fstream& f) {
 		read_teacher_counter++;
 	}
 	cout << "read teacher counter>>" << read_teacher_counter << endl;
-	bool is_eof = f.eof();
+	//bool is_eof = f.eof();
 	//f.close();
-	return (is_eof == false);
+	//return (is_eof == false);
 	/*Position pos;
-
 	pos.unpack_haffman_sfen(sum_teachers[0].haffman);
 	cout << pos << endl;
 	cout << pos.occ_all() << endl;*/
+	return true;
 }
 #else
 bool read_teacherdata(fstream& f) {
@@ -910,7 +919,11 @@ void reinforce_learn() {
 
 
 	fstream f;
+#if defined(USEPACKEDSFEN)
 	f.open(teacher_list[0],ios::in|ios::binary);
+#else
+	f.open(teacher_list[0], ios::in);
+#endif
 	//if (f) { cout << "cantopen" << TEACHERPATH << endl; UNREACHABLE; }
 
 	

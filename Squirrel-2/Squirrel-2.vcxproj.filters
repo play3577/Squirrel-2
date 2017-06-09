@@ -149,9 +149,6 @@
     <ClCompile Include="occupied_m256.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="Parallel_learner.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
     <ClCompile Include="Packedsfen.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
@@ -170,9 +167,6 @@
     <ClCompile Include="ThreadPool.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="reinforce_learner.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
     <ClCompile Include="TimeManeger.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
@@ -180,6 +174,12 @@
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="evalKPPT.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="rootstrap.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="bonanzamathod.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
   </ItemGroup>
