@@ -3,7 +3,7 @@
 #include "evaluate.h"
 #include "misc.h"
 #include <random>
-#include "progress.h"
+
 //指し手生成速度計測
 //計測方法が他のソフトと違うと比較できないので他のソフトに合わせる。
 #ifdef MISC

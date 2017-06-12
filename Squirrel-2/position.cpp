@@ -4,7 +4,6 @@
 #include "evaluate.h"
 #include <sstream>
 
-#include "progress.h"
 
 #if defined(_MSC_VER)
 #endif

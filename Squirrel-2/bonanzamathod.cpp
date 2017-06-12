@@ -12,7 +12,6 @@
 #include "position.h"
 #include "game_database.h"
 #include "makemove.h"
-#include "progress.h"
 #include "usi.h"
 #include <omp.h>
 #include <thread>

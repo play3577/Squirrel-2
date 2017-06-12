@@ -50,7 +50,8 @@ Direction direct_table[SQ_NUM][SQ_NUM];
 
 int distance_table[SQ_NUM][SQ_NUM];
 
-Bitboard PsuedoGivesCheckBB[ColorALL][PT_ALL][SQ_NUM];
+//Bitboard PsuedoGivesCheckBB[ColorALL][PT_ALL][SQ_NUM];//これも今のところGOLDしか使ってないので他のところは削ってしまってもいいな
+Bitboard PsuedoGivesCheckBBGOLD[ColorALL][SQ_NUM];
 //Bitboard GivesCheckRookBB[ColorALL][SQ_NUM][128];
 //Bitboard GivesCheckBishopBB[ColorALL][SQ_NUM][128];
 //Bitboard GivesCheckLanceBB[ColorALL][SQ_NUM][128];
@@ -649,6 +650,7 @@ void bitboard_init()
 	歩による王手はksqに相手番の歩を置いたときに効きのある場所に移動できるマス（つまり玉の2つ前）
 	と成りによって移動できるマス
 	*/
+#if 0
 	for (Square ksq = SQ_ZERO; ksq < SQ_NUM; ksq++) {
 		for (Color c = BLACK; c < ColorALL; c++) {
 			const Color op = opposite(c);
@@ -738,25 +740,7 @@ void bitboard_init()
 		}
 	}
 
-	//金
-	for (Color c = BLACK; c < ColorALL; c++) {
-		for (Square ksq = SQ_ZERO; ksq < SQ_NUM; ksq++) {
-
-			const Color op = opposite(c);
-			//王手をかけるマス
-			Bitboard check = StepEffect[op][GOLD][ksq];
-
-
-			//cout << ksq << " " << c << endl << check << endl;
-			while (check.isNot()) {
-				const Square sq = check.pop();
-				PsuedoGivesCheckBB[c][GOLD][ksq] |= StepEffect[op][GOLD][sq];
-
-			}
-			PsuedoGivesCheckBB[c][GOLD][ksq] = andnot(PsuedoGivesCheckBB[c][GOLD][ksq], SquareBB[ksq]);
-			//cout << c << ksq << GOLD << endl << PsuedoGivesCheckBB[c][GOLD][ksq] << endl;//ワンパス通った。
-		}
-	}
+	
 	//飛車(飛車はどこからでも王手できることになってしまうのか.......)
 	for (Color c = BLACK; c < ColorALL; c++) {
 		for (Square ksq = SQ_ZERO; ksq < SQ_NUM; ksq++) {
@@ -817,6 +801,29 @@ void bitboard_init()
 			}
 			PsuedoGivesCheckBB[c][UNICORN][ksq] = andnot(PsuedoGivesCheckBB[c][UNICORN][ksq], SquareBB[ksq]);
 			//cout << c << ksq << UNICORN << endl << PsuedoGivesCheckBB[c][UNICORN][ksq] << endl;//ワンパス通った。
+		}
+	}
+#endif
+	//金
+	for (Color c = BLACK; c < ColorALL; c++) {
+		for (Square ksq = SQ_ZERO; ksq < SQ_NUM; ksq++) {
+
+			const Color op = opposite(c);
+			//王手をかけるマス
+			Bitboard check = StepEffect[op][GOLD][ksq];
+
+
+			//cout << ksq << " " << c << endl << check << endl;
+			while (check.isNot()) {
+				const Square sq = check.pop();
+				//PsuedoGivesCheckBB[c][GOLD][ksq] |= StepEffect[op][GOLD][sq];
+				PsuedoGivesCheckBBGOLD[c][ksq] |= StepEffect[op][GOLD][sq];
+
+			}
+			//PsuedoGivesCheckBB[c][GOLD][ksq] = andnot(PsuedoGivesCheckBB[c][GOLD][ksq], SquareBB[ksq]);
+			PsuedoGivesCheckBBGOLD[c][ksq] = andnot(PsuedoGivesCheckBBGOLD[c][ksq], SquareBB[ksq]);
+
+			//cout << c << ksq << GOLD << endl << PsuedoGivesCheckBB[c][GOLD][ksq] << endl;//ワンパス通った。
 		}
 	}
 

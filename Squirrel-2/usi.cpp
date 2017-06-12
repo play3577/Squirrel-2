@@ -9,7 +9,6 @@
 #include "makemove.h"
 #include "learner.h"
 #include "book.h"
-#include "progress.h"
 //#include "makemove.h"
 #include "reinforce_learner.h"
 #include "tpt.h"

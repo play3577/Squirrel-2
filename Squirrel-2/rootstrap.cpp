@@ -5,7 +5,6 @@
 #include "reinforce_learner.h"
 #include "position.h"
 #include "Thread.h"
-#include "progress.h"
 #include "makemove.h"
 #include "learner.h"
 #include <random>
@@ -374,11 +373,9 @@ void make_startpos_detabase()
 struct teacher_data {
 
 	//bool haffman[256];
-#ifdef  USEPACKEDSFEN
-	PackedSfen haffman;
-#else
+
 	string sfen;//ハフマン失敗しまくったのでstringで行く。　大会終わって時間もできたしハフマン変換関数のデバッグするか...
-#endif
+
 	//
 	int16_t teacher_value;
 	uint16_t move;
@@ -403,28 +400,19 @@ struct teacher_data {
 	//	teacher_value = (int16_t)teachervalue;
 	//	move = m;
 	//}
-#ifdef  USEPACKEDSFEN
-	teacher_data(const PackedSfen *ps, const Value teachervalue) {
-		memcpy(&haffman, ps, sizeof(haffman));
-		//sfen = sfen_;
-		teacher_value = (int16_t)teachervalue;
-		//move = MOVE_NONE;
-	}
-#else
+
 	teacher_data( const string sfen_, const Value teachervalue) {
 		
 		sfen = sfen_;
 		teacher_value = (int16_t)teachervalue;
 		
 }
-#endif
+
 	teacher_data(){}
 };
 static_assert(sizeof(teacher_data) == 40, "40");
 inline std::ostream& operator<<(std::ostream& os, const teacher_data& td) {
-#ifndef  USEPACKEDSFEN
-	os <<td.sfen<<endl;
-#endif
+
 	os << td.teacher_value << endl;
 	//os << td.move << endl;
 	return os;
@@ -765,7 +753,6 @@ double loss = 0;
 ifstreamを外部から参照渡しすることにする
 
 */
-#if !defined(USEPACKEDSFEN)
 bool read_teacherdata(fstream& f) {
 	sum_teachers.clear();
 	//ifstream f(TEACHERPATH);
@@ -814,28 +801,7 @@ bool read_teacherdata(fstream& f) {
 	cout << pos.occ_all() << endl;*/
 	return true;
 }
-#else
-bool read_teacherdata(fstream& f) {
-	sum_teachers.clear();
-	sum_teachers.reserve(batchsize);
-	//ifstream f(TEACHERPATH);
-	teacher_data t;
-	
-	while (sum_teachers.size() < batchsize) {
-		if (f.read((char*)&t, sizeof(teacher_data))) {
-			sum_teachers.push_back(t);
-		}
-		else {
-			f.close();
-			listcounter++;
-			if (listcounter >= teacher_list.size()) { return false; }
-			f.open(teacher_list[listcounter], ios::in | ios::binary);
-			cout << "teacher " << teacher_list[listcounter] << endl;
-		}
-	}
-	return true;
-}
-#endif
+
 #endif
 #if defined(LEARN) && defined(REIN)
 
@@ -1020,11 +986,8 @@ void reinforce_learn_pharse1(const int index) {
 		auto teacher_data = sum_teachers[g];
 		const Value teacher = (Value)teacher_data.teacher_value;
 		
-#ifdef  USEPACKEDSFEN
-		pos.unpack_haffman_sfen(teacher_data.haffman);
-#else
+
 		pos.set(teacher_data.sfen);
-#endif
 
 		const Color rootColor = pos.sidetomove();//rootcolorをpos setをする前に用意してしまっていた！
 		/*
@@ -1324,11 +1287,9 @@ void check_teacherdata() {
 			count++;
 			auto data = sum_teachers[g];
 		
-#ifdef USEPACKEDSFEN
-			pos__.unpack_haffman_sfen(data.haffman);
-#else
+
 			pos__.set(data.sfen);
-#endif
+
 			//cout << pos__ << endl;
 #if 0
 			th.cleartable();

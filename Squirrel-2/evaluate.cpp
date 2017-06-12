@@ -1,7 +1,6 @@
 
 
 #include "evaluate.h"
-#include "progress.h"
 #include "position.h"
 #include "eval_hash.h"
 #include <utility>

@@ -2067,7 +2067,46 @@ Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
 			}
 #endif
 			ASSERT(bestvalue > -Value_Infinite&&bestvalue < Value_Infinite);
+			//stand pat 方式を試してみる。（もしあまりよろしくなければ採用を取り消す。）
+			/*
+			stand pat(ポーカーで指し書のカードを変更せずに手を決めるという意味の単語)
 
+			この局面の静的評価値をvalueのlower boundとして用いる。
+			普通は少なくとも1つの指してはこのlower bound以上の指してがあると考えられる。
+			これはnullmove observation（局面には必ず1つはpass以上に良い指し手があるはずであるという考え）に基づいている。
+			これは現在Zugzwang(パスが最も良い局面)にいないと考える場合（将棋にはpassが最も良い指し手になる局面はなかなか出てこないらしい））
+			https://chessprogramming.wikispaces.com/Null+Move+Observation
+			http://ponanza.hatenadiary.jp/entry/2014/04/02/220239
+
+			もし　lower bound(stand pat score) がすでに>=betaであれば、
+			stand pat score(fail-soft)かbeta(fail-hard)をlowerboundとしてreturn できる。
+			（局面の評価値はstandpat以上になるはずなので）
+
+			[
+			というかそんなことが許されるのなら前向き枝切りは全部eval>=betaで済んでしまうじゃないか....???
+			standpatは静止探索でのみ許されるのか？？そんなことはないはず。よくわからんもっと考えないと...
+			しかし静止探索にstandpatを入れると前のバージョンにかなり勝ち越すようになった（よくわからん）
+			]
+
+			[
+			静止探索ではコレぐらい適当にバッサリ枝を切ってしまってもいいのか...???
+
+			]
+
+			取り合いでは取り合いを続けるか終わらせるかを選べる
+			取り合いで得があるのなら取り合いを続けて得がないのなら取り合いを終わらせるのでこの局面の評価値をlowerboundとしてそれ以上の値が返ってくることを期待するということ。
+			valueがbetaを超えたということは相手にとって見たらalphaを下回ったということで一手前の相手にとって取り合いを続けて得がなさそうということなのでここでreturnする。
+
+			これがあるから取り合いの局面に対しても多少は値が更新される...でもそんなに多く発生するわけでもなさそうなのでやっぱ浅い探索ではPVで末端まで移動しないほうがいいか？
+
+			fali soft
+			http://d.hatena.ne.jp/hiyokoshogi/20111128/1322409710
+			https://ja.wikipedia.org/wiki/Negascout
+			通常のアルファベータ法が返す値は探索窓の範囲内の値であるが、 子ノードを探索した結果が探索窓の範囲外だった場合、
+			探索窓の境界値ではなく実際に出現した子ノードの最大値を返すと探索量が減る事がある。
+			これは親ノードに伝わったときにβ値以上となってカットしたりα値を更新して探索窓を狭めたりできる可能性が高くなるためである。
+			このような性質を Fail-Soft と言い、 Null Window Search などの狭い探索窓による探索や置換表を使った探索をする場合にその効果がよく現れる。
+			*/
 			return bestvalue;
 
 		}
@@ -2082,41 +2121,7 @@ Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
 #if 0
 	if (!incheck) {
 
-		//stand pat 方式を試してみる。（もしあまりよろしくなければ採用を取り消す。）
-		/*
-		stand pat(ポーカーで指し書のカードを変更せずに手を決めるという意味の単語)
-
-		この局面の静的評価値をvalueのlower boundとして用いる。
-		普通は少なくとも1つの指してはこのlower bound以上の指してがあると考えられる。
-		これはnullmove observation（局面には必ず1つはpass以上に良い指し手があるはずであるという考え）に基づいている。
-		これは現在Zugzwang(パスが最も良い局面)にいないと考える場合（将棋にはpassが最も良い指し手になる局面はなかなか出てこないらしい））
-		https://chessprogramming.wikispaces.com/Null+Move+Observation
-		http://ponanza.hatenadiary.jp/entry/2014/04/02/220239
-
-		もし　lower bound(stand pat score) がすでに>=betaであれば、
-		stand pat score(fail-soft)かbeta(fail-hard)をlowerboundとしてreturn できる。
-		（局面の評価値はstandpat以上になるはずなので）
-
-		[
-		というかそんなことが許されるのなら前向き枝切りは全部eval>=betaで済んでしまうじゃないか....??? 
-		standpatは静止探索でのみ許されるのか？？そんなことはないはず。よくわからんもっと考えないと...
-		しかし静止探索にstandpatを入れると前のバージョンにかなり勝ち越すようになった（よくわからん）
-		 ]
-
-		 [
-		 静止探索ではコレぐらい適当にバッサリ枝を切ってしまってもいいのか...???
-		 
-		 ]
-
-
-		fali soft
-		http://d.hatena.ne.jp/hiyokoshogi/20111128/1322409710
-		https://ja.wikipedia.org/wiki/Negascout
-		通常のアルファベータ法が返す値は探索窓の範囲内の値であるが、 子ノードを探索した結果が探索窓の範囲外だった場合、
-		探索窓の境界値ではなく実際に出現した子ノードの最大値を返すと探索量が減る事がある。
-		これは親ノードに伝わったときにβ値以上となってカットしたりα値を更新して探索窓を狭めたりできる可能性が高くなるためである。
-		このような性質を Fail-Soft と言い、 Null Window Search などの狭い探索窓による探索や置換表を使った探索をする場合にその効果がよく現れる。
-		*/
+		
 		
 	}
 #endif

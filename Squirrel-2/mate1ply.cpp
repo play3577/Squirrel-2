@@ -430,7 +430,9 @@ movecheck:;
 
 
 	//ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーまずは詰ませる可能性の高い金から　OKワンパスは通った。
-	Bitboard matecandicate_Gold = (occ_pt(us, GOLD)|occ_pt(us,PRO_PAWN)|occ_pt(us,PRO_LANCE)|occ_pt(us,PRO_NIGHT)|occ_pt(us,PRO_SILVER))&PsuedoGivesCheckBB[us][GOLD][eksq];
+	//Bitboard matecandicate_Gold = (occ_pt(us, GOLD)|occ_pt(us,PRO_PAWN)|occ_pt(us,PRO_LANCE)|occ_pt(us,PRO_NIGHT)|occ_pt(us,PRO_SILVER))&PsuedoGivesCheckBB[us][GOLD][eksq];
+	Bitboard matecandicate_Gold = (occ_pt(us, GOLD) | occ_pt(us, PRO_PAWN) | occ_pt(us, PRO_LANCE) | occ_pt(us, PRO_NIGHT) | occ_pt(us, PRO_SILVER))&PsuedoGivesCheckBBGOLD[us][eksq];
+
 	//pinゴマを動かそうとしてはいけない（まあpinをしている駒をとることで王手できる場合もあるがそれはイレギュラーなので考えないほうがいいだろう）
 	matecandicate_Gold = andnot(matecandicate_Gold, st->blocker[us]);
 

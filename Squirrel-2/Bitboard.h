@@ -144,7 +144,8 @@ void check_between();
 //==========================================
 //â§éËä÷òA
 //==========================================
-extern Bitboard PsuedoGivesCheckBB[ColorALL][PT_ALL][SQ_NUM];
+//extern Bitboard PsuedoGivesCheckBB[ColorALL][PT_ALL][SQ_NUM];//Ç±ÇÍÇ‡ç°ÇÃÇ∆Ç±ÇÎGOLDÇµÇ©égÇ¡ÇƒÇ»Ç¢ÇÃÇ≈ëºÇÃÇ∆Ç±ÇÎÇÕçÌÇ¡ÇƒÇµÇ‹Ç¡ÇƒÇ‡Ç¢Ç¢Ç»
+extern Bitboard PsuedoGivesCheckBBGOLD[ColorALL][SQ_NUM];
 //extern Bitboard GivesCheckStepBB[ColorALL][PT_ALL][SQ_NUM];
 //extern Bitboard GivesCheckRookBB[ColorALL][SQ_NUM][128];
 //extern Bitboard GivesCheckBishopBB[ColorALL][SQ_NUM][128];

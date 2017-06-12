@@ -75,9 +75,6 @@
     <ClInclude Include="occupied_m256.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="progress.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
     <ClInclude Include="reinforce_learner.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
@@ -155,15 +152,6 @@
     <ClCompile Include="mate1ply.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="progress.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
-    <ClCompile Include="ProgLearner.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
-    <ClCompile Include="evaluate_KPP.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
     <ClCompile Include="ThreadPool.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
@@ -171,9 +159,6 @@
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="eval_hash.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
-    <ClCompile Include="evalKPPT.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="rootstrap.cpp">

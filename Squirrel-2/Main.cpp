@@ -18,7 +18,6 @@
 #include "tpt.h"
 #include "book.h"
 #include "occupied_m256.h"
-#include "progress.h"
 #include "eval_hash.h"
 
 #include <iostream>
