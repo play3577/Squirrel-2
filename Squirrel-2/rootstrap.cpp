@@ -659,6 +659,9 @@ void make_teacher_body(const int number) {
 	#elif defined(EVAL_PP)
 			pos.state()->bpp = pos.state()->wpp = Value_error;//差分計算を無効にしてみる
 			pos.state()->previous->bpp =pos.state()->previous->wpp= Value_error;
+	#elif defined(EVAL_PPT)
+			pos.state()->bpp = pos.state()->wpp = Value_error;//差分計算を無効にしてみる
+			if (pos.state()->previous != nullptr) { pos.state()->previous->bpp = pos.state()->previous->wpp = Value_error; }
 	#endif
 			deepvalue = (rootColor==pos.sidetomove()) ? Eval::eval(pos):-Eval::eval(pos);
 #endif
@@ -809,7 +812,7 @@ bool read_teacherdata(fstream& f) {
 dJValue sum_gradJ;
 vector<dJValue> gradJs;
 
-lowerDimPP lowdim_;
+//lowerDimPP lowdim_;
 
 void reinforce_learn_pharse1(const int index);
 
@@ -999,6 +1002,11 @@ void reinforce_learn_pharse1(const int index) {
 		（静止探索にrecapture以外を入れたら弱くなったがあれはバグがあったからなのかもしれないな...もう一回試してみたほうがいいか）
 
 		1手探索ぐらいはしたほうがいいのかもしれない
+
+
+		静止探索の末端の値を更新するのには疑問を覚えるのであとで変えてみる
+
+
 		*/
 		//const Value shallow_v = Eval::eval(pos);
 #if 0
@@ -1044,6 +1052,9 @@ void reinforce_learn_pharse1(const int index) {
 		pos.state()->bpp = pos.state()->wpp = Value_error;//差分計算を無効にしてみる
 		if (pos.state()->previous != nullptr) { pos.state()->previous->bpp = pos.state()->previous->wpp = Value_error; }
 		//previousをvalueerrorにするのを忘れていた
+#elif defined(EVAL_PPT)
+		pos.state()->bpp = pos.state()->wpp = Value_error;//差分計算を無効にしてみる
+		if (pos.state()->previous != nullptr) { pos.state()->previous->bpp = pos.state()->previous->wpp = Value_error; }
 #endif
 		//rootから見た点数に変換する（teacherもrootから見た評価値のはず）]
 
@@ -1073,7 +1084,12 @@ void reinforce_learn_pharse1(const int index) {
 		gradJs[index].update_dJ(pos, diffsig);
 #else
 		double diffsig = (rootColor == BLACK ? diffsig_ : -diffsig_);
+		double diffsig_turn = (rootColor == pos.sidetomove() ? -diffsig_ : diffsig_);//rootcolorつまり手番を握っている側に対してボーナスを与える
+#ifdef EVAL_PP
 		gradJs[index].update_dJ(pos, -diffsig);
+#elif defined(EVAL_PPT)
+		gradJs[index].update_dJ(pos, -diffsig,diffsig_turn);
+#endif
 #endif
 	}
 
@@ -1166,8 +1182,13 @@ wcsc27でnozomiさんに教えていただいた方法。
 kppなどに局所解はあまりないというのが見解としてわかったらしいので0~2までの範囲で動かす値を変えるなんてしなくていいみたい。
 なんか昔はハイパーパラメータいろいろ弄ったらしいがここに落ち着いたようだ...
 
-この方法は大量に棋譜があって何回もiterationを回せるのならいいのかもしれないがそうではないうちではちゃんと収束まで持ち込めなくてうまくいかないのかも...
-それでも目的関数を下って行ってくれているのなら強くなるはずか...う～～んそう考えるとなんで強くならないのかわからない....
+https://twitter.com/hillbig/status/868053156223004672
+https://twitter.com/hillbig/status/869122361001246720
+https://twitter.com/hillbig/status/869348563259490304
+
+これをみるとたしかにこの方法でなんだかんだいけるような気がする
+ただし動かす値が1だけなので学習データはいっぱいほしい
+（1だけではあるが場合によっては1が大きいということもあるかもしれない）
 */
 void renewal_PP_nozomi(dJValue &data) {
 
@@ -1188,62 +1209,21 @@ void renewal_PP_nozomi(dJValue &data) {
 
 		}
 	}
-	//書き出した後読み込むことで値を更新する　ここで32回も書き出し書き込みを行うのは無駄最後にまとめて行う
-#elif defined(EVAL_KPP)
-	for (Square ksq = SQ_ZERO; ksq < Square(81); ksq++) {
-		//kpp-----------------------------------------------------------
-		for (BonaPiece bp1 = BONA_PIECE_ZERO; bp1 < fe_end; bp1++) {
-			for (BonaPiece bp2 = BONA_PIECE_ZERO; bp2 < fe_end; bp2++) {
-				int inc = h*sign(data.absolute_KPP[ksq][bp1][bp2]);
-				if (abs(kpp[ksq][bp1][bp2] + inc) < INT16_MAX) {
-					kpp[ksq][bp1][bp2] += inc;
-				}
+#elif defined(EVAL_PPT)
+	//対称性はdJの中に含まれているのでここでは考えなくていい
+	for (BonaPiece i = f_hand_pawn; i < fe_end2; i++) {
+		for (BonaPiece j = f_hand_pawn; j < fe_end2; j++) {
+
+			int inc = h*sign(data.absolute_PP[i][j]);
+			if (abs(PP[i][j] + inc) < INT16_MAX) {
+				PP[i][j] += inc;
 			}
-		}
-		//kkp-----------------------------------------------------------
-		for (Square ksq2 = SQ_ZERO; ksq2 < Square(81); ksq2++) {
-			for (BonaPiece bp3 = BONA_PIECE_ZERO; bp3 < fe_end + 1; bp3++) {
-
-				int inc = h*sign(data.absolute_KKP[ksq][ksq2][bp3]);
-				if (abs(kpp[ksq][ksq2][bp3] + inc) < INT16_MAX) {
-					kpp[ksq][ksq][bp3] += inc;
-				}
-
+			inc = h*sign(data.absolute_PPt[i][j]);
+			if (abs(PPT[i][j] + inc) < INT16_MAX) {
+				PPT[i][j] += inc;
 			}
 		}
 	}
-#elif defined(EVAL_KPPT)
-
-	int inc;
-	for (Square ksq = SQ_ZERO; ksq < SQ_NUM; ksq++) {
-		//kpp-----------------------------------------------------------
-		for (BonaPiece bp1 = BONA_PIECE_ZERO; bp1 < fe_end; bp1++) {
-			for (BonaPiece bp2 = BONA_PIECE_ZERO; bp2 < fe_end; bp2++) {
-				inc = h*sign(data.kpp[ksq][bp1][bp2][0]);
-				KPP[ksq][bp1][bp2][0]+=inc;
-				inc = h*sign(data.kpp[ksq][bp1][bp2][1]);
-				KPP[ksq][bp1][bp2][1] += inc;
-			}
-		}
-		//kkp  &kk -----------------------------------------------------------
-		for (Square ksq2 = SQ_ZERO; ksq2 < SQ_NUM; ksq2++) {
-
-			inc = h*sign(data.kk[ksq][ksq2][0]);
-			KK[ksq][ksq2][0] +=inc;
-			inc = h*sign(data.kk[ksq][ksq2][1]);
-			KK[ksq][ksq2][1] += inc;
-
-			for (BonaPiece bp3 = BONA_PIECE_ZERO; bp3 < fe_end; bp3++) {
-				inc=h*sign(data.kkp[ksq][ksq2][bp3][0]);
-				KKP[ksq][ksq2][bp3][0] += inc;
-				inc = h*sign(data.kkp[ksq][ksq2][bp3][1]);
-				KKP[ksq][ksq2][bp3][1] += inc;
-			}
-		}
-	}
-
-
-
 #endif
 
 };

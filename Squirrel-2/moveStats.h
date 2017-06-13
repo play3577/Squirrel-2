@@ -55,7 +55,16 @@ d 18 d^2+2d-2 358
 vが324の値を超えるのはd=18
 
 なんで324で制限を入れるんだ...????
-全くわからん
+https://chessprogramming.wikispaces.com/History+Heuristic
+
+However, all of those statements were made at the time when typical search depth was much lower than today.
+Nowadays some authors say that given enough search depth, history heuristic produces just a random noise
+
+十分深い探索深さを与えるとhistory huristicはただのランダムノイズになるからであるようだ...
+ならd=18以上であればv=324でhistoryを更新すればいいのではないか？（試してみる）
+
+https://chessprogramming.wikispaces.com/Butterfly+Heuristic
+betaを超えたかどうかに関係なく探索で出てきた回数によってorderingする方法もあるらしい
 
 */
 template<typename T, bool CM = false>
@@ -104,7 +113,7 @@ typedef Stats<CounterMoveStats> CounterMoveHistoryStats;
 上のstatsはtoとpcしか考慮していなかったがこちらはfromとtoを考慮するstats.
 
 よく考えたらdropの時のことを考えてなかったな補正しなきゃな
-
+fromtoで格納されるのはBatterflyboardと呼ばれる
 */
 struct FromToStats {
 

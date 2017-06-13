@@ -71,8 +71,8 @@
 #define  USETMP
 //#define DIFFTEST
 //#define EVAL_NONDIFF
-#define EVAL_PP
-
+//#define EVAL_PP
+#define EVAL_PPT
 
 //--------------------------------’èÕì¬ƒ‚[ƒh‚ğƒIƒ“‚É‚·‚é‚©
 //#define MAKEBOOK

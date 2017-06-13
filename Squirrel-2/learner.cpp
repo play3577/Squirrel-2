@@ -104,6 +104,9 @@ void Eval::initialize_PP()
 	memset(kpp, 0, sizeof(kpp));
 	memset(kkp, 0, sizeof(kkp));
 	write_FV();
+#elif defined(EVAL_PPT)
+	//memset(PP, 0, sizeof(PP));
+	memset(PPT, 0, sizeof(PPT));
 #endif
 	
 	cout << "initialize param PP!" << endl;

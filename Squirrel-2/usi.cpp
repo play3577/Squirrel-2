@@ -137,6 +137,9 @@ void USI::init_option(OptionMap &o,string engine_name)
 	o["KPP"] << USIOption("C:/evalKPPT/Apery26/KPP_synthesized.bin");
 	o["KKP"] << USIOption("C:/evalKPPT/Apery26/KKP_synthesized.bin");
 	o["KK"] << USIOption("C:/evalKPPT/Apery26/KK_synthesized.bin");
+#elif defined(EVAL_PPT)
+	o["PP"] << USIOption("c:/book2/fv_PP.bin");
+	o["PPT"] << USIOption("c:/book2/fv_PPT.bin");
 #endif //  EVAL_KPP
 
 	

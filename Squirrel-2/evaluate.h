@@ -331,8 +331,21 @@ namespace Eval {
 
 
 	inline void init() { read_FV(); }
-#endif
+#elif defined(EVAL_PPT)
+	Value eval_PPT(const Position& pos);
 
+	Value eval_diff_PPT(const Position& pos);
+
+	void read_FV();
+	void write_FV();
+
+	void param_sym_ij();
+
+	extern int32_t PP[fe_end2][fe_end2];//手番ボーナスを与えないほうは今までのPPを使いまわす。
+	extern int32_t PPT[fe_end2][fe_end2];//手番ボーナス
+
+#endif
+	inline void init() { read_FV(); }
 
 	constexpr Value tempo = Value(40);
 };
