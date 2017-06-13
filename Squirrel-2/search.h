@@ -21,7 +21,11 @@ struct Signal {
 
 void search_clear(Thread& th);
 
-//pvの為にSearchStackを導入
+/*
+childnode parentnode brothernodeと共有したいデータをStackに入れる。
+例えばkillerがStackに入っているということはkillermoveはbrothernodeの物を共有するということである
+http://daruma3940.hatenablog.com/entry/2016/07/08/011324
+*/
 struct Stack {
 	//Move pvmove=MOVE_NONE;
 	Move *pv;

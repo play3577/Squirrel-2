@@ -4,7 +4,6 @@
 #include <sstream>
 #include <random>
 
-CSA2Piece CSA2Piece_;
 
 File Sfen2File(const char c) {
 
@@ -98,7 +97,10 @@ Move Sfen2Move(const string smove, const Position& pos)
 2937KE
 2277UM
 */
+#if 0
+CSA2Piece CSA2Piece_;
 
+//ここApery形式参考にしすぎているので直しておいた方がいいかもしれない
 //smove[0] fromfile [1]torank [2]tofile [3]torank [4][5]piece
 Move CSA2Move(const string smove, const Position& pos)
 {
@@ -153,9 +155,81 @@ Move CSA2Move(const string smove, const Position& pos)
 
 	return MOVE_NONE;
 }
+#else
+/*
+NO_PIECE, PAWN, LANCE, KNIGHT, SILVER, BISHOP, ROOK, GOLD, KING,
+PRO_PAWN, PRO_LANCE, PRO_NIGHT, PRO_SILVER, UNICORN, DRAGON,PT_ALL,
+*/
+const pair<string, Piece> CSAtoPiece[PT_ALL] = { {"",NO_PIECE},{"FU",PAWN},{"KY",LANCE},{"KE",KNIGHT},{"GI",SILVER},{"KA",BISHOP},{"HI",ROOK},{"KI",GOLD},{"OU",KING}
+,{"TO",PRO_PAWN},{"NY",PRO_LANCE},{"NK",PRO_NIGHT},{"NG",PRO_SILVER},{"UM",UNICORN},{"RY",DRAGON}};
 
+Piece csa_to_pt(const string p) {
+	
+	for (int i = 1; i < PT_ALL; i++) {
+		if (p == CSAtoPiece[i].first) {
+			return CSAtoPiece[i].second;
+		}
+	}
+	//UNREACHABLE;
+	return NO_PIECE;
+}
+
+Move CSA2Move(const string smove, const Position& pos)
+{
+	//文字列が長すぎる
+	if (smove.size() >= 7) {
+		return MOVE_NONE;
+	}
+	Move m;
+
+
+	//駒打ちの場合も考えられるので先に移動先から生成する。
+	const File tofile = CSA2File(smove[2]);
+	const Rank torank = CSA2Rank(smove[3]);
+
+	const Square to = make_square(torank, tofile);
+
+	Piece pt = csa_to_pt(smove.substr(4));
+	if (pt == NO_PIECE) { return MOVE_NONE; }
+	const Piece pc = add_color(pt, pos.sidetomove());
+
+	if (smove.substr(0,2)=="00") {
+		//コマ打ちの場合						 
+		return  m = make_drop(to, pc);
+	}
+	else {
+		//駒移動の場合
+		const File fromfile = CSA2File(smove[0]);
+		const Rank fromran = CSA2Rank(smove[1]);
+		const Square from = make_square(fromran, fromfile);
+		const Piece fromPC = pos.piece_on(from);
+		if (fromPC == NO_PIECE) { return MOVE_NONE; }
+
+		//成りはposのfromにいる駒とpcが違うかどうかで内部的に判定させないといけないみたい
+
+		if (fromPC == pc) {
+			return  m = make_move(from, to, pc);
+		}
+		else if (fromPC + PROMOTE == pc) {
+			//moveの情報に格納するのは成る前の駒種である
+			return  m = make_movepromote(from, to, fromPC);
+		}
+		else {
+			return MOVE_NONE;
+		}
+	}
+
+	return MOVE_NONE;
+}
+
+#endif
 
 #ifdef MISC
+/*
+gradient noize実装用に用意した
+http://yaneuraou.yaneu.com/2016/08/28/%E3%82%84%E3%81%AD%E3%81%86%E3%82%89%E7%8E%8B%E3%81%AE%E5%AD%A6%E7%BF%92%E3%83%AB%E3%83%BC%E3%83%81%E3%83%B3%E3%82%92%E4%BD%BF%E3%81%A3%E3%81%A6%E3%81%84%E3%82%8B%E9%96%8B%E7%99%BA%E8%80%85%E3%81%AE/
+http://postd.cc/optimizing-gradient-descent/#gradientnoise
+*/
 inline double normal_dist(double mean, double stddiv)
 {
 	std::default_random_engine generator;

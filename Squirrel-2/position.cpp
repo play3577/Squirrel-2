@@ -1572,6 +1572,8 @@ Bitboard Position::attackers_to_all(const Square to,const Occ_256& occ) const
 
 
 
+
+#if 0
 /*
 stockfishの実装はenumでkingより大きい駒があるSquirrelでは使えないので屋根裏王参考
 */
@@ -1584,7 +1586,7 @@ Piece Position::min_attacker_pt(const Color stm,const Square to, const Bitboard 
 	b = stmattacker&occ_pt(stm, LANCE); if (b.isNot()) { goto found; }
 	b = stmattacker&occ_pt(stm, KNIGHT); if (b.isNot()) { goto found; }
 	b = stmattacker&occ_pt(stm, SILVER); if (b.isNot()) { goto found; }
-	b = stmattacker&(occ_pt(stm, PRO_PAWN) | occ_pt(stm, PRO_LANCE) | occ_pt(stm, PRO_NIGHT) | occ_pt(stm, PRO_SILVER)); if (b.isNot()) { goto found; }
+	b = stmattacker&(occ_pt(stm, PRO_PAWN) | occ_pt(stm, PRO_LANCE) | occ_pt(stm, PRO_NIGHT) | occ_pt(stm, PRO_SILVER)); if (b.isNot()) { goto found; }//PROMOTEはすべて同じだとしていた
 	b = stmattacker&occ_pt(stm, GOLD); if (b.isNot()) { goto found; }
 	b = stmattacker&occ_pt(stm, BISHOP); if (b.isNot()) { goto found; }
 	b = stmattacker&occ_pt(stm, ROOK); if (b.isNot()) { goto found; }
@@ -1670,6 +1672,84 @@ found:
 
 	return pt;
 }
+#else
+/*
+NO_PIECE, PAWN, LANCE, KNIGHT, SILVER, BISHOP, ROOK, GOLD, KING,
+PRO_PAWN, PRO_LANCE, PRO_NIGHT, PRO_SILVER, UNICORN, DRAGON,PT_ALL,
+*/
+const Piece pieces[PT_ALL] = { NO_PIECE,PAWN, LANCE, KNIGHT, SILVER,PRO_PAWN, PRO_LANCE, PRO_NIGHT,PRO_SILVER, BISHOP, ROOK,UNICORN,DRAGON, GOLD,KING };
+Piece Position::min_attacker_pt(const int index, const Color stm, const Square to, const Bitboard & stmattacker, Bitboard & allattackers, Occ_256 & occ, Bitboard& occupied_)const
+{
+	ASSERT(0 < index&&index < PT_ALL);
+
+	if (index == PT_ALL - 1) { return KING; }
+
+	Bitboard b = stmattacker &occ_pt(stm, pieces[index]);;
+	if (b.isNot()==false) { return min_attacker_pt(index+1,stm, to, stmattacker, allattackers, occ, occupied_);}
+
+	//bにあった駒は移動するはずなので取り除く
+	Square sq = b.pop();
+	occ ^= SquareBB256[sq];
+	occupied_ ^= SquareBB[sq];
+
+	Piece pt = piece_type(piece_on(sq));
+	//成れる場合は成った値を返す
+	if (can_promote(pt) && ((SquareBB[to] & canPromoteBB[stm]).isNot() || (SquareBB[sq] & canPromoteBB[stm]).isNot())) {
+		pt = promotepiece(pt);
+	}
+	ASSERT(pt != KING);
+	Direction d = direct_table[sq][to];
+
+	uint8_t obstacle_tate;
+	uint8_t obstacle_yoko;
+	uint8_t obstacle_plus45;
+	uint8_t obstacle_Minus45;
+
+
+	//駒が移動したことで新たにtoに駒の危機が追加されるかもしれない。
+	if (d) {
+		switch (d)
+		{
+		case UP:
+			//fromから見てtoが上方向にあれば飛車の効きと先手の香車がtoに効いてくる可能性がある。
+			obstacle_tate = (occ.b64(0) >> occ256_shift_table_tate[sq])&effectmask;
+			//toに香車を置いた時のwhite側の効きに駒があるか
+			allattackers |= LanceEffect[WHITE][to][obstacle_tate] & (occ_pt(BLACK, ROOK) | occ_pt(BLACK, DRAGON) | occ_pt(WHITE, ROOK) | occ_pt(WHITE, DRAGON) | occ_pt(BLACK, LANCE));
+			break;
+		case RightUP:
+		case LeftDOWN:
+			obstacle_plus45 = (occ256.b64(2) >> occ256_shift_table_p45[sq])&effectmask;
+			allattackers |= LongBishopEffect_plus45[sq][obstacle_plus45] & (occ_pt(BLACK, BISHOP) | occ_pt(BLACK, UNICORN) | occ_pt(WHITE, BISHOP) | occ_pt(WHITE, UNICORN));
+			break;
+		case RightDOWN:
+		case LeftUP:
+			//斜め方向であれば角の効き
+			obstacle_Minus45 = (occ256.b64(3) >> occ256_shift_table_m45[sq])&effectmask;
+			allattackers |= LongBishopEffect_minus45[sq][(obstacle_Minus45)] & (occ_pt(BLACK, BISHOP) | occ_pt(BLACK, UNICORN) | occ_pt(WHITE, BISHOP) | occ_pt(WHITE, UNICORN));
+			break;
+		case DOWN:
+			//飛車　後手の効き
+			obstacle_tate = (occ.b64(0) >> occ256_shift_table_tate[sq])&effectmask;
+			allattackers |= LanceEffect[BLACK][sq][obstacle_tate] & (occ_pt(BLACK, ROOK) | occ_pt(BLACK, DRAGON) | occ_pt(WHITE, ROOK) | occ_pt(WHITE, DRAGON) | occ_pt(WHITE, LANCE));
+			break;
+		case Left:
+		case Right:
+			//飛車の効き
+			obstacle_yoko = (occ.b64(1) >> occ256_shift_table_yoko[sq])&effectmask;
+			allattackers |= LongRookEffect_yoko[sq][obstacle_yoko] & (occ_pt(BLACK, ROOK) | occ_pt(BLACK, DRAGON) | occ_pt(WHITE, ROOK) | occ_pt(WHITE, DRAGON));
+			break;
+		default:
+			UNREACHABLE;
+			break;
+		}
+	}
+	//ここでallttackersからsqは消される。
+	allattackers = allattackers & occupied_;
+
+	return pt;
+}
+
+#endif
 
 
 bool Position::see_ge(const Move m, const Value v) const
@@ -1689,8 +1769,7 @@ bool Position::see_ge(const Move m, const Value v) const
 	//最初に捕獲した駒の価値がｖを超えなかったので
 	if (balance < v) return false;
 
-	//ーーーーーーーーーーーーーーー最初に動かした駒がkingであればtrue？？kingが捕獲されてしまうのでfalseではないのか？？
-	//王を取られないものとしているのか...???う～んseeだし取られるものとしたほうがいいような気がするんだけど
+	
 	if (nextVictim == KING) return true;
 
 	balance -= (Value)Eval::capture_value[nextVictim];//動かした駒はやられる
@@ -1725,7 +1804,7 @@ bool Position::see_ge(const Move m, const Value v) const
 
 		if (!stmAttackers.isNot()) { return relativeStm; }
 
-		nextVictim = min_attacker_pt(stm, to, stmAttackers, attackers, occ_256, oc);
+		nextVictim = min_attacker_pt(1,stm, to, stmAttackers, attackers, occ_256, oc);
 		
 
 		if (nextVictim == KING) { return relativeStm == (attackers&occ(opposite(stm))).isNot();}

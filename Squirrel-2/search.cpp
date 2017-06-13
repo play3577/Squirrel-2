@@ -519,7 +519,7 @@ Value MainThread::think() {
 	Thread* bestthread = this;
 
 
-	//‹l‚ñ‚Å‚é‚Æ‚«‚Í‰½‚à‚µ‚È‚¢‚Å‹A‚é
+	//‹l‚ñ‚Å‚é‚Æ‚«‚Í‰½‚à‚µ‚È‚¢‚Å‹A‚é‡–@è‚ªˆêè‚µ‚©‚È‚¢ê‡‚Å‚àpondermove‚ğ“¾‚é‚½‚ß‚É’Tõ‚Í‚³‚¹‚é
 	if (end == RootMoves/*&& limit.is_inponder == false*/) {
 #ifndef LEARN
 		if (!signals.stop&&limit.is_inponder) {

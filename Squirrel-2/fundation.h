@@ -68,11 +68,11 @@
 
 //-----------------------------評価関数関連
 
-#define  USETMP
+//#define  USETMP
 //#define DIFFTEST
 //#define EVAL_NONDIFF
-//#define EVAL_PP
-#define EVAL_PPT
+#define EVAL_PP
+//#define EVAL_PPT
 
 //--------------------------------定跡作成モードをオンにするか
 //#define MAKEBOOK

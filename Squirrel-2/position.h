@@ -29,10 +29,10 @@ positionコマンド内のdo_move()で局面を進めるときに作成する。
 
 countの数が１のものはvectorから削除する。
 水際対策の千日手チェックではあるが探索時の速度的にこれで行く
+
+ただこの方法では王手を含めた千日手かどうかは全く考えられていない
 */
 #ifdef SENNICHI
-
-
 struct ReputationInfo {
 public:
 	Key key = 0;
@@ -51,8 +51,7 @@ inline std::ostream& operator<<(std::ostream& os, const ReputationInfo& ri) {
 #endif
 
 /*
-やっぱ利きテーブルを持つの差分計算とか簡単じゃないのでやめる
-wordboardとか理解できるようになったなら持ってもいいかもしれない
+domoveundomoveで局面を更新するときに残しておいた方が楽な情報を格納する
 */
 struct StateInfo
 {
@@ -589,7 +588,7 @@ public:
 	Bitboard attackers_to(Color stm, Square to, Occ_256& occ)const;
 	Bitboard attackers_to_all(const Square to, const Occ_256& occ) const;
 	Piece min_attacker_pt(const Color stm,const Square to, const Bitboard& stmattacker, Bitboard& allattackers, Occ_256& occ,Bitboard& occupied)const ;
-
+	Piece min_attacker_pt(const int index, const Color stm, const Square to, const Bitboard & stmattacker, Bitboard & allattackers, Occ_256 & occ, Bitboard& occupied_)const;
 	/*
 	これでは遅いよね.....
 	もっとスマートな処理が欲しい
@@ -730,6 +729,7 @@ public:
 	string random_startpos();
 
 	bool operator==(const Position& p)const;
+	
 };
 
 std::ostream& operator<<(std::ostream& os, const Position& pos);

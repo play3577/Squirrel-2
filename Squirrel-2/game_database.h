@@ -1,7 +1,7 @@
 #pragma once
 
 //技巧の学習形式に直してくれるプログラムfg2gdbがあるのでここは技巧方式にする（申し訳ない）(それにしても素晴らしい実装だ)
-
+//別に技巧方式にしなくてもいいのであとで自前実装に直しておいた方がいいのかもしれない。
 #include "fundation.h"
 #include "learner.h"
 #include <istream>
@@ -50,6 +50,8 @@ struct Game
 std::ostream& operator<<(std::ostream& os, const Game& game);
 
 
+bool read_onegame(istream& is,Game* game);//一局分のデータを読みだす。（まだ残りがあればtrue）
+#if 0
 //ゲームデータストリーム
 class GameDataStream {
 
@@ -58,7 +60,9 @@ private:
 
 public:
 	GameDataStream(istream& is) : input_stream_(is) {}
-	bool read_onegame(Game* game);//一局分のデータを読みだす。（まだ残りがあればtrue）
 	
+	bool read_onegame(Game* game);//一局分のデータを読みだす。（まだ残りがあればtrue）
+
 
 };
+#endif

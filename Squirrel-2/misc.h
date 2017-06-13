@@ -79,6 +79,7 @@ public:
 2277UM
 
 */
+#if 0
 class CSA2Piece :public std::unordered_map<string, Piece> {
 
 public:
@@ -111,6 +112,7 @@ public:
 };
 
 extern CSA2Piece CSA2Piece_;
+#endif
 
 Move Sfen2Move(const string smove, const Position& pos);
 Move CSA2Move(const string smove, const Position& pos);

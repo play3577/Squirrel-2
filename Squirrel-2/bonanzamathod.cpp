@@ -295,7 +295,6 @@ void Eval::parallel_learner() {
 	//ifstream gamedata(fg2800_2ch);
 	ifstream gamedata(nichkihu);//ソフト棋譜の水平線効果を学習させないために2ch棋譜のみを使用して学習することにする。(技巧やapery(sdt4を除く)もそれで学習していたはずなので大丈夫だと思う)
 #endif
-	GameDataStream gamedatastream(gamedata);
 	
 	cout << "readgames " << readgames << endl;
 	
@@ -305,7 +304,7 @@ void Eval::parallel_learner() {
 	for (int i = 0; i < readgames; ++i) {
 		Game game;
 
-		if (gamedatastream.read_onegame(&game)
+		if (read_onegame(gamedata,&game)
 			&& game.ply >= 60
 			&& game.result != draw)
 		{
@@ -315,7 +314,7 @@ void Eval::parallel_learner() {
 	/*for (int i = 0; i < numtestset; ++i) {
 		Game game;
 
-		if (gamedatastream.read_onegame(&game)
+		if (read_onegame(gamedata,&game)
 			&& game.ply >= 60
 			&& game.result != draw)
 		{

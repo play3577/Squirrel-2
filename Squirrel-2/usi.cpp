@@ -487,11 +487,11 @@ void USI::loop()
 		//====================
 		//ここから下はデバッグ用コマンド
 		//====================
-#if 1
-		//else if (token == "gm") {
-		//	//指し手生成速度計測
-		//	speed_genmove(pos);
-		//}
+#ifdef MISC
+		else if (token == "gm") {
+			//指し手生成速度計測
+			speed_genmove(pos);
+		}
 		
 		else if (token == "maturi") {
 			pos.set(maturi);

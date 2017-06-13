@@ -330,7 +330,7 @@ namespace Eval {
 
 
 
-	inline void init() { read_FV(); }
+	//inline void init() { read_FV(); }
 #elif defined(EVAL_PPT)
 	Value eval_PPT(const Position& pos);
 
