@@ -2,7 +2,6 @@
 
 using namespace std;
 
-//#define fastdrop
 #define shiftpawn
 
 #ifdef shiftpawn
@@ -572,13 +571,11 @@ ExtMove* make_move_KING(const Position& pos, const Bitboard& target, ExtMove* mo
 	return (pos.sidetomove() == BLACK) ? make_move_KING<BLACK>(pos, target, movelist) : make_move_KING<WHITE>(pos, target, movelist);
 }
 
-
-
-
 //駒打ち
+template<Color US>
 ExtMove* make_move_DROP(const Position& pos, const Bitboard& target, ExtMove* movelist) {
 
-	Color US = pos.sidetomove();
+	ASSERT(US == pos.sidetomove());
 	auto hands = pos.hand(US);
 	Square to;
 	Piece pc;
@@ -650,14 +647,16 @@ ExtMove* make_move_DROP(const Position& pos, const Bitboard& target, ExtMove* mo
 				}
 			}
 		}
-
-
-
-
 	}
 
 	return movelist;
 }
+
+
+ExtMove* make_move_DROP(const Position& pos, const Bitboard& target, ExtMove* movelist) {
+	return (pos.sidetomove() == BLACK) ? make_move_DROP<BLACK>(pos, target, movelist) : make_move_DROP<WHITE>(pos, target, movelist);
+}
+
 
 /*
 
@@ -730,10 +729,10 @@ ExtMove * move_generation(const Position& pos, ExtMove * movelist)
 		//
 		if (US == BLACK) {
 
-			movelist = make_move_DROP(pos, target_drop, movelist);
+			movelist = make_move_DROP<BLACK>(pos, target_drop, movelist);
 		}
 		else {
-			movelist = make_move_DROP(pos, target_drop, movelist);
+			movelist = make_move_DROP<WHITE>(pos, target_drop, movelist);
 		}
 	}
 
@@ -826,7 +825,7 @@ ExtMove * move_eversion(const Position& pos, ExtMove * movelist) {
 
 		//dropを打てるのは駒と駒の間だけ！！
 
-		movelist = make_move_DROP(pos, target_drop, movelist);
+		movelist = make_move_DROP<BLACK>(pos, target_drop, movelist);
 	}
 	else {
 		movelist = make_move_PAWN_bitshift<WHITE>(pos, target, movelist);
@@ -842,7 +841,7 @@ ExtMove * move_eversion(const Position& pos, ExtMove * movelist) {
 
 		//dropを打てるのは駒と駒の間だけ！！
 
-		movelist = make_move_DROP(pos, target_drop, movelist);
+		movelist = make_move_DROP<WHITE>(pos, target_drop, movelist);
 	}
 	return movelist;
 
