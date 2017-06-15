@@ -23,5 +23,4 @@ ExtMove * move_recapture(const Position& pos, ExtMove * movelist,Square recapsq)
 
 
 ExtMove * test_move_generation(const Position& pos, ExtMove * movelist);
-ExtMove * test_drop_fast(const Position& pos, ExtMove * movelist);
 ExtMove * test_quietcheck(const Position & pos, ExtMove * movelist);

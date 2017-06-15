@@ -196,28 +196,3 @@ inline bool more_than_one(const Bitboard& b) {
 //距離テーブルの初期化
 void init_distancetable();
 
-
-
-//foreach
-//bitboardのb[0]とb[1]それぞれに対してコードを生成するためのdefine.最適化されるはず（ここんところよくわからん）
-#define foreachBB(bb,sq,state)\
-	do{\
-		while(bb.b_(0)){\
-			sq = bb.pop_fromb0();\
-			state;\
-		}\
-		while(bb.b_(1)){\
-			sq = bb.pop_fromb1();\
-			state;\
-		}\
-	}while(false);
-
-
-//unrollerは屋根裏王方式のほうがいいらしい？（Apery方式だと最適化されないことがあったらしい）（ここんところよくわからん）
-//駒うちができる歩以外の駒種は最大6つまでであるのでunrollerは6つでいい
-#define unroller1(state){const int i=0;state;}
-#define unroller2(state){unroller1(state); const int i=1; state;}
-#define unroller3(state){unroller2(state); const int i=2; state;}
-#define unroller4(state){unroller3(state); const int i=3; state;}
-#define unroller5(state){unroller4(state); const int i=4; state;}
-#define unroller6(state){unroller5(state); const int i=5; state;}

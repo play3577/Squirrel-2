@@ -10,7 +10,6 @@
 #include <time.h>       /* time_t, struct tm, time, localtime */
 #include <fstream>
 #include "position.h"
-#include "game_database.h"
 #include "makemove.h"
 #include "usi.h"
 #include <omp.h>
@@ -306,7 +305,7 @@ void Eval::parallel_learner() {
 
 		if (read_onegame(gamedata,&game)
 			&& game.ply >= 60
-			&& game.result != draw)
+			&& game.result != 0)
 		{
 			games.push_back(game);
 		}
@@ -316,7 +315,7 @@ void Eval::parallel_learner() {
 
 		if (read_onegame(gamedata,&game)
 			&& game.ply >= 60
-			&& game.result != draw)
+			&& game.result != 0)
 		{
 			testset.push_back(game);
 		}

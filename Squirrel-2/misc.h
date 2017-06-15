@@ -79,40 +79,6 @@ public:
 2277UM
 
 */
-#if 0
-class CSA2Piece :public std::unordered_map<string, Piece> {
-
-public:
-	CSA2Piece() {
-		//¬‚è‹î‚ª“ü‚Á‚Ä‚È‚¢‚â‚ñ(‚±‚Á‚¿‚Í–â‘è)
-		(*this)["FU"] = PAWN;
-		(*this)["KY"] = LANCE;
-		(*this)["KE"] = KNIGHT;
-		(*this)["GI"] = SILVER;
-		(*this)["KA"] = BISHOP;
-		(*this)["HI"] = ROOK;
-		(*this)["KI"] = GOLD;
-		(*this)["OU"] = KING;
-		(*this)["TO"] = PRO_PAWN;
-		(*this)["NY"] = PRO_LANCE;
-		(*this)["NK"] = PRO_NIGHT;
-		(*this)["NG"] = PRO_SILVER;
-		(*this)["UM"] = UNICORN;
-		(*this)["RY"] = DRAGON;
-	}
-
-	bool is_ok(const string psuedo_piece) const {
-		return (this->find(psuedo_piece) != this->end());
-	}
-
-	Piece csa_to_piece(string piece) const {
-		return this->find(piece)->second;
-	}
-
-};
-
-extern CSA2Piece CSA2Piece_;
-#endif
 
 Move Sfen2Move(const string smove, const Position& pos);
 Move CSA2Move(const string smove, const Position& pos);

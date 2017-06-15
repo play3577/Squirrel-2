@@ -2,7 +2,7 @@
 
 using namespace std;
 
-#define fastdrop
+//#define fastdrop
 #define shiftpawn
 
 #ifdef shiftpawn
@@ -572,7 +572,7 @@ ExtMove* make_move_KING(const Position& pos, const Bitboard& target, ExtMove* mo
 	return (pos.sidetomove() == BLACK) ? make_move_KING<BLACK>(pos, target, movelist) : make_move_KING<WHITE>(pos, target, movelist);
 }
 
-#ifndef fastdrop
+
 
 
 //駒打ち
@@ -659,168 +659,6 @@ ExtMove* make_move_DROP(const Position& pos, const Bitboard& target, ExtMove* mo
 	return movelist;
 }
 
-#endif // !fastdrop
-#ifdef fastdrop
-//Apery参考の駒うち
-template<Color US>
-ExtMove* make_move_DROP_fast(const Position& pos, const Bitboard& target, ExtMove* movelist) {
-
-	ASSERT(US == pos.sidetomove());
-	auto hands = pos.hand(US);
-	Square to;
-	Piece pc;
-	Bitboard target2;
-
-	if (have_hand(hands)) {
-
-		//ここで2歩は防がれているがうち歩詰めはここでは見ていない。isleagalで見る。
-		if (num_pt(hands, PAWN)) {
-			pc = add_color(PAWN, US);
-			int pc2 = pc << 17;
-			target2 = andnot(andnot(target, CantGo_PAWNLANCE[US]), pos.pawnbb(US));
-			foreachBB(target2, to, movelist++->move = make_drop2(to, pc2););
-		}
-		if (have_except_pawn(hands)) {
-			Move Drop[6];
-			int num = 0;
-			if (have_pt(hands, KNIGHT)) {Drop[num++] = make_drop(SQ_ZERO, add_color(KNIGHT, US));}
-			int no_knight_index = num;//桂馬がない場合
-			if (have_pt(hands, LANCE)) {Drop[num++] = make_drop(SQ_ZERO, add_color(LANCE, US));}
-			int no_lance_index = num;//香車がない場合
-			if (have_pt(hands, SILVER)) { Drop[num++] = make_drop(SQ_ZERO, add_color(SILVER, US)); }
-			if (have_pt(hands, GOLD)) { Drop[num++] = make_drop(SQ_ZERO, add_color(GOLD, US)); }
-			if (have_pt(hands, BISHOP)) { Drop[num++] = make_drop(SQ_ZERO, add_color(BISHOP, US)); }
-			if (have_pt(hands, ROOK)) { Drop[num++] = make_drop(SQ_ZERO, add_color(ROOK, US)); }
-
-			if (no_lance_index == 0) {
-
-				target2 = target;
-				//香車と桂馬がないので味方のいないマスに打つ差し手を生成すればいい
-				switch (num)
-				{
-					//0になることはあり得ない
-				case 1:
-					foreachBB(target2, to, { unroller1({movelist++->move = (Move)(Drop[i] + to); }) });
-					break;
-				case 2:
-					foreachBB(target2, to, { unroller2({ movelist++->move = (Move)(Drop[i] + to); }) });
-					break;
-				case 3:
-					foreachBB(target2, to, { unroller3({ movelist++->move = (Move)(Drop[i] + to); }) });
-					break;
-				case 4:
-					foreachBB(target2, to, { unroller4({ movelist++->move = (Move)(Drop[i] + to); }) });
-					break;
-				default:
-					UNREACHABLE;
-					break;
-				}
-			}
-			else {
-				//それ以外のケース
-				/*------------------------------------------------------
-				それ以外のケースには
-				香車　ある　ない
-				桂馬　ある　ない
-				その他　ある　ない
-				の3つのケースがある。
-				香車は　1段目に打てない
-				桂馬は１～２段目に打てない。
-
-				まずは一段目への駒うちだけを香車以外に対して生成
-				2段目への駒うちだけを桂馬以外に対して生成。
-				3段目以降はすべての駒種を生成する
-				---------------------------------------------------------*/
-				Bitboard rank1 = target& CantGo_PAWNLANCE[US];//1段目(9段目)
-				Bitboard rank2 = target& (US==BLACK?RankBB[RankB]:RankBB[RankH]);//2段目（8段目）
-				target2 = andnot(target, CantGo_KNIGHT[US]);//3~9
-				/*cout << rank1 << endl;
-				cout << rank2 << endl;
-				cout << target2 << endl;*/
-				switch (num-no_lance_index)
-				{
-				case 0:
-					break;
-				case 1:
-					foreachBB(rank1, to, { unroller1({ movelist++->move = (Move)(Drop[i+no_lance_index] + to); }) });
-					break;
-				case 2:
-					foreachBB(rank1, to, { unroller2({ movelist++->move = (Move)(Drop[i + no_lance_index] + to); }) });
-					break;
-				case 3:
-					foreachBB(rank1, to, { unroller3({ movelist++->move = (Move)(Drop[i + no_lance_index] + to); }) });
-					break;
-				case 4:
-					foreachBB(rank1, to, { unroller4({ movelist++->move = (Move)(Drop[i + no_lance_index] + to); }) });
-					break;
-				default:
-					UNREACHABLE;
-					break;
-				}
-
-				switch (num - no_knight_index)
-				{
-				case 0:
-					break;
-				case 1:
-					foreachBB(rank2, to, { unroller1({ movelist++->move = (Move)(Drop[i+no_knight_index] + to); }) });
-					break;
-				case 2:
-					foreachBB(rank2, to, { unroller2({ movelist++->move = (Move)(Drop[i + no_knight_index] + to); }) });
-					break;
-				case 3:
-					foreachBB(rank2, to, { unroller3({ movelist++->move = (Move)(Drop[i + no_knight_index] + to); }) });
-					break;
-				case 4:
-					foreachBB(rank2, to, { unroller4({ movelist++->move = (Move)(Drop[i + no_knight_index] + to); }) });
-					break;
-				case 5:
-					foreachBB(rank2, to, { unroller5({ movelist++->move = (Move)(Drop[i + no_knight_index] + to); }) });
-					break;
-				default:
-					UNREACHABLE;
-					break;
-				}
-
-				switch (num)
-				{
-				case 1:
-					foreachBB(target2, to, { unroller1({ movelist++->move = (Move)(Drop[i] + to); }) });
-					break;
-				case 2:
-					foreachBB(target2, to, { unroller2({ movelist++->move = (Move)(Drop[i] + to); }) });
-					break;
-				case 3:
-					foreachBB(target2, to, { unroller3({ movelist++->move = (Move)(Drop[i] + to); }) });
-					break;
-				case 4:
-					foreachBB(target2, to, { unroller4({ movelist++->move = (Move)(Drop[i] + to); }) });
-					break;
-				case 5:
-					foreachBB(target2, to, { unroller5({ movelist++->move = (Move)(Drop[i] + to); }) });
-					break;
-				case 6:
-					foreachBB(target2, to, { unroller6({ movelist++->move = (Move)(Drop[i] + to); }) });
-					break;
-				default:
-					UNREACHABLE;
-					break;
-				}
-			}
-		}
-
-
-	}
-
-
-	return movelist;
-}
-
-ExtMove* make_move_DROP_fast(const Position& pos, const Bitboard& target, ExtMove* movelist) {
-	return (pos.sidetomove() == BLACK) ? make_move_DROP_fast<BLACK>(pos, target, movelist) : make_move_DROP_fast<WHITE>(pos, target, movelist);
-}
-
-#endif
 /*
 
 int8_t obstacle_tate = (occ256.b64(0) >> occ256_shift_table_tate[sq])&effectmask;
@@ -891,10 +729,11 @@ ExtMove * move_generation(const Position& pos, ExtMove * movelist)
 		const Bitboard target_drop = ~pos.occ_all();//ALLBBをマスクするのは番外にも１が立ってしまっている場所があるから
 		//
 		if (US == BLACK) {
-			movelist = make_move_DROP_fast<BLACK>(pos, target_drop, movelist);
+
+			movelist = make_move_DROP(pos, target_drop, movelist);
 		}
 		else {
-			movelist = make_move_DROP_fast<WHITE>(pos, target_drop, movelist);
+			movelist = make_move_DROP(pos, target_drop, movelist);
 		}
 	}
 
@@ -986,8 +825,8 @@ ExtMove * move_eversion(const Position& pos, ExtMove * movelist) {
 		//movelist = make_move_KING(pos, target, movelist);
 
 		//dropを打てるのは駒と駒の間だけ！！
-		//movelist = make_move_DROP(pos, target_drop, movelist);
-		movelist = make_move_DROP_fast<BLACK>(pos, target_drop, movelist);
+
+		movelist = make_move_DROP(pos, target_drop, movelist);
 	}
 	else {
 		movelist = make_move_PAWN_bitshift<WHITE>(pos, target, movelist);
@@ -1002,9 +841,8 @@ ExtMove * move_eversion(const Position& pos, ExtMove * movelist) {
 		//movelist = make_move_KING(pos, target, movelist);
 
 		//dropを打てるのは駒と駒の間だけ！！
-		//movelist = make_move_DROP(pos, target_drop, movelist);
-		movelist = make_move_DROP_fast<WHITE>(pos, target_drop, movelist);
 
+		movelist = make_move_DROP(pos, target_drop, movelist);
 	}
 	return movelist;
 
