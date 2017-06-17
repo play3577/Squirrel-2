@@ -460,6 +460,7 @@ void do_randommove(Position& pos, StateInfo* s, std::mt19937& mt);
 数手先の評価値と局面の組をセットにした教師データを作成するための関数
 これは初期化とthreadの取りまとめのための関数であるので
 ----------------------------------------------------------------------------*/
+uint64_t sumteachersize = 0;
 void make_teacher()
 {
 	int64_t maxnum;
@@ -558,7 +559,14 @@ void make_teacher()
 			teachers[h++].clear();
 		}
 		
+		//教師データをシャッフル
+		std::printf("shuffle teacherdata\n");
+		std::shuffle(sum_teachers.begin(), sum_teachers.end(), g_mt);
 
+
+		std::printf("write teacher_data\n");
+		sumteachersize += sum_teachers.size();
+		cout << "writed teacher num:" << sumteachersize << endl;
 		//ふぁいるに書き出し（上書き）
 		/*
 		読み込むときはvector一つ分とってきて、それをpushbackしていけばいいと考えられるのだが
