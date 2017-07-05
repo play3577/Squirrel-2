@@ -44,7 +44,7 @@ depth2‚Å‚Í•]‰¿’l100ˆÈ“à‚¾‚ª‘¼‚Å‚Í1000’´‚¦‚Ä‚µ‚Ü‚¤‚Ý‚½‚¢‚È...(TT‚ðon‚É‚µ‚½‚ç‚«‚ê‚
 
 
 #ifdef MAKETEST
-string TEACHERPATH = "C:/teacher/teacherd3_test.txt";
+string TEACHERPATH = "C:/teacher";
 #else
 	#ifdef  USEPACKEDSFEN
 		string TEACHERPATH = "G:/201705260520D8AperyWCSC26";
@@ -53,7 +53,7 @@ string TEACHERPATH = "C:/teacher/teacherd3_test.txt";
 	#endif
 #endif
 
-#define DEPTH 9
+#define DEPTH 6
 
 #ifdef MAKESTARTPOS
 /*
@@ -412,13 +412,13 @@ struct teacher_data {
 		sfen = sfen_;
 		teacher_value = (int16_t)teachervalue;
 		
-}
+	}
 
 	teacher_data(){}
 };
 static_assert(sizeof(teacher_data) == 40, "40");
 inline std::ostream& operator<<(std::ostream& os, const teacher_data& td) {
-
+	os << td.sfen << endl;
 	os << td.teacher_value << endl;
 	//os << td.move << endl;
 	return os;
@@ -546,7 +546,6 @@ void make_teacher()
 
 		//teacher‚Ìì¬
 		index__ = 0;
-
 #define MALTI
 #ifdef  MALTI
 		for (int k = 0; k < maxthreadnum__ - 1; ++k) {
@@ -649,7 +648,7 @@ void make_teacher_body(const int number) {
 		/*	bool HaffmanrootPos[256];
 			memcpy(HaffmanrootPos, pos.packed_sfen, sizeof(HaffmanrootPos));*/
 			string sfen_rootpos = pos.make_sfen();//root‹Ç–Ê‚Ìsfen
-			pos.pack_haffman_sfen();
+			//pos.pack_haffman_sfen();
 			//------------------------------PV‚Ì––’[‚Ìƒm[ƒh‚ÉˆÚ‚Á‚Ä‚»‚±‚Å‚ÌÃŽ~’Tõ‚Ì’l‚ð‹‚ßteacher_data‚ÉŠi”[
 			/*--------------------------------------------------------------------------------------------------------
 			pv‚Ì––’[‚ÉˆÚ“®‚ð‚µ‚È‚©‚Á‚½ê‡deepvalue‚ª’Tõ‚Ì’l‚Æ‚©‚¯—£‚ê‚Ä‚µ‚Ü‚¤‚Æ‚¢‚¤‚±‚Æ‚ª‹N‚±‚Á‚½I‚±‚ê‚Å­‚µ‚Í‚Ü‚µ‚É‚È‚é
