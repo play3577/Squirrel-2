@@ -33,7 +33,7 @@
 //#define HAVE_AVX2
 
 //#define CHECKPOS
-#define SENNICHI
+//#define SENNICHI
 
 
 #define MISC//使わない機能をコメントアウトする時はこれをundefinedにすればいい
@@ -46,7 +46,7 @@
 //#define Prog_LEARN  //進行度学習
 //#define REIN      //強化学習
 
-#ifdef MAKETEACHER
+#if defined(MAKETEACHER) || defined(MAKESTARTPOS)
 #define USETT
 #endif
 //学習中にTTをONにするとleafnodeにさかのぼれなくなる
@@ -74,11 +74,13 @@
 #define EVAL_PP
 //#define EVAL_PPT
 
-//--------------------------------定跡作成モードをオンにするか
-//#define MAKEBOOK
+//--------------------------------定跡
+//#define MAKEBOOK//定跡作成モード
+//#define APERYBOOK
 
 
-
+//探索パラメーターのtuneを行うためのモード（実装途中）
+//#define TUNE
 
 
 #if defined(_MSC_VER)

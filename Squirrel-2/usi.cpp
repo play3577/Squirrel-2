@@ -141,9 +141,9 @@ void USI::init_option(OptionMap &o,string engine_name)
 	o["PP"] << USIOption("c:/book2/fv_PP.bin");
 	o["PPT"] << USIOption("c:/book2/fv_PPT.bin");
 #endif //  EVAL_KPP
-
-	
-
+#ifdef TUNE
+	o["Fmargin"]<< USIOption(100, 150, 400);
+#endif // TUNE
 
 }
 
@@ -386,6 +386,10 @@ void position(Position& pos, istringstream& is) {
 
 void USI::loop()
 {
+#ifdef TUNE
+	cout << "tune mode" << endl;
+#endif
+
 	Position pos;
 	/*Thread th;
 	th.cleartable();*/
@@ -451,7 +455,9 @@ void USI::loop()
 				UNREACHABLE;
 			}
 			
-			
+#ifdef TUNE
+			search_init();
+#endif
 
 		}
 #ifndef LEARN
@@ -503,7 +509,7 @@ void USI::loop()
 
 
 #ifdef MAKESTARTPOS
-		else if (token == "rsp") {
+		else if (token == "msp") {
 			//pos.random_startpos();
 			make_startpos_detabase();
 		}
@@ -652,6 +658,11 @@ void USI::loop()
 		}
 		else if (token == "eval") {
 			cout << Eval::eval(pos) << endl;;
+		}
+		else if (token == "clamp") {
+			double v;
+			is >> v;
+			cout << (clamp(v, -324.0, 324.0)) << endl;
 		}
 		else if (token == "csa") {
 			string csa;

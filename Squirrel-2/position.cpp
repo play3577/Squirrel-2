@@ -1799,6 +1799,7 @@ https://ja.wikipedia.org/wiki/%E5%8D%83%E6%97%A5%E6%89%8B
 一方の指し手が王手のみじゃないといけないのか！！！厳しい....
 もうめんどくさいし4回目出てきたらreturn trueでいいか()
 */
+#ifdef SENNICHI
 bool Position::is_sennichite(){
 	for (ReputationInfo& a : reputaion_infos) {
 		if (a.key == key()) {
@@ -1811,6 +1812,7 @@ bool Position::is_sennichite(){
 	}
 	return false;
 }
+#endif
 
 
 

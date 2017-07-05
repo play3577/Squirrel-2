@@ -170,7 +170,8 @@ EasyMoveManager EasyMove;
 進行度によってmargin値を変えるためには激指のように学習時のmarginを10+258*progressみたいに進行度が大きくなるに連れて大きくすることが必要か？？
 進行度が大きくなるに連れてsigmoidの傾斜が存在する範囲を広くするのも後半の棋譜以外の指し手のPP値が教師手のそれと大きく離れるようにするためにありかもしれない...
 */
-Value futility_margin(Depth d) { ASSERT(d < 7*ONE_PLY); return Value(150 * d / ONE_PLY); }
+int fmargin = 150;
+Value futility_margin(Depth d) { ASSERT(d < 7*ONE_PLY); return Value(fmargin * d / ONE_PLY); }
 
 //d手で挽回できる点数であるのでだんだんと大きくならないとおかしい.(局所最適解に陥っている？（by屋根さん）)
 const int razor_margin[4] = { 483, 570, 603, 554 };
@@ -238,7 +239,9 @@ void search_init() {
 		FutilityMoveCounts[1][d] = int(2.9 + 1.045 * pow(d + 0.49, 1.8));
 		//move count fomula fixは弱くなったので採用しない
 	}
-
+#ifdef TUNE
+	fmargin = Options["Fmargin"];
+#endif
 }
 
 
@@ -1202,15 +1205,28 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 	//６手先までこの関数で予測できるというのはどうなんだろうか...もう少し浅いほうがいい気がする...
 	//後は進行度によってこの値をいじることができる気がする...
 	//序盤１４０終盤160みたいな....
+
+	ここqsearchしないでいいのかと思ったがqsearch使った枝切りはrazoringで行われているのでここではいらないのか？？
 	-------------------------------------------------------------------------------------------------------------*/
 	if (!RootNode
 		&&depth < 7 * ONE_PLY
 		&&staticeval - futility_margin(depth) >= beta
 		&& staticeval < Value_known_win
-		//nonpawnmaterialという条件は将棋には関係ないはず
 		)
 	{
-		return staticeval;
+		
+		//ここでqsearchをしてなかったのでここでしてみたが、しない場合に比べて勝率に差はなかった
+		//まあqsearchをした分値が正確になってるのでmarginをもう少し変更してもいいかもしれない。
+		//しかし評価関数に手番を入れたら静止探索分の表現力は得られるはずなので静止探索はしないでいいと考えられる
+		if (PVNode&&
+			qsearch<PV, false>(pos, ss, alpha, beta, DEPTH_ZERO) >= staticeval - futility_margin(depth)) {
+			return staticeval;
+		}
+		else if(!PVNode&&
+			qsearch<NonPV, false>(pos, ss, alpha, beta, DEPTH_ZERO) >= staticeval - futility_margin(depth)){
+			return staticeval;
+		}
+		//return staticeval;
 	}
 
 	// Step 8. Null move search with verification search
@@ -1277,6 +1293,12 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 		}
 
 	}
+
+	/*
+	http://www.usapyonsoft.jp/shogi/wiki/wiki.cgi?ABC%C3%B5%BA%F7
+	http://citeseerx.ist.psu.edu/viewdoc/download;jsessionid=F219FAB043A7D42EB203D9687B87FA4C?doi=10.1.1.56.8662&rep=rep1&type=pdf
+	ここにABC探索の考えをもちいた枝切りを入れたい
+	*/
 
 #ifdef   multicut 
 	//step9 multicut 

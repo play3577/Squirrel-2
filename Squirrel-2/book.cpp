@@ -94,6 +94,9 @@ bool BookDataStream::preparebook() {
 	return true;
 }
 
+
+
+
 void BOOK::init() {
 
 	ifstream datafile(Options["bookpath"].str().c_str());

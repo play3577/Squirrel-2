@@ -162,6 +162,11 @@ inline double win_dsig(const double x) {
 	return a*win_sig(x)*(1 - win_sig(x));
 }
 
+//std::clamp‚ªC++17‚©‚ç‚¾‚Á‚½‚Ì‚ÅŽ©‘OŽÀ‘•
+template<typename TYPE> 
+inline TYPE clamp(TYPE v, TYPE minv, TYPE maxv) {
+	return min(max(minv, v), maxv);
+}
 
 inline double normal_dist(double mean, double stddiv);
 #endif

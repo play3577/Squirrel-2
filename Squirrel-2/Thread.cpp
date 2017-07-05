@@ -13,7 +13,10 @@ using namespace std;
 const string print_value(Value v) {
 
 	stringstream ss;
-
+#ifdef TUNE
+    //tuneするときには評価値が文字列で出てこられると面倒なので数字として出す
+	ss<< int(v)*int(100) / int(Eval::PawnValue);
+#else
 	if (v < Value_mated_in_maxply) {
 		//しかし修正としてこれでいいのかは不安　本質的なバグかもしれないしこれがおかしいとmatedistanceがおかしくなるので...
 		ss << "mate " << int(Value_Mated  - v+1) ;
@@ -24,7 +27,7 @@ const string print_value(Value v) {
 	else {
 		ss << int(v)*int(100)/int(Eval::PawnValue);
 	}
-
+#endif
 	return ss.str();
 }
 

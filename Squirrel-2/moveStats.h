@@ -1,7 +1,6 @@
 #pragma once
 #include "fundation.h"
-
-
+#include <algorithm>
 // The Stats struct stores moves statistics. According to the template parameter
 // the class can store History and Countermoves. History records how often
 // different moves have been successful or unsuccessful during the current search
@@ -61,7 +60,7 @@ However, all of those statements were made at the time when typical search depth
 Nowadays some authors say that given enough search depth, history heuristic produces just a random noise
 
 十分深い探索深さを与えるとhistory huristicはただのランダムノイズになるからであるようだ...
-ならd=18以上であればv=324でhistoryを更新すればいいのではないか？（試してみる）
+ならd=18以上であればv=324でhistoryを更新すればいいのではないか？（試してみる）→弱くなった
 
 https://chessprogramming.wikispaces.com/Butterfly+Heuristic
 betaを超えたかどうかに関係なく探索で出てきた回数によってorderingする方法もあるらしい
@@ -94,6 +93,8 @@ struct Stats {
 		if (abs(int(v)) >= 324)
 			return;
 
+		//v = clamp(v, Value(-324), Value(324));
+
 		table[pc][to] -= table[pc][to] * abs(int(v)) / (CM ? 936 : 324);
 		table[pc][to] += (v) * 32;
 	}
@@ -122,9 +123,10 @@ struct FromToStats {
 
 	void update(Color c, Move m, Value v)
 	{
+		
 		if (abs(int(v)) >= 324)
 			return;
-
+		//v = clamp(v, Value(-324), Value(324));
 		
 		const Square t = move_to(m);
 		if (is_drop(m)) {

@@ -56,6 +56,12 @@ string TEACHERPATH = "C:/teacher/teacherd3_test.txt";
 #define DEPTH 9
 
 #ifdef MAKESTARTPOS
+/*
+このランダムに駒を置いてみる作戦はあまりよくないような気がしてきた。
+初期局面からランダムに駒を動かしつつ作った方がいいような気がする。
+実践に出てこないような局面ばかりになっている可能性がある。
+（しかし枝切りなどの関係である程度実践に出てこないような局面にも値が付いていてほしいのでどこまでやればいいのかわからない）
+*/
 string Position::random_startpos()
 {
 	clear();
@@ -310,7 +316,7 @@ string Position::random_startpos()
 	th.l_alpha = -Value_Infinite;
 	Value v = th.think();
 	//あまり評価値が離れていると初期局面として不適切と考えられる。
-	if (abs(v) > 100/* Progress::prog_scale*Progress::calc_prog(*this)>2000*/) {
+	if (abs(v) > 100) {
 		return to_string(0);
 	}
 	return sfen;
@@ -499,8 +505,8 @@ void make_teacher()
 	/*
 	出てこないきょくめんばかりだった可能性が大なので定跡から読み込ませる
 	*/
-	//ifstream f("C:/sp_db/startpos.db");
-	ifstream f("C:/book2/standard_book.db");
+	ifstream f("C:/sp_db/startpos.db");
+	//ifstream f("C:/book2/standard_book.db");
 	string s;
 	while (!f.eof()) {
 		getline(f, s);
@@ -523,7 +529,7 @@ void make_teacher()
 	vector<std::thread> threads(maxthreadnum__ - 1);
 	
 	int i = 0;
-	for (int i = 0; i < (maxnum / startpos_db.size()); i++)
+	for (int i = 0; i < (maxnum / startpos_db.size())+1; i++)
 	//while(true)
 	{
 		//i++;
@@ -559,9 +565,9 @@ void make_teacher()
 			teachers[h++].clear();
 		}
 		
-		//教師データをシャッフル
-		std::printf("shuffle teacherdata\n");
-		std::shuffle(sum_teachers.begin(), sum_teachers.end(), g_mt);
+		//教師データをシャッフル(なんかバグってた(´･ω･｀)　今回作った教師データ水の泡じゃん...)
+		/*std::printf("shuffle teacherdata\n");
+		std::shuffle(sum_teachers.begin(), sum_teachers.end(), g_mt);*/
 
 
 		std::printf("write teacher_data\n");
@@ -571,7 +577,7 @@ void make_teacher()
 		/*
 		読み込むときはvector一つ分とってきて、それをpushbackしていけばいいと考えられるのだが
 		*/
-		string teacher_ = TEACHERPATH + "/"+"iteration4"+"depth"+itos(DEPTH-1)+".txt";
+		string teacher_ = TEACHERPATH + "/"+"iteration5"+"depth"+itos(DEPTH-1)+".txt";
 		ofstream of(teacher_,ios::app);
 		if (!of) { UNREACHABLE; }
 		//of.write(reinterpret_cast<const char*>(&sum_teachers[0]), sum_teachers.size() * sizeof(teacher_data));
@@ -803,14 +809,14 @@ bool read_teacherdata(fstream& f) {
 		read_teacher_counter++;
 	}
 	cout << "read teacher counter>>" << read_teacher_counter << endl;
-	//bool is_eof = f.eof();
+	bool is_eof = f.eof();
 	//f.close();
-	//return (is_eof == false);
+	return (is_eof == false);
 	/*Position pos;
 	pos.unpack_haffman_sfen(sum_teachers[0].haffman);
 	cout << pos << endl;
 	cout << pos.occ_all() << endl;*/
-	return true;
+	//return true;
 }
 
 #endif
@@ -1029,7 +1035,7 @@ void reinforce_learn_pharse1(const int index) {
 
 		int ii = 0;
 		for (Move m : th.pv) { pos.do_move(m, &si[ii]); ii++; }//pvの末端へ移動
-#elif 1
+#elif 0
 		th.set(pos);
 		//th.cleartable();//毎回は死ぬほど遅い
 		th.l_alpha = -Value_Infinite;
@@ -1067,8 +1073,8 @@ void reinforce_learn_pharse1(const int index) {
 		//rootから見た点数に変換する（teacherもrootから見た評価値のはず）]
 
 
-		//Value shallow_v = (rootColor == pos.sidetomove()) ? Eval::eval(pos) : -Eval::eval(pos);//ここ探索で帰ってきた値にすべき？（よくなかった）
-		Value shallow_v = shallow_serch_value;
+		Value shallow_v = (rootColor == pos.sidetomove()) ? Eval::eval(pos) : -Eval::eval(pos);//ここ探索で帰ってきた値にすべき？（よくなかった）
+		//Value shallow_v = shallow_serch_value;
 
 		double win_teacher = win_sig(teacher);
 		double win_shallow = win_sig(shallow_v);
