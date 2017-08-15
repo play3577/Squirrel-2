@@ -1,27 +1,37 @@
 #pragma once
 
 
-
-
 #include <iostream>
-
+#include <climits>
 #include <string>
 
 #if defined(_MSC_VER)
+
 #define _CRTDBG_MAP_ALLOC #include <stdlib.h> #include <crtdbg.h>  
+#define WINDOWS //windows build時
+
+#elif  defined(__MINGW64__) 
+#define WINDOWS //windows build時
+#else
+
+#define LINUX   //linux build時
+
 #endif
+
+
 #if defined(__GNUC__) 
 #include <assert.h>
 #define ASSERT_(x) assert(x)
 #endif
+
 
 //やねうら王のアイデア
 #ifdef _DEBUG
 #define ASSERT(x) {if (!(x)){std::cout << "\nError!!\n" << "info string file:" << __FILE__ << " line:" << __LINE__ <<" "<< #x<< std::endl;_ASSERT(x);}}
 #endif
 #ifndef _DEBUG
-//#define ASSERT(X) { if (!(X)){std::cout << "\nError!!\n" << "info string file:" << __FILE__ << " line:" << __LINE__ <<" "<< #X<< std::endl; *(int*)1 =0;} }
-#define ASSERT(x) ((void)0)//すべてをかなぐり捨てて速度を出したいとき用
+#define ASSERT(X) { if (!(X)){std::cout << "\nError!!\n" << "info string file:" << __FILE__ << " line:" << __LINE__ <<" "<< #X<< std::endl; *(int*)1 =0;} }
+//#define ASSERT(x) ((void)0)//すべてをかなぐり捨てて速度を出したいとき用
 #endif
 
 #define UNREACHABLE ASSERT(0)
@@ -40,11 +50,12 @@
 
 //---------------------------------学習関連
 
-#define LEARN      //学習（これ単体だとぼなぜぞ）
+//#define LEARN      //学習（これ単体だとぼなぜぞ）
 //#define MAKESTARTPOS //初期局面データ作成
-#define MAKETEACHER  //教師データ作成
+//#define MAKETEACHER  //教師データ作成
 //#define Prog_LEARN  //進行度学習
 //#define REIN      //強化学習
+//#define BONA
 
 #if defined(MAKETEACHER) || defined(MAKESTARTPOS)
 #define USETT
@@ -63,6 +74,7 @@
 #if defined(_MSC_VER)
 // C4800 : 'unsigned int': ブール値を 'true' または 'false' に強制的に設定します
 #pragma warning(disable : 4800)
+#define MSVC
 #endif
 
 

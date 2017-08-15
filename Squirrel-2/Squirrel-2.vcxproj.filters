@@ -57,6 +57,9 @@
     <ClInclude Include="learner.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="game_database.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
     <ClInclude Include="Hash.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
@@ -70,6 +73,9 @@
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="occupied_m256.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="progress.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="reinforce_learner.h">
@@ -128,6 +134,9 @@
     <ClCompile Include="learner.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="game_database.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
     <ClCompile Include="Hash.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
@@ -146,6 +155,15 @@
     <ClCompile Include="mate1ply.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="progress.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="ProgLearner.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="evaluate_KPP.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
     <ClCompile Include="ThreadPool.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
@@ -155,13 +173,13 @@
     <ClCompile Include="eval_hash.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="evalKPPT.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
     <ClCompile Include="rootstrap.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="bonanzamathod.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
-    <ClCompile Include="eval_PPT.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
   </ItemGroup>

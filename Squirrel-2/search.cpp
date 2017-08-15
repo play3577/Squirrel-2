@@ -629,6 +629,15 @@ Value MainThread::think() {
 
 	bestthread->print_pv(bestthread->completedDepth, bestthread->RootMoves[0].value);
 
+	if ((bool)Options["useResignValue"] == true) {
+		if (bestthread->RootMoves[0].value < -Options["Resign_Value"]) {
+			cout << bestthread->RootMoves[0].value << " " << -Options["Resign_Value"] << endl;
+			cout << "bestmove resign" << endl;
+			return Value(0);
+		}
+	}
+
+
 
 	S_END:;
 	cout << "bestmove " << bestthread->RootMoves[0];

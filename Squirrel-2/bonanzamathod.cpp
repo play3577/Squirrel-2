@@ -4,7 +4,7 @@
 
 
 #include "learner.h"
-#if defined(LEARN) && !defined(REIN)
+#if defined(LEARN) && defined(BONA)
 #include <random>
 #include <vector>
 #include <time.h>       /* time_t, struct tm, time, localtime */
@@ -287,7 +287,11 @@ void Eval::parallel_learner() {
 	
 #ifdef  SOFTKIFU
 	readgames = 35000;
+#ifdef WINDOWS
+	ifstream gamedata("C:/book2/records_sum.txt");
+#else
 	ifstream gamedata(gamedatabasefile);
+#endif
  //  SOFTKIFU
 #else
 	readgames = 70000;

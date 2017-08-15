@@ -16,7 +16,10 @@
 #include <iostream>
 #include <string>
 #include <sstream>
+
+#ifdef _MSC_VER
 #include <filesystem>
+#endif
 
 using namespace std;
 using namespace USI;
@@ -108,7 +111,8 @@ void USI::init_option(OptionMap &o,string engine_name)
 //#ifndef _DEBUG
 //	name+="releaseTT ";
 //#endif
-
+	o["useResignValue"] << USIOption(true);
+	o["Resign_Value"] << USIOption(3000, 1000, VALUE_NOT_EVALUATED);
 	o["USI_Ponder"] << USIOption(false);
 	o["Threads"] << USIOption(1, 1, 128);
 	o["USI_Hash"] << USIOption(64, 1, 100000000);
@@ -125,14 +129,23 @@ void USI::init_option(OptionMap &o,string engine_name)
 	o["use_defined_time"] << USIOption(true);
 	o["defined_time"] << USIOption(1000,100,100000);
 #ifdef  EVAL_KPP
-	
 	/*o["kpp"] << USIOption("c:/yaneeval/kpp16ap.bin");
 	o["kkp"] << USIOption("c:/yaneeval/kkp32ap.bin");*/
 
 	o["KPP"] << USIOption("c:/eval_KPP/fv_kpp.bin");
 	o["KKP"] << USIOption("c:/eval_KPP/fv_kkp.bin");
 #elif defined(EVAL_PP)
+
+
+
+#if defined(_WIN32)
 	o["eval"] << USIOption("c:/book2/fv_PP.bin");
+
+#else
+	o["eval"] << USIOption("/home/suganuma/FV/fv_PP.bin");	
+#endif
+
+	
 #elif defined(EVAL_KPPT)
 	o["KPP"] << USIOption("C:/evalKPPT/Apery26/KPP_synthesized.bin");
 	o["KKP"] << USIOption("C:/evalKPPT/Apery26/KKP_synthesized.bin");
@@ -478,7 +491,7 @@ void USI::loop()
 		//学習用コマンド”アイ”ではなく"エル"
 		else if (token == "l") {
 
-#if defined(LEARN) && !defined(REIN) 
+#if defined(LEARN) && defined(BONA) 
 			string yn;
 			cout << "do you really wanna learning fv? [y/n]  " ;
 			cin >> yn;
@@ -883,8 +896,8 @@ void USI::loop()
 		}
 		else if (token == "file") {
 			//OK
-
-
+			#ifdef _MSC_VER
+			//これもwindows番しか使えない
 			//参考：　http://qiita.com/episteme/items/0e3c2ee8a8c03780f01e
 			namespace sys = std::tr2::sys;
 			vector<string> list;
@@ -900,6 +913,8 @@ void USI::loop()
 			for (string l : list) {
 				cout << l << endl;
 			}
+			#else
+			#endif
 		}
 #endif
 #if defined(MAKEBOOK)

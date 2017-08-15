@@ -15,4 +15,6 @@
 *.enc
 Squirrel-2/obj/
 Squirrel-2/.depend
-x64/
+Squirrel-2/core
+x64/Release/Squirrel-2.ipdb
+x64/Release/Squirrel-2.iobj

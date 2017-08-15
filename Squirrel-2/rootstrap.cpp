@@ -11,49 +11,37 @@
 #include <time.h>
 #include <omp.h>
 #include <fstream>
+
+#if defined(_MSC_VER)
 #include <filesystem>
 namespace sys = std::tr2::sys;
-/*
-ここではランダムに初期局面を用意しsfen文字列に変換し、ファイルに書き出す。
-packedsfenのほうがいいかもしれないがまずはsfenで作成する
-
-ランダムといっても
-ある程度のルールは必要だろう
-
-まず王手がかかっていないこと
-その局面の評価値が500を超えないこと（もしくは進行度を使って序盤であることを確認してもいいかも）
-ライブラリ規制に引っかからないのならやねうら初期局面集を使うべきか？？？
-
-...まあこれぐらいか？？
-
-やっぱり初期局面なので自陣から見て4段目までなどという制限が必要か...
-初期局面に成りを用意すべきか..??
-う～～ん初期局面になりを入れると初期局面の評価値が大きくなりすぎてしまうような気がするので
-初期局面になりを入れることはしないでおく
-
-
-そうか2歩も防がないといけないな....
-
-持ち駒はないほうがいいか..
-
-
-評価関数がよくないからか,あんまり質のいい開始局面は生成できなかった。
-depth2では評価値100以内だが他では1000超えてしまうみたいな...(TTをonにしたらきれいになった)
-*/
-//#define MAKETEST
-
-
-#ifdef MAKETEST
-string TEACHERPATH = "C:/teacher";
-#else
-	#ifdef  USEPACKEDSFEN
-		string TEACHERPATH = "G:/201705260520D8AperyWCSC26";
-	#else
-		string TEACHERPATH = "G:/teacher";
-	#endif
 #endif
 
+#define MAKETEST
+
+
+#if defined(WINDOWS)
+
+	#ifdef MAKETEST
+		string TEACHERPATH = "C:/teacher";
+	#else
+		#ifdef  USEPACKEDSFEN
+			string TEACHERPATH = "G:/201705260520D8AperyWCSC26";
+		#else
+			string TEACHERPATH = "G:/teacher";
+		#endif
+	#endif//maketest
+
+#elif defined(LINUX)
+	string TEACHERPATH = "/home/suganuma/Teacher";
+#endif//windows
+
+
+	
+
 #define DEPTH 6
+
+
 
 #ifdef MAKESTARTPOS
 /*
@@ -61,6 +49,8 @@ string TEACHERPATH = "C:/teacher";
 初期局面からランダムに駒を動かしつつ作った方がいいような気がする。
 実践に出てこないような局面ばかりになっている可能性がある。
 （しかし枝切りなどの関係である程度実践に出てこないような局面にも値が付いていてほしいのでどこまでやればいいのかわからない）
+
+実際学習させてみたら弱くなってしまった
 */
 string Position::random_startpos()
 {
@@ -458,7 +448,7 @@ void renewal_PP_rein(dJValue &data);
 void renewal_PP_nozomi(dJValue &data);//nozomiさんに教わった方法
 //ランダム開始局面から1手ランダムにささせるために使う
 void do_randommove(Position& pos, StateInfo* s, std::mt19937& mt);
-
+void make_teacher_body(const int number);
 #endif
 
 #if defined(LEARN) && defined(MAKETEACHER)
@@ -473,12 +463,14 @@ void make_teacher()
 	cout << "maxnum:";
 	cin >> maxnum;
 
+#ifdef WINDOWS
 	cout << "have G volume?[Y/N]" << endl;
 	string haveg;
 	cin >> haveg;
 	if (haveg == "Y" || haveg == "y") {
 		TEACHERPATH[0] = 'G';
 	}
+#endif
 	cout << TEACHERPATH << endl;
 
 /*
@@ -505,8 +497,12 @@ void make_teacher()
 	/*
 	出てこないきょくめんばかりだった可能性が大なので定跡から読み込ませる
 	*/
-	ifstream f("C:/sp_db/startpos.db");
-	//ifstream f("C:/book2/standard_book.db");
+	//ifstream f("C:/sp_db/startpos.db");
+	#if defined(WINDOWS)
+		ifstream f("C:/book2/standard_book.db");
+	#elif defined(LINUX)
+		ifstream f("/home/suganuma/FV/BOOK/standard_book.db");		
+	#endif
 	string s;
 	while (!f.eof()) {
 		getline(f, s);
@@ -517,23 +513,26 @@ void make_teacher()
 
 	cout << "startposdb_size:" << startpos_db.size() << endl;
 	//教師データ格納庫用意
+
+	//GCCで全然うまくいかない..................(´･ω･｀)
 	maxthreadnum__ = omp_get_max_threads();
+	maxthreadnum__ = 4;
 	for (size_t i = 0; i < maxthreadnum__; i++) {
 		teachers.emplace_back();
 	}
-
+	cout <<"teachers"<< teachers.size() << endl;
 	//開始局面データベースシャッフル 
 	std::random_device rd;
 	std::mt19937 g_mt(rd());
 	//スレッド作成
 	vector<std::thread> threads(maxthreadnum__ - 1);
-	
+	cout <<"threads"<< threads.size() << endl;
 	int i = 0;
 	for (int i = 0; i < (maxnum / startpos_db.size())+1; i++)
 	//while(true)
 	{
 		//i++;
-
+		cout<<"iter:"<<i<<endl;
 
 		sum_teachers.clear();
 		for (size_t h = 0; h < maxthreadnum__; h++) {
@@ -543,30 +542,41 @@ void make_teacher()
 
 		std::shuffle(startpos_db.begin(), startpos_db.end(), g_mt);
 
-
+		cout<<"shuffled startpos"<<endl;
 		//teacherの作成
 		index__ = 0;
 #define MALTI
 #ifdef  MALTI
 		for (int k = 0; k < maxthreadnum__ - 1; ++k) {
 			threads[k] = std::thread([k] {make_teacher_body(k); });
-	}
-#endif 
+		}
 		make_teacher_body(maxthreadnum__ - 1);
+#else
+		make_teacher_body(0);
+#endif 
+		
 #ifdef  MALTI
 		for (auto& th : threads) { th.join(); }
 #endif
 		//thread毎のteacherをmerge
 		int h = 0;
+
+	#ifdef MSVC
 		for each (vector<teacher_data> tdv in teachers)
 		{
 			std::copy(tdv.begin(), tdv.end(), std::back_inserter(sum_teachers));
 			teachers[h++].clear();
 		}
-		
-		//教師データをシャッフル(なんかバグってた(´･ω･｀)　今回作った教師データ水の泡じゃん...)
-		/*std::printf("shuffle teacherdata\n");
-		std::shuffle(sum_teachers.begin(), sum_teachers.end(), g_mt);*/
+	#else
+		for (vector<teacher_data> tdv : teachers)
+		{
+			std::copy(tdv.begin(), tdv.end(), std::back_inserter(sum_teachers));
+			teachers[h++].clear();
+		}
+	#endif
+		//なんかシャッフルしないほうがいいとかいう情報もあるのでシャッフルしないほうがいいのか？まあ普通に考えたらminbatchに入っている局面のランダム性が多いほうがいいのでシャッフルすべきだと思うのだが...
+		std::printf("shuffle teacherdata\n");
+		std::shuffle(sum_teachers.begin(), sum_teachers.end(), g_mt);
 
 
 		std::printf("write teacher_data\n");
@@ -594,6 +604,7 @@ void make_teacher()
 
 void make_teacher_body(const int number) {
 
+	cout<<number<<endl;
 	std::random_device rd;
 	std::mt19937 mt(rd());
 	std::uniform_real_distribution<double> random_move_probability(0.0, 1.0);//doubleのほうが扱いやすいか
@@ -616,6 +627,9 @@ void make_teacher_body(const int number) {
 
 		for (int i = 0; i <500; i++) si[i].clear();
 		string startposdb_string = startpos_db[g];
+
+		cout<<"index:"<<g<<endl;
+
 		if (startposdb_string.size() < 10) { continue; }//文字列の長さがありえないほど短いのはエラーであるので使わない
 		pos.set(startposdb_string);//random開始局面集から一つ取り出してsetする。（このランダム開始局面は何回も出てくるのでここから一手動かしたほうがいい）
 		do_randommove(pos, &s_start, mt);//random初期局面から1手ランダムに進めておく
