@@ -129,11 +129,9 @@ void USI::init_option(OptionMap &o,string engine_name)
 	o["use_defined_time"] << USIOption(true);
 	o["defined_time"] << USIOption(1000,100,100000);
 #ifdef  EVAL_KPP
-	/*o["kpp"] << USIOption("c:/yaneeval/kpp16ap.bin");
-	o["kkp"] << USIOption("c:/yaneeval/kkp32ap.bin");*/
-
 	o["KPP"] << USIOption("c:/eval_KPP/fv_kpp.bin");
 	o["KKP"] << USIOption("c:/eval_KPP/fv_kkp.bin");
+	o["KK"] << USIOption("c:/eval_KPP/fv_kk.bin");
 #elif defined(EVAL_PP)
 
 
@@ -529,7 +527,9 @@ void USI::loop()
 #endif
 #ifdef MAKETEACHER
 		else if (token == "mt") {
-			make_teacher();
+			//make_teacher();
+			std::unique_ptr<Make_Teacher> mt(new Make_Teacher);
+			mt->make_teacher();
 		}
 #endif
 #ifdef REIN
@@ -541,13 +541,14 @@ void USI::loop()
 			cout << "do you really wanna learning fv? [y/n]  ";
 			cin >> yn;
 			if (yn != "y") { cout << "OK I do not  learning"; break; }
-			reinforce_learn();
+			std::unique_ptr<Rein_Learner> rl(new Rein_Learner);
+			rl->reinforce_learn();
 		}
 #endif
 #if defined(REIN) || defined(MAKETEACHER)
-		else if (token == "hafft") {
+		/*else if (token == "hafft") {
 			check_teacherdata();
-		}
+		}*/
 #endif
 #endif //  LEARN
 #ifdef MISC

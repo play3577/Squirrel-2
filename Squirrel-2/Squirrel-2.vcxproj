@@ -164,7 +164,6 @@
     <ClInclude Include="evaluate.h" />
     <ClInclude Include="eval_hash.h" />
     <ClInclude Include="fundation.h" />
-    <ClInclude Include="game_database.h" />
     <ClInclude Include="Hash.h" />
     <ClInclude Include="learner.h" />
     <ClInclude Include="makemove.h" />
@@ -174,7 +173,6 @@
     <ClInclude Include="occupied.h" />
     <ClInclude Include="occupied_m256.h" />
     <ClInclude Include="position.h" />
-    <ClInclude Include="progress.h" />
     <ClInclude Include="reinforce_learner.h" />
     <ClInclude Include="search.h" />
     <ClInclude Include="Thread.h" />
@@ -186,12 +184,10 @@
     <ClCompile Include="benchmark.cpp" />
     <ClCompile Include="Bitboard.cpp" />
     <ClCompile Include="bitop.cpp" />
-    <ClCompile Include="evalKPPT.cpp" />
     <ClCompile Include="evaluate.cpp" />
     <ClCompile Include="evaluate_KPP.cpp" />
     <ClCompile Include="eval_hash.cpp" />
     <ClCompile Include="fundation.cpp" />
-    <ClCompile Include="game_database.cpp" />
     <ClCompile Include="Hash.cpp" />
     <ClCompile Include="learner.cpp" />
     <ClCompile Include="Main.cpp" />
@@ -204,8 +200,6 @@
     <ClCompile Include="Packedsfen.cpp" />
     <ClCompile Include="bonanzamathod.cpp" />
     <ClCompile Include="position.cpp" />
-    <ClCompile Include="ProgLearner.cpp" />
-    <ClCompile Include="progress.cpp" />
     <ClCompile Include="rootstrap.cpp" />
     <ClCompile Include="search.cpp" />
     <ClCompile Include="book.cpp" />

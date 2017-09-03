@@ -310,6 +310,11 @@ namespace Eval {
 	//bonapieceの左右を反転させる関数
 	BonaPiece sym_rightleft(const BonaPiece bp);
 
+	void read_FV();
+	void write_FV();
+	void param_sym_ij();
+	inline void init() { read_FV(); }
+
 #ifdef EVAL_PP
 	Value eval_PP(const Position& pos);
 
@@ -321,31 +326,29 @@ namespace Eval {
 	//２駒関係(32bitの精度で持っておいたほうが強くなると思う)
 	extern int32_t PP[fe_end2][fe_end2];
 
+#elif defined(EVAL_KPP)
+	Value eval_KPP(const Position& pos);
+	Value eval_diff_KPP(const Position& pos);
+	void init_kpp();
+	const int FV_SCALE_KKP = 512;
 
+	extern int16_t kpp[81][fe_end][fe_end];
+	extern int32_t kkp[81][81][fe_end];
+	extern int32_t kk[81][81];
 
-	void read_FV();
-	void write_FV();
+#define FOR_KPP(ksq,i,j) for(int ksq=0;ksq<81;ksq++) for(int i=0;i<fe_end;i++) for(int j=0;j<fe_end;j++)
+#define FOR_KKP(ksq,ksq2,j) for(int ksq=0;ksq<81;ksq++) for(int ksq2=0;ksq2<81;ksq2++) for(int j=0;j<fe_end;j++)
+#define FOR_KK(ksq,ksq2) for(int ksq=0;ksq<81;ksq++) for(int ksq2=0;ksq2<81;ksq2++) 
 
-	void param_sym_ij();
-
-
-
-	//inline void init() { read_FV(); }
 #elif defined(EVAL_PPT)
 	Value eval_PPT(const Position& pos);
 
 	Value eval_diff_PPT(const Position& pos);
 
-	void read_FV();
-	void write_FV();
-
-	void param_sym_ij();
-
 	extern int32_t PP[fe_end2][fe_end2];//手番ボーナスを与えないほうは今までのPPを使いまわす。
 	extern int32_t PPT[fe_end2][fe_end2];//手番ボーナス
 
 #endif
-	inline void init() { read_FV(); }
 
 	constexpr Value tempo = Value(40);
 };

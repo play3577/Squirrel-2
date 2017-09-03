@@ -47,9 +47,10 @@ int main() {
 	//cout << ename2 << endl;
 	//Progress::initialize_KP();
 
-
 //	Progress::read_KP();
 	USI::init_option(Options,ename2);
+	//Eval::init_kpp();
+
 	bitboard_init();
 	init_occ256();
 	Eval::init();

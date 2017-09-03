@@ -104,6 +104,7 @@ void Eval::initialize_PP()
 #elif defined(EVAL_KPP) 
 	memset(kpp, 0, sizeof(kpp));
 	memset(kkp, 0, sizeof(kkp));
+	memset(kk, 0, sizeof(kk));
 	write_FV();
 #elif defined(EVAL_PPT)
 	//memset(PP, 0, sizeof(PP));

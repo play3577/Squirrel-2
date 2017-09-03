@@ -6,7 +6,6 @@
 #include "position.h"
 #include "Thread.h"
 #include "makemove.h"
-#include "learner.h"
 #include <random>
 #include <time.h>
 #include <omp.h>
@@ -22,433 +21,39 @@ namespace sys = std::tr2::sys;
 
 #if defined(WINDOWS)
 
-	#ifdef MAKETEST
-		string TEACHERPATH = "C:/teacher";
-	#else
-		#ifdef  USEPACKEDSFEN
-			string TEACHERPATH = "G:/201705260520D8AperyWCSC26";
-		#else
-			string TEACHERPATH = "G:/teacher";
-		#endif
-	#endif//maketest
+#ifdef MAKETEST
+string TEACHERPATH = "C:/teacher";
+#else
+#ifdef  USEPACKEDSFEN
+string TEACHERPATH = "G:/201705260520D8AperyWCSC26";
+#else
+string TEACHERPATH = "G:/teacher";
+#endif
+#endif//maketest
 
 #elif defined(LINUX)
-	string TEACHERPATH = "/home/suganuma/Teacher";
+string TEACHERPATH = "/home/suganuma/Teacher";
 #endif//windows
 
 
-	
+
 
 #define DEPTH 6
 
 
 
-#ifdef MAKESTARTPOS
-/*
-このランダムに駒を置いてみる作戦はあまりよくないような気がしてきた。
-初期局面からランダムに駒を動かしつつ作った方がいいような気がする。
-実践に出てこないような局面ばかりになっている可能性がある。
-（しかし枝切りなどの関係である程度実践に出てこないような局面にも値が付いていてほしいのでどこまでやればいいのかわからない）
-
-実際学習させてみたら弱くなってしまった
-*/
-string Position::random_startpos()
-{
-	clear();
-	std::random_device seed_gen;
-	std::default_random_engine engine(seed_gen());
-	std::uniform_int_distribution<int> rand_color(BLACK, WHITE);
-	std::uniform_int_distribution<int> is_hand_piece(0,1);//9で手ごま
-	std::uniform_int_distribution<int> rand_file(0, 8);
-	std::uniform_int_distribution<int> rand_rank(0, 3);
-	std::uniform_int_distribution<int> rand_king(SQ_ZERO, SQ_NUM-1);
-	string sfen;
-	Thread th;
-
-	int count = 0;
-	//pawn
-	for (int i = 0; i < 9; i++) {
-		
-		const Color c = BLACK;
-		while (true) {
-			const int h = is_hand_piece(engine);
-			if (h == 9) { makehand(hands[c], PAWN, num_pt(hands[c], PAWN) + 1); count++; break; }
-			else {
-
-				const File f = (File)rand_file(engine);
-				const Rank r = (c == BLACK) ? (Rank)(8 - rand_rank(engine)) : (Rank)rand_rank(engine);
-				const Square sq = make_square(r, f);
-
-				if (piece_on(sq) != NO_PIECE) { continue; }
-				if ((SquareBB[sq] & ExistPawnBB[c]).isNot()) { continue; }
-				if (c == BLACK ? sqtorank(sq) == RankA : sqtorank(sq) == RankI) { continue; }
-				else {
-					pcboard[sq] = add_color(PAWN, c);
-					put_piece(c, PAWN, sq);
-					set_occ256(sq);
-					ExistPawnBB[c] |= FileBB[sqtofile(sq)];
-					count++;
-					break;
-				}
-				
-			}
-		}
-	}
-	for (int i = 0; i < 9; i++) {
-
-		const Color c = WHITE;
-		while (true) {
-			const int h = is_hand_piece(engine);
-			if (h == 9) { makehand(hands[c], PAWN, num_pt(hands[c], PAWN) + 1); count++; break; }
-			else {
-
-				const File f = (File)rand_file(engine);
-				const Rank r = (c == BLACK) ? (Rank)(8 - rand_rank(engine)) : (Rank)rand_rank(engine);
-				const Square sq = make_square(r, f);
-
-				if (piece_on(sq) != NO_PIECE) { continue; }
-				if ((SquareBB[sq] & ExistPawnBB[c]).isNot()) { continue; }
-				if (c == BLACK ? sqtorank(sq) == RankA : sqtorank(sq) == RankI) { continue; }
-				else {
-					pcboard[sq] = add_color(PAWN, c);
-					put_piece(c, PAWN, sq);
-					set_occ256(sq);
-					ExistPawnBB[c] |= FileBB[sqtofile(sq)];
-					count++;
-					break;
-				}
-
-			}
-		}
-	}
-	//lance
-	for (int i = 0; i < 4; i++) {
-
-		const Color c = (Color)rand_color(engine);
-		while (true) {
-			const int h = is_hand_piece(engine);
-			if (h == 9) { makehand(hands[c], LANCE, num_pt(hands[c], LANCE) + 1); count++; break; }
-			else {
-				const File f = (File)rand_file(engine);
-				const Rank r = (c == BLACK) ? (Rank)(8 - rand_rank(engine)) : (Rank)rand_rank(engine);
-				const Square sq = make_square(r, f);
-				if (piece_on(sq) != NO_PIECE) { continue; }
-				if (c == BLACK ? sqtorank(sq) == RankA : sqtorank(sq) == RankI) { continue; }
-				else {
-					pcboard[sq] = add_color(LANCE, c);
-					put_piece(c, LANCE, sq);
-					set_occ256(sq);
-					count++;
-					break;
-				}
-
-			}
-		}
-	}
-
-	//knight
-	for (int i = 0; i < 4; i++) {
-
-		const Color c = (Color)rand_color(engine);
-		while (true) {
-			const int h = is_hand_piece(engine);
-			if (h == 9) { makehand(hands[c], KNIGHT, num_pt(hands[c], KNIGHT) + 1); count++; break; }
-			else {
-				const File f = (File)rand_file(engine);
-				const Rank r = (c == BLACK) ? (Rank)(8 - rand_rank(engine)) : (Rank)rand_rank(engine);
-				const Square sq = make_square(r, f);
-				if (piece_on(sq) != NO_PIECE) { continue; }
-				if ((SquareBB[sq]&CantGo_KNIGHT[c]).isNot()) { continue; }
-				else {
-					pcboard[sq] = add_color(KNIGHT, c);
-					put_piece(c, KNIGHT, sq);
-					set_occ256(sq);
-					count++;
-					break;
-				}
-
-			}
-		}
-	}
-
-	//silver
-	for (int i = 0; i < 4; i++) {
-
-		const Color c = (Color)rand_color(engine);
-		while (true) {
-			const int h = is_hand_piece(engine);
-			if (h == 9) { makehand(hands[c], SILVER, num_pt(hands[c], SILVER) + 1); count++; break; }
-			else {
-				const File f = (File)rand_file(engine);
-				const Rank r = (c == BLACK) ? (Rank)(8 - rand_rank(engine)) : (Rank)rand_rank(engine);
-				const Square sq = make_square(r, f);
-				if (piece_on(sq) != NO_PIECE) { continue; }
-				else {
-					pcboard[sq] = add_color(SILVER, c);
-					put_piece(c, SILVER, sq);
-					set_occ256(sq);
-					count++;
-					break;
-				}
-
-			}
-		}
-	}
-
-	//gold
-	for (int i = 0; i < 4; i++) {
-
-		const Color c = (Color)rand_color(engine);
-		while (true) {
-			const int h = is_hand_piece(engine);
-			if (h == 9) { makehand(hands[c], GOLD, num_pt(hands[c], GOLD) + 1); count++; break; }
-			else {
-				const File f = (File)rand_file(engine);
-				const Rank r = (c == BLACK) ? (Rank)(8 - rand_rank(engine)) : (Rank)rand_rank(engine);
-				const Square sq = make_square(r, f);
-				if (piece_on(sq) != NO_PIECE) { continue; }
-				else {
-					pcboard[sq] = add_color(GOLD, c);
-					put_piece(c, GOLD, sq);
-					set_occ256(sq);
-					count++;
-					break;
-				}
-
-			}
-		}
-	}
-	//bishop
-	for (int i = 0; i < 2; i++) {
-
-		const Color c = (Color)rand_color(engine);
-		while (true) {
-			const int h = is_hand_piece(engine);
-			if (h == 9) { makehand(hands[c], BISHOP, num_pt(hands[c], BISHOP) + 1); count++; break; }
-			else {
-				const File f = (File)rand_file(engine);
-				const Rank r = (c == BLACK) ? (Rank)(8 - rand_rank(engine)) : (Rank)rand_rank(engine);
-				const Square sq = make_square(r, f);
-				if (piece_on(sq) != NO_PIECE) { continue; }
-				else {
-					pcboard[sq] = add_color(BISHOP, c);
-					put_piece(c, BISHOP, sq);
-					set_occ256(sq);
-					count++;
-					break;
-				}
-
-			}
-		}
-	}
-	//rook
-	for (int i = 0; i < 2; i++) {
-
-		const Color c = (Color)rand_color(engine);
-		while (true) {
-			const int h = is_hand_piece(engine);
-			if (h == 9) { makehand(hands[c], ROOK, num_pt(hands[c], ROOK) + 1); count++; break; }
-			else {
-				const File f = (File)rand_file(engine);
-				const Rank r = (c == BLACK) ? (Rank)(8 - rand_rank(engine)) : (Rank)rand_rank(engine);
-				const Square sq = make_square(r, f);
-				if (piece_on(sq) != NO_PIECE) { continue; }
-				else {
-					pcboard[sq] = add_color(ROOK, c);
-					put_piece(c, ROOK, sq);
-					set_occ256(sq);
-					count++;
-					break;
-				}
-
-			}
-		}
-	}
-	//先手玉
-	while (true)
-	{
-		const File f = (File)rand_file(engine);
-		const Rank r = (Rank)(8 - rand_rank(engine));
-		const Square ksq = make_square(r, f);
-		if(piece_on(ksq) != NO_PIECE) { continue; }
-		if (attackers_to(WHITE, ksq, occ256).isNot()) { continue; }//相手の効きが効いていてはいけない
-		pcboard[ksq] = add_color(KING, BLACK);
-		put_piece(BLACK, KING, ksq);
-		set_occ256(ksq);
-		count++;
-		break;
-	}
-	while (true)
-	{
-		const File f = (File)rand_file(engine);
-		const Rank r = (Rank)rand_rank(engine);
-		const Square ksq = make_square(r, f);
-		if (piece_on(ksq) != NO_PIECE) { continue; }
-		if (attackers_to(BLACK, ksq, occ256).isNot()) { continue; }//相手の効きが効いていてはいけない
-		pcboard[ksq] = add_color(KING, WHITE);
-		put_piece(WHITE, KING, ksq);
-		set_occ256(ksq);
-		count++;
-		break;
-	}
-	ASSERT(count == 40);
-	ASSERT(is_incheck() == false);
-	/*cout << *this << endl;
-	cout << count << endl;*/
-	sfen = make_sfen();
-	set(sfen);
-	
-	th.set(*this);
-	th.l_depth = 10;
-	//th.l_beta = (Value)101;
-	//th.l_alpha = (Value)-101;
-	th.l_beta = Value_Infinite;
-	th.l_alpha = -Value_Infinite;
-	Value v = th.think();
-	//あまり評価値が離れていると初期局面として不適切と考えられる。
-	if (abs(v) > 100) {
-		return to_string(0);
-	}
-	return sfen;
-}
-
-
-
-
-void make_startpos_detabase()
-{
-	Position pos;
-	vector<string> db;
-
-	int64_t num;
-	cout << "num:";
-	cin >> num;
-	int64_t i = 0;
-	string str;
-	
-	//db作成。
-	while (true) {
-		str = pos.random_startpos();
-
-		for each (string s in db){if (str == s) { goto NEXT; }}//同じ局面があれば再登録はしない
-		if (str.size() < 3) { continue; }
-		else {
-			db.push_back(str);
-			i++;
-		}
-		if (i % 100 == 0) { cout << i << endl; }
-		if (i % 100 == 0) { 
-			
-			ofstream of1("C:/sp_db/startpos.db");
-			for (int j = 0; j < db.size(); j++) {
-
-				of1 << db[j] << endl;
-			}
-			of1.close();
-		}
-		if (i > num) { break; }
-
-	NEXT:;
-	}
-
-	//ファイルに書き出し
-	
-	ofstream of("C:/sp_db/startpos.db");
-
-	for (int j = 0; j < db.size(); j++) {
-		
-		of << db[j] << endl;
-	}
-	of.close();
-	cout << "finish make database!" << endl;
-}
-
-#endif
 
 #if defined(REIN) || defined(MAKETEACHER)
-struct teacher_data {
-
-	//bool haffman[256];
-
-	string sfen;//ハフマン失敗しまくったのでstringで行く。　大会終わって時間もできたしハフマン変換関数のデバッグするか...
-
-	//
-	int16_t teacher_value;
-	uint16_t move;
-	uint16_t gameply;
-	bool isWin;
-	uint8_t padding;
-	//teacher_data() {};
-	/*
-	elmo式を使うならここに勝率
-	qhapak式で教師手よりも価値の高い差し手を低くするためには差し手を含めなければならない
-
-	勝敗を入れることで
-	数手先だけの局所最適化が防げる（NDFの金沢さん）
-	評価値と勝率がかけ離れている戦型も学習がちゃんとできるようになる（かパックの澤田さん）
-	*/
-	//Color winner;
-	//Move move;
-
-	//teacher_data(/*const bool *haff,*/const string sfen_,const Value teachervalue,const Move m) {
-	//	//memcpy(haffman, haff, sizeof(haffman));
-	//	sfen = sfen_;
-	//	teacher_value = (int16_t)teachervalue;
-	//	move = m;
-	//}
-
-	teacher_data( const string sfen_, const Value teachervalue) {
-		
-		sfen = sfen_;
-		teacher_value = (int16_t)teachervalue;
-		
-	}
-
-	teacher_data(){}
-};
-static_assert(sizeof(teacher_data) == 40, "40");
-inline std::ostream& operator<<(std::ostream& os, const teacher_data& td) {
-	os << td.sfen << endl;
-	os << td.teacher_value << endl;
-	//os << td.move << endl;
-	return os;
-}
-
-vector<string> startpos_db;
-vector<vector<teacher_data>> teachers;
-vector<teacher_data> sum_teachers;
 
 
-
-vector<string> teacher_list;
-int listcounter = 0;
 
 //==========================================================================
-//                               maltithread時のrandam開始局面databaseのindexとか教師データのindexとかに使う
 
-std::mutex mutex__;
-int index__ = 0;
-
-int lock_index_inclement__() {
-	std::unique_lock<std::mutex> lock(mutex__);
-#ifdef MAKETEACHER
-	if (index__ > startpos_db.size()) { cout << "o" << endl; }
-#else
-	if (index__ > sum_teachers.size()) { cout << "o" << endl; }
-#endif //  MAKETEACHER
-	else if(index__%1000==0){ cout << "."; }
-
-	return index__++;
-}
-//==========================================================================
-
-int maxthreadnum__;
 
 void renewal_PP_rein(dJValue &data);
 void renewal_PP_nozomi(dJValue &data);//nozomiさんに教わった方法
 //ランダム開始局面から1手ランダムにささせるために使う
 void do_randommove(Position& pos, StateInfo* s, std::mt19937& mt);
-void make_teacher_body(const int number);
 #endif
 
 #if defined(LEARN) && defined(MAKETEACHER)
@@ -456,8 +61,7 @@ void make_teacher_body(const int number);
 数手先の評価値と局面の組をセットにした教師データを作成するための関数
 これは初期化とthreadの取りまとめのための関数であるので
 ----------------------------------------------------------------------------*/
-uint64_t sumteachersize = 0;
-void make_teacher()
+void Make_Teacher::make_teacher()
 {
 	int64_t maxnum;
 	cout << "maxnum:";
@@ -473,41 +77,41 @@ void make_teacher()
 #endif
 	cout << TEACHERPATH << endl;
 
-/*
-	std::string day;
-	time_t rawtime;
-	struct tm * timeinfo;
-	time(&rawtime);
-	timeinfo = localtime(&rawtime);
-	day = asctime(timeinfo);
+	/*
+		std::string day;
+		time_t rawtime;
+		struct tm * timeinfo;
+		time(&rawtime);
+		timeinfo = localtime(&rawtime);
+		day = asctime(timeinfo);
 
-	size_t hoge;
-	while ((hoge = day.find_first_of(" ")) != string::npos) {
-		day.erase(hoge, 1);
-	}
-	while ((hoge = day.find_first_of("\n")) != string::npos) {
-		day.erase(hoge, 1);
-	}
-	while ((hoge = day.find_first_of(":")) != string::npos) {
-		day.erase(hoge, 1);
-	}
-*/
+		size_t hoge;
+		while ((hoge = day.find_first_of(" ")) != string::npos) {
+			day.erase(hoge, 1);
+		}
+		while ((hoge = day.find_first_of("\n")) != string::npos) {
+			day.erase(hoge, 1);
+		}
+		while ((hoge = day.find_first_of(":")) != string::npos) {
+			day.erase(hoge, 1);
+		}
+	*/
 
 	//開始局面データベース読み込み
 	/*
 	出てこないきょくめんばかりだった可能性が大なので定跡から読み込ませる
 	*/
 	//ifstream f("C:/sp_db/startpos.db");
-	#if defined(WINDOWS)
-		ifstream f("C:/book2/standard_book.db");
-	#elif defined(LINUX)
-		ifstream f("/home/suganuma/FV/BOOK/standard_book.db");		
-	#endif
+#if defined(WINDOWS)
+	ifstream f("C:/book2/standard_book.db");
+#elif defined(LINUX)
+	ifstream f("/home/suganuma/FV/BOOK/standard_book.db");
+#endif
 	string s;
 	while (!f.eof()) {
 		getline(f, s);
-		if (s.find("sfen")!=string::npos) { startpos_db.push_back(s); }
-		
+		if (s.find("sfen") != string::npos) { startpos_db.push_back(s); }
+
 	}
 	f.close();
 
@@ -516,23 +120,25 @@ void make_teacher()
 
 	//GCCで全然うまくいかない..................(´･ω･｀)
 	maxthreadnum__ = omp_get_max_threads();
-	maxthreadnum__ = 4;
+	//maxthreadnum__ = 4;
 	for (size_t i = 0; i < maxthreadnum__; i++) {
 		teachers.emplace_back();
 	}
-	cout <<"teachers"<< teachers.size() << endl;
+	cout << "teachers" << teachers.size() << endl;
 	//開始局面データベースシャッフル 
 	std::random_device rd;
 	std::mt19937 g_mt(rd());
 	//スレッド作成
 	vector<std::thread> threads(maxthreadnum__ - 1);
-	cout <<"threads"<< threads.size() << endl;
+	cout << "threads" << threads.size() << endl;
 	int i = 0;
-	for (int i = 0; i < (maxnum / startpos_db.size())+1; i++)
-	//while(true)
+
+	for (int i = 0; i < (maxnum / startpos_db.size()) + 2; i++)
+		//for (int i = 0; i < 10; i++)
+		//while(true)
 	{
 		//i++;
-		cout<<"iter:"<<i<<endl;
+		cout << "iter:" << i << endl;
 
 		sum_teachers.clear();
 		for (size_t h = 0; h < maxthreadnum__; h++) {
@@ -542,38 +148,41 @@ void make_teacher()
 
 		std::shuffle(startpos_db.begin(), startpos_db.end(), g_mt);
 
-		cout<<"shuffled startpos"<<endl;
+		cout << "shuffled startpos" << endl;
 		//teacherの作成
 		index__ = 0;
 #define MALTI
 #ifdef  MALTI
+
+
+		//https://msdn.microsoft.com/ja-jp/library/dd293608.aspx
 		for (int k = 0; k < maxthreadnum__ - 1; ++k) {
-			threads[k] = std::thread([k] {make_teacher_body(k); });
+			threads[k] = std::thread([=] {make_teacher_body(k); });
 		}
 		make_teacher_body(maxthreadnum__ - 1);
 #else
 		make_teacher_body(0);
 #endif 
-		
+
 #ifdef  MALTI
 		for (auto& th : threads) { th.join(); }
 #endif
 		//thread毎のteacherをmerge
 		int h = 0;
 
-	#ifdef MSVC
+#ifdef MSVC
 		for each (vector<teacher_data> tdv in teachers)
 		{
 			std::copy(tdv.begin(), tdv.end(), std::back_inserter(sum_teachers));
 			teachers[h++].clear();
 		}
-	#else
+#else
 		for (vector<teacher_data> tdv : teachers)
 		{
 			std::copy(tdv.begin(), tdv.end(), std::back_inserter(sum_teachers));
 			teachers[h++].clear();
 		}
-	#endif
+#endif
 		//なんかシャッフルしないほうがいいとかいう情報もあるのでシャッフルしないほうがいいのか？まあ普通に考えたらminbatchに入っている局面のランダム性が多いほうがいいのでシャッフルすべきだと思うのだが...
 		std::printf("shuffle teacherdata\n");
 		std::shuffle(sum_teachers.begin(), sum_teachers.end(), g_mt);
@@ -586,8 +195,8 @@ void make_teacher()
 		/*
 		読み込むときはvector一つ分とってきて、それをpushbackしていけばいいと考えられるのだが
 		*/
-		string teacher_ = TEACHERPATH + "/"+"iteration5"+"depth"+itos(DEPTH-1)+".txt";
-		ofstream of(teacher_,ios::app);
+		string teacher_ = TEACHERPATH + "/" + "iteration5" + "depth" + itos(DEPTH - 1) + ".txt";
+		ofstream of(teacher_, ios::app);
 		if (!of) { UNREACHABLE; }
 		//of.write(reinterpret_cast<const char*>(&sum_teachers[0]), sum_teachers.size() * sizeof(teacher_data));
 		for (auto& td : sum_teachers) {
@@ -598,17 +207,17 @@ void make_teacher()
 		//なぜか落ちるので明日の朝チェックをする
 	}
 
-	
+
 	cout << "finish!" << endl;
 }
 
-void make_teacher_body(const int number) {
+void Make_Teacher::make_teacher_body(const int number) {
 
-	cout<<number<<endl;
+	cout << number << endl;
 	std::random_device rd;
 	std::mt19937 mt(rd());
 	std::uniform_real_distribution<double> random_move_probability(0.0, 1.0);//doubleのほうが扱いやすいか
-	double random_probability=1.0;
+	double random_probability = 1.0;
 	Position pos;
 	StateInfo si[500];
 	StateInfo s_start;
@@ -619,16 +228,16 @@ void make_teacher_body(const int number) {
 
 	for (int g = lock_index_inclement__();
 #ifdef MAKETEST
-		g<100;
+		g < 10;
 #else
-		g < startpos_db.size(); 
+		g < startpos_db.size();
 #endif
 		g = lock_index_inclement__()) {
 
-		for (int i = 0; i <500; i++) si[i].clear();
+		for (int i = 0; i < 500; i++) si[i].clear();
 		string startposdb_string = startpos_db[g];
 
-		cout<<"index:"<<g<<endl;
+		cout << "index:" << g << endl;
 
 		if (startposdb_string.size() < 10) { continue; }//文字列の長さがありえないほど短いのはエラーであるので使わない
 		pos.set(startposdb_string);//random開始局面集から一つ取り出してsetする。（このランダム開始局面は何回も出てくるのでここから一手動かしたほうがいい）
@@ -642,7 +251,7 @@ void make_teacher_body(const int number) {
 			//探索前にthreadを初期化しておく
 			Eval::eval_PP(pos);//差分計算でバグを出さないために計算しておく
 
-			
+
 
 			th.set(pos);
 			//th.cleartable();//毎回やるとおそいがやった方がいいのだろうか？？
@@ -667,11 +276,11 @@ void make_teacher_body(const int number) {
 			/*--------------------------------------------------------------------------------------------------------
 			pvの末端に移動をしなかった場合deepvalueが探索の値とかけ離れてしまうということが起こった！これで少しはましになる
 			--------------------------------------------------------------------------------------------------------*/
-//#define GOLEAF//USETTしてるのでGLEAFはできない
+			//#define GOLEAF//USETTしてるのでGLEAFはできない
 			Value deepvalue = v;
 #if defined(GOLEAF)
 			StateInfo si2[64];
-			for (int i = 0; i <64; i++) si2[i].clear();
+			for (int i = 0; i < 64; i++) si2[i].clear();
 			int pv_depth = 0;
 			const Color rootColor = pos.sidetomove();//HaffmanrootPosの手番
 
@@ -681,16 +290,16 @@ void make_teacher_body(const int number) {
 				pos.do_move(m, &si2[pv_depth++]);
 			}
 			//rootから見た評価値を格納する
-	#ifdef EVAL_KPP
+#ifdef EVAL_KPP
 			pos.state()->sumBKPP = Value_error; pos.state()->previous->sumBKPP = Value_error;
-	#elif defined(EVAL_PP)
+#elif defined(EVAL_PP)
 			pos.state()->bpp = pos.state()->wpp = Value_error;//差分計算を無効にしてみる
-			pos.state()->previous->bpp =pos.state()->previous->wpp= Value_error;
-	#elif defined(EVAL_PPT)
+			pos.state()->previous->bpp = pos.state()->previous->wpp = Value_error;
+#elif defined(EVAL_PPT)
 			pos.state()->bpp = pos.state()->wpp = Value_error;//差分計算を無効にしてみる
 			if (pos.state()->previous != nullptr) { pos.state()->previous->bpp = pos.state()->previous->wpp = Value_error; }
-	#endif
-			deepvalue = (rootColor==pos.sidetomove()) ? Eval::eval(pos):-Eval::eval(pos);
+#endif
+			deepvalue = (rootColor == pos.sidetomove()) ? Eval::eval(pos) : -Eval::eval(pos);
 #endif
 			//teacher_data td(/*HaffmanrootPos,*/sfen_rootpos, deepvalue);
 #ifdef  USEPACKEDSFEN
@@ -698,7 +307,7 @@ void make_teacher_body(const int number) {
 #else
 			teacher_data td(sfen_rootpos, deepvalue);
 #endif
-			
+
 			teachers[number].push_back(td);
 #if  defined(GOLEAF)
 			for (int jj = 0; jj < pv_depth; jj++) {
@@ -719,21 +328,21 @@ void make_teacher_body(const int number) {
 				//合法手が選択されるまでwhileで回る
 
 				//王手がかかっていない場合、40パーセントでランダムの指し手で次局面に
-				if (!pos.is_incheck() 
+				if (!pos.is_incheck()
 					&& random_move_probability(rd) < random_probability)
-				{ 
-					random_probability /= 1.5; m = moves[mt() % num_moves]; 
+				{
+					random_probability /= 1.5; m = moves[mt() % num_moves];
 				}
 				else {
 					//60パーセントでpv
 					m = th.RootMoves[0].move;
 				}
 
-				if (pos.is_legal(m) && pos.pseudo_legal(m)) {break;}
+				if (pos.is_legal(m) && pos.pseudo_legal(m)) { break; }
 			}
 			//差し手で次の局面に移動する。
 			pos.do_move(m, &si[i]);
-			
+
 		}
 	NEXT_STARTPOS:;
 	}
@@ -743,7 +352,7 @@ void make_teacher_body(const int number) {
 //メルセンヌついスタのコンストラクタは遅いので参照で渡す
 void do_randommove(Position& pos, StateInfo* s, std::mt19937& mt) {
 
-	
+
 	if (pos.is_incheck()) { return; }
 
 	ExtMove moves[600], *end;
@@ -758,8 +367,8 @@ void do_randommove(Position& pos, StateInfo* s, std::mt19937& mt) {
 		//次の局面に進めるための指し手の選択
 		//合法手が選択されるまでwhileで回る
 
-		 m = moves[mt() % num_moves];
-		
+		m = moves[mt() % num_moves];
+
 
 		if (pos.is_legal(m) && pos.pseudo_legal(m)) { break; }
 	}
@@ -770,7 +379,7 @@ void do_randommove(Position& pos, StateInfo* s, std::mt19937& mt) {
 
 #endif
 
-#if defined(REIN) || defined(MAKETEACHER)
+#if defined(REIN) 
 //定数
 int read_teacher_counter = 0;
 int batchsize = 1000000;//nozomiさんはminbatch100万でいいって言ってた
@@ -783,14 +392,14 @@ double loss = 0;
 ifstreamを外部から参照渡しすることにする
 
 */
-bool read_teacherdata(fstream& f) {
+bool Rein_Learner::read_teacherdata(fstream& f) {
 	sum_teachers.clear();
 	//ifstream f(TEACHERPATH);
 	if (!f) { cout << "cantopen" << TEACHERPATH << endl; UNREACHABLE; }
 	teacher_data t;
 	int i = 0;
-	
-	while (/*!f.eof() &&*/ sum_teachers.size()<batchsize) {
+
+	while (/*!f.eof() &&*/ sum_teachers.size() < batchsize) {
 		/*f.seekg(read_teacher_counter * sizeof(teacher_data));
 		f.read((char*)&t, sizeof(teacher_data));
 
@@ -814,8 +423,8 @@ bool read_teacherdata(fstream& f) {
 		sfen = line;
 		if (!getline(f, line)) { break; };
 		v = (Value)stoi(line);
-		
-		
+
+
 		teacher_data td(sfen, v);
 		sum_teachers.push_back(td);
 		i++;
@@ -836,16 +445,13 @@ bool read_teacherdata(fstream& f) {
 #if defined(LEARN) && defined(REIN)
 
 
-dJValue sum_gradJ;
-vector<dJValue> gradJs;
 
 //lowerDimPP lowdim_;
 
-void reinforce_learn_pharse1(const int index);
 
 
 
-void reinforce_learn() {
+void Rein_Learner::reinforce_learn() {
 
 	/*int num_iteration=100;
 
@@ -857,7 +463,7 @@ void reinforce_learn() {
 	cout << "have G volume?[Y/N]" << endl;
 	string haveg;
 	cin >> haveg;
-	if (haveg == "Y"||haveg=="y") {
+	if (haveg == "Y" || haveg == "y") {
 		TEACHERPATH[0] = 'G';
 	}
 	cout << TEACHERPATH << endl;
@@ -892,8 +498,8 @@ void reinforce_learn() {
 
 #endif
 
-	
-	
+
+
 	sys::path p(TEACHERPATH);
 	std::for_each(sys::recursive_directory_iterator(p), sys::recursive_directory_iterator(),
 		[&](const sys::path& p) {
@@ -916,13 +522,13 @@ void reinforce_learn() {
 
 	fstream f;
 #if defined(USEPACKEDSFEN)
-	f.open(teacher_list[0],ios::in|ios::binary);
+	f.open(teacher_list[0], ios::in | ios::binary);
 #else
 	f.open(teacher_list[0], ios::in);
 #endif
 	//if (f) { cout << "cantopen" << TEACHERPATH << endl; UNREACHABLE; }
 
-	
+
 	std::random_device rd;
 	std::mt19937 g_mt(rd());
 
@@ -955,7 +561,7 @@ void reinforce_learn() {
 
 		index__ = 0;
 		for (int i = 0; i < maxthreadnum__ - 1; ++i) {
-			threads[i] = std::thread([i] {reinforce_learn_pharse1(i); });
+			threads[i] = std::thread([=] {reinforce_learn_pharse1(i); });
 		}
 		reinforce_learn_pharse1(maxthreadnum__ - 1);
 
@@ -970,18 +576,18 @@ void reinforce_learn() {
 		値の更新の方法を勉強しないといけない...手元にadadeltaの論文があるしこれをつかうか？？
 		*/
 
-//nozomiさん曰く次元下げはしないほうがいいとのこと。
-//#ifdef JIGENSAGE
-//		lowdim_.clear();
-//		lower__dimPP(lowdim_, sum_gradJ);
-//		sum_gradJ.clear();
-//		weave_lowdim_to_gradj(sum_gradJ, lowdim_);
-//#endif
+		//nozomiさん曰く次元下げはしないほうがいいとのこと。
+		//#ifdef JIGENSAGE
+		//		lowdim_.clear();
+		//		lower__dimPP(lowdim_, sum_gradJ);
+		//		sum_gradJ.clear();
+		//		weave_lowdim_to_gradj(sum_gradJ, lowdim_);
+		//#endif
 
 
 
 
-		//renewal_PP_rein(sum_gradJ);//nanがいっぱい入っていてちゃんと値の更新ができていなかったので強さが変わらなかった疑惑。
+				//renewal_PP_rein(sum_gradJ);//nanがいっぱい入っていてちゃんと値の更新ができていなかったので強さが変わらなかった疑惑。
 		renewal_PP_nozomi(sum_gradJ);//こっちは確実に値がついていると考えられる。
 
 
@@ -1001,13 +607,13 @@ void reinforce_learn() {
 それ以前にunpacksfenは通常に動作している？？
 あの辺バグってたし、今後のためにsfenで出力することにした
 */
-void reinforce_learn_pharse1(const int index) {
+void Rein_Learner::reinforce_learn_pharse1(const int index) {
 
 	Position pos;
 	Thread th;
 	th.cleartable();
 	StateInfo si[100];
-	for (int i = 0; i <100; i++) si[i].clear();
+	for (int i = 0; i < 100; i++) si[i].clear();
 	/*ExtMove moves[600], *end;
 	end = moves;*/
 
@@ -1015,7 +621,7 @@ void reinforce_learn_pharse1(const int index) {
 
 		auto teacher_data = sum_teachers[g];
 		const Value teacher = (Value)teacher_data.teacher_value;
-		
+
 
 		pos.set(teacher_data.sfen);
 
@@ -1043,8 +649,8 @@ void reinforce_learn_pharse1(const int index) {
 		th.l_beta = Value_Infinite;
 		th.l_depth = 2;
 		//Eval::eval(pos);
-		Value shallow_serch_value=th.think();
-		if (abs(shallow_serch_value) > 3000||shallow_serch_value==0) { continue; }
+		Value shallow_serch_value = th.think();
+		if (abs(shallow_serch_value) > 3000 || shallow_serch_value == 0) { continue; }
 
 		int ii = 0;
 		for (Move m : th.pv) { pos.do_move(m, &si[ii]); ii++; }//pvの末端へ移動
@@ -1066,13 +672,13 @@ void reinforce_learn_pharse1(const int index) {
 				th.print_pv(0, shallow_serch_value);
 				ASSERT(0);
 			}
-			pos.do_move(m, &si[ii]); ii++; 
+			pos.do_move(m, &si[ii]); ii++;
 		}//pvの末端へ移動
 
 
 
 #endif
-		
+
 #ifdef EVAL_KPP
 		pos.state()->sumBKPP = Value_error; pos.state()->previous->sumBKPP = Value_error;
 #elif defined(EVAL_PP)
@@ -1098,11 +704,11 @@ void reinforce_learn_pharse1(const int index) {
 		そのままの評価値だと差が大きすぎるところの値が支配的になってしまうのでやはり勝率に変換すべきか？？
 		*/
 		//double diffsig_ = (shallow_v - teacher);
-		
+
 		//loss += diffsig_*diffsig_;
 		loss += pow(int(shallow_v - teacher), 2);
 
-		
+
 
 #ifdef EVAL_KPPT
 		double diffsig_withoutturn = (rootColor == BLACK ? diffsig_ : -diffsig_);//+bpp-wppの関係
@@ -1115,7 +721,7 @@ void reinforce_learn_pharse1(const int index) {
 #ifdef EVAL_PP
 		gradJs[index].update_dJ(pos, -diffsig);
 #elif defined(EVAL_PPT)
-		gradJs[index].update_dJ(pos, -diffsig,diffsig_turn);
+		gradJs[index].update_dJ(pos, -diffsig, diffsig_turn);
 #endif
 #endif
 	}
@@ -1123,7 +729,7 @@ void reinforce_learn_pharse1(const int index) {
 
 }
 #if 0
-double PP_double[fe_end2][fe_end2] = {0,0};
+double PP_double[fe_end2][fe_end2] = { 0,0 };
 
 constexpr double row = 0.95, epsiron = 0.0001;
 double lastEg[fe_end2][fe_end2] = { 0.0 }, last_Edeltax[fe_end2][fe_end2] = { 0.0 };
@@ -1169,19 +775,19 @@ void renewal_PP_rein(dJValue &data) {
 		for (BonaPiece j = f_hand_pawn; j < fe_end2; j++) {
 
 
-			
+
 			PP_double[i][j] = double(PP[i][j]);
 
 			double gt = data.absolute_PP[i][j];
 			double gt2 = gt*gt;
 			double Egt = lastEg[i][j] = (row)*lastEg[i][j] + (1 - row)*gt2;
-			double delta_x = gt*RMS(last_Edeltax[i][j]) /RMS(Egt);
+			double delta_x = gt*RMS(last_Edeltax[i][j]) / RMS(Egt);
 			last_Edeltax[i][j] = (row)*last_Edeltax[i][j] + (1 - row)*delta_x;
 
 			//FV_SCALEでいいのか？
 			/*
 			こっちのほうが強くなったと思ったが配列にnanが入っていて値が動いていないだけだった
-			
+
 			*/
 			if (delta_x == NAN) { continue; }
 			int add = int(delta_x)*FV_SCALE;//clampか何かしたほうがいいか？(というかPPをいったんdoubleに変換してそれをintに戻すほうがいいか？？)
@@ -1222,7 +828,7 @@ void renewal_PP_nozomi(dJValue &data) {
 
 
 	int h;
-	
+
 	h = 1;
 #ifdef EVAL_PP
 	//対称性はdJの中に含まれているのでここでは考えなくていい
@@ -1260,7 +866,7 @@ void renewal_PP_nozomi(dJValue &data) {
 #endif
 
 
-#if defined(REIN) || defined(MAKETEACHER)
+#if defined(REIN)
 
 /*
 毎回clear tableするとほとんどの評価値の誤差は非常に小さい範囲に収まった.小さいやつは1も差がない
@@ -1270,7 +876,7 @@ void renewal_PP_nozomi(dJValue &data) {
 
 AperyWCSC26の教師データファイル読み込みに間違いはなかった
 */
-void check_teacherdata() {
+void Rein_Learner::check_teacherdata() {
 
 	//	Position pos;
 	Position pos__;
@@ -1279,7 +885,7 @@ void check_teacherdata() {
 
 	ofstream ofs("C:/Users/daruma/Desktop/SQcheckteacher.txt");
 
-	
+
 	fstream f;
 	f.open(TEACHERPATH, ios::in | ios::binary);
 	if (!f) { cout << "cantopen" << TEACHERPATH << endl; UNREACHABLE; }
@@ -1287,13 +893,13 @@ void check_teacherdata() {
 
 	bool firsttime = true;
 
-	while (read_teacherdata(f)||firsttime) {
+	while (read_teacherdata(f) || firsttime) {
 
 		firsttime = false;
 		for (int g = lock_index_inclement__(); g < sum_teachers.size(); g = lock_index_inclement__()) {
 			count++;
 			auto data = sum_teachers[g];
-		
+
 
 			pos__.set(data.sfen);
 

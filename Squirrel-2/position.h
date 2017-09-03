@@ -76,8 +76,8 @@ struct StateInfo
 	Value material;
 #ifdef EVAL_PP
 	int32_t bpp=Value_error,wpp=Value_error;
-
-
+#elif defined(EVAL_KPP)
+	int32_t sumKKP = Value_error, sumBKPP = Value_error, sumWKPP = Value_error;
 #elif defined(EVAL_PPT) 
 	int32_t bpp = Value_error, wpp = Value_error, bppt = Value_error,wppt=Value_error;
 #endif
@@ -93,13 +93,12 @@ struct StateInfo
 	void clear_stPP() {
 #ifdef EVAL_PP
 		bpp = Value_error; wpp = Value_error;
-
-
+#elif defined(EVAL_KPP)
+		sumKKP = Value_error; sumBKPP = Value_error; sumWKPP = Value_error;
 #elif defined(EVAL_PPT) 
 		 bpp = Value_error, wpp = Value_error, bppt = Value_error, wppt = Value_error;
 #endif
 
-		//bkp = Value_error; wkp = Value_error;
 	}
 
 	void clear() {

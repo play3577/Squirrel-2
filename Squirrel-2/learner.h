@@ -3,7 +3,6 @@
 #include "evaluate.h"
 #include <fstream>
 #include "Thread.h"
-#include "evaluate.h"
 
 #define LOG
 
@@ -32,11 +31,6 @@ namespace Eval {
 		}
 
 	};
-
-	
-
-
-	
 }
 
 
@@ -298,4 +292,4 @@ void renewal_PP(dJValue &data);
 
 void lower__dimPP(lowerDimPP& lowdim, const dJValue& gradJ);
 void weave_lowdim_to_gradj(dJValue& newgradJ, const lowerDimPP& lowdim);
-#endif
+#endif // LEARN

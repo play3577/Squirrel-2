@@ -17,7 +17,9 @@
 #define LINUX   //linux build時
 
 #endif
-
+#if defined(_MSC_VER)
+#define MSVC
+#endif
 
 #if defined(__GNUC__) 
 #include <assert.h>
@@ -50,11 +52,11 @@
 
 //---------------------------------学習関連
 
-//#define LEARN      //学習（これ単体だとぼなぜぞ）
+#define LEARN      //学習（これ単体だとぼなぜぞ）
 //#define MAKESTARTPOS //初期局面データ作成
 //#define MAKETEACHER  //教師データ作成
 //#define Prog_LEARN  //進行度学習
-//#define REIN      //強化学習
+#define REIN      //強化学習
 //#define BONA
 
 #if defined(MAKETEACHER) || defined(MAKESTARTPOS)
@@ -74,18 +76,17 @@
 #if defined(_MSC_VER)
 // C4800 : 'unsigned int': ブール値を 'true' または 'false' に強制的に設定します
 #pragma warning(disable : 4800)
-#define MSVC
 #endif
 
 
 //-----------------------------評価関数関連
 
-//#define  USETMP
+#define  USETMP
 //#define DIFFTEST
 //#define EVAL_NONDIFF
 #define EVAL_PP
 //#define EVAL_PPT
-
+//#define EVAL_KPP
 //--------------------------------定跡
 //#define MAKEBOOK//定跡作成モード
 //#define APERYBOOK
