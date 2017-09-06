@@ -646,7 +646,7 @@ void Rein_Learner::reinforce_learn_pharse1(const int index) {
 
 		int ii = 0;
 		for (Move m : th.pv) { pos.do_move(m, &si[ii]); ii++; }//pv‚Ì––’[‚ÖˆÚ“®
-#elif 0
+#elif 1
 		th.set(pos);
 		//th.cleartable();//–ˆ‰ñ‚ÍŽ€‚Ê‚Ù‚Ç’x‚¢
 		th.l_alpha = -Value_Infinite;
@@ -672,7 +672,8 @@ void Rein_Learner::reinforce_learn_pharse1(const int index) {
 #endif
 
 #ifdef EVAL_KPP
-		pos.state()->sumBKPP = Value_error; pos.state()->previous->sumBKPP = Value_error;
+		pos.state()->sumBKPP = Value_error; 
+		if (pos.state()->previous != nullptr) { pos.state()->previous->sumBKPP = Value_error; }
 #elif defined(EVAL_PP)
 		pos.state()->bpp = pos.state()->wpp = Value_error;//·•ªŒvŽZ‚ð–³Œø‚É‚µ‚Ä‚Ý‚é
 		if (pos.state()->previous != nullptr) { pos.state()->previous->bpp = pos.state()->previous->wpp = Value_error; }
@@ -714,6 +715,8 @@ void Rein_Learner::reinforce_learn_pharse1(const int index) {
 		gradJs[index].update_dJ(pos, -diffsig);
 #elif defined(EVAL_PPT)
 		gradJs[index].update_dJ(pos, -diffsig, diffsig_turn);
+#elif defined(EVAL_KPP)
+		gradJs[index].update_dJ(pos, -diffsig);
 #endif
 #endif
 	}
@@ -847,6 +850,33 @@ void renewal_PP_nozomi(dJValue &data) {
 			}
 		}
 	}
+#elif defined(EVAL_KPP)
+
+	int inc;
+	for (int k = SQ_ZERO; k < SQ_NUM; k++) {
+
+		for (int k2 = SQ_ZERO; k2 > SQ_NUM; k2++) {
+
+			inc = h*sign(data.absolute_KK[k][k2]);
+			kk[k][k2] +=inc;
+
+			for (int i = BONA_PIECE_ZERO; i < fe_end; i++) {
+
+				inc = h*sign(data.absolute_KKP[k][k2][i]);
+				kkp[k][k2][i] += inc;
+			}
+		}
+
+		for (int i = BONA_PIECE_ZERO; i < fe_end; i++) {
+			for (int j = BONA_PIECE_ZERO; j < fe_end; j++) {
+				inc = h*sign(data.absolute_KPP[k][i][j]);
+
+				kpp[k][j][i] +=inc;
+			}
+		}
+	}
+
+
 #endif
 
 };
