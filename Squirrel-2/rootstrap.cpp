@@ -16,7 +16,7 @@
 namespace sys = std::tr2::sys;
 #endif
 
-#define MAKETEST
+//#define MAKETEST
 
 
 #if defined(WINDOWS)
@@ -213,7 +213,7 @@ void Make_Teacher::make_teacher()
 
 void Make_Teacher::make_teacher_body(const int number) {
 
-	cout << number << endl;
+	//cout << number << endl;
 	std::random_device rd;
 	std::mt19937 mt(rd());
 	std::uniform_real_distribution<double> random_move_probability(0.0, 1.0);//doubleのほうが扱いやすいか
@@ -237,7 +237,7 @@ void Make_Teacher::make_teacher_body(const int number) {
 		for (int i = 0; i < 500; i++) si[i].clear();
 		string startposdb_string = startpos_db[g];
 
-		cout << "index:" << g << endl;
+		//cout << "index:" << g << endl;
 
 		if (startposdb_string.size() < 10) { continue; }//文字列の長さがありえないほど短いのはエラーであるので使わない
 		pos.set(startposdb_string);//random開始局面集から一つ取り出してsetする。（このランダム開始局面は何回も出てくるのでここから一手動かしたほうがいい）
@@ -249,7 +249,7 @@ void Make_Teacher::make_teacher_body(const int number) {
 		for (int i = 0; i < 300; i++) {
 
 			//探索前にthreadを初期化しておく
-			Eval::eval_PP(pos);//差分計算でバグを出さないために計算しておく
+			Eval::eval(pos);//差分計算でバグを出さないために計算しておく
 
 
 
@@ -532,11 +532,6 @@ void Rein_Learner::reinforce_learn() {
 	std::random_device rd;
 	std::mt19937 g_mt(rd());
 
-
-
-
-
-
 	//gradJ格納庫用意
 	maxthreadnum__ = omp_get_max_threads();
 	for (size_t i = 0; i < maxthreadnum__; i++) {
@@ -583,9 +578,6 @@ void Rein_Learner::reinforce_learn() {
 		//		sum_gradJ.clear();
 		//		weave_lowdim_to_gradj(sum_gradJ, lowdim_);
 		//#endif
-
-
-
 
 				//renewal_PP_rein(sum_gradJ);//nanがいっぱい入っていてちゃんと値の更新ができていなかったので強さが変わらなかった疑惑。
 		renewal_PP_nozomi(sum_gradJ);//こっちは確実に値がついていると考えられる。
@@ -824,8 +816,6 @@ https://twitter.com/hillbig/status/869348563259490304
 （1だけではあるが場合によっては1が大きいということもあるかもしれないが）
 */
 void renewal_PP_nozomi(dJValue &data) {
-
-
 
 	int h;
 

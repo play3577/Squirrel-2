@@ -28,14 +28,10 @@ sfenはハフマン化して256bit 評価値は16bitであるので　272bitあればよい(paddingをな
 そこに必要なデータ全部突っ込んでそれを動的に確保する設計にしなければならない！！！！！！！！
 
 
-
-
 */
 #include <fstream>
 #include <sstream>
 #include "learner.h"
-
-
 
 
 #if defined(REIN) || defined(MAKETEACHER)

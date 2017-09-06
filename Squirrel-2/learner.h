@@ -27,7 +27,7 @@ namespace Eval {
 		vector<Move> pv;
 
 		MoveInfo(const Move m, const vector<Move> pv_) {
-			move = m; pv = pv_; 
+			move = m; pv = pv_;
 		}
 
 	};
@@ -169,7 +169,7 @@ struct  dJValue
 					absolute_PP[sym_rightleft(list_fw[j])][(list_fw[i])] -= diff;
 				}
 
-#endif
+#endif//LR
 			}
 		}
 	}
@@ -195,7 +195,7 @@ struct  dJValue
 {
 	double absolute_PP[fe_end2][fe_end2];
 	double absolute_PPt[fe_end2][fe_end2];
-	void update_dJ(const Position& pos, const double diff,const double difft) {
+	void update_dJ(const Position& pos, const double diff, const double difft) {
 		const auto list1 = pos.evallist();
 
 		const BonaPiece *list_fb = list1.bplist_fb, *list_fw = list1.bplist_fw;
@@ -254,8 +254,8 @@ struct  dJValue
 					absolute_PPt[sym_rightleft(list_fw[j])][(list_fw[i])] += difft;
 				}
 
-#endif
-}
+#endif//LR
+			}
 		}
 	}
 
@@ -268,6 +268,72 @@ struct  dJValue
 			for (BonaPiece bp2 = BONA_PIECE_ZERO; bp2 < fe_end2; bp2++) {
 				absolute_PP[bp1][bp2] += data.absolute_PP[bp1][bp2];
 				absolute_PPt[bp1][bp2] += data.absolute_PPt[bp1][bp2];
+			}
+		}
+	}
+};
+
+#elif defined(EVAL_KPP)
+struct lowerDimPP
+{
+	int dummy;
+};
+struct  dJValue
+{
+	double absolute_KPP[SQ_NUM][fe_end][fe_end];
+	double absolute_KKP[SQ_NUM][SQ_NUM][fe_end];
+	double absolute_KK[SQ_NUM][SQ_NUM];
+	void update_dJ(const Position& pos, const double diff) {
+		const auto list1 = pos.evallist();
+
+		const BonaPiece *list_fb = list1.bplist_fb, *list_fw = list1.bplist_fw;
+
+		const Square bksq = pos.ksq(BLACK); const Square wksq = hihumin_eye(pos.ksq(WHITE));
+
+
+
+
+		kk[bksq][wksq] += diff;
+		kk[wksq][bksq] -= diff;
+
+		for (int i = 0; i < 38; i++) {
+			BonaPiece bp1_fb = list_fb[i];
+			BonaPiece bp1_fw = list_fw[i];
+
+			kkp[bksq][wksq][bp1_fb] += diff;
+
+
+			for (int j = 0; j < i; j++) {
+				BonaPiece bp2_fb = list_fb[j];
+				BonaPiece bp2_fw = list_fw[j];
+				kpp[bksq][bp1_fb][bp2_fb] += diff;
+				kpp[bksq][bp1_fw][bp2_fw] -= diff;
+
+			}
+		}
+
+
+	}
+
+	void clear() { memset(this, 0, sizeof(*this)); }
+
+
+	void add(dJValue& data) {
+		for (int k = SQ_ZERO; k < SQ_NUM; k++) {
+
+			for (int k2 = SQ_ZERO; k2 > SQ_NUM; k2++) {
+
+				absolute_KK[k][k2] += data.absolute_KK[k][k2];
+
+				for (int i = BONA_PIECE_ZERO; i < fe_end; i++) {
+					absolute_KKP[k][k2][i] += data.absolute_KKP[k][k2][i];
+				}
+			}
+
+			for (int i = BONA_PIECE_ZERO; i < fe_end; i++) {
+				for (int j = BONA_PIECE_ZERO; j < fe_end; j++) {
+					absolute_KKP[k][j][i] += data.absolute_KPP[k][i][j];
+				}
 			}
 		}
 	}
