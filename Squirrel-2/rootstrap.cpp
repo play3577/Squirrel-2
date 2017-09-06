@@ -710,10 +710,10 @@ void Rein_Learner::reinforce_learn_pharse1(const int index) {
 		gradJs[index].update_dJ(pos, diffsig);
 #else
 		double diffsig = (rootColor == BLACK ? diffsig_ : -diffsig_);
-		double diffsig_turn = (rootColor == pos.sidetomove() ? -diffsig_ : diffsig_);//rootcolorつまり手番を握っている側に対してボーナスを与える
 #ifdef EVAL_PP
 		gradJs[index].update_dJ(pos, -diffsig);
 #elif defined(EVAL_PPT)
+		double diffsig_turn = (rootColor == pos.sidetomove() ? -diffsig_ : diffsig_);//rootcolorつまり手番を握っている側に対してボーナスを与える
 		gradJs[index].update_dJ(pos, -diffsig, diffsig_turn);
 #elif defined(EVAL_KPP)
 		gradJs[index].update_dJ(pos, -diffsig);

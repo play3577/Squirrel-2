@@ -375,19 +375,19 @@ namespace Eval {
 	void Eval::param_sym_ij() {
 
 		bool check_KPP[81][fe_end][fe_end] = { false };
-		bool check_KKP[81][81][fe_end] = { false };
-		bool check_KK[81][81] = { false };
+		/*bool check_KKP[81][81][fe_end] = { false };
+		bool check_KK[81][81] = { false };*/
 
 		FOR_KPP(ksq, bp1, bp2) {
 			if (check_KPP[ksq][bp1][bp2] == false) {
 				check_KPP[ksq][bp1][bp2] = check_KPP[ksq][bp2][bp1] = true;
-				int16_t a = kpp[ksq][bp1][bp2], b = kpp[ksq][bp2][bp1];
+				int32_t a = kpp[ksq][bp1][bp2], b = kpp[ksq][bp2][bp1];
 				kpp[ksq][bp1][bp2] = kpp[ksq][bp2][bp1] = (a + b) / 2;
 			}
 		}
 
-
-		FOR_KK(ksq1, ksq2) {
+		//‚±‚ê‚Í‚Å‚«‚È‚¢‚Í‚¸‚¾‚È
+		/*FOR_KK(ksq1, ksq2) {
 			if (check_KK[ksq1][ksq2] == false) {
 				check_KK[ksq1][ksq2] = check_KK[ksq2][ksq1] = true;
 				int32_t a = kk[ksq1][ksq2], b = kk[ksq2][ksq1];
@@ -403,7 +403,7 @@ namespace Eval {
 					kkp[ksq1][ksq2][bp1] = kkp[ksq2][ksq1][bp1] = (a + b) / 2;
 				}
 			}
-		}
+		}*/
 	}
 #endif
 }

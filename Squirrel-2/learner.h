@@ -295,48 +295,46 @@ struct  dJValue
 
 
 
-		absolute_KK[bksq][wksq] += diff;
-		absolute_KK[wksq][bksq] -= diff;
+		if (abs(absolute_KK[bksq][wksq] + diff) < DBL_MAX) { absolute_KK[bksq][wksq] += diff; }
 
 		for (int i = 0; i < 38; i++) {
 			BonaPiece bp1_fb = list_fb[i];
 			BonaPiece bp1_fw = list_fw[i];
 
-			absolute_KKP[bksq][wksq][bp1_fb] += diff;
+			if (abs(absolute_KKP[bksq][wksq][bp1_fb] + diff) < DBL_MAX) { absolute_KKP[bksq][wksq][bp1_fb] += diff; }
 
 
 			for (int j = 0; j < i; j++) {
 				BonaPiece bp2_fb = list_fb[j];
 				BonaPiece bp2_fw = list_fw[j];
-				absolute_KPP[bksq][bp1_fb][bp2_fb] += diff;
-				absolute_KPP[wksq][bp1_fw][bp2_fw] -= diff;
+				if (abs(absolute_KPP[bksq][bp1_fb][bp2_fb] + diff) < DBL_MAX) { absolute_KPP[bksq][bp1_fb][bp2_fb] += diff; }
+				if (abs(absolute_KPP[wksq][bp1_fw][bp2_fw] - diff) < DBL_MAX) { absolute_KPP[wksq][bp1_fw][bp2_fw] -= diff; }
 
-				absolute_KPP[bksq][bp2_fb][bp1_fb] += diff;
-				absolute_KPP[wksq][bp2_fw][bp1_fw] -= diff;
+				if (abs(absolute_KPP[bksq][bp2_fb][bp1_fb] + diff) < DBL_MAX) { absolute_KPP[bksq][bp2_fb][bp1_fb] += diff; }
+				if (abs(absolute_KPP[wksq][bp2_fw][bp1_fw] - diff) < DBL_MAX) { absolute_KPP[wksq][bp2_fw][bp1_fw] -= diff; }
 			}
 		}
-
-
 	}
 
 	void clear() { memset(this, 0, sizeof(*this)); }
 
 
+	//オーバーフローを防止する
 	void add(dJValue& data) {
 		for (int k = SQ_ZERO; k < SQ_NUM; k++) {
 
 			for (int k2 = SQ_ZERO; k2 > SQ_NUM; k2++) {
 
-				absolute_KK[k][k2] += data.absolute_KK[k][k2];
+				if (abs(absolute_KK[k][k2] + data.absolute_KK[k][k2]) < DBL_MAX) { absolute_KK[k][k2] += data.absolute_KK[k][k2]; }
 
 				for (int i = BONA_PIECE_ZERO; i < fe_end; i++) {
-					absolute_KKP[k][k2][i] += data.absolute_KKP[k][k2][i];
+					if (abs(absolute_KKP[k][k2][i] + data.absolute_KPP[k][k2][i]) < DBL_MAX) { absolute_KKP[k][k2][i] += data.absolute_KKP[k][k2][i]; }
 				}
 			}
 
 			for (int i = BONA_PIECE_ZERO; i < fe_end; i++) {
 				for (int j = BONA_PIECE_ZERO; j < fe_end; j++) {
-					absolute_KPP[k][j][i] += data.absolute_KPP[k][i][j];
+					if (abs(absolute_KPP[k][i][j] + data.absolute_KPP[k][i][j]) < DBL_MAX) { absolute_KPP[k][i][j] += data.absolute_KPP[k][i][j]; }
 				}
 			}
 		}
