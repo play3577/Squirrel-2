@@ -129,12 +129,8 @@ void USI::init_option(OptionMap &o,string engine_name)
 	o["use_defined_time"] << USIOption(true);
 	o["defined_time"] << USIOption(1000,100,100000);
 #ifdef  EVAL_KPP
-	o["KPP"] << USIOption("c:/eval_KPP/fv_kpp.bin");
-	o["KKP"] << USIOption("c:/eval_KPP/fv_kkp.bin");
-	o["KK"] << USIOption("c:/eval_KPP/fv_kk.bin");
+	o["EvalPathKPP"] << USIOption("c:/eval_KPP/");
 #elif defined(EVAL_PP)
-
-
 
 #if defined(_WIN32)
 	o["eval"] << USIOption("c:/book2/fv_PP.bin");
@@ -916,6 +912,35 @@ void USI::loop()
 			}
 			#else
 			#endif
+		}
+		else if ("kingmove") {
+			cout << pos << endl;
+
+			ExtMove moves_[600];
+			ExtMove *end = moves_;
+
+			end = test_move_king(pos, moves_);
+
+			/*
+			if (pos.is_incheck()) {
+				end = moves_;
+				end = move_eversion(pos, moves_);
+			}
+			else {
+				end = moves_;
+				end = move_generation<Cap_Propawn>(pos, moves_);
+				end = move_generation<Quiet>(pos, end);
+				end = move_generation<Drop>(pos, end);
+			}*/
+
+			const ptrdiff_t count = end - moves_;
+			std::cout << "num of moves = " << count << std::endl;
+			for (int i = 0; i < count; ++i) {
+				std::cout << moves_[i].move << ", " << " islegal:" << pos.is_legal(moves_[i].move);
+				check_move(moves_[i].move);
+				//cout<< " islegal:"<<pos.is_legal(moves_[i].move);
+			}
+			std::cout << std::endl;
 		}
 #endif
 #if defined(MAKEBOOK)

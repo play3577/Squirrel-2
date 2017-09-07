@@ -24,3 +24,8 @@ ExtMove * move_recapture(const Position& pos, ExtMove * movelist,Square recapsq)
 
 ExtMove * test_move_generation(const Position& pos, ExtMove * movelist);
 ExtMove * test_quietcheck(const Position & pos, ExtMove * movelist);
+
+
+//KPP学習用に玉をランダムに動かす用
+ExtMove * test_move_king(const Position& pos, ExtMove * movelist);
+ExtMove * test_move_exceptking(const Position& pos, ExtMove * movelist);

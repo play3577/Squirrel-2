@@ -1080,5 +1080,36 @@ ExtMove * test_quietcheck(const Position & pos, ExtMove * movelist) {
 	return movelist;
 }
 
+ExtMove * test_move_king(const Position& pos, ExtMove * movelist) {
+
+	ASSERT(!pos.is_incheck());
+	//if (pos.is_incheck()) {
+	//	//王手をかけられているときは逃げる
+	//	//というか王手をかけられているのならランダムムーブはすべきではない
+	//}
+	//else {
+	//	//
+	//}
+	Color US = pos.sidetomove();//ここでUS用意してるってことはここでtemplate化できるやん
+	Color ENEMY = opposite(US);
+	const Bitboard targetCapture = pos.occ(ENEMY);
+	const Bitboard targetQuiet = ~pos.occ_all();
+
+	const Bitboard target = targetCapture | targetQuiet;
+	if (US == BLACK) {
+		movelist = make_move_KING<BLACK>(pos, target, movelist);
+	}
+	else {
+		movelist = make_move_KING<WHITE>(pos, target, movelist);
+	}
+	return movelist;
+};
+ExtMove * test_move_exceptking(const Position& pos, ExtMove * movelist) {
+
+	return movelist;
+}
+
+
+
 
 #endif

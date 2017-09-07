@@ -54,6 +54,8 @@ void renewal_PP_rein(dJValue &data);
 void renewal_PP_nozomi(dJValue &data);//nozomiさんに教わった方法
 //ランダム開始局面から1手ランダムにささせるために使う
 void do_randommove(Position& pos, StateInfo* s, std::mt19937& mt);
+bool do_randamKing(Position& pos, StateInfo* s, std::mt19937& mt);
+bool do_randomNonKing(Position& pos, StateInfo* s, std::mt19937& mt);
 #endif
 
 #if defined(LEARN) && defined(MAKETEACHER)
@@ -217,7 +219,8 @@ void Make_Teacher::make_teacher_body(const int number) {
 	std::random_device rd;
 	std::mt19937 mt(rd());
 	std::uniform_real_distribution<double> random_move_probability(0.0, 1.0);//doubleのほうが扱いやすいか
-	double random_probability = 1.0;
+	double random_probability = 1.0;//ランダムに駒を動かす確率
+	double randomKingmove_probability = 0.7;//70パーセントで玉を動かす
 	Position pos;
 	StateInfo si[500];
 	StateInfo s_start;
@@ -314,14 +317,14 @@ void Make_Teacher::make_teacher_body(const int number) {
 				pos.undo_move();
 			}
 #endif
+			
+#if 0
 			//---------------------------------------------------------------------------
 			//次の差し手を選別。(合法手が選ばれるまでなんども繰り返す必要がある)
 			memset(moves, 0, sizeof(moves));//初期化
 			end = test_move_generation(pos, moves);
 			ptrdiff_t num_moves = end - moves;
 			Move m;
-
-
 
 			while (true) {
 				//次の局面に進めるための指し手の選択
@@ -342,7 +345,37 @@ void Make_Teacher::make_teacher_body(const int number) {
 			}
 			//差し手で次の局面に移動する。
 			pos.do_move(m, &si[i]);
+#else //玉を動かす確率を増やす
 
+			if (!pos.is_incheck()&& random_move_probability(rd) < random_probability) {
+
+				random_probability /= 1.5;
+
+				//王手がかかっていなければ	ランダムに動かす。　
+				if (random_move_probability(rd) < randomKingmove_probability) {
+					//70パーセントで玉を動かす
+
+					if (!do_randamKing(pos, &si[i], mt)) {//玉を動かす合法手が存在しなかった
+						if (!do_randomNonKing(pos, &si[i], mt)) {//玉以外を動かす合法手が存在しなかった
+							ASSERT(0);
+						}
+					}
+				}
+				else {
+					//30パーセントで玉以外を動かす
+
+					if (!do_randomNonKing(pos, &si[i], mt)) {//玉以外を動かす合法手が存在しなかった
+						do_randommove(pos, &si[i], mt);//全ての合法手からランダムに選ぶ
+						//ASSERT(0);
+					}
+				}
+			}
+			else {
+				//王手がかかっていればPVの指し手を返す
+				Move m = th.RootMoves[0].move;
+				pos.do_move(m, &si[i]);
+			}
+#endif
 		}
 	NEXT_STARTPOS:;
 	}
@@ -374,6 +407,65 @@ void do_randommove(Position& pos, StateInfo* s, std::mt19937& mt) {
 	}
 	pos.do_move(m, s);
 
+}
+
+//玉をランダムに動かす
+//もし合法手が存在しなければfalseを返す
+bool do_randamKing(Position& pos, StateInfo* s, std::mt19937& mt) {
+
+	ASSERT(!pos.is_incheck());
+
+	ExtMove moves[8],*end;//玉を動かせるのは8方向のみ
+	memset(moves, 0, sizeof(moves));
+	end = test_move_king(pos, moves);
+	ptrdiff_t num_moves = end - moves;
+	Move m;
+
+	
+
+	//ここでmoveをswapする
+	std::shuffle(&moves[0], &moves[num_moves], mt);
+
+	for (size_t testedmovecount = 0; testedmovecount < num_moves;testedmovecount++) {
+		m = moves[testedmovecount];
+		if (pos.is_legal(m) && pos.pseudo_legal(m)) { goto LEGAL; }
+	}
+
+	//合法手が存在しなければfalse
+	return false;
+
+
+LEGAL:;
+	pos.do_move(m, s);
+	return true;
+}
+
+bool do_randomNonKing(Position& pos, StateInfo* s, std::mt19937& mt) {
+
+
+	ASSERT(!pos.is_incheck());
+
+	ExtMove moves[600], *end;
+
+	memset(moves, 0, sizeof(moves));//指し手の初期化
+	end = test_move_generation(pos, moves);//指し手生成
+	ptrdiff_t num_moves = end - moves;
+
+	Move m;
+
+	//ここでmoveをswapする
+	std::shuffle(&moves[0], &moves[num_moves], mt);
+
+	for (int i = 0; i < num_moves; i++) {
+		m = moves[i];
+		if (piece_type(moved_piece(m))!=KING&& pos.is_legal(m) && pos.pseudo_legal(m)) { goto LEGAL; }
+	}
+
+	return false;
+
+LEGAL:;
+	pos.do_move(m, s);
+	return true;
 }
 
 

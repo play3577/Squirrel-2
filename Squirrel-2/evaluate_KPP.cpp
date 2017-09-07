@@ -11,19 +11,28 @@ namespace Eval {
 	int16_t kpp[81][fe_end][fe_end];
 	int32_t kkp[81][81][fe_end];
 	int32_t kk[81][81];
+	
 
 	void read_FV() {
-		FILE* fp = std::fopen(Options["KPP"].str().c_str(), "rb");
+
+		string filepath = Options["EvalPathKPP"];
+
+		string KPPpath = filepath + "fv_kpp.bin";
+		string KKPpath = filepath + "fv_kkp.bin";
+		string KKpath = filepath + "fv_kk.bin";
+
+
+		FILE* fp = std::fopen(KPPpath.c_str(), "rb");
 		if (fp == NULL) { cout << "can't read KPP" << endl;  ASSERT(0); }
 		std::fread(&kpp, sizeof(kpp), 1, fp);
 		std::fclose(fp);
 
-		fp = std::fopen(Options["KKP"].str().c_str(), "rb");
+		fp = std::fopen(KKPpath.c_str(), "rb");
 		if (fp == NULL) { cout << "can't read KKP" << endl; ASSERT(0); }
 		std::fread(&kkp, sizeof(kkp), 1, fp);
 		std::fclose(fp);
 
-		fp = std::fopen(Options["KK"].str().c_str(), "rb");
+		fp = std::fopen(KKpath.c_str(), "rb");
 		if (fp == NULL) { cout << "can't read KK" << endl; ASSERT(0); }
 		std::fread(&kk, sizeof(kk), 1, fp);
 		std::fclose(fp);
@@ -32,15 +41,21 @@ namespace Eval {
 
 	void write_FV() {
 
-		FILE* fp = std::fopen(Options["KPP"].str().c_str(), "wb");
+		string filepath = Options["EvalPathKPP"];
+
+		string KPPpath = filepath + "fv_kpp.bin";
+		string KKPpath = filepath + "fv_kkp.bin";
+		string KKpath = filepath + "fv_kk.bin";
+
+		FILE* fp = std::fopen(KPPpath.c_str(), "wb");
 		std::fwrite(&kpp, sizeof(kpp), 1, fp);
 		std::fclose(fp);
 
-		fp = std::fopen(Options["KKP"].str().c_str(), "wb");
+		fp = std::fopen(KKPpath.c_str(), "wb");
 		std::fwrite(&kkp, sizeof(kkp), 1, fp);
 		std::fclose(fp);
 
-		fp = std::fopen(Options["KK"].str().c_str(), "wb");
+		fp = std::fopen(KKpath.c_str(), "wb");
 		std::fwrite(&kk, sizeof(kk), 1, fp);
 		std::fclose(fp);
 	}

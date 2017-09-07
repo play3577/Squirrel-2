@@ -32,8 +32,8 @@
 #define ASSERT(x) {if (!(x)){std::cout << "\nError!!\n" << "info string file:" << __FILE__ << " line:" << __LINE__ <<" "<< #x<< std::endl;_ASSERT(x);}}
 #endif
 #ifndef _DEBUG
-//#define ASSERT(X) { if (!(X)){std::cout << "\nError!!\n" << "info string file:" << __FILE__ << " line:" << __LINE__ <<" "<< #X<< std::endl; *(int*)1 =0;} }
-#define ASSERT(x) ((void)0)//すべてをかなぐり捨てて速度を出したいとき用
+#define ASSERT(X) { if (!(X)){std::cout << "\nError!!\n" << "info string file:" << __FILE__ << " line:" << __LINE__ <<" "<< #X<< std::endl; *(int*)1 =0;} }
+//#define ASSERT(x) ((void)0)//すべてをかなぐり捨てて速度を出したいとき用
 #endif
 
 #define UNREACHABLE ASSERT(0)
@@ -54,9 +54,9 @@
 
 #define LEARN      //学習（これ単体だとぼなぜぞ）
 //#define MAKESTARTPOS //初期局面データ作成
-//#define MAKETEACHER  //教師データ作成
+#define MAKETEACHER  //教師データ作成
 //#define Prog_LEARN  //進行度学習
-#define REIN      //強化学習
+//#define REIN      //強化学習
 //#define BONA
 
 #if defined(MAKETEACHER) || defined(MAKESTARTPOS)
