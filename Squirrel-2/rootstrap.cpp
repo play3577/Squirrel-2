@@ -38,20 +38,54 @@ string TEACHERPATH = "/home/suganuma/Teacher";
 
 
 
-#define DEPTH 6
-
+#define DEPTH 7
+#define CHETA
 
 
 
 #if defined(REIN) || defined(MAKETEACHER)
 
 
+//floatとした　評価用特徴ベクトル
+
+#ifdef CHETA
+dJValue Eval_Feature;
+
+void CopyEval2Float(dJValue& FloatEval) {
+
+
+
+	FOR_KKP(k1, k2, i) {
+		FloatEval.absolute_KKP[k1][k2][i] = (float)kkp[k1][k2][i];
+	}
+	FOR_KK(k1, k2) {
+		FloatEval.absolute_KK[k1][k2] = (float)kk[k1][k2];
+	}
+	FOR_KPP(k1, i, j) {
+		FloatEval.absolute_KPP[k1][i][j] = (float)kpp[k1][i][j];
+	}
+}
+
+
+void Float2Eval(dJValue& FloatEval) {
+
+	FOR_KKP(k1, k2, i) {
+		kkp[k1][k2][i] = (int32_t)FloatEval.absolute_KKP[k1][k2][i];
+	}
+	FOR_KK(k1, k2) {
+		kk[k1][k2]=(int32_t)FloatEval.absolute_KK[k1][k2];
+	}
+	FOR_KPP(k1, i, j) {
+		kpp[k1][i][j]=(int16_t)FloatEval.absolute_KPP[k1][i][j];
+	}
+}
+#endif
 
 //==========================================================================
 
 
 void renewal_PP_rein(dJValue &data);
-void renewal_PP_nozomi(dJValue &data);//nozomiさんに教わった方法
+void renewal_PP_nozomi(dJValue &data,int iteration);//nozomiさんに教わった方法
 //ランダム開始局面から1手ランダムにささせるために使う
 void do_randommove(Position& pos, StateInfo* s, std::mt19937& mt);
 bool do_randamKing(Position& pos, StateInfo* s, std::mt19937& mt);
@@ -65,9 +99,9 @@ bool do_randomNonKing(Position& pos, StateInfo* s, std::mt19937& mt);
 ----------------------------------------------------------------------------*/
 void Make_Teacher::make_teacher()
 {
-	int64_t maxnum;
+	//int64_t maxnum;
 	cout << "maxnum:";
-	cin >> maxnum;
+	//cin >> maxnum;
 
 #ifdef WINDOWS
 	cout << "have G volume?[Y/N]" << endl;
@@ -105,7 +139,8 @@ void Make_Teacher::make_teacher()
 	*/
 	//ifstream f("C:/sp_db/startpos.db");
 #if defined(WINDOWS)
-	ifstream f("C:/book2/standard_book.db");
+	//ifstream f("C:/book2/standard_book.db");
+	ifstream f("C:/book2/wcsc27.db");
 #elif defined(LINUX)
 	ifstream f("/home/suganuma/FV/BOOK/standard_book.db");
 #endif
@@ -135,9 +170,9 @@ void Make_Teacher::make_teacher()
 	cout << "threads" << threads.size() << endl;
 	int i = 0;
 
-	for (int i = 0; i < (maxnum / startpos_db.size()) + 2; i++)
+	//for (int i = 0; i < (maxnum / startpos_db.size()) + 2; i++)
 		//for (int i = 0; i < 10; i++)
-		//while(true)
+	while(true)
 	{
 		//i++;
 		cout << "iter:" << i << endl;
@@ -188,7 +223,6 @@ void Make_Teacher::make_teacher()
 		//なんかシャッフルしないほうがいいとかいう情報もあるのでシャッフルしないほうがいいのか？まあ普通に考えたらminbatchに入っている局面のランダム性が多いほうがいいのでシャッフルすべきだと思うのだが...
 		std::printf("shuffle teacherdata\n");
 		std::shuffle(sum_teachers.begin(), sum_teachers.end(), g_mt);
-
 
 		std::printf("write teacher_data\n");
 		sumteachersize += sum_teachers.size();
@@ -265,7 +299,9 @@ void Make_Teacher::make_teacher_body(const int number) {
 			th.l_alpha = -Value_Infinite;
 			th.l_beta = Value_Infinite;
 			Value v = th.think();//探索を実行する これは手番側から見た評価値である 読み抜けが激しいかもしれないので枝刈りを抑えた探索を行うべきか？
-			if (abs(v) > 3000) { goto NEXT_STARTPOS; }//評価値が3000を超えてしまった場合は次の局面へ移る
+
+			//KPPが後半の値を全然学習できていないようなのでもっとmarginを広げる。
+			if (abs(v) > Value_mate_in_maxply) { goto NEXT_STARTPOS; }//評価値が3000を超えてしまった場合は次の局面へ移る
 			/*if (th.pv.size() > 6) {
 				cout << th.pv.size() << endl;
 			}*/
@@ -318,7 +354,7 @@ void Make_Teacher::make_teacher_body(const int number) {
 			}
 #endif
 			
-#if 0
+#if 1
 			//---------------------------------------------------------------------------
 			//次の差し手を選別。(合法手が選ばれるまでなんども繰り返す必要がある)
 			memset(moves, 0, sizeof(moves));//初期化
@@ -346,7 +382,7 @@ void Make_Teacher::make_teacher_body(const int number) {
 			//差し手で次の局面に移動する。
 			pos.do_move(m, &si[i]);
 #else //玉を動かす確率を増やす
-
+			//これを使うと強くならなかった...何が良くなかったのか....
 			if (!pos.is_incheck()&& random_move_probability(rd) < random_probability) {
 
 				random_probability /= 1.5;
@@ -474,7 +510,7 @@ LEGAL:;
 #if defined(REIN) 
 //定数
 int read_teacher_counter = 0;
-int batchsize = 1000000;//nozomiさんはminbatch100万でいいって言ってた
+int batchsize = 1000000;//nozomiさんはminbatch100万でいいって言ってた　　　3億あれば300iterationは回る
 double loss = 0;
 
 //ok
@@ -639,7 +675,17 @@ void Rein_Learner::reinforce_learn() {
 	for (dJValue& dJ : gradJs) { dJ.clear(); }
 
 	//学習開始(readteacherdataでバッチサイズだけ棋譜を読み込んでミニバッチ学習を行う)
+	long iteration = 0;
+
+
+#ifdef CHETA
+	CopyEval2Float(Eval_Feature);
+#endif
+
+
 	while (read_teacherdata(f)) {
+
+		iteration++;
 
 		loss = 0;
 
@@ -671,13 +717,19 @@ void Rein_Learner::reinforce_learn() {
 		//		weave_lowdim_to_gradj(sum_gradJ, lowdim_);
 		//#endif
 
-				//renewal_PP_rein(sum_gradJ);//nanがいっぱい入っていてちゃんと値の更新ができていなかったので強さが変わらなかった疑惑。
-		renewal_PP_nozomi(sum_gradJ);//こっちは確実に値がついていると考えられる。
 
+				//renewal_PP_rein(sum_gradJ);//nanがいっぱい入っていてちゃんと値の更新ができていなかったので強さが変わらなかった疑惑。
+		renewal_PP_nozomi(sum_gradJ,iteration);//こっちは確実に値がついていると考えられる。
+
+
+#ifdef CHETA
+		Float2Eval(Eval_Feature);
+#endif
 
 		Eval::param_sym_ij();
 		write_FV();
 		read_FV();
+		cout << "iteration:" << iteration << endl;
 		cout << "loss:" << loss << endl;
 		ofs << "loss " << loss << endl;
 	}
@@ -808,7 +860,7 @@ void Rein_Learner::reinforce_learn_pharse1(const int index) {
 		double diffsig_turn = (rootColor == pos.sidetomove() ? -diffsig_ : diffsig_);//rootcolorつまり手番を握っている側に対してボーナスを与える
 		gradJs[index].update_dJ(pos, -diffsig, diffsig_turn);
 #elif defined(EVAL_KPP)
-		gradJs[index].update_dJ(pos, -diffsig);
+		gradJs[index].update_dJ(pos, -(float)diffsig);
 #endif
 #endif
 	}
@@ -909,12 +961,36 @@ https://twitter.com/hillbig/status/869348563259490304
 これをみるとたしかにこの方法でなんだかんだいけるような気がする
 ただし動かす値が1だけなので学習データはいっぱいほしい
 （1だけではあるが場合によっては1が大きいということもあるかもしれないが）
-*/
-void renewal_PP_nozomi(dJValue &data) {
 
+https://twitter.com/im132nd/status/899555652715945984
+これを見ると学習率を最初は上げてだんだん下げていく方法をとるといいみたい。
+とりあえずiteration100までは学習率を増やしてそこからだんだん減らしていく方法をとろうかな...
+そのためには値をfloatに変えて学習率をfloatの値をとれるようにする
+
+*/
+
+#ifdef CHETA
+float h = 1.0;
+#endif
+
+void renewal_PP_nozomi(dJValue &data, int iteration) {
+
+
+#ifdef CHETA
+	if (iteration < 100) {
+		h += 0.03;
+	}
+	else {
+		if (h > 1) {
+			h -= 0.02;
+		}
+	}
+#else
 	int h;
 
 	h = 1;
+#endif
+
 #ifdef EVAL_PP
 	//対称性はdJの中に含まれているのでここでは考えなくていい
 	for (BonaPiece i = f_hand_pawn; i < fe_end2; i++) {
@@ -942,7 +1018,7 @@ void renewal_PP_nozomi(dJValue &data) {
 			}
 		}
 	}
-#elif defined(EVAL_KPP)
+#elif defined(EVAL_KPP) && !defined(CHETA)
 
 	int inc;
 	for (int k = SQ_ZERO; k < SQ_NUM; k++) {
@@ -963,11 +1039,34 @@ void renewal_PP_nozomi(dJValue &data) {
 			for (int j = BONA_PIECE_ZERO; j < fe_end; j++) {
 				inc = h*sign(data.absolute_KPP[k][i][j]);
 
-				kpp[k][j][i] +=inc;
+				kpp[k][i][j] +=inc;
 			}
 		}
 	}
+#elif defined(EVAL_KPP) && defined(CHETA)
+	float inc;
+	for (int k = SQ_ZERO; k < SQ_NUM; k++) {
 
+		for (int k2 = SQ_ZERO; k2 > SQ_NUM; k2++) {
+
+			inc = h*sign(data.absolute_KK[k][k2]);
+			Eval_Feature.absolute_KK[k][k2] += inc;
+
+			for (int i = BONA_PIECE_ZERO; i < fe_end; i++) {
+
+				inc = h*sign(data.absolute_KKP[k][k2][i]);
+				Eval_Feature.absolute_KKP[k][k2][i] += inc;
+			}
+		}
+
+		for (int i = BONA_PIECE_ZERO; i < fe_end; i++) {
+			for (int j = BONA_PIECE_ZERO; j < fe_end; j++) {
+				inc = h*sign(data.absolute_KPP[k][i][j]);
+
+				Eval_Feature.absolute_KPP[k][i][j] += inc;
+			}
+		}
+	}
 
 #endif
 

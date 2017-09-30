@@ -280,12 +280,13 @@ struct lowerDimPP
 };
 struct  dJValue
 {
-	double absolute_KPP[SQ_NUM][fe_end][fe_end];
-	double absolute_KKP[SQ_NUM][SQ_NUM][fe_end];
-	double absolute_KK[SQ_NUM][SQ_NUM];
+	//Ç«Ç§ÇπSGDÇ»ÇÃÇ≈floatÇ≈è\ï™Ç©
+	float absolute_KPP[SQ_NUM][fe_end][fe_end];
+	float absolute_KKP[SQ_NUM][SQ_NUM][fe_end];
+	float absolute_KK[SQ_NUM][SQ_NUM];
 
 	//åÖÇ†Ç”ÇÍÇµÇ»Ç¢ÇÊÇ§Ç…ÇµÇ»ÇØÇÍÇŒÇ»ÇÁÇ»Ç¢Ç»....
-	void update_dJ(const Position& pos, const double diff) {
+	void update_dJ(const Position& pos, const float diff) {
 		const auto list1 = pos.evallist();
 
 		const BonaPiece *list_fb = list1.bplist_fb, *list_fw = list1.bplist_fw;
@@ -295,23 +296,23 @@ struct  dJValue
 
 
 
-		if (abs(absolute_KK[bksq][wksq] + diff) < DBL_MAX) { absolute_KK[bksq][wksq] += diff; }
+		if (abs(absolute_KK[bksq][wksq] + diff) < FLT_MAX) { absolute_KK[bksq][wksq] += diff; }
 
 		for (int i = 0; i < 38; i++) {
 			BonaPiece bp1_fb = list_fb[i];
 			BonaPiece bp1_fw = list_fw[i];
 
-			if (abs(absolute_KKP[bksq][wksq][bp1_fb] + diff) < DBL_MAX) { absolute_KKP[bksq][wksq][bp1_fb] += diff; }
+			if (abs(absolute_KKP[bksq][wksq][bp1_fb] + diff) < FLT_MAX) { absolute_KKP[bksq][wksq][bp1_fb] += diff; }
 
 
 			for (int j = 0; j < i; j++) {
 				BonaPiece bp2_fb = list_fb[j];
 				BonaPiece bp2_fw = list_fw[j];
-				if (abs(absolute_KPP[bksq][bp1_fb][bp2_fb] + diff) < DBL_MAX) { absolute_KPP[bksq][bp1_fb][bp2_fb] += diff; }
-				if (abs(absolute_KPP[wksq][bp1_fw][bp2_fw] - diff) < DBL_MAX) { absolute_KPP[wksq][bp1_fw][bp2_fw] -= diff; }
+				if (abs(absolute_KPP[bksq][bp1_fb][bp2_fb] + diff) < FLT_MAX) { absolute_KPP[bksq][bp1_fb][bp2_fb] += diff; }
+				if (abs(absolute_KPP[wksq][bp1_fw][bp2_fw] - diff) < FLT_MAX) { absolute_KPP[wksq][bp1_fw][bp2_fw] -= diff; }
 
-				if (abs(absolute_KPP[bksq][bp2_fb][bp1_fb] + diff) < DBL_MAX) { absolute_KPP[bksq][bp2_fb][bp1_fb] += diff; }
-				if (abs(absolute_KPP[wksq][bp2_fw][bp1_fw] - diff) < DBL_MAX) { absolute_KPP[wksq][bp2_fw][bp1_fw] -= diff; }
+				if (abs(absolute_KPP[bksq][bp2_fb][bp1_fb] + diff) < FLT_MAX) { absolute_KPP[bksq][bp2_fb][bp1_fb] += diff; }
+				if (abs(absolute_KPP[wksq][bp2_fw][bp1_fw] - diff) < FLT_MAX) { absolute_KPP[wksq][bp2_fw][bp1_fw] -= diff; }
 			}
 		}
 	}
@@ -325,16 +326,16 @@ struct  dJValue
 
 			for (int k2 = SQ_ZERO; k2 > SQ_NUM; k2++) {
 
-				if (abs(absolute_KK[k][k2] + data.absolute_KK[k][k2]) < DBL_MAX) { absolute_KK[k][k2] += data.absolute_KK[k][k2]; }
+				if (abs(absolute_KK[k][k2] + data.absolute_KK[k][k2]) < FLT_MAX) { absolute_KK[k][k2] += data.absolute_KK[k][k2]; }
 
 				for (int i = BONA_PIECE_ZERO; i < fe_end; i++) {
-					if (abs(absolute_KKP[k][k2][i] + data.absolute_KPP[k][k2][i]) < DBL_MAX) { absolute_KKP[k][k2][i] += data.absolute_KKP[k][k2][i]; }
+					if (abs(absolute_KKP[k][k2][i] + data.absolute_KPP[k][k2][i]) < FLT_MAX) { absolute_KKP[k][k2][i] += data.absolute_KKP[k][k2][i]; }
 				}
 			}
 
 			for (int i = BONA_PIECE_ZERO; i < fe_end; i++) {
 				for (int j = BONA_PIECE_ZERO; j < fe_end; j++) {
-					if (abs(absolute_KPP[k][i][j] + data.absolute_KPP[k][i][j]) < DBL_MAX) { absolute_KPP[k][i][j] += data.absolute_KPP[k][i][j]; }
+					if (abs(absolute_KPP[k][i][j] + data.absolute_KPP[k][i][j]) < FLT_MAX) { absolute_KPP[k][i][j] += data.absolute_KPP[k][i][j]; }
 				}
 			}
 		}
