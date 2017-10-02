@@ -168,7 +168,7 @@ Move AperyBook::probe(const Position & pos, const std::string & filename, const 
 			value = entry.score;
 		}
 	}
-	cerr << m << " value:" << value << endl;
+	//cerr << m << " value:" << value << endl;
 	return m;
 }
 

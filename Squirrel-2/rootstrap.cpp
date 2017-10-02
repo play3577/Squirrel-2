@@ -6,6 +6,8 @@
 #include "position.h"
 #include "Thread.h"
 #include "makemove.h"
+#include "AperyBook.h"
+#include "usi.h"
 #include <random>
 #include <time.h>
 #include <omp.h>
@@ -35,9 +37,7 @@ string TEACHERPATH = "G:/teacher";
 string TEACHERPATH = "/home/suganuma/Teacher";
 #endif//windows
 
-
-
-
+#define LAperyBook//Apery城跡を用いて初期局面指定
 #define DEPTH 7
 #define CHETA
 
@@ -138,6 +138,8 @@ void Make_Teacher::make_teacher()
 	出てこないきょくめんばかりだった可能性が大なので定跡から読み込ませる
 	*/
 	//ifstream f("C:/sp_db/startpos.db");
+#ifndef LAperyBook
+
 #if defined(WINDOWS)
 	//ifstream f("C:/book2/standard_book.db");
 	ifstream f("C:/book2/wcsc27.db");
@@ -153,6 +155,8 @@ void Make_Teacher::make_teacher()
 	f.close();
 
 	cout << "startposdb_size:" << startpos_db.size() << endl;
+
+#endif
 	//教師データ格納庫用意
 
 	//GCCで全然うまくいかない..................(´･ω･｀)
@@ -182,10 +186,11 @@ void Make_Teacher::make_teacher()
 			teachers[h].clear();
 		}
 
-
+#ifndef LAperyBook
 		std::shuffle(startpos_db.begin(), startpos_db.end(), g_mt);
 
 		cout << "shuffled startpos" << endl;
+#endif
 		//teacherの作成
 		index__ = 0;
 #define MALTI
@@ -267,17 +272,30 @@ void Make_Teacher::make_teacher_body(const int number) {
 #ifdef MAKETEST
 		g < 10;
 #else
-		g < startpos_db.size();
+	#ifndef LAperyBook
+		g < startpos_db.size();//これ
+	#else
+		g<20000;//2万ぐらいでいいか？・
+	#endif
 #endif
 		g = lock_index_inclement__()) {
 
 		for (int i = 0; i < 500; i++) si[i].clear();
+
+#ifndef LAperyBook
+
 		string startposdb_string = startpos_db[g];
 
 		//cout << "index:" << g << endl;
 
 		if (startposdb_string.size() < 10) { continue; }//文字列の長さがありえないほど短いのはエラーであるので使わない
 		pos.set(startposdb_string);//random開始局面集から一つ取り出してsetする。（このランダム開始局面は何回も出てくるのでここから一手動かしたほうがいい）
+
+#else
+		//ここで開始局面をAperybookを用いて指定する
+		dorand_AperyBook(pos, si, mt);
+#endif
+
 		do_randommove(pos, &s_start, mt);//random初期局面から1手ランダムに進めておく
 		th.cleartable();
 
@@ -502,6 +520,29 @@ bool do_randomNonKing(Position& pos, StateInfo* s, std::mt19937& mt) {
 LEGAL:;
 	pos.do_move(m, s);
 	return true;
+}
+
+/*
+Apery book を用いて初期局面から数手すすめる
+動作未確認
+*/
+void dorand_AperyBook(Position & pos, StateInfo * s, std::mt19937 & mt)
+{
+	Move m = MOVE_NONE;
+
+	pos.set_hirate();
+	//最大でも40手までとする
+	int max_random = mt() % 40;
+	//cerr << max_random << endl;
+	for (int i = 0; i < max_random; i++) {
+		m = ABook.probe(pos, Options["AperyBookPath"], false);
+		if (m != MOVE_NONE) {
+			pos.do_move(m, &(s[i]));
+		}
+		else {
+			return;
+		}
+	}
 }
 
 

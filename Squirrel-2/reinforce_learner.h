@@ -32,7 +32,7 @@ sfenはハフマン化して256bit 評価値は16bitであるので　272bitあればよい(paddingをな
 #include <fstream>
 #include <sstream>
 #include "learner.h"
-
+#include <random>
 
 #if defined(REIN) || defined(MAKETEACHER)
 struct teacher_data {
@@ -90,7 +90,9 @@ inline std::ostream& operator<<(std::ostream& os, const teacher_data& td) {
 //学習用、データ作成用のクラスを動的確保させる
 class Make_Teacher {
 private:
+#ifndef LAperyBook
 	vector<string> startpos_db;//開始局面集
+#endif
 	vector<vector<teacher_data>> teachers;//threadごとの作成した教師局面データ。
 	vector<teacher_data> sum_teachers;//最後にここにthreadごとに作成した教師局面データをまとめてあげる
 
@@ -117,6 +119,9 @@ public:
 	void make_teacher_body(const int number);
 
 };
+
+void dorand_AperyBook(Position& pos, StateInfo* s, std::mt19937& mt);
+
 #elif defined(REIN)
 class Rein_Learner {
 
@@ -155,5 +160,7 @@ public:
 	void check_teacherdata();
 	bool read_teacherdata(fstream& f);
 };
+
+
 
 #endif // defined(MAKETEACHER)

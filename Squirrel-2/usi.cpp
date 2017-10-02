@@ -16,7 +16,7 @@
 #include <iostream>
 #include <string>
 #include <sstream>
-
+#include <random>
 #ifdef _MSC_VER
 #include <filesystem>
 #endif
@@ -956,6 +956,13 @@ void USI::loop()
 		//PP2KPP C:/book2/fv_PP.bin
 		else if (token == "PP2KPP") {
 			Eval::PP2KPP(is);
+		}
+		else if (token == "dorand") {
+			StateInfo s[40];
+			random_device rd;
+			std::mt19937 mt(rd());
+			dorand_AperyBook(pos, &s[0], mt);
+			cout << pos << endl;
 		}
 
 #endif
