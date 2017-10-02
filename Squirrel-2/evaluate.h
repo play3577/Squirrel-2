@@ -315,6 +315,10 @@ namespace Eval {
 	void param_sym_ij();
 	inline void init() { read_FV(); }
 
+	//評価関数をブリードするための関数(ブリードするのはうちで作った評価関数のみにする)
+	void evalbreed(istringstream& is);
+	//PP評価関数をKPPに突っ込む関数。
+	void PP2KPP(istringstream& is);
 #ifdef EVAL_PP
 	Value eval_PP(const Position& pos);
 

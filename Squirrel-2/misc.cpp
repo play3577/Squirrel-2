@@ -40,7 +40,7 @@ Move Sfen2Move(const string smove, const Position& pos)
 
 	Color turn = pos.sidetomove();
 	Move m;
-	
+
 	if (isdigit(smove[0])) {
 
 		//ç≈èâÇ™ï∂éöÇ≈Ç†ÇÍÇŒÉRÉ}ÇÃà⁄ìÆ
@@ -56,7 +56,7 @@ Move Sfen2Move(const string smove, const Position& pos)
 		ASSERT(pc != NO_PIECE);
 
 		if (smove.size() == 5 && smove[4] == '+') {
-			m =make_movepromote(from, to, pc);
+			m = make_movepromote(from, to, pc);
 		}
 		else {
 			m = make_move(from, to, pc);
@@ -103,10 +103,10 @@ NO_PIECE, PAWN, LANCE, KNIGHT, SILVER, BISHOP, ROOK, GOLD, KING,
 PRO_PAWN, PRO_LANCE, PRO_NIGHT, PRO_SILVER, UNICORN, DRAGON,PT_ALL,
 */
 const pair<string, Piece> CSAtoPiece[PT_ALL] = { {"",NO_PIECE},{"FU",PAWN},{"KY",LANCE},{"KE",KNIGHT},{"GI",SILVER},{"KA",BISHOP},{"HI",ROOK},{"KI",GOLD},{"OU",KING}
-,{"TO",PRO_PAWN},{"NY",PRO_LANCE},{"NK",PRO_NIGHT},{"NG",PRO_SILVER},{"UM",UNICORN},{"RY",DRAGON}};
+,{"TO",PRO_PAWN},{"NY",PRO_LANCE},{"NK",PRO_NIGHT},{"NG",PRO_SILVER},{"UM",UNICORN},{"RY",DRAGON} };
 
 Piece csa_to_pt(const string p) {
-	
+
 	for (int i = 1; i < PT_ALL; i++) {
 		if (p == CSAtoPiece[i].first) {
 			return CSAtoPiece[i].second;
@@ -120,6 +120,9 @@ Move CSA2Move(const string smove, const Position& pos)
 {
 	//ï∂éöóÒÇ™í∑Ç∑Ç¨ÇÈ
 	if (smove.size() >= 7) {
+		return MOVE_NONE;
+	}
+	else if (smove.size() < 4){
 		return MOVE_NONE;
 	}
 	Move m;

@@ -60,7 +60,7 @@ namespace Eval {
 		std::fclose(fp);
 	}
 	void init_kpp() {
-		std::random_device rd;
+		/*std::random_device rd;
 		std::mt19937 mt(rd());
 
 		int a;
@@ -75,10 +75,10 @@ namespace Eval {
 		FOR_KPP(k, i, j) {
 			a = int16_t(mt()) % 32;
 			kpp[k][i][j]= kpp[k][j][i] = a;
-		}
-		/*memset(kpp, 0, sizeof(kpp));
+		}*/
+		memset(kpp, 0, sizeof(kpp));
 		memset(kkp, 0, sizeof(kkp));
-		memset(kk, 0, sizeof(kk));*/
+		memset(kk, 0, sizeof(kk));
 
 
 		Eval::write_FV();

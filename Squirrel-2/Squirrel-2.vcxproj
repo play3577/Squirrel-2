@@ -157,6 +157,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="AperyBook.h" />
     <ClInclude Include="benchmark.h" />
     <ClInclude Include="Bitboard.h" />
     <ClInclude Include="bitop.h" />
@@ -181,6 +182,7 @@
     <ClInclude Include="usi.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="AperyBook.cpp" />
     <ClCompile Include="benchmark.cpp" />
     <ClCompile Include="Bitboard.cpp" />
     <ClCompile Include="bitop.cpp" />

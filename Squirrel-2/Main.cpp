@@ -19,6 +19,9 @@
 #include "occupied_m256.h"
 #include "eval_hash.h"
 
+#include "AperyBook.h"
+
+
 #include <iostream>
 #include <string>
 
@@ -56,6 +59,8 @@ int main() {
 	Eval::init();
 	Zoblist::init();
 	search_init();
+	cerr << "init abook" << endl;
+	ABook.init();//apery book ‚Ì‚½‚ß‚Ìzobristhash‚Ì‰Šú‰»
 #ifdef EVALHASH
 	EHASH.resize(64);
 #endif
@@ -166,7 +171,7 @@ int main() {
 
 #endif
 	
-
+	cerr << "init finish!" << endl;
 	USI::loop();
 	return 0;
 }

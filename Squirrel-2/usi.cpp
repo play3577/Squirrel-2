@@ -12,7 +12,7 @@
 //#include "makemove.h"
 #include "reinforce_learner.h"
 #include "tpt.h"
-
+#include "AperyBook.h"
 #include <iostream>
 #include <string>
 #include <sstream>
@@ -151,6 +151,11 @@ void USI::init_option(OptionMap &o,string engine_name)
 #ifdef TUNE
 	o["Fmargin"]<< USIOption(100, 150, 400);
 #endif // TUNE
+
+
+
+	o["AperyBookPath"]<< USIOption("C:/AperyBook/mahuv11.bin");
+
 
 }
 
@@ -852,6 +857,10 @@ void USI::loop()
 		else if (token == "prog") {
 //			cout<<fixed<<Progress::prog_scale*Progress::calc_prog(pos)<<endl;
 		}
+		else if (token == "abook") {
+			//apery book ‚ÌƒeƒXƒg
+			cout << ABook.probe(pos, Options["AperyBookPath"].str(), true) << endl;;
+		}
 #ifdef EVAL_KPPT
 		else if (token == "et") {
 			Stack ss;
@@ -913,7 +922,7 @@ void USI::loop()
 			#else
 			#endif
 		}
-		else if ("kingmove") {
+		else if (token=="kingmove") {
 			cout << pos << endl;
 
 			ExtMove moves_[600];
@@ -942,6 +951,11 @@ void USI::loop()
 			}
 			std::cout << std::endl;
 		}
+		//PP2KPP C:/book2/fv_PP.bin
+		else if (token == "PP2KPP") {
+			Eval::PP2KPP(is);
+		}
+
 #endif
 #if defined(MAKEBOOK)
 		else if (token == "makebook") {

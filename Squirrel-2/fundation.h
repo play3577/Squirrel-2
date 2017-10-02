@@ -32,8 +32,8 @@
 #define ASSERT(x) {if (!(x)){std::cout << "\nError!!\n" << "info string file:" << __FILE__ << " line:" << __LINE__ <<" "<< #x<< std::endl;_ASSERT(x);}}
 #endif
 #ifndef _DEBUG
-//#define ASSERT(X) { if (!(X)){std::cout << "\nError!!\n" << "info string file:" << __FILE__ << " line:" << __LINE__ <<" "<< #X<< std::endl; *(int*)1 =0;} }
-#define ASSERT(x) ((void)0)//すべてをかなぐり捨てて速度を出したいとき用
+#define ASSERT(X) { if (!(X)){std::cout << "\nError!!\n" << "info string file:" << __FILE__ << " line:" << __LINE__ <<" "<< #X<< std::endl; *(int*)1 =0;} }
+//#define ASSERT(x) ((void)0)//すべてをかなぐり捨てて速度を出したいとき用
 #endif
 
 #define UNREACHABLE ASSERT(0)
@@ -52,12 +52,12 @@
 
 //---------------------------------学習関連
 
-#define LEARN      //学習（これ単体だとぼなぜぞ）
+//#define LEARN      //学習（これ単体だとぼなぜぞ）
 //#define MAKESTARTPOS //初期局面データ作成
 //#define MAKETEACHER  //教師データ作成
 //#define Prog_LEARN  //進行度学習
-#define REIN      //強化学習
-//#define BONA
+//#define REIN      //強化学習
+//#define BONA        //ボナメゾ
 
 #if defined(MAKETEACHER) || defined(MAKESTARTPOS)
 #define USETT
@@ -112,6 +112,7 @@
 //教師手との差がこの範囲内に収まらなかった特徴は更新しない。
 static const int FV_WINDOW = 256;
 
+typedef uint64_t Key;
 
 
 //==========================================================
@@ -418,6 +419,11 @@ enum Bound :int8_t {
 	BOUND_EXACT = BOUND_UPPER | BOUND_LOWER,
 };
 
+//aperybookを読めるようにするため
+enum HandPiece {
+	HPawn, HLance, HKnight, HSilver, HGold, HBishop, HRook, HandPieceNum
+};
+
 #define ENABLE_OPERATORS_ON(T)                                                  \
   inline T operator+(const T d1, const T d2) { return T(int(d1) + int(d2)); }   \
   inline T operator-(const T d1, const T d2) { return T(int(d1) - int(d2)); }   \
@@ -444,3 +450,5 @@ ENABLE_OPERATORS_ON(Color)
 ENABLE_OPERATORS_ON(Hand)
 ENABLE_OPERATORS_ON(Depth)
 ENABLE_OPERATORS_ON(Value)
+ENABLE_OPERATORS_ON(HandPiece)
+

@@ -7,6 +7,8 @@
 #include <fstream>
 #include <sstream>
 #include <iomanip>
+#include <sstream>
+
 #include "position.h"
 #include "makemove.h"
 #include "usi.h"
@@ -114,9 +116,158 @@ void Eval::initialize_PP()
 	cout << "initialize param PP!" << endl;
 }
 
-
-
 #ifdef MISC
+
+
+/*
+入力としては
+評価関数のパス１　評価関数のpath2 1の割合　２の割合　が入ってくる　
+（動くか確認してない）
+*/
+void Eval::evalbreed(istringstream & is)
+{
+	string path1, path2;
+	float rate1, rate2;
+
+	int16_t kpp1[81][fe_end][fe_end];
+	int32_t kkp1[81][81][fe_end];
+	int32_t kk1[81][81];
+
+	int16_t kpp2[81][fe_end][fe_end];
+	int32_t kkp2[81][81][fe_end];
+	int32_t kk2[81][81];
+
+	is >> path1 >> path2 >> rate1 >> rate2;
+
+
+	//１から読み込み
+	string filepath = path1;
+
+	string KPPpath = filepath + "fv_kpp.bin";
+	string KKPpath = filepath + "fv_kkp.bin";
+	string KKpath = filepath + "fv_kk.bin";
+
+	FILE* fp = std::fopen(KPPpath.c_str(), "rb");
+	if (fp == NULL) { cout << "can't read KPP" << endl;  ASSERT(0); }
+	std::fread(&kpp1, sizeof(kpp1), 1, fp);
+	std::fclose(fp);
+
+	fp = std::fopen(KKPpath.c_str(), "rb");
+	if (fp == NULL) { cout << "can't read KKP" << endl; ASSERT(0); }
+	std::fread(&kkp1, sizeof(kkp1), 1, fp);
+	std::fclose(fp);
+
+	fp = std::fopen(KKpath.c_str(), "rb");
+	if (fp == NULL) { cout << "can't read KK" << endl; ASSERT(0); }
+	std::fread(&kk1, sizeof(kk1), 1, fp);
+	std::fclose(fp);
+
+
+	//2から読み込み
+	filepath = path2;
+	KPPpath = filepath + "fv_kpp.bin";
+	KKPpath = filepath + "fv_kkp.bin";
+	KKpath = filepath + "fv_kk.bin";
+
+
+	if (fp == NULL) { cout << "can't read KPP" << endl;  ASSERT(0); }
+	std::fread(&kpp2, sizeof(kpp2), 1, fp);
+	std::fclose(fp);
+
+	fp = std::fopen(KKPpath.c_str(), "rb");
+	if (fp == NULL) { cout << "can't read KKP" << endl; ASSERT(0); }
+	std::fread(&kkp2, sizeof(kkp2), 1, fp);
+	std::fclose(fp);
+
+	fp = std::fopen(KKpath.c_str(), "rb");
+	if (fp == NULL) { cout << "can't read KK" << endl; ASSERT(0); }
+	std::fread(&kk2, sizeof(kk2), 1, fp);
+	std::fclose(fp);
+
+
+	//breed
+	FOR_KK(k1, k2) {
+		kk[k1][k2] = int32_t((float)kk1[k1][k2] * rate1 + (float)kk2[k1][k2]*rate2);
+	}
+	FOR_KKP(k1, k2,i) {
+		kkp[k1][k2][i] = int32_t((float)kkp1[k1][k2][i] * rate1 + (float)kkp2[k1][k2][i] * rate2);
+	}
+
+	FOR_KKP(k1, i, j) {
+		kpp[k1][i][j] = int16_t((float)kpp1[k1][i][j] * rate1 + (float)kpp2[k1][i][j] * rate2);
+	}
+
+	//書き出し
+	write_FV();
+}
+/*
+入力
+pp評価関数へのパス。
+*/
+void Eval::PP2KPP(istringstream & is)
+{
+	string pathPP;
+	is >> pathPP;
+
+	int32_t PP_[fe_end2][fe_end2];
+
+
+	//PPの読み込み
+	FILE* fp = std::fopen(pathPP.c_str(), "rb");
+	if (fp != NULL) {
+		std::fread(&PP_, sizeof(PP_), 1, fp);
+	}
+	else {
+		cout << "error reading PP!!!" << endl;
+	}
+	std::fclose(fp);
+
+
+	//ゼロ初期化
+	memset(kpp, 0, sizeof(kpp));
+	memset(kkp, 0, sizeof(kkp));
+	memset(kk, 0, sizeof(kk));
+
+
+	//コピー
+	for (BonaPiece i = BONA_PIECE_ZERO; i < fe_end2; i++) {
+
+		for (BonaPiece j = BONA_PIECE_ZERO; j < fe_end2; j++) {
+
+			//KKであるが後手のKの座標は反転させなければならない
+			if (i >= fe_end&&j >= fe_end) {
+				int ksqb, ksqw;
+				if ( e_king>i&& i >= f_king&&fe_end2>j&& j >= e_king) {
+					kk[bp2sq(i)][hihumin_eye(bp2sq(j))] = PP_[i][j];
+				}
+				/*if (i ==e_king&&j == f_king) {
+				kk[ hihumin_eye(bp2sq(i))][(bp2sq(j))] = PP_[i][j];
+				}*/
+			}
+			//PP
+			else if (i < fe_end&&j < fe_end) {
+
+				for (int k = 0; k < 81; k++) {
+					kpp[k][i][j] = (int16_t)PP_[i][j];
+				}
+			}
+			//KP
+			else if (e_king>i&& i >= f_king&&j < fe_end) {
+				for (int k = 0; k < 81; k++) {
+					kkp[bp2sq(i)][k][j] = PP_[i][j];
+				}
+			}
+		}
+
+	}
+	//記録
+	write_FV();
+
+}
+
+
+
+
 std::ostream & operator<<(std::ostream & os, const Game & game)
 {
 	cout << "this game info" << endl
@@ -164,6 +315,9 @@ bool read_onegame(istream& is, Game * game)
 	for (int ply = 0; ply < game->ply; ply++) {
 		std::string move_str;
 		moves >> std::setw(6) >> move_str;
+
+		
+		//if (move_str == "**") { cerr << moves << endl; }
 		if (!moves) { break; }//正しく読み込めなかった場合は中断をする。
 		Move move = CSA2Move(move_str, pos);
 		if (move == MOVE_NONE || !pos.is_legal(move) || !pos.pseudo_legal(move)) {

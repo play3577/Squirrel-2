@@ -88,20 +88,42 @@ void renewal_PP(dJValue &data) {
 		}
 	}
 #elif defined(EVAL_KPP)
-	for (Square ksq = SQ_ZERO; ksq < Square(82); ksq++) {
-		//kpp-----------------------------------------------------------
-		for (BonaPiece bp1 = BONA_PIECE_ZERO; bp1 < fe_end; bp1++) {
-			for (BonaPiece bp2 = BONA_PIECE_ZERO; bp2 < fe_end; bp2++) {
-				kpp[ksq][bp1][bp2] += h*sign(data.absolute_KPP[ksq][bp1][bp2]);
+	
+	//int inc;
+	for (int k = SQ_ZERO; k < SQ_NUM; k++) {
+
+		for (int k2 = SQ_ZERO; k2 > SQ_NUM; k2++) {
+
+			kk[k][k2]+= h*sign(data.absolute_KK[k][k2]);
+
+
+			for (int i = BONA_PIECE_ZERO; i < fe_end; i++) {
+
+				kkp[k][k2][i] += h*sign(data.absolute_KKP[k][k2][i]);
 			}
 		}
-		//kkp-----------------------------------------------------------
-		for (Square ksq2 = SQ_ZERO; ksq2 < Square(82); ksq2++) {
-			for (BonaPiece bp3 = BONA_PIECE_ZERO; bp3 < fe_end + 1; bp3++) {
-				kkp[ksq][ksq2][bp3] += h*sign(data.absolute_KKP[ksq][ksq2][bp3]);
+
+		for (int i = BONA_PIECE_ZERO; i < fe_end; i++) {
+			for (int j = BONA_PIECE_ZERO; j < fe_end; j++) {
+				kpp[k][i][j] += h*sign(data.absolute_KPP[k][i][j]);
 			}
 		}
 	}
+
+	//for (Square ksq = SQ_ZERO; ksq < Square(82); ksq++) {
+	//	//kpp-----------------------------------------------------------
+	//	for (BonaPiece bp1 = BONA_PIECE_ZERO; bp1 < fe_end; bp1++) {
+	//		for (BonaPiece bp2 = BONA_PIECE_ZERO; bp2 < fe_end; bp2++) {
+	//			kpp[ksq][bp1][bp2] += h*sign(data.absolute_KPP[ksq][bp1][bp2]);
+	//		}
+	//	}
+	//	//kkp-----------------------------------------------------------
+	//	for (Square ksq2 = SQ_ZERO; ksq2 < Square(82); ksq2++) {
+	//		for (BonaPiece bp3 = BONA_PIECE_ZERO; bp3 < fe_end + 1; bp3++) {
+	//			kkp[ksq][ksq2][bp3] += h*sign(data.absolute_KKP[ksq][ksq2][bp3]);
+	//		}
+	//	}
+	//}
 #endif
 }
 
@@ -313,6 +335,7 @@ void Eval::parallel_learner() {
 		{
 			games.push_back(game);
 		}
+		//cout << i << endl;
 	}
 	/*for (int i = 0; i < numtestset; ++i) {
 		Game game;
@@ -781,7 +804,7 @@ void learnphase2body(int number)
 					}
 					//evalPP‚ÍƒRƒ}Š„‚è‚ðl‚¦‚Ä‚¢‚È‚©‚Á‚½‚µvalue‚ð”½“]‚³‚¹‚Ä‚È‚©‚Á‚½IIeval‚ð‚Â‚©‚¤‚×‚«‚¾‚Á‚½
 #ifdef EVAL_KPP
-					pos.state()->sumBKPP = Value_error; pos.state()->previous->sumBKPP = Value_error;
+					pos.state()->sumBKPP = Value_error;  if (pos.state()->previous != nullptr) { pos.state()->previous->sumBKPP = Value_error; }
 #elif defined(EVAL_PP)
 					pos.state()->bpp = pos.state()->wpp = Value_error;//·•ªŒvŽZ‚ð–³Œø‚É‚µ‚Ä‚Ý‚é
 					pos.state()->previous->bpp = Value_error;
@@ -837,7 +860,7 @@ void learnphase2body(int number)
 					//•]‰¿’l‚Æ‹³ŽtŽè‚Ì·•ª‚ðŽæ‚éB
 #ifdef EVAL_KPP
 					//·•ªŒvŽZ‚Í‚Å‚«‚È‚¢
-					pos.state()->sumBKPP = Value_error; pos.state()->previous->sumBKPP = Value_error;
+					pos.state()->sumBKPP = Value_error;  if (pos.state()->previous != nullptr) { pos.state()->previous->sumBKPP = Value_error; }
 #elif defined(EVAL_PP)
 					pos.state()->bpp = pos.state()->wpp = Value_error;//·•ªŒvŽZ‚ð–³Œø‚É‚µ‚Ä‚Ý‚é
 					pos.state()->previous->bpp = Value_error;

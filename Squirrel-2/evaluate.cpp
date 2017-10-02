@@ -680,6 +680,7 @@ FIND_HASH:
 
 	}
 
+	
 	Value eval_PP(const Position & pos)
 	{
 		int32_t bPP=0, wPP=0;

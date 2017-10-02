@@ -81,6 +81,9 @@
     <ClInclude Include="eval_hash.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="AperyBook.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="fundation.cpp">
@@ -162,6 +165,9 @@
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="bonanzamathod.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="AperyBook.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
   </ItemGroup>
