@@ -125,6 +125,7 @@ void USI::init_option(OptionMap &o,string engine_name)
 	//o["bookpath"] << USIOption("c:/book2/standard_book.db");
 	o["bookpath"] << USIOption("c:/book2/wcsc27.db");
 	o["usebook"] << USIOption(true);
+	o["useAperybook"] << USIOption(true);
 	o["randombook"] << USIOption(true);
 	o["use_defined_time"] << USIOption(true);
 	o["defined_time"] << USIOption(1000,100,100000);
@@ -206,7 +207,8 @@ void is_ready() {
 #elif EVAL_KPP 1
 		Eval::read_FV();
 #endif
-		if (bool(Options["usebook"]) == true) {
+		//aperyŒ`Ž®‚Ìê‡‚ÍÅ‰‚É“Ç‚Ýž‚Þ•K—v‚Í‚È‚¢
+		if (bool(Options["usebook"]) == true&&bool(Options["useAperybook"])==false) {
 			BOOK::init();
 		}
 	}

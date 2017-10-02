@@ -33,7 +33,6 @@ private:
 	size_t size_;
 
 	
-	
 	//HPawn, HLance, HKnight, HSilver, HGold, HBishop, HRook, HandPieceNum
 	//							NOPIECE			PAWN, LANCE, KNIGHT, SILVER, BISHOP, ROOK, GOLD,
 	int Piece2AperyHandPiece[8] = { HandPieceNum, HPawn,HLance,HKnight,HSilver,HBishop,HRook,HGold};

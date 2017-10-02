@@ -7,6 +7,7 @@
 #include <random>
 #include "TimeManeger.h"
 #include "eval_hash.h"
+#include "AperyBook.h"
 /*
 がうるさんのコメント
 
@@ -540,31 +541,59 @@ Value MainThread::think() {
 	}
 
 	//ここにbookを探すコードを入れる
-	if (Options["usebook"] == true && rootpos.ply_from_startpos<15&& limit.is_inponder == false) {
+	if (Options["usebook"] == true){
+		
+		//屋根裏形式
+		if ((bool)Options["useAperybook"] == false && rootpos.ply_from_startpos < 15 && limit.is_inponder == false) {
 
-		const string sfen = rootpos.make_sfen();
-		auto bookentry = book.find(sfen);
+			const string sfen = rootpos.make_sfen();
+			auto bookentry = book.find(sfen);
 
-		if (bookentry != book.end()) {
-			findbook = true;
-			std::vector<BookEntry> entrys = bookentry->second;
+			if (bookentry != book.end()) {
+				findbook = true;
+				std::vector<BookEntry> entrys = bookentry->second;
 
-			if (Options["randombook"]) {
-				std::random_device rd;
-				std::mt19937 mt(rd());
-				RootMoves[0].move = entrys[mt() % entrys.size()].move;
-				//pondermove = entrys[mt() % entrys.size()].counter;//これを入れると定跡がまともに機能しない
+				if ((bool)Options["randombook"]) {
+					std::random_device rd;
+					std::mt19937 mt(rd());
+					RootMoves[0].move = entrys[mt() % entrys.size()].move;
+					//pondermove = entrys[mt() % entrys.size()].counter;//これを入れると定跡がまともに機能しない
+				}
+				else {
+					RootMoves[0].move = entrys[0].move;
+					//pondermove = entrys[0].counter;
+				}
+
+
+				cout << "info book move" << endl;
+				goto S_END;
+
+			}//bookを見つけた場合
+		}
+
+		//Apery形式のbook
+		if ((bool)Options["useAperybook"] == true && limit.is_inponder == false) {
+
+			Move m_;
+
+			if ((bool)Options["randombook"]) {
+				m_ = ABook.probe(rootpos, Options["AperyBookPath"], false);
+				if (m_ != MOVE_NONE) {
+					RootMoves[0].move = m_;
+					cout << "info book move" << endl;
+					goto S_END;
+				}
 			}
 			else {
-				RootMoves[0].move = entrys[0].move;
-				//pondermove = entrys[0].counter;
+				m_ = ABook.probe(rootpos, Options["AperyBookPath"], true);
+				if (m_ != MOVE_NONE) {
+					RootMoves[0].move = m_;
+					cout << "info book move" << endl;
+					goto S_END;
+				}
 			}
 
-
-			cout << "info book move" << endl;
-			goto S_END;
-
-		}//bookを見つけた場合
+		}
 
 	}//end book
 

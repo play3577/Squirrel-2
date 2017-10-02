@@ -155,6 +155,7 @@ Move AperyBook::probe(const Position & pos, const std::string & filename, const 
 				//ƒRƒ}ˆÚ“®
 				ASSERT(is_ok(from));
 				const Piece pc = pos.piece_on(from);
+				ASSERT(pc != NO_PIECE);
 				//const Piece captured = pos.piece_on(to);
 				if (ispromote) {
 					m = make_move(from, to, pc);
@@ -167,7 +168,7 @@ Move AperyBook::probe(const Position & pos, const std::string & filename, const 
 			value = entry.score;
 		}
 	}
-	cerr << m << " value:" << value;
+	cerr << m << " value:" << value << endl;
 	return m;
 }
 
