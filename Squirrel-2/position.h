@@ -99,6 +99,10 @@ struct StateInfo
 		 bpp = Value_error, wpp = Value_error, bppt = Value_error, wppt = Value_error;
 #endif
 
+
+#ifdef EVAL_EFFECT
+		 KEindex_fromblack = 1 << 9; KEindex_fromwhite = 1 << 9;
+#endif
 	}
 
 	void clear() {
@@ -108,8 +112,10 @@ struct StateInfo
 
 	Bitboard pinner[ColorALL], blocker[ColorALL];
 
-
-
+#ifdef EVAL_EFFECT
+	//1<<9をまだ計算していないことのフラグにする
+	int KEindex_fromblack, KEindex_fromwhite = 1 << 9;
+#endif
 	friend struct Position;
 
 	StateInfo* previous = nullptr;//undo_moveで以前の局面に戻る為の単方向リスト

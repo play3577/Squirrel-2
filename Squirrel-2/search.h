@@ -37,6 +37,7 @@ struct Stack {
 	Value static_eval;
 	int moveCount;
 	CounterMoveStats* counterMoves=nullptr;//countermovehistorytableのentryへのポインタを格納する。
+	int statScore=0;
 };
 
 

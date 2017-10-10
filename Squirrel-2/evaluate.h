@@ -354,5 +354,13 @@ namespace Eval {
 
 #endif
 
+
+#ifdef EVAL_EFFECT
+	extern int32_t KE_FROMENEMY[SQ_NUM][1 << 8];//‘ŠŽè‚©‚ç—^‚¦‚ç‚ê‚éŒø‚«
+
+	int make_effectindex_FROMBLACK(const Position& pos);
+	int make_effectindex_FROMWHITE(const Position& pos);
+	Value eval_effect(const Position& pos);
+#endif
 	constexpr Value tempo = Value(40);
 };

@@ -34,6 +34,10 @@ sfenはハフマン化して256bit 評価値は16bitであるので　272bitあればよい(paddingをな
 #include "learner.h"
 #include <random>
 
+
+#define LAperyBook//Apery城跡を用いて初期局面指定
+
+
 #if defined(REIN) || defined(MAKETEACHER)
 struct teacher_data {
 
@@ -106,8 +110,11 @@ private:
 
 	int lock_index_inclement__() {
 		std::unique_lock<std::mutex> lock(mutex__);
+#ifdef LAperyBook
+		if (index__ > 2000) { cout << "o" << endl; }
+#else
 		if (index__ > startpos_db.size()) { cout << "o" << endl; }
-
+#endif
 		else if (index__ % 1000 == 0) { cout << "."; }
 
 		return index__++;

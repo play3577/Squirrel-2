@@ -61,6 +61,13 @@ void Eval::write_FV()
 	std::fclose(fp);
 
 
+#ifdef EVAL_EFFECT
+	fp = std::fopen(Options["evalKE_ENEMY"].str().c_str(), "wb");
+	std::fwrite(&KE_FROMENEMY, sizeof(KE_FROMENEMY), 1, fp);
+	std::fclose(fp);
+#endif
+
+
 }
 
 void Eval::read_FV() {
@@ -74,6 +81,15 @@ void Eval::read_FV() {
 		cout << "error reading PP!!!" << endl;
 	}
 	std::fclose(fp);
+
+
+#ifdef EVAL_EFFECT
+	fp = std::fopen(Options["evalKE_ENEMY"].str().c_str(), "rb");
+	if (fp != NULL) { std::fread(&KE_FROMENEMY, sizeof(KE_FROMENEMY), 1, fp); }
+	else { cout << "error reading PP!!!" << endl;}
+	std::fclose(fp);
+#endif
+
 
 	return;
 }
@@ -119,6 +135,7 @@ void Eval::initialize_PP()
 #ifdef MISC
 
 
+#ifdef EVAL_KPP
 /*
 “ü—Í‚Æ‚µ‚Ä‚Í
 •]‰¿ŠÖ”‚ÌƒpƒX‚P@•]‰¿ŠÖ”‚Ìpath2 1‚ÌŠ„‡@‚Q‚ÌŠ„‡@‚ª“ü‚Á‚Ä‚­‚é@
@@ -264,7 +281,7 @@ void Eval::PP2KPP(istringstream & is)
 	write_FV();
 
 }
-
+#endif
 
 
 

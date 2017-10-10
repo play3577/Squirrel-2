@@ -246,6 +246,80 @@ namespace Eval {
 		}
 	}
 
+#ifdef EVAL_EFFECT
+	//相手による玉周辺の効き
+	ALIGNED(32) int32_t KE_FROMENEMY[SQ_NUM][1<<8];
+
+	//黒番の駒が白番の玉に攻め込んでいるindexを取得する
+	int make_effectindex_FROMBLACK(const Position& pos) {
+		//ASSERT(pos.state()->KEindex_fromblack == (1 << 9));//未計算のフラグ
+
+		int index=0;
+
+		const int d[8] = { -10,-9,-8,-1,1,8,9,10 };
+		const Color us = BLACK;
+		const Color enemy = opposite(us);
+		const Square eksq = pos.ksq(enemy);
+
+		for (int i = 0; i < 8; i++) {
+			Square around_ksq = eksq + d[i];
+			if (is_ok(around_ksq) && abs(sqtorank(around_ksq) - sqtorank(eksq)) < 2 && abs(sqtofile(around_ksq) - sqtofile(eksq)) < 2) {
+				
+				if (pos.attackers_to(us, around_ksq, pos.ret_occ_256()).isNot()) {
+					index += 1 << i;
+				}
+			}
+		}
+		return index;
+	}
+
+	int make_effectindex_FROMWHITE(const Position& pos) {
+		//ASSERT(pos.state()->KEindex_fromwhite == (1 << 9));//未計算のフラグ
+
+		int index = 0;
+		const int d[8] = { 10,9,8,1,-1,-8,-9,-10 };//BLACKの時と同じ値が使えるように白玉から見て黒玉の並びと同じにする
+
+		const Color us = WHITE;
+		const Color enemy = opposite(us);
+		const Square eksq = pos.ksq(enemy);
+
+		for (int i = 0; i < 8; i++) {
+			Square around_ksq = eksq + d[i];
+			if (is_ok(around_ksq) && abs(sqtorank(around_ksq) - sqtorank(eksq)) < 2 && abs(sqtofile(around_ksq) - sqtofile(eksq)) < 2) {
+
+				if (pos.attackers_to(us, around_ksq, pos.ret_occ_256()).isNot()) {
+					index += 1 << i;
+				}
+			}
+		}
+		return index;
+	}
+
+
+	Value eval_effect(const Position& pos) {
+
+		int effect=Value_Zero;
+		const Square Bksq = pos.ksq(BLACK), Wksq = hihumin_eye(pos.ksq(WHITE));
+		const Color stm = pos.sidetomove();
+		int indexfromblack, indexfromwhite;
+
+		//indexの作成どちらかはmate1plyで計算できるのでそれは省く 後で実装する
+		indexfromblack = make_effectindex_FROMBLACK(pos);
+		indexfromwhite = make_effectindex_FROMWHITE(pos);
+		if (stm == BLACK) {
+			effect += KE_FROMENEMY[Wksq][indexfromblack];//攻め込んでる分
+			effect -= KE_FROMENEMY[Bksq][indexfromwhite];//攻め込まれてる分
+		}
+		else {
+			effect -= KE_FROMENEMY[Wksq][indexfromblack];
+			effect += KE_FROMENEMY[Bksq][indexfromwhite];
+		}
+		return (Value)effect/FV_SCALE;
+	}
+
+#endif
+
+
 
 //#define DIFFTEST
 	Value eval_material(const Position & pos)
@@ -273,7 +347,7 @@ namespace Eval {
 #ifdef EVAL_PP
 	Value eval(const Position & pos)
 	{
-		Value pp,value;
+		Value pp,value,effect=Value(0);
 		Value material= pos.state()->material;
 
 #ifndef EVAL_NONDIFF
@@ -380,8 +454,20 @@ namespace Eval {
 		tte->save(pos.key(), pos.state()->bpp, pos.state()->wpp);
 #endif
 
-FIND_HASH:
+	FIND_HASH:
+
+#ifdef EVAL_EFFECT
+		//王手時は計算しない　したほうがいいか？
+		if (!pos.is_incheck()) {
+			effect = eval_effect(pos);
+		}
+
+
+		value = material + pp + effect;
+#else
 		value = material + pp;
+
+#endif
 
 		//コレは確認済み
 		//Value  full = eval_material(pos);
@@ -1387,11 +1473,6 @@ FIND_HASH:
 
 	}
 #endif
-	/*
-	https://twitter.com/uuunuuun1/status/850891787874951168
-	SMでgccでR+40
-	tanuki-でAVX2評価関数でR+18
-	*/
 
 
 

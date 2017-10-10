@@ -127,6 +127,10 @@ struct lowerDimPP
 struct  dJValue
 {
 	double absolute_PP[fe_end2][fe_end2];
+#ifdef EVAL_EFFECT
+	float absolute_KE_FROMENEMY[81][1 << 8];
+#endif
+
 
 	void update_dJ(const Position& pos, const double diff) {
 		const auto list1 = pos.evallist();
@@ -170,6 +174,23 @@ struct  dJValue
 				}
 
 #endif//LR
+
+
+#ifdef EVAL_EFFECT
+				int indexfromblack, indexfromwhite;
+				indexfromblack = make_effectindex_FROMBLACK(pos);
+				indexfromwhite = make_effectindex_FROMWHITE(pos);
+				const Square Bksq = pos.ksq(BLACK), Wksq = hihumin_eye(pos.ksq(WHITE));
+				const Color stm = pos.sidetomove();
+				if (stm == BLACK) {
+					absolute_KE_FROMENEMY[Wksq][indexfromblack]+=diff;
+					absolute_KE_FROMENEMY[Bksq][indexfromwhite] -= diff;
+				}
+				else {
+					absolute_KE_FROMENEMY[Wksq][indexfromblack] -= diff;
+					absolute_KE_FROMENEMY[Bksq][indexfromwhite] += diff;
+				}
+#endif
 			}
 		}
 	}
@@ -184,6 +205,11 @@ struct  dJValue
 				absolute_PP[bp1][bp2] += data.absolute_PP[bp1][bp2];
 			}
 		}
+#ifdef EVAL_EFFECT
+		for (Square ksq = SQ1A; ksq < SQ_NUM; ksq++) for (int i = 0; i < (1 << 8); i++) {
+			absolute_KE_FROMENEMY[ksq][i] += data.absolute_KE_FROMENEMY[ksq][i];
+		}
+#endif
 	}
 };
 #elif defined(EVAL_PPT)
@@ -298,12 +324,18 @@ struct  dJValue
 
 		if (abs(absolute_KK[bksq][wksq] + diff) < FLT_MAX) { absolute_KK[bksq][wksq] += diff; }
 
+
+
 		for (int i = 0; i < 38; i++) {
 			BonaPiece bp1_fb = list_fb[i];
 			BonaPiece bp1_fw = list_fw[i];
 
 			if (abs(absolute_KKP[bksq][wksq][bp1_fb] + diff) < FLT_MAX) { absolute_KKP[bksq][wksq][bp1_fb] += diff; }
 
+			//¶‰E‘ÎÌ«(”Õã‚ÌŽž)
+			if (bp2sq(list_fb[i]) != Error_SQ) {
+				if (abs(absolute_KKP[sym_rl_sq(bksq)][sym_rl_sq(wksq)][sym_rightleft(bp1_fb)] + diff) < FLT_MAX) { absolute_KKP[sym_rl_sq(bksq)][sym_rl_sq(wksq)][sym_rightleft(bp1_fb)] += diff; }
+			}
 
 			for (int j = 0; j < i; j++) {
 				BonaPiece bp2_fb = list_fb[j];
@@ -313,6 +345,16 @@ struct  dJValue
 
 				if (abs(absolute_KPP[bksq][bp2_fb][bp1_fb] + diff) < FLT_MAX) { absolute_KPP[bksq][bp2_fb][bp1_fb] += diff; }
 				if (abs(absolute_KPP[wksq][bp2_fw][bp1_fw] - diff) < FLT_MAX) { absolute_KPP[wksq][bp2_fw][bp1_fw] -= diff; }
+
+				//¶‰E‘ÎÌ«(”Õã‚ÌŽž)
+				if (bp2sq(list_fb[i]) != Error_SQ&&bp2sq(list_fb[j]) != Error_SQ) {
+					if (abs(absolute_KPP[sym_rl_sq(bksq)][sym_rightleft(bp1_fb)][sym_rightleft(bp2_fb)] + diff) < FLT_MAX) { absolute_KPP[sym_rl_sq(bksq)][sym_rightleft(bp1_fb)][sym_rightleft(bp2_fb)] += diff; }
+					if (abs(absolute_KPP[sym_rl_sq(wksq)][sym_rightleft(bp1_fw)][sym_rightleft(bp2_fw)] - diff) < FLT_MAX) { absolute_KPP[sym_rl_sq(wksq)][sym_rightleft(bp1_fw)][sym_rightleft(bp2_fw)] -= diff; }
+
+					if (abs(absolute_KPP[sym_rl_sq(bksq)][sym_rightleft(bp2_fb)][sym_rightleft(bp1_fb)] + diff) < FLT_MAX) { absolute_KPP[sym_rl_sq(bksq)][sym_rightleft(bp2_fb)][sym_rightleft(bp1_fb)] += diff; }
+					if (abs(absolute_KPP[sym_rl_sq(wksq)][sym_rightleft(bp2_fw)][sym_rightleft(bp1_fw)] - diff) < FLT_MAX) { absolute_KPP[sym_rl_sq(wksq)][sym_rightleft(bp2_fw)][sym_rightleft(bp1_fw)] -= diff; }
+				}
+
 			}
 		}
 	}

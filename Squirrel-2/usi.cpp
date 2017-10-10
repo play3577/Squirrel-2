@@ -125,7 +125,7 @@ void USI::init_option(OptionMap &o,string engine_name)
 	//o["bookpath"] << USIOption("c:/book2/standard_book.db");
 	o["bookpath"] << USIOption("c:/book2/wcsc27.db");
 	o["usebook"] << USIOption(true);
-	o["useAperybook"] << USIOption(true);
+	o["useAperybook"] << USIOption(false);
 	o["randombook"] << USIOption(true);
 	o["use_defined_time"] << USIOption(true);
 	o["defined_time"] << USIOption(1000,100,100000);
@@ -153,6 +153,9 @@ void USI::init_option(OptionMap &o,string engine_name)
 	o["Fmargin"]<< USIOption(100, 150, 400);
 #endif // TUNE
 
+#ifdef EVAL_EFFECT
+	o["evalKE_ENEMY"] << USIOption("c:/book2/fv_KE_FROMENEMY.bin");
+#endif
 
 
 	o["AperyBookPath"]<< USIOption("C:/AperyBook/mahuv11.bin");
@@ -955,13 +958,13 @@ void USI::loop()
 		}
 		//PP2KPP C:/book2/fv_PP.bin
 		else if (token == "PP2KPP") {
-			Eval::PP2KPP(is);
+			//Eval::PP2KPP(is);
 		}
 		else if (token == "dorand") {
 			StateInfo s[40];
 			random_device rd;
 			std::mt19937 mt(rd());
-			dorand_AperyBook(pos, &s[0], mt);
+			//dorand_AperyBook(pos, &s[0], mt);
 			cout << pos << endl;
 		}
 

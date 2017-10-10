@@ -1065,6 +1065,35 @@ void weave_lowdim_to_gradj(dJValue& newgradJ, const lowerDimPP& lowdim) {
 		}
 	}
 }
+#elif  defined(EVAL_KPP)
+
+void lowdim_each_KPP(lowerDimPP & lowdim, const dJValue& gradJ,const Square ksq, const BonaPiece bp1, const BonaPiece bp2) {
+
+}
+
+
+void lowdim_each_KKP(lowerDimPP & lowdim, const dJValue& gradJ,const Square ksq1, const Square ksq2, const BonaPiece bp1) {
+
+}
+
+void weave_eachKPP(dJValue& newgradJ, const lowerDimPP& lowdim,const Square ksq, const BonaPiece bp1, const BonaPiece bp2) {
+
+}
+
+
+void weave_eachKKP(dJValue& newgradJ, const lowerDimPP& lowdim, const Square ksq1, const Square ksq2, const BonaPiece bp1) {
+
+}
+
+
+void lower__dimKPP(lowerDimPP & lowdim, const dJValue& gradJ)
+{
+
+}
+
+void weave_lowdim_to_gradj(dJValue& newgradJ, const lowerDimPP& lowdim) {
+	
+}
 
 #endif
 

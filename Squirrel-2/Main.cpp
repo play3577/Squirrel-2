@@ -4,6 +4,8 @@
 
 çÏé“ÇÃäFólÇ…ä¥é”ÇµÇ‹Ç∑
 --------------------------------------------------------------------------------------------*/
+//#define _CRT_SECURE_NO_WARNINGS
+
 
 #include "fundation.h"
 #include "Bitboard.h"
@@ -171,6 +173,10 @@ int main() {
 
 #endif
 	
+	/*memset(Eval::KE_FROMENEMY, 0, sizeof(KE_FROMENEMY));
+	FILE* fp = std::fopen("c:/book2/fv_KE_FROMENEMY.bin", "wb");
+	std::fwrite(&KE_FROMENEMY, sizeof(KE_FROMENEMY), 1, fp);
+	std::fclose(fp);*/
 	cerr << "init finish!" << endl;
 	USI::loop();
 	return 0;

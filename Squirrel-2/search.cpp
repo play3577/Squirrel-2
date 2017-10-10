@@ -96,7 +96,9 @@ const Row HalfDensity[] = {
 
 const size_t HalfDensitySize = std::extent<decltype(HalfDensity)>::value;
 
-inline Value bonus(const Depth d1) { int d = d1 / ONE_PLY; return Value(d*d + 2 * d - 2); }
+//inline Value bonus(const Depth d1) { int d = d1 / ONE_PLY; return Value(d*d + 2 * d - 2); }
+inline Value bonus(const Depth d1) { int d = d1 / ONE_PLY; return d>17? Value(0): Value(d*d + 2 * d - 2); }
+
 void update_cm_stats(Stack* ss, Piece pc, Square s, Value bonus);
 void update_stats(const Position& pos, Stack* ss, Move move, Move* quiets, int quietsCnt, Value bonus);
 
@@ -922,6 +924,7 @@ template <Nodetype NT>Value search(Position &pos, Stack* ss, Value alpha, Value 
 	bool givescheck, improve, singler_extension, move_count_pruning, skipQuiets;
 	Depth extension, newdepth;
 
+	bool ttCapture, pvExact;
 #ifndef LEARN
 	//timer threadを用意せずにここで時間を確認する。
 	//stockfish方式
@@ -1523,7 +1526,8 @@ moves_loop:
 		
 
 	skipQuiets = false;
-
+	ttCapture = false;
+	pvExact = PVNode&& TThit&& ttBound == BOUND_EXACT;
 
 #ifdef USETT
 	movepicker mp(pos,ss,ttMove,depth);
@@ -1642,7 +1646,8 @@ moves_loop:
 					lmrdepth<3
 					&& (!cmh || (*cmh)[moved_piece(move)][move_to(move)] < Value_Zero)
 					&& (!fmh || (*fmh)[moved_piece(move)][move_to(move)] < Value_Zero)
-					&& (!fmh2 || (*fmh2)[moved_piece(move)][move_to(move)] < Value_Zero || (cmh && fmh)))
+					//&& (!fmh2 || (*fmh2)[moved_piece(move)][move_to(move)] < Value_Zero || (cmh && fmh))
+					)
 				{
 					continue;
 				}
@@ -1691,6 +1696,8 @@ moves_loop:
 		if (!RootNode) {
 			if (pos.is_legal(move) == false) { ss->moveCount = --movecount; continue; }
 		}
+
+		if (move == ttMove&&CaptureorPropawn) { ttCapture = true; }
 
 		ss->currentMove = move;
 
@@ -1751,6 +1758,9 @@ moves_loop:
 		適当に不を鳴らせる指し手も目立ったのでPAWNPROMOTEは含めないほうがいいのかも
 
 		あんまり条件を緩くしすぎてもレーティング下がってしまった。
+
+		そういえばLMRをごっそり抜いたら強くなったという情報があったので省いて試してみる
+
 		*/
 		if (depth >= 3 * ONE_PLY
 			&&movecount > 1
@@ -1767,6 +1777,11 @@ moves_loop:
 
 				// Increase reduction for cut nodes
 				if (cutNode) {r += 2*ONE_PLY;}
+
+				if ((ss - 1)->moveCount > 15) { r -= ONE_PLY; }
+				if (pvExact) { r -= ONE_PLY; }
+				if (ttCapture) { r += ONE_PLY; }
+
 				//捕獲から逃れる指し手の場合はreducationを減らす
 				//ここPAWNじゃダメ！駒の色でどちらのturnか判断するので
 				if (!pos.see_ge(make_move(move_to(move), move_from(move), add_color(PAWN,opposite(pos.sidetomove()))),Value_Zero)) {
@@ -1780,6 +1795,14 @@ moves_loop:
 					+ thisthread->fromTo.get(opposite(pos.sidetomove()), move);
 
 				int rHist = (val - 8000) / 20000;
+
+				/*ss->statScore = thisthread->history[moved_piece(move)][move_to(move)]
+					+ (cmh ? (*cmh)[moved_piece(move)][move_to(move)] : Value_Zero)
+					+ (fmh ? (*fmh)[moved_piece(move)][move_to(move)] : Value_Zero)
+					+ (fmh2 ? (*fmh2)[moved_piece(move)][move_to(move)] : Value_Zero)
+					+ thisthread->fromTo.get(opposite(pos.sidetomove()), move);
+				int rHist = (val - 8000) / 20000;*/
+
 				r = std::max(DEPTH_ZERO, (int(r / ONE_PLY) - rHist)*ONE_PLY);
 
 			}
@@ -1909,7 +1932,8 @@ moves_loop:
 		//Extra penalty for a quiet TT move in previous ply when it gets refutedやり返されてしまったTTの差し手に悪い値をつける。
 		if ((ss - 1)->moveCount == 1 && pos.state()->DirtyPiece[1] == NO_PIECE && (ss - 1)->currentMove != MOVE_NULL) {
 			int d = depth / ONE_PLY;
-			Value penalty = Value(d * d + 4 * d + 1);
+			//Value penalty = Value(d * d + 4 * d + 1);
+			Value penalty = bonus(depth + ONE_PLY);
 			Square prevSq = move_to((ss - 1)->currentMove);
 			update_cm_stats(ss - 1, moved_piece((ss - 1)->currentMove), prevSq, -penalty);//移動した後の駒であるのでこれでいい。しかし駒種はchessと違い成りが含まれるかもしれないので移動前の駒種を使う
 		}
@@ -1918,9 +1942,10 @@ moves_loop:
 	//alphaを超えるような差し手がなかったということは相手の差し手はよい差し手であったので相手の差し手のcountermoveに良い値をつける
 	else if (depth >= 3 * ONE_PLY && pos.state()->DirtyPiece[1] == NO_PIECE&& is_ok((ss - 1)->currentMove)&& (ss - 1)->currentMove!=MOVE_NULL) {
 		int d = depth / ONE_PLY;
-		Value bonus = Value(d * d + 2 * d - 2);
+		//Value bonus = Value(d * d + 2 * d - 2);
+		Value bonus_ = bonus(depth);
 		Square prevSq = move_to((ss - 1)->currentMove);
-		update_cm_stats(ss - 1, moved_piece((ss - 1)->currentMove), prevSq, bonus);
+		update_cm_stats(ss - 1, moved_piece((ss - 1)->currentMove), prevSq, bonus_);
 	}
 
 #ifdef USETT

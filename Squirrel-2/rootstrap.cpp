@@ -37,9 +37,8 @@ string TEACHERPATH = "G:/teacher";
 string TEACHERPATH = "/home/suganuma/Teacher";
 #endif//windows
 
-#define LAperyBook//Apery城跡を用いて初期局面指定
-#define DEPTH 7
-#define CHETA
+#define DEPTH 9
+//#define CHETA
 
 
 
@@ -48,7 +47,7 @@ string TEACHERPATH = "/home/suganuma/Teacher";
 
 //floatとした　評価用特徴ベクトル
 
-#ifdef CHETA
+#if defined(CHETA) && defined(REIN) && defined(EVAL_KPP)
 dJValue Eval_Feature;
 
 void CopyEval2Float(dJValue& FloatEval) {
@@ -236,7 +235,7 @@ void Make_Teacher::make_teacher()
 		/*
 		読み込むときはvector一つ分とってきて、それをpushbackしていけばいいと考えられるのだが
 		*/
-		string teacher_ = TEACHERPATH + "/" + "iteration5" + "depth" + itos(DEPTH - 1) + ".txt";
+		string teacher_ = TEACHERPATH + "/" + "iteration7" + "depth" + itos(DEPTH - 1) + ".txt";
 		ofstream of(teacher_, ios::app);
 		if (!of) { UNREACHABLE; }
 		//of.write(reinterpret_cast<const char*>(&sum_teachers[0]), sum_teachers.size() * sizeof(teacher_data));
@@ -275,7 +274,7 @@ void Make_Teacher::make_teacher_body(const int number) {
 	#ifndef LAperyBook
 		g < startpos_db.size();//これ
 	#else
-		g<20000;//2万ぐらいでいいか？・
+		g<1000;//結構頻繁に書き出すようにする
 	#endif
 #endif
 		g = lock_index_inclement__()) {
@@ -1110,7 +1109,12 @@ void renewal_PP_nozomi(dJValue &data, int iteration) {
 	}
 
 #endif
-
+#ifdef EVAL_EFFECT
+	for (Square ksq = SQ1A; ksq < SQ_NUM; ksq++) for (int i = 0; i < (1 << 8); i++) {
+		int inc=h*sign( data.absolute_KE_FROMENEMY[ksq][i]);
+		KE_FROMENEMY[ksq][i] + inc;
+	}
+#endif
 };
 
 
