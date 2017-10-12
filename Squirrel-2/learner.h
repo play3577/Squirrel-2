@@ -53,7 +53,7 @@ struct Game
 {
 	//player
 	string white_P, black_P;
-	//Œ‹‰Ê
+	//Œ‹‰Ê <Ÿ”s(0:ˆø‚«•ª‚¯,1:æŽèŸ‚¿,2:ŒãŽèŸ‚¿)>
 	int result;
 	//‘Î‹Ç“ú 
 	string day;

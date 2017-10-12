@@ -79,8 +79,8 @@ std::ostream & operator<<(std::ostream & os, const Move m)
 	//Piece moved;
 	Square from = move_from(m);
 	Square to = move_to(m);
-	if (m == MOVE_NULL) { cout << "nullmove"; return os; }
-	if (m == MOVE_NONE) { cout << "movenone"; return os; }
+	if (m == MOVE_NULL) { os << "nullmove"; return os; }
+	if (m == MOVE_NONE) { os << "movenone"; return os; }
 	if (is_drop(m)) {
 
 		Piece moved = moved_piece(m);

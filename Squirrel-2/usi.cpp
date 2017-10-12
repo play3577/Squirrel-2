@@ -978,7 +978,9 @@ void USI::loop()
 			if (yn != "y") { cout << "OK I do not makebook"; break; }
 			BOOK::makebook();
 		}
-
+		else if (token == "ucb") {
+			BOOK::makebook_ucb();
+		}
 #endif
 #endif
 #endif //MISC

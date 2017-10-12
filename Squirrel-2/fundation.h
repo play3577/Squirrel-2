@@ -56,10 +56,11 @@
 //#define MAKESTARTPOS //初期局面データ作成
 //#define MAKETEACHER  //教師データ作成
 //#define Prog_LEARN  //進行度学習
-#define REIN      //強化学習
+//#define REIN      //強化学習
 //#define BONA        //ボナメゾ
+#define MAKEBOOK//定跡作成モード
 
-#if defined(MAKETEACHER) || defined(MAKESTARTPOS)
+#if defined(MAKETEACHER) || defined(MAKESTARTPOS) ||defined(MAKEBOOK)
 #define USETT
 #endif
 //学習中にTTをONにするとleafnodeにさかのぼれなくなる
@@ -87,9 +88,8 @@
 #define EVAL_PP
 //#define EVAL_PPT
 //#define EVAL_KPP
-#define EVAL_EFFECT
+//#define EVAL_EFFECT
 //--------------------------------定跡
-//#define MAKEBOOK//定跡作成モード
 //#define APERYBOOK
 
 

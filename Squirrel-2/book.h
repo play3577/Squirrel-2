@@ -78,4 +78,5 @@ namespace BOOK {
 	void init();
 	bool makebook();
 	bool write_book(string filename);
+	void makebook_ucb();
 }

@@ -546,7 +546,7 @@ Value MainThread::think() {
 	if (Options["usebook"] == true){
 		
 		//âÆç™ó†å`éÆ
-		if ((bool)Options["useAperybook"] == false && rootpos.ply_from_startpos < 15 && limit.is_inponder == false) {
+		if ((bool)Options["useAperybook"] == false /*&& rootpos.ply_from_startpos < 15*/ && limit.is_inponder == false) {
 
 			const string sfen = rootpos.make_sfen();
 			auto bookentry = book.find(sfen);
@@ -754,7 +754,7 @@ Value Thread::think() {
 
 
 
-#if  defined(MAKETEACHER) || defined(MAKESTARTPOS) || defined(REIN)
+#if  defined(MAKETEACHER) || defined(MAKESTARTPOS) || defined(REIN)||defined(MAKEBOOK)
 		bestvalue = search<Root>(rootpos, ss, alpha, beta, rootdepth*ONE_PLY, false);
 #else
 		bestvalue = lsearch<Root>(rootpos, ss, alpha, beta, rootdepth*ONE_PLY, false);
