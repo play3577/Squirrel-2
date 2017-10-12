@@ -342,7 +342,7 @@ struct Node
 	vector<ucbMove> moves;//この局面における合法手
 	bool isleaf = true;//この局面がleaf nodeか
 	//ucbMove* lastMove = nullptr;
-	Move lastmove;
+	Move lastmove=MOVE_NONE;
 	//Node* previous = nullptr;//以前の局面
 	int previousindex = -1;
 	string sfen_;//この局面のsfen文字列
@@ -372,27 +372,31 @@ struct Node
 		//ここで大きいほうに並び替えられる。
 		std::stable_sort(moves.begin(), moves.end(), [](const ucbMove& m1, const ucbMove& m2) {return m1.score > m2.score; });
 		//大きいほうから6手だけ残す
-		if (moves.size() < 6) return;
+		if (moves.size() ==1) return;
 
-		moves.resize(6);
+		//moves.resize(6);
+		//すべての評価値が閾値以下になることもあるのでその場合は一つだけ残してそのucbの値はマイナスにしておく
 
 
 		//二分探索で評価値が閾値以下になってしまう場所を探す
-		//int lb = 0,ub=moves.size();
-		//int mid;
-		//int threshold = -200;
-		//while (ub - lb > 1) {
-		//	mid = (ub + lb) / 2;
-		//	if (moves[mid].score> threshold) {
-		//		//解の範囲は[mid,ub]に絞られる
-		//		lb = mid;
-		//	}
-		//	else {
-		//		ub = mid;
-		//	}
-		//}
-		////評価値が閾値以下の値をリストから消す
-		//moves.resize(lb);
+		int lb = 0,ub=moves.size();
+		int mid;
+		int threshold = -30;//先手番と後手番でthresholdは分けたほうがいいな
+
+		if (moves[0].score<threshold) { moves.resize(1); moves[0].ucb = -114514; }
+
+		while (ub - lb > 1) {
+			mid = (ub + lb) / 2;
+			if (moves[mid].score> threshold) {
+				//解の範囲は[mid,ub]に絞られる
+				lb = mid;
+			}
+			else {
+				ub = mid;
+			}
+		}
+		//評価値が閾値以下の値をリストから消す
+		{ moves.resize(lb+1); }
 
 	}
 
@@ -404,13 +408,12 @@ inline std::ostream& operator<<(std::ostream& os, Node n) { os <<"node:move[0]"<
 
 #include <random>
 
-
+void BackPropagationScore(int index, Value score);
 
 //ucbが最大となる末端局面まで移動する
 void movebestUcbPos(Position& pos, int index) {
 
 	ucbMove* bestucbmove = nullptr;
-	Value v;
 	double maxucb = -1145148101919, ucb;
 	StateInfo si;
 
@@ -418,7 +421,7 @@ void movebestUcbPos(Position& pos, int index) {
 	Node* node = &Nodes[index];
 	for (ucbMove& move : node->moves) {
 		//ucb = move.ucb;
-		calc_ucb(win_sig(v), node->moves[i].numThisArmTried, node->allplayoutnum);
+		ucb=calc_ucb(win_sig(move.score), move.numThisArmTried, node->allplayoutnum);
 
 		if (ucb > maxucb) {
 			maxucb = ucb;
@@ -446,21 +449,24 @@ void movebestUcbPos(Position& pos, int index) {
 		nextnode.lastmove = bestucbmove->move;
 		nextnode.previousindex = node->nodeindex;
 		nextnode.depth = node->depth + 1;
-		nextnode.nodeindex = index + 1;
+		nextnode.nodeindex = Nodes.size();
 
 		Nodes.push_back(nextnode);
 
-		bestucbmove->nextindex=Nodes.size()-1;
+		bestucbmove->nextindex=nextnode.nodeindex;
 
 		return;
 	}
 	else {
+		ASSERT(bestucbmove->nextindex != index);
 		movebestUcbPos(pos, bestucbmove->nextindex);
 	}
 	return;
 }
 
-
+/*
+どうやらバカな手を調べてしまい、それによってucbが引っ張られてしまうことがあるみたいなので閾値は必要か
+*/
 void BOOK::makebook_ucb() {
 
 	Position pos;
@@ -506,24 +512,27 @@ void BOOK::makebook_ucb() {
 	std::cout << "sorted" << endl;
 	for (ucbMove m : root.moves) { std::cout << m << endl; }
 
-	Nodes.emplace_back(root);
+	Nodes.push_back(root);
 
 	double bestucb;
 	while (true) {
 		//末端まで移動
 		movebestUcbPos(pos,0);
-		Node* node = &Nodes[Nodes.size() - 1];
+		//Node* node = &Nodes[Nodes.size() - 1];
+		int index = Nodes[Nodes.size() - 1].nodeindex;
 		bestucb = -114514810;
 		//ここでrootmoveの処理
-		node->allplayoutnum++;
-		pos.set(node->sfen_);
+		Nodes[Nodes.size() - 1].allplayoutnum++;
+		pos.set(Nodes[Nodes.size() - 1].sfen_);
 		std::cout << pos << endl;
+		Value bestscore=Value_Mated;
 
-		for (int i = 0; i < node->moves.size(); i++) {
+
+		for (int i = 0; i < Nodes[Nodes.size() - 1].moves.size(); i++) {
 
 			si.clear();
-			cout << node->moves[i].move << endl;
-			pos.do_move(node->moves[i].move, &si);//この手を指した時の評価値を計算
+			cout << Nodes[Nodes.size() - 1].moves[i].move << endl;
+			pos.do_move(Nodes[Nodes.size() - 1].moves[i].move, &si);//この手を指した時の評価値を計算
 
 			th.set(pos);
 			th.l_depth = 11;
@@ -531,25 +540,30 @@ void BOOK::makebook_ucb() {
 			th.l_beta = Value_Infinite;
 			v = -th.think();//相手から見た評価値になってる！
 			if (v == -Value_Infinite) { continue; }
-			node->moves[i].score = v;
-			node->moves[i].numThisArmTried += 1;
-			node->moves[i].ucb = calc_ucb(win_sig(v), node->moves[i].numThisArmTried, node->allplayoutnum);
+			Nodes[Nodes.size() - 1].moves[i].score = v;
+			Nodes[Nodes.size() - 1].moves[i].numThisArmTried += 1;
+			Nodes[Nodes.size() - 1].moves[i].ucb = calc_ucb(win_sig(v), Nodes[Nodes.size() - 1].moves[i].numThisArmTried, Nodes[Nodes.size() - 1].allplayoutnum);
 
+			if (v > bestscore) {
+				bestscore = v;
+			}
 
-
-			//std::cout << node->moves[i] << endl;
+			//std::cout << Nodes[Nodes.size() - 1].moves[i] << endl;
 
 			pos.undo_move();
 		}
-		node->sort_resize_moves();
-		for (ucbMove m : node->moves) { std::cout << m << endl; }
+		Nodes[Nodes.size() - 1].sort_resize_moves();
+		for (ucbMove m : Nodes[Nodes.size() - 1].moves) { std::cout << m << endl; }
 
-		//ここで木の根に向かってデータをを更新していく
+		//ここで木の根に向かってデータをを更新していくのを実装する
+
+		if (bestscore < -40) { bestscore = (Value)-114514; }
+		cout << index << " " << bestscore<<endl;
+		BackPropagationScore(index, bestscore);
 
 
 
-
-		std::cout << "a";
+		std::cout << "a"<<endl;
 
 	}
 
@@ -562,52 +576,41 @@ void BOOK::makebook_ucb() {
 }
 
 //評価値の値を逆伝搬する
-void BackPropagationScore(Node* nownode, Value score,Move m) {
+void BackPropagationScore(int index, Value score) {
+	//index周りのバグがある！！
+	//どこかでvectorの要素を書き換えてしまっている？？？？
+	int lastnodeindex=Nodes[index].previousindex;
+	Move lastmove = Nodes[index].lastmove;
 
+	Node* lastnode=&Nodes[lastnodeindex];
+	Value maxscore=Value_Mated;
+	do {
+
+		maxscore = Value_Mated;
+		score *= -1;//入ってくるscoreは相手から見たものなので反転する
+
+		for (ucbMove& m : lastnode->moves) {
+			if (m.move == lastmove) {
+				m.score = score;//scoreが更新されたのでその値を入れる
+				m.numThisArmTried++;
+			}
+			if (maxscore < m.score) {
+				maxscore = m.score;
+			}
+		}
+		lastnode->allplayoutnum++;
+
+
+		lastnodeindex = lastnode->previousindex;
+		if (lastnodeindex == -1) { break; }
+
+		lastnode = &Nodes[lastnodeindex];
+		lastmove = lastnode->lastmove;
+
+		score = maxscore;
+
+	} while (lastnode->previousindex != -1);
 }
 
-
-
-Value makemoveloop(Position& pos, Node& node,mt19937& mt,Thread& th) {
-
-	StateInfo si;
-	ucbMove* bestucbmove=nullptr;
-	Value v;
-	double maxucb = -1145148101919, ucb;
-	double ln_allnumplayout = std::log(node.allplayoutnum);
-
-	//ここでucbが最大となる差し手を探す
-	for (ucbMove& move : node.moves) {
-
-		//まだ試されていない差し手
-		if (move.numThisArmTried == 0) {
-			ucb = 1000 + mt() % 100;
-
-		}
-		else {
-			//ucbの計算
-			ucb = calc_ucb(move.winrate(), move.numThisArmTried, node.allplayoutnum);
-		}
-
-		if (ucb > maxucb) {
-			maxucb = ucb;
-			bestucbmove = &move;
-		}
-	}
-	ASSERT(bestucbmove != nullptr);
-	//bestな手が見つかった
-
-
-	//bestな差し手が末端であれば次のノードを作成する
-	if (bestucbmove->nextindex==-1) {
-		Node nextnode;
-		pos.set(node.sfen_);
-		pos.do_move(bestucbmove->move, &si);
-		nextnode.depth = node.depth + 1;
-		nextnode.make_movesvector(pos);
-		nextnode.sfen_ = pos.make_sfen();
-	}
-
-}
 
 #endif
